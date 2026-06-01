@@ -1,7 +1,7 @@
-<svg width="194" height="28" viewBox="0 0 194 28" xmlns="http://www.w3.org/2000/svg">
-  <rect width="120" height="28" fill="#fff7ed"/>
-  <rect x="120" width="74" height="28" fill="#fee2e2"/>
-  <g transform="translate(16 5) scale(0.03515625)">
+<svg width="150" height="28" viewBox="0 0 150 28" xmlns="http://www.w3.org/2000/svg">
+  <rect width="91" height="28" fill="#fff7ed"/>
+  <rect x="91" width="59" height="28" fill="#fee2e2"/>
+  <g transform="translate(13 6) scale(0.03125)">
 <path style="fill:#E2E5E7;" d="M128,0c-17.6,0-32,14.4-32,32v448c0,17.6,14.4,32,32,32h320c17.6,0,32-14.4,32-32V128L352,0H128z"/>
 <path style="fill:#B0B7BD;" d="M384,128h96L352,0v96C352,113.6,366.4,128,384,128z"/>
 <polygon style="fill:#CAD1D8;" points="480,224 384,128 480,128 "/>
@@ -49,6 +49,6 @@
 <g>
 </g>
   </g>
-  <text x="50" y="18" fill="#111827" font-family="Verdana, Geneva, sans-serif" font-size="10" font-weight="700" letter-spacing="2">PAPER</text>
-  <text x="145" y="18" fill="#111827" font-family="Verdana, Geneva, sans-serif" font-size="10" font-weight="700" letter-spacing="2">PDF</text>
+  <text x="39" y="18" fill="#111827" font-family="Verdana, Geneva, sans-serif" font-size="10" font-weight="700" letter-spacing="1.4">PAPER</text>
+  <text x="110" y="18" fill="#111827" font-family="Verdana, Geneva, sans-serif" font-size="10" font-weight="700" letter-spacing="1.4">PDF</text>
 </svg>

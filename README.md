@@ -6,10 +6,7 @@
   </p>
 
   <p>
-    <a href="https://arxiv.org/abs/2605.24117"><img alt="arXiv" src="asset/badge-arxiv.svg" /></a>
-    <a href="https://arxiv.org/pdf/2605.24117"><img alt="Paper PDF" src="asset/badge-paper.svg" /></a>
-    <a href="https://huggingface.co/papers/2605.24117"><img alt="Hugging Face Page" src="asset/badge-huggingface.svg" /></a>
-    <a href="https://skillevolbench.github.io/"><img alt="Project Page" src="asset/badge-project.svg" /></a>
+    <a href="https://arxiv.org/abs/2605.24117"><img alt="arXiv" src="asset/badge-arxiv.svg" /></a> <a href="https://arxiv.org/pdf/2605.24117"><img alt="Paper PDF" src="asset/badge-paper.svg" /></a> <a href="https://huggingface.co/papers/2605.24117"><img alt="Hugging Face Page" src="asset/badge-huggingface.svg" /></a> <a href="https://skillevolbench.github.io/"><img alt="Project Page" src="asset/badge-project.svg" /></a>
   </p>
 
   <p>
