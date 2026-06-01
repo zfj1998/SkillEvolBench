@@ -6,11 +6,10 @@
   </p>
 
   <p>
-    <a href="https://arxiv.org/abs/2605.24117"><img alt="arXiv" src="https://img.shields.io/badge/arXiv-2605.24117-f8d7da?style=for-the-badge&logo=arxiv&logoColor=9f1239&labelColor=fff5f5" /></a>
-    <a href="https://arxiv.org/pdf/2605.24117"><img alt="Paper PDF" src="https://img.shields.io/badge/Paper-PDF-fee2e2?style=for-the-badge&logo=readthedocs&logoColor=b91c1c&labelColor=fff7ed" /></a>
-    <a href="https://huggingface.co/papers/2605.24117"><img alt="Hugging Face" src="asset/hf-paper-badge.svg" /></a>
-    <a href="https://skillevolbench.github.io/"><img alt="Project Page" src="https://img.shields.io/badge/Project-Page-dbf4ff?style=for-the-badge&logo=googlechrome&logoColor=0969da&labelColor=f6f8fa" /></a>
-    <a href="https://github.com/AIoT-MLSys-Lab/SkillEvolBench"><img alt="Code" src="https://img.shields.io/badge/GitHub-Code-eaeef2?style=for-the-badge&logo=github&logoColor=24292f&labelColor=f6f8fa" /></a>
+    <a href="https://arxiv.org/abs/2605.24117"><img alt="arXiv" src="asset/badge-arxiv.svg" /></a>
+    <a href="https://arxiv.org/pdf/2605.24117"><img alt="Paper PDF" src="asset/badge-paper.svg" /></a>
+    <a href="https://huggingface.co/papers/2605.24117"><img alt="Hugging Face Page" src="asset/badge-huggingface.svg" /></a>
+    <a href="https://skillevolbench.github.io/"><img alt="Project Page" src="asset/badge-project.svg" /></a>
   </p>
 
   <p>
