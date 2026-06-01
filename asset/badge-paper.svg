@@ -50,5 +50,5 @@
 </g>
   </g>
   <text x="39" y="18" fill="#111827" font-family="Verdana, Geneva, sans-serif" font-size="10" font-weight="700" letter-spacing="1.4">PAPER</text>
-  <text x="110" y="18" fill="#111827" font-family="Verdana, Geneva, sans-serif" font-size="10" font-weight="700" letter-spacing="1.4">PDF</text>
+  <text x="120.5" y="18" fill="#111827" font-family="Verdana, Geneva, sans-serif" font-size="10" font-weight="700" letter-spacing="1.4" text-anchor="middle">PDF</text>
 </svg>
