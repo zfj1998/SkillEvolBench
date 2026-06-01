@@ -1,0 +1,11 @@
+{
+  "employee_name": "Riley Chen",
+  "employee_id": "EMP-5510",
+  "department": "Operations",
+  "title": "Ops Manager",
+  "base_salary": 120000,
+  "bonus": 15000,
+  "manager": "Sophia Reed",
+  "office": "Austin",
+  "employment_type": "Full-time"
+}

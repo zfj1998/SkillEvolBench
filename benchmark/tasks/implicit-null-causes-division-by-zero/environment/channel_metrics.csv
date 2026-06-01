@@ -1,0 +1,13 @@
+channel,impressions,clicks,conversions,spend
+organic_search,50000,2500,375,12000
+paid_search,"80,000",6400,960,25000
+social_media,120000,4800,240,18000
+email,30000,4500,900,5000
+referral,15000,2250,450,3000
+direct,40000,3200,640,8000
+display_ads,200000,4000,200,35000
+video_ads,60000,3000,300,15000
+affiliate,,1200,180,4000
+new_channel,0,0,0,500
+bad_negative,-100,10,1,50
+,1000,100,10,20

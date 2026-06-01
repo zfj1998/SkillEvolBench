@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E3-LS5
+environment_id: E3
+latent_skill_id: E3-LS5.result-sanity-reconciliation
+slug: result-sanity-reconciliation
+name: result-sanity-reconciliation
+description: Verify processed tabular results with basic sanity checks before using or returning them. Use this skill after a pandas or SQL data-processing pipeline when you need to confirm that the final output has a reasonable row count, contains the expected columns, looks plausible in sample rows, and does not contain unexpected NaN values in critical fields. Focus on simple final-output verification with df.shape, df.columns, df.describe(), and df.isna().sum().
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E3-LS5-T1
+- E3-LS5-T2
+- E3-LS5-T3
+- E3-LS5-T4
+- E3-LS5-T5
+- E3-LS5-T6
+gap_1_summary: 'Statistical anomaly detection: the curated skill only checks empty / non-empty. A column whose normal range is 100-200 with one row at 20,000 should ring an alarm — but row count and null count don''t catch it. Add basic distribution checks (min, max, mean, std) and flag values more than five standard deviations off.'
+gap_2_summary: 'Cross-query consistency: the curated skill verifies one query at a time. The bug surfaces when query A''s `SUM(amount)` and query B''s `SUM(amount)` over the same business definition return different numbers — both look reasonable in isolation. Express invariants that span queries (totals match across breakdowns) and assert them as part of the pipeline.'

@@ -1,0 +1,1602 @@
+[
+  {
+    "record_id": "P132",
+    "email": "faye131@biz.org",
+    "name": "Faye Scott",
+    "phone": "555-4528",
+    "department": "HR",
+    "address": {
+      "street": "1452 Oak St",
+      "city": "SF",
+      "zip": "10131"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P038",
+    "email": "lily37@enterprise.io",
+    "name": "Lily Carter",
+    "phone": "555-6346",
+    "department": "HR",
+    "address": {
+      "street": "418 Oak St",
+      "city": "New York",
+      "zip": "10037"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P057",
+    "email": "grace56@enterprise.io",
+    "name": "Grace Moore",
+    "phone": "555-5361",
+    "department": "Engineering",
+    "address": {
+      "street": "627 Oak St",
+      "city": "SF",
+      "zip": "10056"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P092",
+    "email": "petra91@biz.org",
+    "name": "Petra Turner",
+    "phone": "555-2243",
+    "department": "HR",
+    "address": {
+      "street": "541 Maple Ave",
+      "city": "New York",
+      "zip": "92461"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P083",
+    "email": "glen82@enterprise.io",
+    "name": "Glen Green",
+    "phone": "555-8241",
+    "department": "HR",
+    "address": {
+      "street": "913 Oak St",
+      "city": "New York",
+      "zip": "10082"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P185",
+    "email": "igor184@corp.net",
+    "name": "Igor Baker",
+    "phone": "555-1203",
+    "department": "Legal",
+    "address": {
+      "street": "2035 Oak St",
+      "city": "Chicago",
+      "zip": "10184"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P033",
+    "email": "glen32@acme.com",
+    "name": "Glen Green",
+    "phone": "555-4509",
+    "department": "Finance",
+    "address": {
+      "street": "264 Maple Ave",
+      "city": "SF",
+      "zip": "98193"
+    },
+    "compensation": {
+      "bonus": "20%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P178",
+    "email": "beth177@biz.org",
+    "name": "Beth King",
+    "phone": "555-4919",
+    "department": "Operations",
+    "address": {
+      "street": "536 Maple Ave",
+      "city": "SF",
+      "zip": "94798"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P068",
+    "email": "thomas67@enterprise.io",
+    "name": "Thomas Robinson",
+    "phone": "555-6918",
+    "department": "Finance",
+    "address": {
+      "street": "748 Oak St",
+      "city": "SF",
+      "zip": "10067"
+    },
+    "compensation": {
+      "bonus": "16%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P103",
+    "email": "carol102@enterprise.io",
+    "name": "Carol Brown",
+    "phone": "555-4923",
+    "department": "Legal",
+    "address": {
+      "street": "716 Maple Ave",
+      "city": "SF",
+      "zip": "96216"
+    },
+    "compensation": {
+      "bonus": "17%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P177",
+    "email": "andy176@acme.com",
+    "name": "Andy Hernandez",
+    "phone": "555-9878",
+    "department": "Operations",
+    "address": {
+      "street": "922 Maple Ave",
+      "city": "SF",
+      "zip": "92947"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P149",
+    "email": "xin148@acme.com",
+    "name": "Xin Stewart",
+    "phone": "555-6115",
+    "department": "Sales",
+    "address": {
+      "street": "1639 Oak St",
+      "city": "SF",
+      "zip": "10148"
+    },
+    "compensation": {
+      "bonus": "6%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P179",
+    "email": "craig178@acme.com",
+    "name": "Craig Wright",
+    "phone": "555-1820",
+    "department": "Operations",
+    "address": {
+      "street": "1969 Oak St",
+      "city": "New York",
+      "zip": "10178"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P205",
+    "email": "emma204@enterprise.io",
+    "name": "Emma Miller",
+    "phone": "555-2982",
+    "department": "Sales",
+    "address": {
+      "street": "2255 Oak St",
+      "city": "SF",
+      "zip": "10204"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P238",
+    "email": "lily237@acme.com",
+    "name": "Lily Carter",
+    "phone": "555-6542",
+    "department": "HR",
+    "address": {
+      "street": "300 Maple Ave",
+      "city": "SF",
+      "zip": "95742"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P052",
+    "email": "robert51@biz.org",
+    "name": "Robert Jones",
+    "phone": "555-5860",
+    "department": "HR",
+    "address": {
+      "street": "572 Oak St",
+      "city": "Chicago",
+      "zip": "10051"
+    },
+    "compensation": {
+      "bonus": "17%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P229",
+    "email": "craig228@corp.net",
+    "name": "Craig Wright",
+    "phone": "555-4768",
+    "department": "Operations",
+    "address": {
+      "street": "2519 Oak St",
+      "city": "New York",
+      "zip": "10228"
+    },
+    "compensation": {
+      "bonus": "14%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P064",
+    "email": "alexander63@corp.net",
+    "name": "Alexander Martin",
+    "phone": "555-4805",
+    "department": "Sales",
+    "address": {
+      "street": "704 Oak St",
+      "city": "New York",
+      "zip": "10063"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P034",
+    "email": "hana33@acme.com",
+    "name": "Hana Adams",
+    "phone": "555-8070",
+    "department": "Sales",
+    "address": {
+      "street": "374 Oak St",
+      "city": "New York",
+      "zip": "10033"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P084",
+    "email": "hana83@enterprise.io",
+    "name": "Hana Adams",
+    "phone": "555-9113",
+    "department": "Operations",
+    "address": {
+      "street": "924 Oak St",
+      "city": "SF",
+      "zip": "10083"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P133",
+    "email": "glen132@corp.net",
+    "name": "Glen Green",
+    "phone": "555-1420",
+    "department": "Sales",
+    "address": {
+      "street": "1463 Oak St",
+      "city": "New York",
+      "zip": "10132"
+    },
+    "compensation": {
+      "bonus": "12%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P119",
+    "email": "sarah118@enterprise.io",
+    "name": "Sarah Clark",
+    "phone": "555-4578",
+    "department": "Legal",
+    "address": {
+      "street": "1309 Oak St",
+      "city": "Chicago",
+      "zip": "10118"
+    },
+    "compensation": {
+      "bonus": "10%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P210",
+    "email": "elizabeth209@acme.com",
+    "name": "Elizabeth Thomas",
+    "phone": "555-4915",
+    "department": "Legal",
+    "address": {
+      "street": "2310 Oak St",
+      "city": "Chicago",
+      "zip": "10209"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P121",
+    "email": "uma120@biz.org",
+    "name": "Uma Lewis",
+    "phone": "555-6595",
+    "department": "Operations",
+    "address": {
+      "street": "1331 Oak St",
+      "city": "New York",
+      "zip": "10120"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P200",
+    "email": "yale199@acme.com",
+    "name": "Yale Sanchez",
+    "phone": "555-3445",
+    "department": "HR",
+    "address": {
+      "street": "2200 Oak St",
+      "city": "Chicago",
+      "zip": "10199"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P027",
+    "email": "andy26@corp.net",
+    "name": "Andy Hernandez",
+    "phone": "555-4405",
+    "department": "Legal",
+    "address": {
+      "street": "297 Oak St",
+      "city": "New York",
+      "zip": "10026"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P040",
+    "email": "nina39@enterprise.io",
+    "name": "Nina Perez",
+    "phone": "555-1429",
+    "department": "Sales",
+    "address": {
+      "street": "440 Oak St",
+      "city": "New York",
+      "zip": "10039"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P193",
+    "email": "rex192@enterprise.io",
+    "name": "Rex Phillips",
+    "phone": "555-7248",
+    "department": "Operations",
+    "address": {
+      "street": "2123 Oak St",
+      "city": "Chicago",
+      "zip": "10192"
+    },
+    "compensation": {
+      "bonus": "16%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P081",
+    "email": "evan80@biz.org",
+    "name": "Evan Hill",
+    "phone": "555-1217",
+    "department": "Operations",
+    "address": {
+      "street": "799 Maple Ave",
+      "city": "SF",
+      "zip": "96259"
+    },
+    "compensation": {
+      "bonus": "18%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P140",
+    "email": "nina139@biz.org",
+    "name": "Nina Perez",
+    "phone": "555-3143",
+    "department": "Legal",
+    "address": {
+      "street": "1540 Oak St",
+      "city": "Chicago",
+      "zip": "10139"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P011",
+    "email": "karen10@corp.net",
+    "name": "Karen Jackson",
+    "phone": "555-4867",
+    "department": "Operations",
+    "address": {
+      "street": "121 Oak St",
+      "city": "SF",
+      "zip": "10010"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P172",
+    "email": "victor171@corp.net",
+    "name": "Victor Lee",
+    "phone": "555-1179",
+    "department": "Engineering",
+    "address": {
+      "street": "1892 Oak St",
+      "city": "New York",
+      "zip": "10171"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P059",
+    "email": "iris58@corp.net",
+    "name": "Iris Anderson",
+    "phone": "555-3692",
+    "department": "Sales",
+    "address": {
+      "street": "649 Oak St",
+      "city": "Chicago",
+      "zip": "10058"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P086",
+    "email": "jane85@acme.com",
+    "name": "Jane Gonzalez",
+    "phone": "555-7057",
+    "department": "Legal",
+    "address": {
+      "street": "946 Oak St",
+      "city": "Chicago",
+      "zip": "10085"
+    },
+    "compensation": {
+      "bonus": "16%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P098",
+    "email": "walt97@acme.com",
+    "name": "Walt Collins",
+    "phone": "555-2406",
+    "department": "HR",
+    "address": {
+      "street": "167 Maple Ave",
+      "city": "New York",
+      "zip": "98053"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P214",
+    "email": "alexander213@acme.com",
+    "name": "Alexander Martin",
+    "phone": "555-4943",
+    "department": "HR",
+    "address": {
+      "street": "627 Maple Ave",
+      "city": "SF",
+      "zip": "98741"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P051",
+    "email": "alice50@corp.net",
+    "name": "Alice Smith",
+    "phone": "555-2525",
+    "department": "Finance",
+    "address": {
+      "street": "561 Oak St",
+      "city": "New York",
+      "zip": "10050"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P075",
+    "email": "yara74@corp.net",
+    "name": "Yara Allen",
+    "phone": "555-6060",
+    "department": "Legal",
+    "address": {
+      "street": "825 Oak St",
+      "city": "SF",
+      "zip": "10074"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P066",
+    "email": "richard65@biz.org",
+    "name": "Richard Garcia",
+    "phone": "555-8552",
+    "department": "Sales",
+    "address": {
+      "street": "814 Maple Ave",
+      "city": "SF",
+      "zip": "91077"
+    },
+    "compensation": {
+      "bonus": "20%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P104",
+    "email": "william103@corp.net",
+    "name": "William Davis",
+    "phone": "555-7316",
+    "department": "Operations",
+    "address": {
+      "street": "1144 Oak St",
+      "city": "SF",
+      "zip": "10103"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P115",
+    "email": "olivia114@enterprise.io",
+    "name": "Olivia Thompson",
+    "phone": "555-4328",
+    "department": "Legal",
+    "address": {
+      "street": "944 Maple Ave",
+      "city": "SF",
+      "zip": "93387"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P024",
+    "email": "xavier23@corp.net",
+    "name": "Xavier Hall",
+    "phone": "555-3654",
+    "department": "Engineering",
+    "address": {
+      "street": "264 Oak St",
+      "city": "New York",
+      "zip": "10023"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P044",
+    "email": "sasha43@enterprise.io",
+    "name": "Sasha Campbell",
+    "phone": "555-8302",
+    "department": "Finance",
+    "address": {
+      "street": "484 Oak St",
+      "city": "New York",
+      "zip": "10043"
+    },
+    "compensation": {
+      "bonus": "12%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P065",
+    "email": "olivia64@enterprise.io",
+    "name": "Olivia Thompson",
+    "phone": "555-1551",
+    "department": "Operations",
+    "address": {
+      "street": "715 Oak St",
+      "city": "New York",
+      "zip": "10064"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P085",
+    "email": "igor84@corp.net",
+    "name": "Igor Baker",
+    "phone": "555-1724",
+    "department": "Legal",
+    "address": {
+      "street": "935 Oak St",
+      "city": "SF",
+      "zip": "10084"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P144",
+    "email": "sasha143@biz.org",
+    "name": "Sasha Campbell",
+    "phone": "555-3216",
+    "department": "Sales",
+    "address": {
+      "street": "1584 Oak St",
+      "city": "Chicago",
+      "zip": "10143"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P060",
+    "email": "elizabeth59@enterprise.io",
+    "name": "Elizabeth Thomas",
+    "phone": "555-2765",
+    "department": "HR",
+    "address": {
+      "street": "660 Oak St",
+      "city": "SF",
+      "zip": "10059"
+    },
+    "compensation": {
+      "bonus": "18%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P062",
+    "email": "christopher61@corp.net",
+    "name": "Christopher White",
+    "phone": "555-5380",
+    "department": "HR",
+    "address": {
+      "street": "682 Oak St",
+      "city": "Chicago",
+      "zip": "10061"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P134",
+    "email": "hana133@biz.org",
+    "name": "Hana Adams",
+    "phone": "555-7904",
+    "department": "HR",
+    "address": {
+      "street": "1474 Oak St",
+      "city": "New York",
+      "zip": "10133"
+    },
+    "compensation": {
+      "bonus": "6%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P009",
+    "email": "iris8@corp.net",
+    "name": "Iris Anderson",
+    "phone": "555-1663",
+    "department": "Legal",
+    "address": {
+      "street": "99 Oak St",
+      "city": "New York",
+      "zip": "10008"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P113",
+    "email": "maria112@enterprise.io",
+    "name": "Maria Harris",
+    "phone": "555-6656",
+    "department": "Finance",
+    "address": {
+      "street": "1243 Oak St",
+      "city": "Chicago",
+      "zip": "10112"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P156",
+    "email": "james155@corp.net",
+    "name": "James Wilson",
+    "phone": "555-1783",
+    "department": "Sales",
+    "address": {
+      "street": "1716 Oak St",
+      "city": "Chicago",
+      "zip": "10155"
+    },
+    "compensation": {
+      "bonus": "14%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P101",
+    "email": "alice100@biz.org",
+    "name": "Alice Smith",
+    "phone": "555-3351",
+    "department": "HR",
+    "address": {
+      "street": "1111 Oak St",
+      "city": "SF",
+      "zip": "10100"
+    },
+    "compensation": {
+      "bonus": "11%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P082",
+    "email": "faye81@acme.com",
+    "name": "Faye Scott",
+    "phone": "555-6612",
+    "department": "Finance",
+    "address": {
+      "street": "902 Oak St",
+      "city": "SF",
+      "zip": "10081"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P014",
+    "email": "alexander13@corp.net",
+    "name": "Alexander Martin",
+    "phone": "555-6436",
+    "department": "HR",
+    "address": {
+      "street": "154 Oak St",
+      "city": "Chicago",
+      "zip": "10013"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P136",
+    "email": "jane135@acme.com",
+    "name": "Jane Gonzalez",
+    "phone": "555-4797",
+    "department": "Engineering",
+    "address": {
+      "street": "840 Maple Ave",
+      "city": "Chicago",
+      "zip": "97590"
+    },
+    "compensation": {
+      "bonus": "12%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P053",
+    "email": "carol52@biz.org",
+    "name": "Carol Brown",
+    "phone": "555-4011",
+    "department": "Operations",
+    "address": {
+      "street": "583 Oak St",
+      "city": "SF",
+      "zip": "10052"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P087",
+    "email": "kurt86@biz.org",
+    "name": "Kurt Nelson",
+    "phone": "555-8931",
+    "department": "Finance",
+    "address": {
+      "street": "957 Oak St",
+      "city": "Chicago",
+      "zip": "10086"
+    },
+    "compensation": {
+      "bonus": "20%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P080",
+    "email": "dana79@acme.com",
+    "name": "Dana Lopez",
+    "phone": "555-7757",
+    "department": "HR",
+    "address": {
+      "street": "880 Oak St",
+      "city": "Chicago",
+      "zip": "10079"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P050",
+    "email": "yale49@enterprise.io",
+    "name": "Yale Sanchez",
+    "phone": "555-9487",
+    "department": "HR",
+    "address": {
+      "street": "550 Oak St",
+      "city": "Chicago",
+      "zip": "10049"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P171",
+    "email": "uma170@acme.com",
+    "name": "Uma Lewis",
+    "phone": "555-2411",
+    "department": "Engineering",
+    "address": {
+      "street": "1881 Oak St",
+      "city": "SF",
+      "zip": "10170"
+    },
+    "compensation": {
+      "bonus": "16%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P207",
+    "email": "grace206@biz.org",
+    "name": "Grace Moore",
+    "phone": "555-6206",
+    "department": "Legal",
+    "address": {
+      "street": "2277 Oak St",
+      "city": "New York",
+      "zip": "10206"
+    },
+    "compensation": {
+      "bonus": "11%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P012",
+    "email": "christopher11@biz.org",
+    "name": "Christopher White",
+    "phone": "555-9082",
+    "department": "Finance",
+    "address": {
+      "street": "132 Oak St",
+      "city": "Chicago",
+      "zip": "10011"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P041",
+    "email": "owen40@corp.net",
+    "name": "Owen Roberts",
+    "phone": "555-4479",
+    "department": "Finance",
+    "address": {
+      "street": "380 Maple Ave",
+      "city": "Chicago",
+      "zip": "94077"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P022",
+    "email": "victor21@acme.com",
+    "name": "Victor Lee",
+    "phone": "555-2942",
+    "department": "HR",
+    "address": {
+      "street": "242 Oak St",
+      "city": "New York",
+      "zip": "10021"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P017",
+    "email": "quinn16@enterprise.io",
+    "name": "Quinn Martinez",
+    "phone": "555-5319",
+    "department": "Operations",
+    "address": {
+      "street": "187 Oak St",
+      "city": "Chicago",
+      "zip": "10016"
+    },
+    "compensation": {
+      "bonus": "18%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P088",
+    "email": "lily87@biz.org",
+    "name": "Lily Carter",
+    "phone": "555-7670",
+    "department": "Legal",
+    "address": {
+      "street": "968 Oak St",
+      "city": "SF",
+      "zip": "10087"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P109",
+    "email": "iris108@enterprise.io",
+    "name": "Iris Anderson",
+    "phone": "555-8979",
+    "department": "Sales",
+    "address": {
+      "street": "1199 Oak St",
+      "city": "Chicago",
+      "zip": "10108"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P221",
+    "email": "uma220@acme.com",
+    "name": "Uma Lewis",
+    "phone": "555-9712",
+    "department": "Operations",
+    "address": {
+      "street": "364 Maple Ave",
+      "city": "Chicago",
+      "zip": "99800"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P047",
+    "email": "vera46@corp.net",
+    "name": "Vera Edwards",
+    "phone": "555-4900",
+    "department": "Sales",
+    "address": {
+      "street": "517 Oak St",
+      "city": "New York",
+      "zip": "10046"
+    },
+    "compensation": {
+      "bonus": "18%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P231",
+    "email": "evan230@corp.net",
+    "name": "Evan Hill",
+    "phone": "555-8726",
+    "department": "Operations",
+    "address": {
+      "street": "2541 Oak St",
+      "city": "Chicago",
+      "zip": "10230"
+    },
+    "compensation": {
+      "bonus": "11%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P202",
+    "email": "robert201@biz.org",
+    "name": "Robert Jones",
+    "phone": "555-5585",
+    "department": "HR",
+    "address": {
+      "street": "2222 Oak St",
+      "city": "New York",
+      "zip": "10201"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P230",
+    "email": "dana229@enterprise.io",
+    "name": "Dana Lopez",
+    "phone": "555-6179",
+    "department": "Sales",
+    "address": {
+      "street": "2530 Oak St",
+      "city": "New York",
+      "zip": "10229"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P175",
+    "email": "yara174@biz.org",
+    "name": "Yara Allen",
+    "phone": "555-1485",
+    "department": "Finance",
+    "address": {
+      "street": "638 Maple Ave",
+      "city": "New York",
+      "zip": "96031"
+    },
+    "compensation": {
+      "bonus": "11%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P073",
+    "email": "katherine72@biz.org",
+    "name": "Katherine Walker",
+    "phone": "555-9402",
+    "department": "Legal",
+    "address": {
+      "street": "803 Oak St",
+      "city": "SF",
+      "zip": "10072"
+    },
+    "compensation": {
+      "bonus": "20%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P018",
+    "email": "thomas17@enterprise.io",
+    "name": "Thomas Robinson",
+    "phone": "555-4292",
+    "department": "Engineering",
+    "address": {
+      "street": "144 Maple Ave",
+      "city": "SF",
+      "zip": "95481"
+    },
+    "compensation": {
+      "bonus": "14%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P187",
+    "email": "kurt186@enterprise.io",
+    "name": "Kurt Nelson",
+    "phone": "555-9460",
+    "department": "Legal",
+    "address": {
+      "street": "2057 Oak St",
+      "city": "SF",
+      "zip": "10186"
+    },
+    "compensation": {
+      "bonus": "12%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P010",
+    "email": "elizabeth9@biz.org",
+    "name": "Elizabeth Thomas",
+    "phone": "555-7898",
+    "department": "Finance",
+    "address": {
+      "street": "110 Oak St",
+      "city": "New York",
+      "zip": "10009"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P204",
+    "email": "william203@acme.com",
+    "name": "William Davis",
+    "phone": "555-2415",
+    "department": "Engineering",
+    "address": {
+      "street": "2244 Oak St",
+      "city": "SF",
+      "zip": "10203"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P162",
+    "email": "christopher161@acme.com",
+    "name": "Christopher White",
+    "phone": "555-7488",
+    "department": "Finance",
+    "address": {
+      "street": "1782 Oak St",
+      "city": "Chicago",
+      "zip": "10161"
+    },
+    "compensation": {
+      "bonus": "6%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P212",
+    "email": "christopher211@acme.com",
+    "name": "Christopher White",
+    "phone": "555-1708",
+    "department": "Sales",
+    "address": {
+      "street": "252 Maple Ave",
+      "city": "New York",
+      "zip": "98834"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P108",
+    "email": "michael107@enterprise.io",
+    "name": "Michael Taylor",
+    "phone": "555-8620",
+    "department": "Legal",
+    "address": {
+      "street": "1188 Oak St",
+      "city": "Chicago",
+      "zip": "10107"
+    },
+    "compensation": {
+      "bonus": "18%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P077",
+    "email": "andy76@biz.org",
+    "name": "Andy Hernandez",
+    "phone": "555-3472",
+    "department": "Engineering",
+    "address": {
+      "street": "847 Oak St",
+      "city": "SF",
+      "zip": "10076"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "4%"
+    }
+  },
+  {
+    "record_id": "P188",
+    "email": "lily187@corp.net",
+    "name": "Lily Carter",
+    "phone": "555-2288",
+    "department": "Finance",
+    "address": {
+      "street": "509 Maple Ave",
+      "city": "SF",
+      "zip": "92618"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P163",
+    "email": "maria162@acme.com",
+    "name": "Maria Harris",
+    "phone": "555-8105",
+    "department": "HR",
+    "address": {
+      "street": "1793 Oak St",
+      "city": "New York",
+      "zip": "10162"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P186",
+    "email": "jane185@biz.org",
+    "name": "Jane Gonzalez",
+    "phone": "555-9470",
+    "department": "Sales",
+    "address": {
+      "street": "2046 Oak St",
+      "city": "SF",
+      "zip": "10185"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P078",
+    "email": "beth77@biz.org",
+    "name": "Beth King",
+    "phone": "555-6163",
+    "department": "HR",
+    "address": {
+      "street": "858 Oak St",
+      "city": "New York",
+      "zip": "10077"
+    },
+    "compensation": {
+      "bonus": "14%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P160",
+    "email": "elizabeth159@corp.net",
+    "name": "Elizabeth Thomas",
+    "phone": "555-7510",
+    "department": "Sales",
+    "address": {
+      "street": "1760 Oak St",
+      "city": "New York",
+      "zip": "10159"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P049",
+    "email": "xin48@acme.com",
+    "name": "Xin Stewart",
+    "phone": "555-5132",
+    "department": "Operations",
+    "address": {
+      "street": "539 Oak St",
+      "city": "Chicago",
+      "zip": "10048"
+    },
+    "compensation": {
+      "bonus": "11%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P197",
+    "email": "vera196@corp.net",
+    "name": "Vera Edwards",
+    "phone": "555-1166",
+    "department": "Operations",
+    "address": {
+      "street": "2167 Oak St",
+      "city": "New York",
+      "zip": "10196"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P174",
+    "email": "xavier173@acme.com",
+    "name": "Xavier Hall",
+    "phone": "555-1044",
+    "department": "Engineering",
+    "address": {
+      "street": "1914 Oak St",
+      "city": "Chicago",
+      "zip": "10173"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "0%"
+    }
+  },
+  {
+    "record_id": "P016",
+    "email": "richard15@corp.net",
+    "name": "Richard Garcia",
+    "phone": "555-2334",
+    "department": "HR",
+    "address": {
+      "street": "176 Oak St",
+      "city": "SF",
+      "zip": "10015"
+    },
+    "compensation": {
+      "bonus": "12%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P061",
+    "email": "karen60@biz.org",
+    "name": "Karen Jackson",
+    "phone": "555-9962",
+    "department": "HR",
+    "address": {
+      "street": "671 Oak St",
+      "city": "New York",
+      "zip": "10060"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "3%"
+    }
+  },
+  {
+    "record_id": "P126",
+    "email": "zach125@corp.net",
+    "name": "Zach Young",
+    "phone": "555-9429",
+    "department": "Operations",
+    "address": {
+      "street": "1386 Oak St",
+      "city": "New York",
+      "zip": "10125"
+    },
+    "compensation": {
+      "bonus": "20%",
+      "equity": "1%"
+    }
+  },
+  {
+    "record_id": "P235",
+    "email": "igor234@corp.net",
+    "name": "Igor Baker",
+    "phone": "555-4182",
+    "department": "Operations",
+    "address": {
+      "street": "2585 Oak St",
+      "city": "SF",
+      "zip": "10234"
+    },
+    "compensation": {
+      "bonus": "12%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P209",
+    "email": "iris208@enterprise.io",
+    "name": "Iris Anderson",
+    "phone": "555-6064",
+    "department": "Legal",
+    "address": {
+      "street": "2299 Oak St",
+      "city": "New York",
+      "zip": "10208"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P159",
+    "email": "iris158@biz.org",
+    "name": "Iris Anderson",
+    "phone": "555-4561",
+    "department": "Operations",
+    "address": {
+      "street": "1749 Oak St",
+      "city": "New York",
+      "zip": "10158"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P105",
+    "email": "emma104@biz.org",
+    "name": "Emma Miller",
+    "phone": "555-9896",
+    "department": "Sales",
+    "address": {
+      "street": "965 Maple Ave",
+      "city": "Chicago",
+      "zip": "95654"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "2%"
+    }
+  },
+  {
+    "record_id": "P135",
+    "email": "igor134@corp.net",
+    "name": "Igor Baker",
+    "phone": "555-6151",
+    "department": "Operations",
+    "address": {
+      "street": "630 Maple Ave",
+      "city": "Chicago",
+      "zip": "95656"
+    },
+    "compensation": {
+      "bonus": "11%",
+      "equity": "5%"
+    }
+  },
+  {
+    "record_id": "P071",
+    "email": "uma70@acme.com",
+    "name": "Uma Lewis",
+    "phone": "555-7931",
+    "department": "Engineering",
+    "address": {
+      "street": "781 Oak St",
+      "city": "SF",
+      "zip": "10070"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "5%"
+    }
+  }
+]

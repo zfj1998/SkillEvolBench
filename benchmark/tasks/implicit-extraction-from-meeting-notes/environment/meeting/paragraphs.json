@@ -1,0 +1,215 @@
+{
+  "title": "Northstar launch readiness review",
+  "paragraphs": [
+    {
+      "id": "p01",
+      "speaker": "Bob",
+      "timestamp": "2026-04-23T10:01:00-04:00",
+      "text": "We opened with customer sentiment. The pilot accounts like the staged rollout but want fewer surprise emails.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p02",
+      "speaker": "Maya",
+      "timestamp": "2026-04-23T10:02:00-04:00",
+      "text": "Design reviewed the empty-state mocks. The room agreed the current version is acceptable for launch.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p03",
+      "speaker": "Omar",
+      "timestamp": "2026-04-23T10:03:00-04:00",
+      "text": "Performance charts looked noisy because the replay job overlapped with staging traffic.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p04",
+      "speaker": "Alice",
+      "timestamp": "2026-04-23T10:04:00-04:00",
+      "text": "Alice mentioned she'd follow up on the vendor quote once procurement sends the updated line items.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p05",
+      "speaker": "Diana",
+      "timestamp": "2026-04-23T10:05:00-04:00",
+      "text": "Support expects a small spike on the first morning but no weekend coverage change.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p06",
+      "speaker": "George",
+      "timestamp": "2026-04-23T10:06:00-04:00",
+      "text": "Northstar asked about self-serve billing, which remains out of scope for this pilot.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p07",
+      "speaker": "Fatima",
+      "timestamp": "2026-04-23T10:07:00-04:00",
+      "text": "The docs redirect plan was discussed, mostly to avoid linking customers into the preview site.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p08",
+      "speaker": "Eli",
+      "timestamp": "2026-04-23T10:08:00-04:00",
+      "text": "Regression coverage is good for Chrome and Safari, but Firefox screenshots are still pending comparison.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p09",
+      "speaker": "Nora",
+      "timestamp": "2026-04-23T10:09:00-04:00",
+      "text": "Backend agreed to validate the webhook contract against staging before the partner demo.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p10",
+      "speaker": "Bob",
+      "timestamp": "2026-04-23T10:10:00-04:00",
+      "text": "The launch calendar stays unchanged unless legal blocks the customer email.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p11",
+      "speaker": "Maya",
+      "timestamp": "2026-04-23T10:11:00-04:00",
+      "text": "Could the color palette be calmer? The group treated that as feedback, not a launch blocker.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p12",
+      "speaker": "Omar",
+      "timestamp": "2026-04-23T10:12:00-04:00",
+      "text": "There was a short aside about whether p95 should be shown in the exec readout.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p13",
+      "speaker": "Charlie",
+      "timestamp": "2026-04-23T10:13:00-04:00",
+      "text": "EMEA localization is deferred because the initial cohort is US-only.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p14",
+      "speaker": "Bob",
+      "timestamp": "2026-04-23T10:14:00-04:00",
+      "text": "The team agreed to defer the data migration to Q2 and publish a short risk note for leadership.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p15",
+      "speaker": "Diana",
+      "timestamp": "2026-04-23T10:15:00-04:00",
+      "text": "No new escalation path is needed for customer success.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p16",
+      "speaker": "George",
+      "timestamp": "2026-04-23T10:16:00-04:00",
+      "text": "The client sponsor likes the dashboard but wants clearer terminology around import errors.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p17",
+      "speaker": "Alice",
+      "timestamp": "2026-04-23T10:17:00-04:00",
+      "text": "We revisited API freeze timing and kept noon Eastern as the cutoff.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p18",
+      "speaker": "Diana",
+      "timestamp": "2026-04-23T10:18:00-04:00",
+      "text": "Diana will circulate the revised onboarding checklist after support reviews the examples.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p19",
+      "speaker": "Fatima",
+      "timestamp": "2026-04-23T10:19:00-04:00",
+      "text": "Docs owner said the screenshots are fine once the banner text changes.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p20",
+      "speaker": "Eli",
+      "timestamp": "2026-04-23T10:20:00-04:00",
+      "text": "Why do demos always find the one path QA did not click? The room laughed and moved on.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p21",
+      "speaker": "Omar",
+      "timestamp": "2026-04-23T10:21:00-04:00",
+      "text": "Performance budget remains at 800ms for the first contentful panel.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p22",
+      "speaker": "Bob",
+      "timestamp": "2026-04-23T10:22:00-04:00",
+      "text": "The group decided not to add a second launch email.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p23",
+      "speaker": "Eli",
+      "timestamp": "2026-04-23T10:23:00-04:00",
+      "text": "QA needs to rerun the regression pack after the feature flag is enabled.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p24",
+      "speaker": "Maya",
+      "timestamp": "2026-04-23T10:24:00-04:00",
+      "text": "Design can live with the current icon set until the next release.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p25",
+      "speaker": "Charlie",
+      "timestamp": "2026-04-23T10:25:00-04:00",
+      "text": "Partner enablement has the same deck as sales, so no new artifact is required.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p26",
+      "speaker": "George",
+      "timestamp": "2026-04-23T10:26:00-04:00",
+      "text": "The client escalation contact is unchanged.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p27",
+      "speaker": "Nora",
+      "timestamp": "2026-04-23T10:27:00-04:00",
+      "text": "Backend noted that the webhook retry policy is already documented.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p28",
+      "speaker": "Bob",
+      "timestamp": "2026-04-23T10:28:00-04:00",
+      "text": "Product should collect beta feedback from Northstar and Atlas before the roadmap review.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p29",
+      "speaker": "Fatima",
+      "timestamp": "2026-04-23T10:29:00-04:00",
+      "text": "The meeting closed with thanks and a reminder to keep updates in the launch channel.",
+      "source": "meeting_notes"
+    },
+    {
+      "id": "p30",
+      "speaker": "Alice",
+      "timestamp": "2026-04-23T10:30:00-04:00",
+      "text": "Next readiness review remains on the calendar for Monday morning.",
+      "source": "meeting_notes"
+    }
+  ]
+}

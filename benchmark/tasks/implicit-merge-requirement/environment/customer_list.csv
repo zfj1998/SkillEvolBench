@@ -1,0 +1,651 @@
+email,name,phone,city,company,tag,_sources
+alice0@corp.io,Alice Smith,555-7238,Austin,Company154,prospect,"crm_export,event_attendees"
+alice100@acme.com,Alice Smith,555-6026,,Company55,Summit 2024,event_attendees
+alice150@yahoo.com,Alice Smith,555-1255,Miami,Company52,lead,crm_export
+alice200@corp.io,Alice Smith,555-6256,,Company63,Conference 2023,event_attendees
+alice250@acme.com,Alice Smith,555-4419,,Company145,Webinar Q1,event_attendees
+alice300@gmail.com,Alice Smith,555-4747,Boston,Company131,lead,crm_export
+alice350@yahoo.com,Alice Smith,555-6831,,Company151,Summit 2024,event_attendees
+alice450@acme.com,Alice Smith,555-5882,,Company168,Summit 2024,event_attendees
+alice500@biz.net,Alice Smith,555-2071,Seattle,Company160,customer,crm_export
+alice50@yahoo.com,Alice Smith,555-1778,Denver,Company10,vip,crm_export
+alice550@acme.com,Alice Smith,555-2769,San Francisco,Company87,vip,crm_export
+alice600@acme.com,Alice Smith,555-9214,San Francisco,Company69,vip,crm_export
+alice700@gmail.com,Alice Smith,555-7488,Seattle,Company46,prospect,crm_export
+alice750@corp.io,Alice Smith,555-3753,,Company70,Summit 2024,event_attendees
+alice800@biz.net,Alice Smith,555-2416,Boston,Company99,lead,crm_export
+andy126@acme.com,Andy Hernandez,555-1411,Austin,Company77,lead,"crm_export,event_attendees"
+andy226@corp.io,Andy Hernandez,555-2268,,Company21,Webinar Q1,event_attendees
+andy26@corp.io,Andy Hernandez,555-4771,Seattle,Company168,prospect,crm_export
+andy276@acme.com,Andy Hernandez,555-1597,,Company172,Summit 2024,event_attendees
+andy326@gmail.com,Andy Hernandez,555-6177,Miami,Company134,prospect,crm_export
+andy376@corp.io,Andy Hernandez,555-5190,San Francisco,Company150,prospect,crm_export
+andy426@biz.net,Andy Hernandez,555-6565,Seattle,Company152,prospect,crm_export
+andy476@corp.io,Andy Hernandez,555-1687,Denver,Company77,prospect,"crm_export,event_attendees"
+andy526@biz.net,Andy Hernandez,555-8202,Miami,Company85,vip,crm_export
+andy576@gmail.com,Andy Hernandez,555-1956,Denver,Company185,prospect,crm_export
+andy626@gmail.com,Andy Hernandez,555-6193,Boston,Company133,customer,crm_export
+andy676@acme.com,Andy Hernandez,555-6853,,Company128,Summit 2024,event_attendees
+andy726@yahoo.com,Andy Hernandez,555-4968,New York,Company174,customer,crm_export
+andy76@biz.net,Andy Hernandez,555-7485,Miami,Company19,prospect,crm_export
+andy776@yahoo.com,Andy Hernandez,555-1303,San Francisco,Company33,lead,crm_export
+andy826@yahoo.com,Andy Hernandez,555-8368,New York,Company135,customer,crm_export
+beth127@acme.com,Beth King,555-9256,New York,Company114,customer,crm_export
+beth177@yahoo.com,Beth King,555-8921,Miami,Company119,prospect,crm_export
+beth227@yahoo.com,Beth King,555-9479,New York,Company174,lead,crm_export
+beth277@biz.net,Beth King,555-8854,Denver,Company9,prospect,crm_export
+beth27@acme.com,Beth King,555-2732,Boston,Company56,prospect,crm_export
+beth327@biz.net,Beth King,555-6035,,Company176,Summit 2024,event_attendees
+beth377@acme.com,Beth King,555-1354,Austin,Company102,prospect,crm_export
+beth427@yahoo.com,Beth King,555-5159,,Company13,Conference 2023,event_attendees
+beth577@biz.net,Beth King,555-1688,Boston,Company45,vip,crm_export
+beth627@acme.com,Beth King,555-5144,Miami,Company28,customer,crm_export
+beth677@yahoo.com,Beth King,555-2191,Boston,Company115,vip,crm_export
+beth777@yahoo.com,Beth King,555-5359,,Company94,Conference 2023,event_attendees
+beth77@biz.net,Beth King,555-4822,,Company112,Conference 2023,event_attendees
+beth827@yahoo.com,Beth King,555-2386,San Francisco,Company66,customer,crm_export
+bob101@corp.io,Bob Jones,555-9552,New York,Company155,customer,crm_export
+bob151@corp.io,Bob Jones,555-1051,Austin,Company187,vip,crm_export
+bob1@yahoo.com,Bob Jones,555-5070,,Company195,Webinar Q1,event_attendees
+bob201@yahoo.com,Bob Jones,555-5115,Denver,Company43,vip,crm_export
+bob251@gmail.com,Bob Jones,555-6062,Austin,Company98,lead,crm_export
+bob301@biz.net,Bob Jones,555-4554,Denver,Company181,lead,crm_export
+bob351@biz.net,Bob Jones,555-5186,New York,Company16,customer,crm_export
+bob401@gmail.com,Bob Jones,555-6115,San Francisco,Company91,customer,crm_export
+bob451@acme.com,Bob Jones,555-4818,Miami,Company120,customer,crm_export
+bob501@yahoo.com,Bob Jones,555-1324,Chicago,Company163,lead,crm_export
+bob51@acme.com,Bob Jones,555-9377,Austin,Company143,customer,crm_export
+bob551@yahoo.com,Bob Jones,555-5603,Chicago,Company105,lead,crm_export
+bob601@corp.io,Bob Jones,555-9377,San Francisco,Company30,vip,crm_export
+bob651@yahoo.com,Bob Jones,555-1237,Chicago,Company156,customer,crm_export
+bob751@acme.com,Bob Jones,555-5398,Austin,Company89,lead,crm_export
+bob801@yahoo.com,Bob Jones,555-3798,San Francisco,Company46,customer,crm_export
+carol102@gmail.com,Carol Brown,555-7282,,Company189,Conference 2023,event_attendees
+carol202@acme.com,Carol Brown,555-6150,Austin,Company97,customer,"crm_export,event_attendees"
+carol302@yahoo.com,Carol Brown,555-4238,Miami,Company155,customer,crm_export
+carol402@gmail.com,Carol Brown,555-1625,Seattle,Company38,customer,crm_export
+carol452@gmail.com,Carol Brown,555-5389,Austin,Company29,lead,crm_export
+carol502@biz.net,Carol Brown,555-3442,Miami,Company52,lead,crm_export
+carol52@yahoo.com,Carol Brown,555-8193,New York,Company179,lead,crm_export
+carol552@biz.net,Carol Brown,555-9133,,Company141,Webinar Q1,event_attendees
+carol602@yahoo.com,Carol Brown,555-1294,Seattle,Company101,prospect,crm_export
+carol652@corp.io,Carol Brown,555-5969,,Company14,Summit 2024,event_attendees
+carol702@corp.io,Carol Brown,555-7049,Austin,Company102,prospect,crm_export
+carol752@yahoo.com,Carol Brown,555-9676,Austin,Company52,customer,crm_export
+carol802@acme.com,Carol Brown,555-2759,Seattle,Company158,lead,crm_export
+craig128@corp.io,Craig Wright,555-9884,Boston,Company56,customer,crm_export
+craig178@corp.io,Craig Wright,555-9498,,Company153,Conference 2023,event_attendees
+craig228@biz.net,Craig Wright,555-8434,,Company191,Webinar Q1,event_attendees
+craig278@biz.net,Craig Wright,555-2430,Miami,Company136,prospect,crm_export
+craig328@acme.com,Craig Wright,555-7446,San Francisco,Company25,vip,crm_export
+craig378@gmail.com,Craig Wright,555-8521,Austin,Company136,lead,crm_export
+craig428@acme.com,Craig Wright,555-7586,,Company3,Summit 2024,event_attendees
+craig628@gmail.com,Craig Wright,555-4535,San Francisco,Company45,customer,crm_export
+craig678@gmail.com,Craig Wright,555-2686,Seattle,Company104,vip,crm_export
+craig728@acme.com,Craig Wright,555-1787,Chicago,Company78,customer,crm_export
+craig778@acme.com,Craig Wright,555-2032,Boston,Company81,customer,crm_export
+craig78@corp.io,Craig Wright,555-2490,Boston,Company129,prospect,crm_export
+dana129@yahoo.com,Dana Lopez,555-1704,Boston,Company179,prospect,crm_export
+dana229@biz.net,Dana Lopez,555-8230,Chicago,Company144,lead,crm_export
+dana279@yahoo.com,Dana Lopez,555-3680,,Company85,Summit 2024,event_attendees
+dana29@corp.io,Dana Lopez,555-7899,Seattle,Company18,customer,crm_export
+dana329@corp.io,Dana Lopez,555-3824,,Company142,Webinar Q1,event_attendees
+dana379@yahoo.com,Dana Lopez,555-2807,Austin,Company183,lead,crm_export
+dana429@corp.io,Dana Lopez,555-4779,,Company142,Conference 2023,event_attendees
+dana479@corp.io,Dana Lopez,555-2693,Austin,Company168,vip,"crm_export,event_attendees"
+dana529@yahoo.com,Dana Lopez,555-7592,Seattle,Company11,vip,crm_export
+dana679@yahoo.com,Dana Lopez,555-4641,Austin,Company14,vip,crm_export
+dana729@acme.com,Dana Lopez,555-8238,Boston,Company142,customer,crm_export
+dana79@yahoo.com,Dana Lopez,555-8940,Austin,Company184,vip,crm_export
+dana829@yahoo.com,Dana Lopez,555-2508,Boston,Company41,lead,crm_export
+dave103@acme.com,Dave Davis,555-9096,,Company110,Conference 2023,event_attendees
+dave153@yahoo.com,Dave Davis,555-3057,,Company74,Webinar Q1,event_attendees
+dave203@corp.io,Dave Davis,555-3929,Chicago,Company182,vip,"crm_export,event_attendees"
+dave253@gmail.com,Dave Davis,555-7251,Chicago,Company137,lead,crm_export
+dave303@acme.com,Dave Davis,555-8357,San Francisco,Company1,vip,crm_export
+dave3@yahoo.com,Dave Davis,555-7908,Austin,Company96,lead,crm_export
+dave453@gmail.com,Dave Davis,555-3631,Denver,Company27,prospect,"crm_export,event_attendees"
+dave503@yahoo.com,Dave Davis,555-5959,,Company150,Conference 2023,event_attendees
+dave803@yahoo.com,Dave Davis,555-2302,,Company99,Conference 2023,event_attendees
+evan130@yahoo.com,Evan Hill,555-9570,Denver,Company184,lead,crm_export
+evan180@corp.io,Evan Hill,555-1548,Miami,Company50,vip,crm_export
+evan230@biz.net,Evan Hill,555-6640,,Company193,Webinar Q1,event_attendees
+evan30@acme.com,Evan Hill,555-8816,,Company66,Webinar Q1,event_attendees
+evan330@gmail.com,Evan Hill,555-3385,Austin,Company183,customer,crm_export
+evan380@gmail.com,Evan Hill,555-7151,Austin,Company145,customer,crm_export
+evan430@corp.io,Evan Hill,555-9359,Seattle,Company94,lead,crm_export
+evan480@gmail.com,Evan Hill,555-9686,,Company155,Summit 2024,event_attendees
+evan580@biz.net,Evan Hill,555-7029,Boston,Company107,prospect,crm_export
+evan730@gmail.com,Evan Hill,555-7916,San Francisco,Company170,customer,"crm_export,event_attendees"
+evan780@acme.com,Evan Hill,555-1833,San Francisco,Company54,prospect,crm_export
+evan80@corp.io,Evan Hill,555-4304,Chicago,Company35,lead,crm_export
+evan830@corp.io,Evan Hill,555-5574,Boston,Company47,prospect,crm_export
+eve104@biz.net,Eve Miller,555-4853,,Company74,Webinar Q1,event_attendees
+eve154@gmail.com,Eve Miller,555-5941,New York,Company161,vip,crm_export
+eve204@gmail.com,Eve Miller,555-3543,New York,Company79,customer,crm_export
+eve254@biz.net,Eve Miller,555-3401,,Company146,Summit 2024,event_attendees
+eve304@acme.com,Eve Miller,555-7455,Seattle,Company62,customer,crm_export
+eve354@gmail.com,Eve Miller,555-1882,Denver,Company69,prospect,crm_export
+eve404@biz.net,Eve Miller,555-5907,Austin,Company102,vip,crm_export
+eve454@corp.io,Eve Miller,555-7664,,Company163,Summit 2024,event_attendees
+eve504@yahoo.com,Eve Miller,555-1847,Seattle,Company169,lead,crm_export
+eve54@acme.com,Eve Miller,555-5513,Boston,Company19,prospect,crm_export
+eve554@yahoo.com,Eve Miller,555-5738,,Company119,Summit 2024,event_attendees
+eve704@gmail.com,Eve Miller,555-3075,,Company117,Conference 2023,event_attendees
+eve754@acme.com,Eve Miller,555-1183,Chicago,Company51,prospect,crm_export
+eve804@corp.io,Eve Miller,555-9354,,Company7,Webinar Q1,event_attendees
+faye131@yahoo.com,Faye Scott,555-6694,Chicago,Company187,customer,crm_export
+faye231@biz.net,Faye Scott,555-2781,Chicago,Company18,vip,crm_export
+faye31@acme.com,Faye Scott,555-7706,Chicago,Company73,lead,"crm_export,event_attendees"
+faye381@acme.com,Faye Scott,555-8451,,Company23,Summit 2024,event_attendees
+faye431@corp.io,Faye Scott,555-5205,Boston,Company36,prospect,"crm_export,event_attendees"
+faye481@yahoo.com,Faye Scott,555-6810,Austin,Company31,customer,crm_export
+faye631@corp.io,Faye Scott,555-4648,Boston,Company150,lead,crm_export
+faye681@biz.net,Faye Scott,555-2214,Austin,Company108,customer,crm_export
+faye731@biz.net,Faye Scott,555-6347,Denver,Company115,prospect,crm_export
+faye781@yahoo.com,Faye Scott,555-5306,Miami,Company4,prospect,"crm_export,event_attendees"
+faye831@corp.io,Faye Scott,555-2253,,Company87,Conference 2023,event_attendees
+frank105@yahoo.com,Frank Wilson,555-2116,Seattle,Company117,lead,crm_export
+frank155@yahoo.com,Frank Wilson,555-7446,Boston,Company195,lead,crm_export
+frank205@corp.io,Frank Wilson,555-3375,New York,Company36,customer,crm_export
+frank305@acme.com,Frank Wilson,555-2484,Chicago,Company149,vip,crm_export
+frank355@gmail.com,Frank Wilson,555-8530,,Company49,Webinar Q1,event_attendees
+frank405@yahoo.com,Frank Wilson,555-1811,Boston,Company126,prospect,crm_export
+frank455@biz.net,Frank Wilson,555-4398,Miami,Company24,prospect,crm_export
+frank555@corp.io,Frank Wilson,555-1837,Austin,Company94,vip,crm_export
+frank55@biz.net,Frank Wilson,555-3844,Boston,Company168,vip,crm_export
+frank605@acme.com,Frank Wilson,555-4512,Seattle,Company86,vip,crm_export
+frank655@yahoo.com,Frank Wilson,555-8895,Seattle,Company1,customer,crm_export
+frank705@corp.io,Frank Wilson,555-2368,,Company55,Webinar Q1,event_attendees
+frank805@corp.io,Frank Wilson,555-3805,Boston,Company169,customer,crm_export
+glen132@gmail.com,Glen Green,555-1268,,Company40,Summit 2024,event_attendees
+glen232@yahoo.com,Glen Green,555-4858,,Company135,Webinar Q1,event_attendees
+glen282@yahoo.com,Glen Green,555-5161,,Company164,Webinar Q1,event_attendees
+glen32@biz.net,Glen Green,555-8209,Austin,Company98,customer,crm_export
+glen382@acme.com,Glen Green,555-6300,New York,Company191,lead,crm_export
+glen432@yahoo.com,Glen Green,555-9783,,Company141,Webinar Q1,event_attendees
+glen532@acme.com,Glen Green,555-6921,Austin,Company124,customer,crm_export
+glen582@gmail.com,Glen Green,555-8185,Miami,Company37,customer,"crm_export,event_attendees"
+glen632@acme.com,Glen Green,555-5766,Seattle,Company22,customer,"crm_export,event_attendees"
+glen682@acme.com,Glen Green,555-2141,Boston,Company54,customer,crm_export
+glen782@yahoo.com,Glen Green,555-9286,Boston,Company60,customer,crm_export
+glen82@yahoo.com,Glen Green,555-4940,Austin,Company176,lead,crm_export
+grace106@acme.com,Grace Moore,555-2394,New York,Company13,vip,crm_export
+grace156@yahoo.com,Grace Moore,555-5656,Boston,Company179,prospect,crm_export
+grace206@acme.com,Grace Moore,555-5241,Austin,Company81,prospect,crm_export
+grace256@corp.io,Grace Moore,555-3363,Austin,Company130,vip,"crm_export,event_attendees"
+grace306@gmail.com,Grace Moore,555-6351,Boston,Company148,prospect,crm_export
+grace356@acme.com,Grace Moore,555-1444,Chicago,Company78,prospect,"crm_export,event_attendees"
+grace406@gmail.com,Grace Moore,555-5089,New York,Company124,vip,"crm_export,event_attendees"
+grace456@yahoo.com,Grace Moore,555-2905,Austin,Company33,customer,"crm_export,event_attendees"
+grace506@corp.io,Grace Moore,555-3169,Miami,Company147,prospect,crm_export
+grace556@corp.io,Grace Moore,555-3859,Miami,Company150,prospect,"crm_export,event_attendees"
+grace606@biz.net,Grace Moore,555-1134,Boston,Company83,lead,crm_export
+grace656@acme.com,Grace Moore,555-6247,Seattle,Company44,lead,crm_export
+grace6@corp.io,Grace Moore,555-6183,Denver,Company11,customer,crm_export
+grace706@yahoo.com,Grace Moore,555-3302,Boston,Company39,prospect,crm_export
+grace756@acme.com,Grace Moore,555-3150,Seattle,Company140,prospect,crm_export
+hana133@corp.io,Hana Adams,555-1750,San Francisco,Company137,customer,crm_export
+hana183@biz.net,Hana Adams,555-8039,,Company29,Conference 2023,event_attendees
+hana233@acme.com,Hana Adams,555-1268,Seattle,Company99,prospect,crm_export
+hana333@yahoo.com,Hana Adams,555-9698,Boston,Company163,customer,crm_export
+hana33@yahoo.com,Hana Adams,555-6658,New York,Company171,customer,crm_export
+hana433@biz.net,Hana Adams,555-9544,Chicago,Company116,vip,crm_export
+hana583@biz.net,Hana Adams,555-7100,,Company19,Conference 2023,event_attendees
+hana633@corp.io,Hana Adams,555-4627,Denver,Company9,lead,crm_export
+hana683@acme.com,Hana Adams,555-5001,,Company104,Conference 2023,event_attendees
+hana733@biz.net,Hana Adams,555-5411,Seattle,Company139,lead,crm_export
+hana783@yahoo.com,Hana Adams,555-9565,Boston,Company17,prospect,"crm_export,event_attendees"
+hana833@yahoo.com,Hana Adams,555-9678,New York,Company55,lead,crm_export
+henry107@yahoo.com,Henry Taylor,555-7717,Austin,Company109,vip,crm_export
+henry257@gmail.com,Henry Taylor,555-7543,Austin,Company132,customer,crm_export
+henry307@yahoo.com,Henry Taylor,555-4726,Denver,Company45,prospect,crm_export
+henry357@biz.net,Henry Taylor,555-7370,,Company15,Summit 2024,event_attendees
+henry407@biz.net,Henry Taylor,555-4003,,Company165,Webinar Q1,event_attendees
+henry457@acme.com,Henry Taylor,555-6354,New York,Company124,customer,crm_export
+henry507@gmail.com,Henry Taylor,555-6366,Miami,Company100,lead,crm_export
+henry557@biz.net,Henry Taylor,555-6447,Miami,Company178,customer,crm_export
+henry57@gmail.com,Henry Taylor,555-9400,Denver,Company43,customer,"crm_export,event_attendees"
+henry607@gmail.com,Henry Taylor,555-6950,New York,Company122,lead,crm_export
+henry707@biz.net,Henry Taylor,555-8635,Chicago,Company91,prospect,crm_export
+henry7@biz.net,Henry Taylor,555-1124,Denver,Company53,customer,crm_export
+henry807@acme.com,Henry Taylor,555-7425,Seattle,Company182,lead,crm_export
+igor234@acme.com,Igor Baker,555-1856,,Company154,Webinar Q1,event_attendees
+igor34@acme.com,Igor Baker,555-4166,Chicago,Company164,customer,crm_export
+igor384@yahoo.com,Igor Baker,555-8207,Denver,Company99,vip,crm_export
+igor434@yahoo.com,Igor Baker,555-8271,Seattle,Company28,vip,crm_export
+igor484@yahoo.com,Igor Baker,555-7800,,Company11,Summit 2024,event_attendees
+igor534@corp.io,Igor Baker,555-6457,Chicago,Company17,lead,crm_export
+igor584@yahoo.com,Igor Baker,555-4697,New York,Company146,customer,crm_export
+igor634@acme.com,Igor Baker,555-8262,Austin,Company109,customer,crm_export
+igor684@gmail.com,Igor Baker,555-1195,Austin,Company162,prospect,crm_export
+igor734@acme.com,Igor Baker,555-9031,Boston,Company124,customer,crm_export
+igor84@acme.com,Igor Baker,555-6475,Miami,Company49,vip,crm_export
+iris108@gmail.com,Iris Anderson,555-2988,Boston,Company56,prospect,crm_export
+iris158@corp.io,Iris Anderson,555-5324,Chicago,Company132,customer,crm_export
+iris208@biz.net,Iris Anderson,555-2374,Chicago,Company1,prospect,"crm_export,event_attendees"
+iris308@gmail.com,Iris Anderson,555-1756,New York,Company84,vip,crm_export
+iris358@biz.net,Iris Anderson,555-6149,,Company11,Conference 2023,event_attendees
+iris408@gmail.com,Iris Anderson,555-2583,Boston,Company81,prospect,crm_export
+iris458@acme.com,Iris Anderson,555-8450,Chicago,Company168,lead,crm_export
+iris508@yahoo.com,Iris Anderson,555-1690,Miami,Company195,prospect,"crm_export,event_attendees"
+iris558@yahoo.com,Iris Anderson,555-3816,San Francisco,Company41,vip,crm_export
+iris608@corp.io,Iris Anderson,555-6670,Seattle,Company199,customer,crm_export
+iris658@gmail.com,Iris Anderson,555-5619,Boston,Company16,customer,crm_export
+iris708@corp.io,Iris Anderson,555-2673,Seattle,Company169,customer,crm_export
+iris758@corp.io,Iris Anderson,555-7725,Denver,Company26,customer,"crm_export,event_attendees"
+iris808@acme.com,Iris Anderson,555-2027,Seattle,Company2,customer,crm_export
+iris8@biz.net,Iris Anderson,555-2324,Miami,Company133,prospect,crm_export
+james109@gmail.com,James Thomas,555-1208,Denver,Company74,prospect,crm_export
+james159@corp.io,James Thomas,555-2300,Denver,Company182,lead,crm_export
+james209@acme.com,James Thomas,555-9022,,Company93,Summit 2024,event_attendees
+james309@corp.io,James Thomas,555-8331,,Company182,Summit 2024,event_attendees
+james459@yahoo.com,James Thomas,555-3942,Seattle,Company146,lead,crm_export
+james509@yahoo.com,James Thomas,555-4979,Boston,Company138,prospect,crm_export
+james559@gmail.com,James Thomas,555-4854,,Company88,Summit 2024,event_attendees
+james59@acme.com,James Thomas,555-8145,,Company79,Webinar Q1,event_attendees
+james609@gmail.com,James Thomas,555-3541,Seattle,Company137,lead,crm_export
+james659@biz.net,James Thomas,555-5011,Miami,Company187,lead,crm_export
+james709@biz.net,James Thomas,555-4571,Austin,Company73,customer,crm_export
+james759@gmail.com,James Thomas,555-7261,Denver,Company55,customer,"crm_export,event_attendees"
+james809@biz.net,James Thomas,555-6846,Seattle,Company140,prospect,crm_export
+james9@biz.net,James Thomas,555-8580,New York,Company92,prospect,crm_export
+jane135@gmail.com,Jane Gonzalez,555-9998,Seattle,Company9,customer,crm_export
+jane185@gmail.com,Jane Gonzalez,555-6667,New York,Company12,prospect,crm_export
+jane335@acme.com,Jane Gonzalez,555-9718,,Company147,Summit 2024,event_attendees
+jane35@corp.io,Jane Gonzalez,555-4788,Denver,Company89,lead,crm_export
+jane385@acme.com,Jane Gonzalez,555-9770,San Francisco,Company34,vip,crm_export
+jane435@corp.io,Jane Gonzalez,555-7654,Miami,Company135,lead,crm_export
+jane485@acme.com,Jane Gonzalez,555-4661,Seattle,Company13,prospect,"crm_export,event_attendees"
+jane535@acme.com,Jane Gonzalez,555-6746,,Company191,Webinar Q1,event_attendees
+jane585@corp.io,Jane Gonzalez,555-6893,,Company189,Webinar Q1,event_attendees
+jane635@acme.com,Jane Gonzalez,555-3952,Miami,Company9,prospect,crm_export
+jane685@yahoo.com,Jane Gonzalez,555-2316,Boston,Company149,customer,crm_export
+jane735@acme.com,Jane Gonzalez,555-4982,Chicago,Company98,prospect,crm_export
+jane835@yahoo.com,Jane Gonzalez,555-3465,Seattle,Company57,customer,crm_export
+karen10@yahoo.com,Karen Jackson,555-3634,Miami,Company153,prospect,crm_export
+karen260@yahoo.com,Karen Jackson,555-3322,Denver,Company119,lead,crm_export
+karen310@yahoo.com,Karen Jackson,555-9788,Austin,Company200,lead,crm_export
+karen360@gmail.com,Karen Jackson,555-2655,,Company178,Summit 2024,event_attendees
+karen410@acme.com,Karen Jackson,555-8382,New York,Company50,vip,crm_export
+karen460@gmail.com,Karen Jackson,555-8995,San Francisco,Company175,prospect,crm_export
+karen510@yahoo.com,Karen Jackson,555-8152,Miami,Company138,prospect,crm_export
+karen60@gmail.com,Karen Jackson,555-3401,Miami,Company165,vip,crm_export
+karen610@acme.com,Karen Jackson,555-6728,Miami,Company200,vip,crm_export
+karen710@yahoo.com,Karen Jackson,555-2194,Austin,Company142,customer,crm_export
+karen760@yahoo.com,Karen Jackson,555-2744,Denver,Company146,vip,crm_export
+karen810@acme.com,Karen Jackson,555-9882,,Company65,Webinar Q1,event_attendees
+kurt136@corp.io,Kurt Nelson,555-4254,Chicago,Company11,prospect,crm_export
+kurt186@gmail.com,Kurt Nelson,555-4154,,Company155,Conference 2023,event_attendees
+kurt236@corp.io,Kurt Nelson,555-6717,Miami,Company44,customer,crm_export
+kurt286@acme.com,Kurt Nelson,555-4715,Chicago,Company82,vip,crm_export
+kurt336@gmail.com,Kurt Nelson,555-6499,,Company128,Summit 2024,event_attendees
+kurt36@gmail.com,Kurt Nelson,555-2840,Austin,Company1,customer,crm_export
+kurt436@gmail.com,Kurt Nelson,555-3866,,Company18,Summit 2024,event_attendees
+kurt536@biz.net,Kurt Nelson,555-7766,,Company82,Conference 2023,event_attendees
+kurt586@acme.com,Kurt Nelson,555-7728,Seattle,Company89,lead,crm_export
+kurt636@yahoo.com,Kurt Nelson,555-8692,New York,Company132,lead,crm_export
+kurt736@yahoo.com,Kurt Nelson,555-8577,Denver,Company79,prospect,crm_export
+kurt836@yahoo.com,Kurt Nelson,555-4142,Denver,Company156,customer,"crm_export,event_attendees"
+kurt86@yahoo.com,Kurt Nelson,555-1818,Seattle,Company48,customer,crm_export
+leo111@gmail.com,Leo White,555-6075,Chicago,Company193,lead,crm_export
+leo11@biz.net,Leo White,555-3883,New York,Company29,vip,crm_export
+leo161@gmail.com,Leo White,555-5097,Austin,Company45,vip,crm_export
+leo211@acme.com,Leo White,555-7821,,Company115,Summit 2024,event_attendees
+leo311@yahoo.com,Leo White,555-5487,Austin,Company28,customer,crm_export
+leo361@acme.com,Leo White,555-4265,,Company72,Summit 2024,event_attendees
+leo411@biz.net,Leo White,555-3408,San Francisco,Company93,vip,crm_export
+leo561@gmail.com,Leo White,555-9388,Chicago,Company139,customer,crm_export
+leo611@gmail.com,Leo White,555-8294,,Company180,Conference 2023,event_attendees
+leo61@yahoo.com,Leo White,555-7174,San Francisco,Company61,lead,crm_export
+leo661@gmail.com,Leo White,555-3677,Miami,Company116,lead,crm_export
+leo761@acme.com,Leo White,555-4996,San Francisco,Company179,customer,crm_export
+lily137@gmail.com,Lily Carter,555-8779,Denver,Company110,lead,crm_export
+lily187@yahoo.com,Lily Carter,555-9471,,Company48,Summit 2024,event_attendees
+lily237@acme.com,Lily Carter,555-4973,Austin,Company172,customer,crm_export
+lily287@gmail.com,Lily Carter,555-3174,Denver,Company132,vip,crm_export
+lily337@acme.com,Lily Carter,555-3272,Chicago,Company111,lead,crm_export
+lily37@yahoo.com,Lily Carter,555-9374,,Company53,Webinar Q1,event_attendees
+lily387@biz.net,Lily Carter,555-6638,New York,Company88,vip,crm_export
+lily437@acme.com,Lily Carter,555-5159,Boston,Company61,vip,crm_export
+lily487@yahoo.com,Lily Carter,555-1619,San Francisco,Company48,vip,"crm_export,event_attendees"
+lily687@corp.io,Lily Carter,555-5584,Austin,Company121,vip,crm_export
+lily737@yahoo.com,Lily Carter,555-5615,Denver,Company72,prospect,crm_export
+lily837@gmail.com,Lily Carter,555-1478,,Company118,Webinar Q1,event_attendees
+lily87@acme.com,Lily Carter,555-1166,Seattle,Company51,customer,crm_export
+marc188@acme.com,Marc Mitchell,555-8803,Boston,Company94,customer,"crm_export,event_attendees"
+marc238@acme.com,Marc Mitchell,555-4637,,Company188,Webinar Q1,event_attendees
+marc288@acme.com,Marc Mitchell,555-9542,Denver,Company200,lead,crm_export
+marc338@acme.com,Marc Mitchell,555-2077,Denver,Company48,lead,crm_export
+marc388@yahoo.com,Marc Mitchell,555-9479,Austin,Company62,vip,crm_export
+marc38@corp.io,Marc Mitchell,555-8668,Seattle,Company52,vip,crm_export
+marc488@corp.io,Marc Mitchell,555-1095,San Francisco,Company17,customer,crm_export
+marc588@gmail.com,Marc Mitchell,555-3630,Miami,Company111,customer,crm_export
+marc638@acme.com,Marc Mitchell,555-2124,Seattle,Company99,prospect,crm_export
+marc688@corp.io,Marc Mitchell,555-5983,,Company11,Conference 2023,event_attendees
+marc738@gmail.com,Marc Mitchell,555-2676,Boston,Company175,vip,crm_export
+marc838@acme.com,Marc Mitchell,555-4686,Austin,Company191,vip,crm_export
+marc88@gmail.com,Marc Mitchell,555-3609,,Company100,Summit 2024,event_attendees
+maria112@corp.io,Maria Harris,555-2577,San Francisco,Company69,customer,crm_export
+maria12@yahoo.com,Maria Harris,555-8761,Denver,Company21,lead,crm_export
+maria162@yahoo.com,Maria Harris,555-9660,Austin,Company77,customer,crm_export
+maria262@biz.net,Maria Harris,555-9435,New York,Company55,lead,crm_export
+maria312@gmail.com,Maria Harris,555-1028,,Company20,Webinar Q1,event_attendees
+maria362@biz.net,Maria Harris,555-1229,Chicago,Company144,prospect,crm_export
+maria412@yahoo.com,Maria Harris,555-2523,Denver,Company8,vip,crm_export
+maria462@biz.net,Maria Harris,555-4960,Denver,Company12,lead,crm_export
+maria562@acme.com,Maria Harris,555-3377,Chicago,Company134,customer,crm_export
+maria612@corp.io,Maria Harris,555-3726,Boston,Company144,vip,crm_export
+maria62@biz.net,Maria Harris,555-2313,Chicago,Company43,lead,crm_export
+maria662@corp.io,Maria Harris,555-3456,,Company170,Summit 2024,event_attendees
+maria812@acme.com,Maria Harris,555-7315,,Company137,Webinar Q1,event_attendees
+nathan113@acme.com,Nathan Martin,555-3593,Seattle,Company187,vip,crm_export
+nathan13@gmail.com,Nathan Martin,555-3341,Seattle,Company159,vip,crm_export
+nathan163@acme.com,Nathan Martin,555-7445,Boston,Company103,prospect,crm_export
+nathan213@acme.com,Nathan Martin,555-8652,Austin,Company26,vip,crm_export
+nathan263@biz.net,Nathan Martin,555-9750,New York,Company114,lead,crm_export
+nathan313@corp.io,Nathan Martin,555-3986,Austin,Company139,vip,crm_export
+nathan363@corp.io,Nathan Martin,555-5962,,Company7,Conference 2023,event_attendees
+nathan413@acme.com,Nathan Martin,555-7344,New York,Company123,vip,crm_export
+nathan463@yahoo.com,Nathan Martin,555-1475,,Company13,Summit 2024,event_attendees
+nathan513@gmail.com,Nathan Martin,555-9795,San Francisco,Company130,customer,crm_export
+nathan563@biz.net,Nathan Martin,555-5465,Miami,Company25,lead,"crm_export,event_attendees"
+nathan613@yahoo.com,Nathan Martin,555-9411,Austin,Company172,vip,crm_export
+nathan63@acme.com,Nathan Martin,555-5145,Boston,Company151,vip,"crm_export,event_attendees"
+nathan663@biz.net,Nathan Martin,555-6330,,Company43,Conference 2023,event_attendees
+nathan713@yahoo.com,Nathan Martin,555-8804,Austin,Company180,vip,crm_export
+nathan813@gmail.com,Nathan Martin,555-6151,Seattle,Company90,prospect,crm_export
+nina139@acme.com,Nina Perez,555-3205,San Francisco,Company68,vip,crm_export
+nina189@acme.com,Nina Perez,555-4995,Seattle,Company5,lead,crm_export
+nina239@biz.net,Nina Perez,555-3050,Miami,Company72,customer,crm_export
+nina289@acme.com,Nina Perez,555-4756,San Francisco,Company89,prospect,crm_export
+nina339@corp.io,Nina Perez,555-7272,Boston,Company116,lead,crm_export
+nina389@gmail.com,Nina Perez,555-5399,Miami,Company154,lead,crm_export
+nina39@gmail.com,Nina Perez,555-6038,San Francisco,Company149,vip,crm_export
+nina439@acme.com,Nina Perez,555-8258,Chicago,Company157,vip,crm_export
+nina489@biz.net,Nina Perez,555-1176,,Company169,Webinar Q1,event_attendees
+nina589@gmail.com,Nina Perez,555-5267,Austin,Company168,customer,crm_export
+nina639@yahoo.com,Nina Perez,555-8824,,Company187,Summit 2024,event_attendees
+nina789@gmail.com,Nina Perez,555-3060,Boston,Company9,prospect,crm_export
+olivia114@gmail.com,Olivia Thompson,555-2144,Seattle,Company122,lead,crm_export
+olivia14@corp.io,Olivia Thompson,555-6401,Chicago,Company134,lead,crm_export
+olivia164@acme.com,Olivia Thompson,555-7136,Chicago,Company2,prospect,crm_export
+olivia214@yahoo.com,Olivia Thompson,555-1512,Austin,Company70,lead,crm_export
+olivia414@acme.com,Olivia Thompson,555-2563,New York,Company119,vip,crm_export
+olivia514@gmail.com,Olivia Thompson,555-9702,San Francisco,Company132,customer,crm_export
+olivia564@acme.com,Olivia Thompson,555-1150,,Company115,Summit 2024,event_attendees
+olivia64@biz.net,Olivia Thompson,555-7496,New York,Company77,prospect,crm_export
+olivia664@biz.net,Olivia Thompson,555-1369,Austin,Company151,lead,crm_export
+olivia714@corp.io,Olivia Thompson,555-3288,Austin,Company72,prospect,crm_export
+olivia764@gmail.com,Olivia Thompson,555-5496,,Company154,Webinar Q1,event_attendees
+olivia814@gmail.com,Olivia Thompson,555-8634,Seattle,Company116,customer,crm_export
+owen140@gmail.com,Owen Roberts,555-7024,,Company81,Conference 2023,event_attendees
+owen190@gmail.com,Owen Roberts,555-3743,,Company55,Summit 2024,event_attendees
+owen240@corp.io,Owen Roberts,555-3834,Austin,Company160,customer,crm_export
+owen290@biz.net,Owen Roberts,555-3314,San Francisco,Company10,customer,crm_export
+owen390@yahoo.com,Owen Roberts,555-7932,Miami,Company147,prospect,crm_export
+owen440@gmail.com,Owen Roberts,555-7732,,Company82,Conference 2023,event_attendees
+owen490@biz.net,Owen Roberts,555-7604,Chicago,Company67,prospect,crm_export
+owen540@corp.io,Owen Roberts,555-7173,,Company72,Webinar Q1,event_attendees
+owen590@corp.io,Owen Roberts,555-4778,Denver,Company184,vip,crm_export
+owen640@biz.net,Owen Roberts,555-1169,,Company176,Conference 2023,event_attendees
+owen690@acme.com,Owen Roberts,555-7577,,Company193,Conference 2023,event_attendees
+owen790@acme.com,Owen Roberts,555-6903,Miami,Company189,prospect,crm_export
+owen840@gmail.com,Owen Roberts,555-2416,,Company136,Summit 2024,event_attendees
+owen90@gmail.com,Owen Roberts,555-1445,Boston,Company60,prospect,"crm_export,event_attendees"
+pete115@yahoo.com,Pete Garcia,555-5763,,Company56,Summit 2024,event_attendees
+pete165@biz.net,Pete Garcia,555-8596,,Company72,Summit 2024,event_attendees
+pete215@gmail.com,Pete Garcia,555-2158,San Francisco,Company44,vip,crm_export
+pete265@biz.net,Pete Garcia,555-7723,Miami,Company5,prospect,crm_export
+pete315@yahoo.com,Pete Garcia,555-5192,,Company52,Webinar Q1,event_attendees
+pete415@corp.io,Pete Garcia,555-4885,Austin,Company89,prospect,crm_export
+pete465@biz.net,Pete Garcia,555-8314,San Francisco,Company17,vip,crm_export
+pete515@corp.io,Pete Garcia,555-2517,Boston,Company129,vip,crm_export
+pete565@gmail.com,Pete Garcia,555-5643,New York,Company131,lead,crm_export
+pete615@acme.com,Pete Garcia,555-2014,Miami,Company185,prospect,crm_export
+pete665@acme.com,Pete Garcia,555-5681,Chicago,Company154,vip,crm_export
+pete715@corp.io,Pete Garcia,555-1672,Austin,Company29,customer,crm_export
+pete765@biz.net,Pete Garcia,555-3100,Austin,Company157,vip,crm_export
+petra141@biz.net,Petra Turner,555-3035,Seattle,Company71,lead,"crm_export,event_attendees"
+petra341@biz.net,Petra Turner,555-3534,Miami,Company76,prospect,crm_export
+petra391@acme.com,Petra Turner,555-5735,San Francisco,Company14,vip,crm_export
+petra41@yahoo.com,Petra Turner,555-2640,Denver,Company103,prospect,crm_export
+petra441@yahoo.com,Petra Turner,555-1027,Denver,Company85,prospect,crm_export
+petra491@gmail.com,Petra Turner,555-2538,New York,Company94,prospect,crm_export
+petra541@yahoo.com,Petra Turner,555-9278,Miami,Company123,prospect,crm_export
+petra591@yahoo.com,Petra Turner,555-7722,New York,Company10,vip,crm_export
+petra641@gmail.com,Petra Turner,555-1681,Boston,Company116,lead,crm_export
+petra741@gmail.com,Petra Turner,555-3399,Austin,Company102,vip,crm_export
+petra791@biz.net,Petra Turner,555-6515,Chicago,Company63,vip,crm_export
+petra841@corp.io,Petra Turner,555-1375,Chicago,Company68,vip,crm_export
+petra91@biz.net,Petra Turner,555-2283,,Company5,Summit 2024,event_attendees
+quinn116@corp.io,Quinn Martinez,555-5133,,Company163,Conference 2023,event_attendees
+quinn166@acme.com,Quinn Martinez,555-3905,Boston,Company146,prospect,crm_export
+quinn266@yahoo.com,Quinn Martinez,555-2239,Austin,Company137,lead,crm_export
+quinn316@acme.com,Quinn Martinez,555-7274,Miami,Company198,customer,crm_export
+quinn416@yahoo.com,Quinn Martinez,555-9943,New York,Company76,prospect,crm_export
+quinn466@gmail.com,Quinn Martinez,555-2040,,Company153,Conference 2023,event_attendees
+quinn516@acme.com,Quinn Martinez,555-9508,Miami,Company81,customer,crm_export
+quinn566@gmail.com,Quinn Martinez,555-5597,Seattle,Company38,lead,crm_export
+quinn616@corp.io,Quinn Martinez,555-4070,Miami,Company189,prospect,crm_export
+quinn66@acme.com,Quinn Martinez,555-3025,Miami,Company110,vip,crm_export
+quinn716@acme.com,Quinn Martinez,555-2886,Miami,Company158,prospect,crm_export
+quinn816@acme.com,Quinn Martinez,555-1281,,Company33,Conference 2023,event_attendees
+rachel117@corp.io,Rachel Robinson,555-5640,Chicago,Company49,customer,"crm_export,event_attendees"
+rachel167@biz.net,Rachel Robinson,555-1790,Denver,Company143,prospect,crm_export
+rachel17@gmail.com,Rachel Robinson,555-3145,Chicago,Company156,lead,"crm_export,event_attendees"
+rachel217@gmail.com,Rachel Robinson,555-1311,,Company96,Summit 2024,event_attendees
+rachel267@yahoo.com,Rachel Robinson,555-3301,Austin,Company81,lead,crm_export
+rachel317@acme.com,Rachel Robinson,555-9039,Austin,Company188,lead,crm_export
+rachel367@corp.io,Rachel Robinson,555-1095,San Francisco,Company75,prospect,crm_export
+rachel417@yahoo.com,Rachel Robinson,555-8914,,Company130,Summit 2024,event_attendees
+rachel467@acme.com,Rachel Robinson,555-8989,Seattle,Company86,lead,crm_export
+rachel517@acme.com,Rachel Robinson,555-2099,,Company5,Conference 2023,event_attendees
+rachel567@acme.com,Rachel Robinson,555-1346,New York,Company99,prospect,crm_export
+rachel617@biz.net,Rachel Robinson,555-3290,,Company127,Summit 2024,event_attendees
+rachel667@acme.com,Rachel Robinson,555-1327,Chicago,Company138,lead,crm_export
+rachel67@gmail.com,Rachel Robinson,555-6795,Chicago,Company156,customer,crm_export
+rachel717@corp.io,Rachel Robinson,555-8818,Miami,Company37,vip,crm_export
+rachel767@biz.net,Rachel Robinson,555-8086,Seattle,Company183,lead,crm_export
+rachel817@biz.net,Rachel Robinson,555-5177,,Company51,Summit 2024,event_attendees
+rex142@yahoo.com,Rex Phillips,555-3209,Chicago,Company74,vip,crm_export
+rex192@acme.com,Rex Phillips,555-5941,Miami,Company166,lead,crm_export
+rex292@acme.com,Rex Phillips,555-3428,San Francisco,Company63,vip,"crm_export,event_attendees"
+rex342@corp.io,Rex Phillips,555-9809,Denver,Company31,vip,crm_export
+rex392@yahoo.com,Rex Phillips,555-8274,,Company187,Summit 2024,event_attendees
+rex42@acme.com,Rex Phillips,555-8550,Boston,Company33,prospect,crm_export
+rex442@gmail.com,Rex Phillips,555-5442,Boston,Company51,vip,crm_export
+rex542@yahoo.com,Rex Phillips,555-1008,,Company33,Summit 2024,event_attendees
+rex592@yahoo.com,Rex Phillips,555-4696,Denver,Company98,lead,crm_export
+rex642@corp.io,Rex Phillips,555-5626,Miami,Company189,prospect,crm_export
+rex692@gmail.com,Rex Phillips,555-2327,Miami,Company169,lead,crm_export
+rex742@gmail.com,Rex Phillips,555-7230,San Francisco,Company92,lead,crm_export
+rex842@biz.net,Rex Phillips,555-1573,Boston,Company84,prospect,crm_export
+rex92@acme.com,Rex Phillips,555-7148,Austin,Company138,prospect,crm_export
+sam118@biz.net,Sam Clark,555-3109,Austin,Company158,customer,crm_export
+sam168@corp.io,Sam Clark,555-4473,San Francisco,Company177,lead,crm_export
+sam18@gmail.com,Sam Clark,555-2580,San Francisco,Company37,customer,crm_export
+sam418@gmail.com,Sam Clark,555-6712,Austin,Company194,prospect,crm_export
+sam468@biz.net,Sam Clark,555-5174,,Company114,Conference 2023,event_attendees
+sam568@gmail.com,Sam Clark,555-1557,,Company183,Conference 2023,event_attendees
+sam668@corp.io,Sam Clark,555-3522,Chicago,Company169,prospect,crm_export
+sam68@acme.com,Sam Clark,555-6356,New York,Company97,customer,crm_export
+sam718@biz.net,Sam Clark,555-4501,Seattle,Company47,lead,crm_export
+sam818@acme.com,Sam Clark,555-7211,Denver,Company53,lead,crm_export
+sasha143@biz.net,Sasha Campbell,555-9320,,Company37,Conference 2023,event_attendees
+sasha193@gmail.com,Sasha Campbell,555-8692,,Company66,Summit 2024,event_attendees
+sasha243@biz.net,Sasha Campbell,555-9792,Seattle,Company144,vip,crm_export
+sasha293@acme.com,Sasha Campbell,555-2591,,Company158,Summit 2024,event_attendees
+sasha393@gmail.com,Sasha Campbell,555-7314,Denver,Company7,customer,"crm_export,event_attendees"
+sasha43@corp.io,Sasha Campbell,555-7373,Denver,Company144,prospect,crm_export
+sasha493@acme.com,Sasha Campbell,555-4298,Miami,Company46,vip,crm_export
+sasha543@biz.net,Sasha Campbell,555-9320,San Francisco,Company156,prospect,crm_export
+sasha643@corp.io,Sasha Campbell,555-8458,San Francisco,Company108,vip,crm_export
+sasha693@acme.com,Sasha Campbell,555-8839,Austin,Company101,vip,crm_export
+sasha743@biz.net,Sasha Campbell,555-6732,,Company49,Summit 2024,event_attendees
+sasha793@biz.net,Sasha Campbell,555-7548,Miami,Company169,lead,crm_export
+sasha843@yahoo.com,Sasha Campbell,555-3131,Chicago,Company72,vip,crm_export
+sasha93@gmail.com,Sasha Campbell,555-1352,New York,Company46,prospect,crm_export
+tina119@biz.net,Tina Rodriguez,555-9454,,Company59,Conference 2023,event_attendees
+tina169@acme.com,Tina Rodriguez,555-7939,,Company85,Summit 2024,event_attendees
+tina19@yahoo.com,Tina Rodriguez,555-3910,Denver,Company38,prospect,crm_export
+tina269@corp.io,Tina Rodriguez,555-7616,Chicago,Company3,customer,crm_export
+tina319@acme.com,Tina Rodriguez,555-8201,,Company77,Summit 2024,event_attendees
+tina469@gmail.com,Tina Rodriguez,555-1992,New York,Company144,customer,crm_export
+tina519@biz.net,Tina Rodriguez,555-7326,New York,Company16,lead,crm_export
+tina569@acme.com,Tina Rodriguez,555-4102,San Francisco,Company79,customer,crm_export
+tina619@biz.net,Tina Rodriguez,555-2218,,Company102,Summit 2024,event_attendees
+tina669@acme.com,Tina Rodriguez,555-5506,,Company174,Webinar Q1,event_attendees
+tina69@biz.net,Tina Rodriguez,555-4713,Chicago,Company178,vip,"crm_export,event_attendees"
+tina719@yahoo.com,Tina Rodriguez,555-8863,Miami,Company137,customer,crm_export
+tina819@gmail.com,Tina Rodriguez,555-8294,,Company139,Summit 2024,event_attendees
+todd144@corp.io,Todd Parker,555-9579,,Company68,Webinar Q1,event_attendees
+todd194@acme.com,Todd Parker,555-2770,New York,Company109,customer,crm_export
+todd244@yahoo.com,Todd Parker,555-7375,,Company138,Summit 2024,event_attendees
+todd294@biz.net,Todd Parker,555-2730,,Company130,Summit 2024,event_attendees
+todd344@biz.net,Todd Parker,555-1108,New York,Company109,lead,crm_export
+todd394@acme.com,Todd Parker,555-1693,Denver,Company118,prospect,crm_export
+todd44@acme.com,Todd Parker,555-5098,Austin,Company71,lead,crm_export
+todd494@corp.io,Todd Parker,555-1921,,Company194,Summit 2024,event_attendees
+todd544@biz.net,Todd Parker,555-9728,,Company171,Webinar Q1,event_attendees
+todd594@corp.io,Todd Parker,555-1784,Miami,Company191,lead,crm_export
+todd644@gmail.com,Todd Parker,555-7330,Seattle,Company191,lead,crm_export
+todd744@corp.io,Todd Parker,555-7048,New York,Company45,vip,"crm_export,event_attendees"
+todd844@biz.net,Todd Parker,555-6954,San Francisco,Company155,vip,crm_export
+todd94@yahoo.com,Todd Parker,555-6628,Seattle,Company195,vip,crm_export
+ula145@corp.io,Ula Evans,555-7289,San Francisco,Company89,vip,crm_export
+ula195@gmail.com,Ula Evans,555-3865,,Company92,Webinar Q1,event_attendees
+ula245@yahoo.com,Ula Evans,555-3557,New York,Company132,vip,crm_export
+ula295@corp.io,Ula Evans,555-4652,,Company191,Summit 2024,event_attendees
+ula395@acme.com,Ula Evans,555-7893,Boston,Company4,prospect,crm_export
+ula445@gmail.com,Ula Evans,555-7333,Denver,Company23,prospect,crm_export
+ula45@biz.net,Ula Evans,555-7269,Chicago,Company123,lead,"crm_export,event_attendees"
+ula495@yahoo.com,Ula Evans,555-6707,Austin,Company18,customer,crm_export
+ula545@corp.io,Ula Evans,555-1853,New York,Company2,customer,crm_export
+ula595@gmail.com,Ula Evans,555-3209,Boston,Company147,vip,crm_export
+ula695@gmail.com,Ula Evans,555-1935,,Company64,Summit 2024,event_attendees
+ula745@acme.com,Ula Evans,555-4124,,Company121,Webinar Q1,event_attendees
+ula795@acme.com,Ula Evans,555-4107,,Company53,Summit 2024,event_attendees
+ula845@biz.net,Ula Evans,555-2434,Boston,Company60,customer,crm_export
+uma120@yahoo.com,Uma Lewis,555-1005,Boston,Company186,lead,"crm_export,event_attendees"
+uma170@gmail.com,Uma Lewis,555-2466,Austin,Company161,prospect,crm_export
+uma220@acme.com,Uma Lewis,555-2248,Boston,Company45,customer,"crm_export,event_attendees"
+uma270@biz.net,Uma Lewis,555-6259,Austin,Company70,customer,crm_export
+uma370@gmail.com,Uma Lewis,555-3989,,Company130,Summit 2024,event_attendees
+uma420@gmail.com,Uma Lewis,555-1061,,Company24,Summit 2024,event_attendees
+uma470@corp.io,Uma Lewis,555-2467,,Company161,Summit 2024,event_attendees
+uma570@gmail.com,Uma Lewis,555-5480,Chicago,Company19,customer,crm_export
+uma620@biz.net,Uma Lewis,555-4829,Boston,Company103,prospect,crm_export
+uma670@gmail.com,Uma Lewis,555-3463,Miami,Company66,customer,"crm_export,event_attendees"
+uma70@acme.com,Uma Lewis,555-7546,Denver,Company132,prospect,crm_export
+uma720@acme.com,Uma Lewis,555-6331,Seattle,Company106,prospect,crm_export
+uma820@biz.net,Uma Lewis,555-2132,Chicago,Company75,prospect,crm_export
+vera196@biz.net,Vera Edwards,555-6555,Seattle,Company82,customer,crm_export
+vera296@acme.com,Vera Edwards,555-2676,Boston,Company131,customer,"crm_export,event_attendees"
+vera346@corp.io,Vera Edwards,555-3044,,Company116,Webinar Q1,event_attendees
+vera446@gmail.com,Vera Edwards,555-9102,,Company38,Summit 2024,event_attendees
+vera46@yahoo.com,Vera Edwards,555-2224,Austin,Company118,vip,crm_export
+vera496@biz.net,Vera Edwards,555-7473,Chicago,Company163,customer,crm_export
+vera596@acme.com,Vera Edwards,555-5046,New York,Company56,lead,crm_export
+vera696@biz.net,Vera Edwards,555-8203,Austin,Company18,vip,crm_export
+vera746@corp.io,Vera Edwards,555-2095,Miami,Company191,lead,crm_export
+vera846@yahoo.com,Vera Edwards,555-6609,San Francisco,Company14,prospect,crm_export
+vera96@gmail.com,Vera Edwards,555-7058,,Company109,Summit 2024,event_attendees
+victor121@biz.net,Victor Lee,555-2349,New York,Company109,vip,crm_export
+victor171@corp.io,Victor Lee,555-3567,Austin,Company183,lead,crm_export
+victor21@gmail.com,Victor Lee,555-6926,,Company174,Webinar Q1,event_attendees
+victor221@acme.com,Victor Lee,555-1699,Austin,Company172,prospect,crm_export
+victor321@gmail.com,Victor Lee,555-5874,,Company76,Webinar Q1,event_attendees
+victor421@yahoo.com,Victor Lee,555-9574,Boston,Company170,customer,"crm_export,event_attendees"
+victor521@corp.io,Victor Lee,555-1196,New York,Company104,customer,crm_export
+victor621@yahoo.com,Victor Lee,555-3751,,Company186,Conference 2023,event_attendees
+victor671@acme.com,Victor Lee,555-9526,Chicago,Company142,lead,"crm_export,event_attendees"
+victor71@yahoo.com,Victor Lee,555-9587,Denver,Company14,prospect,crm_export
+victor721@acme.com,Victor Lee,555-9553,Denver,Company186,prospect,crm_export
+victor771@biz.net,Victor Lee,555-9147,,Company95,Conference 2023,event_attendees
+walt247@biz.net,Walt Collins,555-9514,Miami,Company1,vip,"crm_export,event_attendees"
+walt297@corp.io,Walt Collins,555-2170,,Company151,Summit 2024,event_attendees
+walt397@yahoo.com,Walt Collins,555-7782,Miami,Company17,customer,crm_export
+walt447@biz.net,Walt Collins,555-5317,Seattle,Company181,lead,crm_export
+walt47@gmail.com,Walt Collins,555-6402,Miami,Company19,customer,crm_export
+walt497@biz.net,Walt Collins,555-4480,Seattle,Company32,vip,crm_export
+walt547@yahoo.com,Walt Collins,555-4936,Boston,Company109,customer,crm_export
+walt597@corp.io,Walt Collins,555-4514,,Company146,Summit 2024,event_attendees
+walt647@acme.com,Walt Collins,555-6976,Austin,Company46,lead,"crm_export,event_attendees"
+walt697@acme.com,Walt Collins,555-5330,New York,Company190,vip,crm_export
+walt747@biz.net,Walt Collins,555-3784,Miami,Company174,lead,crm_export
+walt797@acme.com,Walt Collins,555-2852,Miami,Company177,lead,crm_export
+walt847@corp.io,Walt Collins,555-4006,Miami,Company161,vip,crm_export
+wendy122@corp.io,Wendy Walker,555-8502,San Francisco,Company22,vip,crm_export
+wendy172@yahoo.com,Wendy Walker,555-6589,San Francisco,Company48,vip,crm_export
+wendy222@gmail.com,Wendy Walker,555-9441,Boston,Company192,prospect,crm_export
+wendy22@biz.net,Wendy Walker,555-5713,New York,Company150,vip,crm_export
+wendy272@acme.com,Wendy Walker,555-7401,Chicago,Company8,vip,crm_export
+wendy322@biz.net,Wendy Walker,555-4171,,Company32,Summit 2024,event_attendees
+wendy422@acme.com,Wendy Walker,555-1092,Chicago,Company57,vip,crm_export
+wendy472@biz.net,Wendy Walker,555-2554,Boston,Company92,customer,crm_export
+wendy522@yahoo.com,Wendy Walker,555-4887,San Francisco,Company83,customer,crm_export
+wendy622@yahoo.com,Wendy Walker,555-6128,Seattle,Company73,prospect,crm_export
+wendy672@gmail.com,Wendy Walker,555-1427,San Francisco,Company172,lead,crm_export
+wendy772@yahoo.com,Wendy Walker,555-9598,,Company41,Summit 2024,event_attendees
+xena123@yahoo.com,Xena Hall,555-2443,Austin,Company77,prospect,crm_export
+xena173@gmail.com,Xena Hall,555-2411,Miami,Company98,prospect,crm_export
+xena23@acme.com,Xena Hall,555-4544,Denver,Company103,customer,crm_export
+xena323@yahoo.com,Xena Hall,555-7402,San Francisco,Company119,lead,crm_export
+xena373@corp.io,Xena Hall,555-2544,Austin,Company125,customer,crm_export
+xena423@yahoo.com,Xena Hall,555-6647,Austin,Company144,vip,crm_export
+xena473@corp.io,Xena Hall,555-2909,Chicago,Company195,vip,crm_export
+xena523@yahoo.com,Xena Hall,555-2946,New York,Company129,customer,crm_export
+xena573@biz.net,Xena Hall,555-3785,Denver,Company99,customer,"crm_export,event_attendees"
+xena623@biz.net,Xena Hall,555-8486,Seattle,Company97,customer,crm_export
+xena723@corp.io,Xena Hall,555-8469,,Company11,Summit 2024,event_attendees
+xena73@corp.io,Xena Hall,555-1070,New York,Company52,prospect,crm_export
+xena823@gmail.com,Xena Hall,555-4639,Boston,Company1,prospect,crm_export
+xin248@corp.io,Xin Stewart,555-7040,Austin,Company89,customer,crm_export
+xin298@yahoo.com,Xin Stewart,555-6632,Seattle,Company198,lead,"crm_export,event_attendees"
+xin348@gmail.com,Xin Stewart,555-2223,,Company101,Conference 2023,event_attendees
+xin398@corp.io,Xin Stewart,555-8169,Chicago,Company138,customer,crm_export
+xin448@corp.io,Xin Stewart,555-6969,Denver,Company52,vip,crm_export
+xin498@yahoo.com,Xin Stewart,555-8586,Miami,Company170,vip,crm_export
+xin648@yahoo.com,Xin Stewart,555-9958,New York,Company123,customer,crm_export
+xin698@yahoo.com,Xin Stewart,555-3342,Seattle,Company99,customer,crm_export
+xin748@yahoo.com,Xin Stewart,555-6797,,Company70,Summit 2024,event_attendees
+xin848@biz.net,Xin Stewart,555-2377,Miami,Company139,prospect,crm_export
+xin98@gmail.com,Xin Stewart,555-5477,Austin,Company17,vip,crm_export
+yale149@acme.com,Yale Sanchez,555-9775,New York,Company17,vip,crm_export
+yale249@gmail.com,Yale Sanchez,555-1405,San Francisco,Company42,prospect,"crm_export,event_attendees"
+yale349@gmail.com,Yale Sanchez,555-7533,San Francisco,Company83,prospect,crm_export
+yale399@acme.com,Yale Sanchez,555-8690,Chicago,Company185,vip,crm_export
+yale449@yahoo.com,Yale Sanchez,555-8556,San Francisco,Company57,prospect,crm_export
+yale499@gmail.com,Yale Sanchez,555-2227,Chicago,Company71,lead,crm_export
+yale49@biz.net,Yale Sanchez,555-6227,Denver,Company67,prospect,crm_export
+yale549@corp.io,Yale Sanchez,555-3555,Denver,Company186,customer,crm_export
+yale599@gmail.com,Yale Sanchez,555-2901,Chicago,Company117,customer,crm_export
+yale699@acme.com,Yale Sanchez,555-5711,,Company41,Webinar Q1,event_attendees
+yale799@corp.io,Yale Sanchez,555-8625,,Company54,Webinar Q1,event_attendees
+yale849@biz.net,Yale Sanchez,555-5681,,Company52,Webinar Q1,event_attendees
+yale99@yahoo.com,Yale Sanchez,555-5375,Boston,Company159,vip,crm_export
+yuri224@yahoo.com,Yuri Allen,555-3028,New York,Company42,lead,crm_export
+yuri274@biz.net,Yuri Allen,555-5751,Miami,Company10,vip,crm_export
+yuri324@yahoo.com,Yuri Allen,555-1877,New York,Company144,lead,crm_export
+yuri374@yahoo.com,Yuri Allen,555-8073,,Company129,Conference 2023,event_attendees
+yuri424@yahoo.com,Yuri Allen,555-7501,Miami,Company74,customer,crm_export
+yuri474@yahoo.com,Yuri Allen,555-2478,Boston,Company20,lead,crm_export
+yuri524@yahoo.com,Yuri Allen,555-4094,Seattle,Company142,lead,crm_export
+yuri574@acme.com,Yuri Allen,555-7408,Austin,Company200,vip,crm_export
+yuri624@biz.net,Yuri Allen,555-4472,Denver,Company113,customer,crm_export
+yuri674@acme.com,Yuri Allen,555-3817,Austin,Company165,lead,crm_export
+yuri824@gmail.com,Yuri Allen,555-1784,San Francisco,Company71,lead,crm_export
+zara125@yahoo.com,Zara Young,555-4112,San Francisco,Company158,vip,crm_export
+zara175@yahoo.com,Zara Young,555-8023,,Company82,Summit 2024,event_attendees
+zara225@gmail.com,Zara Young,555-3993,Austin,Company34,prospect,crm_export
+zara275@corp.io,Zara Young,555-4049,Chicago,Company74,lead,crm_export
+zara325@biz.net,Zara Young,555-9903,Austin,Company9,vip,crm_export
+zara375@yahoo.com,Zara Young,555-3472,Chicago,Company6,customer,crm_export
+zara425@acme.com,Zara Young,555-9105,Seattle,Company107,lead,crm_export
+zara475@acme.com,Zara Young,555-9720,Seattle,Company92,prospect,crm_export
+zara675@yahoo.com,Zara Young,555-9038,San Francisco,Company74,lead,crm_export
+zara725@gmail.com,Zara Young,555-8868,Boston,Company108,prospect,crm_export
+zara75@biz.net,Zara Young,555-8055,Chicago,Company1,vip,crm_export
+zara775@acme.com,Zara Young,555-4837,,Company80,Conference 2023,event_attendees
+zara825@acme.com,Zara Young,555-6623,Austin,Company178,lead,crm_export

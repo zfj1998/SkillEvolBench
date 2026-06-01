@@ -1,0 +1,24 @@
+schema_version: '1.0'
+task_id: E3-LS2-T5
+task_slug: numeric-string-dictionary-order-trap
+environment_id: E3
+family_id: E3-LS2
+latent_skill_id: E3-LS2.type-normalization-before-sort
+task_index: 5
+role: adversarial
+phase: evaluation
+within_family_difficulty_rank: 5
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E3-LS2.type-normalization-before-sort
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types:
+- generic_trap
+domain_group: data_processing
+review_notes: []

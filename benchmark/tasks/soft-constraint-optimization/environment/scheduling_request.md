@@ -1,0 +1,1 @@
+Rank these 3 hard-feasible slots by how well they satisfy team preferences. Use preferences.json.

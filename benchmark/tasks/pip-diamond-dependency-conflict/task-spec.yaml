@@ -1,0 +1,23 @@
+schema_version: '1.0'
+task_id: E1-LS2-T1
+task_slug: pip-diamond-dependency-conflict
+environment_id: E1
+family_id: E1-LS2
+latent_skill_id: E1-LS2.dependency-conflict-resolution
+task_index: 1
+role: canonical
+phase: learning
+within_family_difficulty_rank: 1
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E1-LS2.dependency-conflict-resolution
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types: []
+domain_group: code_debugging
+review_notes: []

@@ -1,0 +1,22 @@
+[
+  {
+    "citation_id": "S01",
+    "source_id": "MED_NATURE_SKIN",
+    "article_claim": "AI achieved dermatologist-level skin-cancer classification."
+  },
+  {
+    "citation_id": "S02",
+    "source_id": "MED_JAMA_DR",
+    "article_claim": "AI can detect diabetic retinopathy from retinal images."
+  },
+  {
+    "citation_id": "S03",
+    "source_id": "REMOTE_NATURE_HYBRID",
+    "article_claim": "Hybrid work improved retention without damaging performance."
+  },
+  {
+    "citation_id": "S04",
+    "source_id": "ENERGY_IEA_ELECTRICITY",
+    "article_claim": "Solar PV and wind are expected to dominate renewable capacity additions."
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "name": "switch-case-with-fallthrough-and-sideeffect",
+  "type": "module",
+  "scripts": {
+    "test": "node --test public_tests/*.test.js"
+  }
+}

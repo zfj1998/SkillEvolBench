@@ -1,0 +1,8 @@
+[tool.poetry]
+name = "api-pkg"
+version = "0.1.0"
+description = "FastAPI service package"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+fastapi = "==0.95.0"

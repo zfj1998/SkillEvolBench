@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "package-core"
+version = "1.9.0"
+requires-python = ">=3.10"
+dependencies = ["package-data>=1.3"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["package_core", "package_core.*"]

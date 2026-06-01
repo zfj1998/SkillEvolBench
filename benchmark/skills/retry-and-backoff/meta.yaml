@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E2-LS2
+environment_id: E2
+latent_skill_id: E2-LS2.retry-and-backoff
+slug: retry-and-backoff
+name: retry-and-backoff
+description: Retry synchronous REST API calls when server errors occur. Use this skill when an HTTP request may temporarily fail with a 5xx response and the caller needs a simple retry loop with a fixed delay between attempts. Focus on straightforward retry handling for synchronous API calls with status-code-based decision rules.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E2-LS2-T1
+- E2-LS2-T2
+- E2-LS2-T3
+- E2-LS2-T4
+- E2-LS2-T5
+- E2-LS2-T6
+gap_1_summary: 'Status-code-specific retry strategy: the curated skill retries 5xx three times with a fixed delay. Real APIs require honoring `Retry-After` headers (which can be a date or a duration), exponential backoff with jitter (to avoid synchronized retry storms), and a circuit breaker that gives up cleanly after sustained failure. Tune the retry policy per status code, not per HTTP family.'
+gap_2_summary: 'Idempotent vs non-idempotent retries: the curated skill retries every request the same way. A retried POST can create a duplicate resource if the original request actually succeeded but the response was lost in transit. For non-idempotent operations, send an idempotency key and only retry when the server confirms it''s safe — otherwise treat the request as terminal.'

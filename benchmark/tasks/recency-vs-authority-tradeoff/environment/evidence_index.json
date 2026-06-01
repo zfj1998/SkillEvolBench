@@ -1,0 +1,66 @@
+[
+  {
+    "source_id": "AIM01",
+    "supported_concepts": [],
+    "source_type": "research_report",
+    "evidence_strength": "high",
+    "grounding_note": "Stanford reports record U.S. private AI investment of $109.1B in 2024 and global generative AI investment of $33.9B.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "AIM02",
+    "supported_concepts": [],
+    "source_type": "research_report",
+    "evidence_strength": "medium",
+    "grounding_note": "CB Insights says AI funding surpassed $100B in 2024 and large AI rounds drove the market.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "AIM03",
+    "supported_concepts": [],
+    "source_type": "research_report",
+    "evidence_strength": "medium",
+    "grounding_note": "Quarterly update noting AI funding hit $23.2B in Q2 2024, useful for trend context but not full-year totals.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "AIM04",
+    "supported_concepts": [],
+    "source_type": "survey",
+    "evidence_strength": "medium",
+    "grounding_note": "Widely cited AI adoption survey, useful context for business usage but not the cleanest market-size source.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "AIM05",
+    "supported_concepts": [],
+    "source_type": "press_release",
+    "evidence_strength": "high",
+    "grounding_note": "Gartner forecasts global AI semiconductor revenue at $71B in 2024.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "AIM06",
+    "supported_concepts": [],
+    "source_type": "research_summary",
+    "evidence_strength": "high",
+    "grounding_note": "Gartner summary says AI processing semiconductors reached $135.3B in 2024, much larger than earlier-stage figures.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "AIM07",
+    "supported_concepts": [],
+    "source_type": "research_report",
+    "evidence_strength": "high",
+    "grounding_note": "Authoritative but far out of date for current market size estimates.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "AIM08",
+    "supported_concepts": [],
+    "source_type": "research_brief",
+    "evidence_strength": "medium",
+    "grounding_note": "Concise briefing built on the 2025 AI Index; current and still grounded in the same report.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  }
+]

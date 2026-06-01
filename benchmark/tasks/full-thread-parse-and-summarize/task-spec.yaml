@@ -1,0 +1,28 @@
+schema_version: '1.0'
+task_id: E6-LS5-T6
+task_slug: full-thread-parse-and-summarize
+environment_id: E6
+family_id: E6-LS5
+latent_skill_id: E6-LS5.thread-action-extraction
+task_index: 6
+role: composition
+phase: evaluation
+within_family_difficulty_rank: 6
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E6-LS5.thread-action-extraction
+required_skills:
+- E6-LS3.follow-up-tracking
+- E6-LS5.thread-action-extraction
+required_skill_compose_order:
+- E6-LS5.thread-action-extraction
+- E6-LS3.follow-up-tracking
+composition_type: cross_family
+trap_types: []
+domain_group: communication_scheduling
+review_notes:
+- 'composition_note: full-thread-parse-and-summarize'

@@ -1,0 +1,21 @@
+# Model preset: Claude Opus 4.5 via Bedrock Invoke API.
+name: claude-opus-4.5
+short_id: opus-4-5
+provider: bedrock
+harbor_agent_name: claude-code
+# NOTE: claude-code passes agent_model_name verbatim to Bedrock (after
+# stripping any provider/ prefix). Bedrock requires the cross-region
+# inference-profile id (``us.<bare>[-vN[:0]]``); the litellm-style
+# ``anthropic/<bare>`` form is rejected with HTTP 400 "The provided
+# model identifier is invalid".
+agent_model_name: us.anthropic.claude-opus-4-5-20251101-v1:0
+
+agent_env:
+  CLAUDE_CODE_USE_BEDROCK: "1"
+  ANTHROPIC_DEFAULT_OPUS_MODEL: us.anthropic.claude-opus-4-5-20251101-v1:0
+
+# Host-side LiteLLMClient routing (for LLMSelfRetriever / SkillAuthor / Judge):
+host_litellm:
+  model: bedrock/us.anthropic.claude-opus-4-5-20251101-v1:0
+  # Bedrock auto-reads AWS_BEARER_TOKEN_BEDROCK + AWS_REGION from env;
+  # no api_base / api_key needed.

@@ -1,0 +1,23 @@
+schema_version: '1.0'
+task_id: E1-LS2-T4
+task_slug: dep-fix-unblocks-ci-then-feature
+environment_id: E1
+family_id: E1-LS2
+latent_skill_id: E1-LS2.dependency-conflict-resolution
+task_index: 4
+role: context-shift
+phase: evaluation
+within_family_difficulty_rank: 4
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E1-LS2.dependency-conflict-resolution
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types: []
+domain_group: code_debugging
+review_notes: []

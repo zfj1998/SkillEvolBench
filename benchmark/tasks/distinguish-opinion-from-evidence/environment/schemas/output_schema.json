@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "classification output",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "labels",
+    "selected_priority"
+  ],
+  "properties": {
+    "labels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "source_id": {
+            "type": "string"
+          },
+          "label": {
+            "enum": [
+              "evidence",
+              "opinion"
+            ]
+          }
+        },
+        "required": [
+          "source_id",
+          "label"
+        ]
+      }
+    },
+    "selected_priority": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

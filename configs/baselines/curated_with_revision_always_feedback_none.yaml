@@ -1,0 +1,28 @@
+# Ablation: curated_with_revision + always trigger + feedback=NONE.
+# Path-B mirror of selfgen_experience_always_feedback_none. Pair with
+# curated_with_revision_always (process feedback) to measure feedback
+# value on the human-prior path.
+name: curated_with_revision_always_feedback_none
+description: Curated v0 + always trigger + no failure feedback.
+track: path-b
+
+skill_init: curated
+allow_self_gen_induction: false
+allow_zero_shot_creation: false
+allow_curated_inject: true
+
+allow_revision: true
+allow_retirement: false
+
+use_skill_library: true
+skill_retrieval_k: 8
+
+feedback_level: none
+feedback_to_skill_text: true
+
+default_strategy: chain
+revision_trigger: always
+max_revisions_per_skill: 8
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5

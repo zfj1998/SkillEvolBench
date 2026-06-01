@@ -1,0 +1,501 @@
+product_id,name,category,price,stock_quantity,weight_kg,avg_rating
+254,Ultra Set X-56,Books,956.33,474,21.64,3.8
+167,Standard Tool B-33,Home & Garden,897.34,369,16.04,1.1
+453,Classic Tool C-2,Food & Beverage,169.39,126,16.08,3.6
+414,Premium Pack C-20,Books,852.99,484,11.83,4.8
+257,Standard Module Z-91,Health,440.88,293,3.06,3.3
+214,Ultra Component C-4,Home & Garden,397.48,346,13.45,2.6
+151,Modern Device B-73,Clothing,430.88,152,2.18,1.3
+239,Professional Unit C-83,Electronics,766.71,47,2.51,2.3
+372,Premium Unit C-25,Automotive,500.28,342,1.95,2.6
+439,Advanced Set Z-39,Clothing,81.45,216,16.61,3.1
+209,Advanced Pack B-96,Electronics,353.49,166,4.30,2.0
+87,Basic Bundle C-31,Home & Garden,780.81,19,11.40,4.2
+488,Classic Component B-4,Books,318.53,302,23.83,2.4
+179,Advanced Unit C-40,Clothing,817.23,229,0.12,3.4
+480,Advanced System B-27,Clothing,423.65,471,8.13,4.9
+164,Premium Tool C-74,Office,482.50,296,18.29,1.1
+191,Basic Pack B-51,Office,101.90,236,11.57,1.2
+242,Professional Gadget C-89,Clothing,50.42,125,10.58,3.1
+470,Professional System Z-73,Office,493.60,285,5.50,1.6
+65,Basic Widget X-37,Books,188.05,69,24.96,3.8
+39,Standard Widget C-21,Books,137.94,5,20.26,2.2
+317,Classic Widget A-92,Sports,498.13,362,17.17,2.6
+50,Compact Kit C-99,Sports,567.19,253,2.52,3.5
+217,Advanced System X-3,Books,507.72,268,5.29,4.3
+340,Professional Bundle C-3,Health,287.68,261,23.13,4.6
+22,Professional System X-27,Food & Beverage,268.31,435,11.75,3.1
+262,Modern Set B-16,Automotive,501.50,93,4.63,2.5
+467,Deluxe Set A-47,Sports,316.84,23,4.12,4.7
+251,Ultra Bundle C-54,Toys,989.51,279,16.95,2.0
+95,Ultra Unit C-62,Electronics,6.10,88,17.59,1.9
+14,Standard Pack C-69,Electronics,98.10,450,23.08,3.9
+32,Standard Tool B-15,Books,487.74,139,16.46,1.3
+451,Ultra Tool C-64,Automotive,254.12,377,16.40,4.8
+193,Advanced System B-76,Books,311.49,351,17.59,2.3
+133,Professional Bundle A-97,Home & Garden,187.60,66,15.69,4.4
+5,Ultra System A-55,Automotive,208.53,477,2.11,3.1
+252,Compact Tool C-79,Health,740.08,24,6.88,4.4
+149,Modern Tool B-73,Books,480.23,22,5.54,4.3
+271,Professional Module X-84,Home & Garden,887.82,292,21.65,2.1
+76,Deluxe Component Z-87,Sports,914.44,435,20.29,3.5
+375,Advanced System C-49,Office,857.21,369,5.38,2.8
+336,Advanced Component Z-66,Clothing,293.70,88,4.01,1.4
+152,Deluxe Accessory X-19,Clothing,236.64,258,1.82,2.0
+320,Classic Set C-3,Health,988.41,228,20.64,2.5
+194,Standard Gadget A-16,Sports,463.86,452,13.90,3.6
+24,Basic Unit A-8,Automotive,420.26,189,15.70,3.8
+405,Professional System X-99,Clothing,18.78,476,21.91,2.6
+198,Basic Set Z-1,Clothing,502.12,285,20.81,1.6
+205,Standard Unit A-42,Sports,223.33,460,16.07,3.6
+285,Basic Module B-84,Clothing,725.65,416,17.46,3.8
+333,Modern Accessory A-26,Office,519.34,265,15.15,3.0
+230,Ultra Accessory A-7,Health,810.51,109,20.06,4.5
+234,Deluxe Pack X-22,Toys,541.10,177,11.79,3.9
+314,Classic Kit B-25,Food & Beverage,803.60,283,4.35,4.4
+424,Professional Bundle Z-29,Home & Garden,873.93,42,5.41,3.9
+484,Deluxe Unit B-20,Toys,572.06,360,14.18,2.6
+246,Modern Set Z-27,Sports,892.00,387,8.70,2.7
+138,Ultra Accessory A-37,Toys,388.84,343,21.97,3.4
+437,Standard Device B-96,Electronics,960.43,480,16.96,1.1
+119,Professional System C-72,Electronics,400.22,431,21.77,2.3
+69,Classic Kit X-33,Home & Garden,503.09,324,11.54,1.6
+184,Ultra Module B-14,Electronics,340.55,27,18.40,1.3
+156,Classic Widget X-87,Electronics,877.72,272,16.89,4.7
+218,Basic Module B-5,Toys,510.41,4,22.70,3.9
+266,Deluxe Kit X-84,Books,721.15,87,5.90,4.0
+41,Deluxe Accessory A-49,Sports,815.00,312,13.74,3.8
+61,Advanced Pack C-66,Automotive,996.38,309,23.07,4.5
+329,Standard Tool Z-31,Clothing,335.74,175,21.80,3.1
+258,Ultra Gadget Z-71,Books,757.34,167,23.35,2.0
+444,Professional Widget A-48,Books,685.32,346,2.40,4.1
+338,Classic Accessory C-43,Automotive,637.71,69,7.23,4.8
+35,Compact Unit Z-98,Toys,968.81,82,19.35,4.6
+245,Professional Component X-80,Electronics,474.52,338,16.23,3.6
+216,Deluxe Pack A-14,Sports,294.36,381,15.06,3.4
+10,Deluxe Component X-8,Office,136.13,442,19.50,1.6
+4,Modern Set A-92,Clothing,531.53,396,11.78,2.6
+432,Professional Gadget Z-98,Automotive,218.44,93,10.93,3.4
+190,Basic Kit A-38,Office,956.20,344,4.92,2.8
+98,Deluxe Component B-42,Office,569.38,353,1.30,2.6
+100,Classic Set C-28,Sports,705.81,45,24.36,4.0
+189,Ultra Bundle Z-38,Toys,304.71,156,5.16,1.7
+163,Premium Accessory A-61,Books,191.00,440,23.02,2.5
+406,Deluxe Widget C-81,Books,725.81,485,4.38,3.6
+195,Premium Device Z-69,Sports,861.97,259,17.84,2.4
+40,Basic Bundle X-10,Office,46.04,83,17.12,4.4
+16,Deluxe Tool B-50,Clothing,300.59,384,22.07,2.7
+342,Professional Accessory A-99,Office,693.77,337,0.95,1.8
+304,Compact Pack X-69,Electronics,199.30,491,15.38,1.8
+472,Deluxe Pack X-69,Electronics,916.07,31,7.18,3.9
+125,Classic Bundle C-54,Sports,963.46,449,11.21,1.9
+227,Modern Device C-90,Toys,322.65,494,21.59,4.6
+420,Premium Set C-84,Clothing,858.12,379,5.97,1.6
+175,Basic Set Z-34,Clothing,884.44,220,5.41,4.3
+129,Ultra Accessory C-48,Office,179.07,197,1.27,1.7
+33,Compact Accessory Z-23,Automotive,703.60,334,2.13,3.7
+243,Deluxe Accessory X-4,Clothing,483.01,153,20.60,2.9
+200,Standard Tool Z-62,Clothing,265.09,439,14.63,5.0
+495,Professional Widget A-15,Food & Beverage,280.81,292,23.35,4.2
+402,Deluxe Widget B-69,Home & Garden,863.20,247,3.55,3.8
+101,Standard Device B-92,Sports,411.11,488,8.59,1.7
+460,Ultra Unit B-26,Sports,930.41,1,21.87,2.0
+66,Basic Kit B-97,Clothing,422.12,323,2.03,4.8
+31,Premium Set Z-30,Home & Garden,557.92,149,20.96,1.2
+127,Classic Component A-23,Books,37.11,101,21.56,2.7
+456,Basic Component C-10,Sports,385.89,455,23.83,4.5
+459,Modern Device X-19,Sports,56.31,140,14.99,3.7
+73,Compact Kit B-15,Books,151.71,132,4.41,3.2
+261,Standard Set B-8,Electronics,275.49,101,7.44,3.1
+485,Classic Pack C-9,Toys,764.49,2,14.51,2.4
+408,Basic Tool A-46,Electronics,451.90,3,15.31,4.2
+131,Ultra Unit A-82,Electronics,221.11,102,12.93,2.3
+469,Classic Set B-72,Automotive,340.79,99,15.74,1.3
+417,Advanced Module X-40,Food & Beverage,481.62,108,21.21,3.6
+196,Ultra Device A-47,Clothing,342.81,58,4.93,2.5
+355,Basic Device X-56,Books,974.38,27,21.87,4.1
+270,Professional Kit C-93,Health,622.16,26,13.99,2.3
+237,Modern Kit X-16,Books,451.34,312,5.39,3.2
+111,Ultra Bundle C-47,Toys,350.68,460,6.17,1.1
+203,Basic System B-57,Health,790.15,219,5.40,1.5
+387,Classic Unit X-80,Electronics,408.58,234,22.73,2.5
+289,Premium Accessory C-40,Electronics,228.13,129,5.56,3.6
+498,Professional Gadget C-21,Toys,441.34,142,4.61,4.3
+294,Compact Accessory X-23,Electronics,68.83,475,17.11,4.0
+263,Basic Device A-64,Automotive,82.45,238,19.09,3.1
+215,Compact Gadget B-38,Automotive,437.91,211,14.35,1.4
+128,Basic Gadget B-3,Clothing,253.32,63,1.81,1.1
+178,Classic Bundle Z-28,Food & Beverage,888.97,326,17.62,1.7
+351,Premium Accessory X-58,Office,146.76,363,9.37,1.2
+383,Classic Pack Z-18,Books,372.13,498,22.62,1.6
+352,Compact Component B-29,Automotive,37.36,496,20.00,4.6
+410,Basic Widget Z-93,Toys,79.67,215,23.09,3.8
+441,Advanced System C-39,Books,875.98,228,12.31,2.9
+430,Professional Tool C-21,Sports,420.06,21,23.55,2.1
+229,Standard Device X-84,Office,810.16,442,4.85,3.8
+310,Basic Widget A-70,Electronics,725.16,3,13.65,4.8
+206,Ultra Unit A-67,Electronics,259.98,8,8.46,3.7
+47,Modern Bundle B-92,Office,855.60,223,5.12,4.2
+291,Advanced Widget A-9,Office,975.06,408,0.37,2.6
+282,Standard Module C-90,Books,708.53,272,9.00,3.1
+28,Advanced Unit X-86,Automotive,174.45,38,6.07,2.8
+296,Professional Module C-72,Clothing,869.95,149,16.43,1.2
+458,Deluxe Accessory C-34,Home & Garden,215.74,493,9.32,4.6
+21,Standard Widget A-65,Automotive,534.55,0,7.83,3.7
+132,Compact Unit X-15,Food & Beverage,274.29,283,18.65,1.5
+394,Compact System B-29,Electronics,485.01,463,12.90,2.5
+345,Advanced Pack C-14,Office,564.16,107,8.91,4.9
+493,Ultra Tool C-46,Health,524.22,450,13.75,4.6
+17,Ultra Gadget Z-38,Toys,907.75,447,19.73,3.1
+454,Modern Set B-17,Automotive,287.58,143,21.36,3.2
+25,Modern Kit B-97,Food & Beverage,105.50,442,10.02,1.7
+171,Compact Accessory A-45,Office,580.24,84,22.55,4.0
+79,Classic Set Z-38,Automotive,834.99,88,8.29,4.8
+463,Compact Device B-13,Health,336.51,295,0.20,1.8
+210,Standard Accessory A-8,Automotive,941.24,310,17.46,4.4
+499,Basic Unit Z-92,Health,210.03,449,18.10,3.3
+391,Ultra Device C-20,Electronics,740.92,337,4.38,3.1
+80,Basic Component Z-38,Toys,38.72,464,10.65,3.5
+370,Standard Module Z-97,Office,673.62,189,1.64,3.8
+145,Modern Device Z-48,Electronics,199.52,423,19.87,1.4
+159,Modern Module X-5,Automotive,756.07,211,10.16,4.2
+146,Basic Unit X-40,Food & Beverage,666.91,482,19.44,4.5
+284,Professional Module B-97,Automotive,26.07,28,2.07,2.6
+326,Standard Device B-77,Office,510.77,469,5.12,4.3
+153,Ultra Bundle B-72,Office,794.79,169,10.85,3.4
+82,Standard Kit A-27,Home & Garden,981.88,180,1.67,3.7
+62,Ultra Pack B-9,Health,593.47,143,18.59,2.4
+29,Premium Gadget C-64,Electronics,77.70,335,14.28,3.1
+6,Compact Unit X-7,Home & Garden,361.37,110,18.71,2.8
+390,Compact Accessory Z-82,Books,714.87,474,21.61,1.7
+368,Basic Gadget X-78,Home & Garden,983.09,359,11.26,1.7
+425,Professional Device C-20,Health,209.95,257,3.55,4.3
+334,Ultra Unit A-60,Electronics,471.20,225,24.91,2.5
+169,Premium Module C-30,Toys,647.85,65,0.37,4.2
+477,Modern Tool A-27,Automotive,275.53,286,11.24,4.3
+122,Deluxe Unit C-32,Electronics,319.12,122,6.28,2.7
+042,Premium Accessory C-95,Sports,403.14,262,4.44,2.6
+335,Premium Pack Z-23,Sports,446.32,322,13.87,4.1
+36,Standard Tool C-23,Health,740.41,75,16.11,3.1
+339,Ultra Bundle A-50,Electronics,646.88,129,23.50,3.7
+446,Basic Gadget X-94,Office,70.18,431,12.25,2.4
+497,Basic Kit C-52,Office,355.36,453,5.70,1.4
+83,Premium Set X-41,Clothing,595.86,303,15.15,4.9
+37,Premium Tool X-88,Sports,794.51,400,14.21,3.9
+224,Advanced Gadget X-27,Health,567.55,182,2.89,4.4
+89,Compact Component A-58,Health,207.31,268,12.47,3.9
+208,Advanced Gadget A-7,Home & Garden,396.15,412,18.66,4.5
+105,Advanced Device X-88,Office,521.56,305,7.57,2.8
+354,Advanced Accessory B-69,Sports,975.42,206,13.11,4.2
+363,Premium Module C-51,Clothing,511.70,122,7.74,2.9
+473,Ultra Component C-15,Electronics,984.22,170,4.99,2.4
+8,Standard Module A-19,Food & Beverage,313.94,2,8.31,3.1
+434,Ultra Pack Z-18,Automotive,259.36,458,10.33,3.9
+51,Premium Pack A-41,Books,194.48,25,4.71,4.6
+393,Classic Component A-6,Office,213.59,393,22.44,3.4
+233,Ultra Set Z-52,Sports,395.04,436,10.41,2.9
+423,Classic Set B-51,Home & Garden,227.14,224,4.64,1.2
+299,Ultra Unit C-19,Automotive,25.66,325,14.83,2.8
+279,Classic Unit B-27,Office,714.81,278,1.88,4.9
+23,Modern Accessory Z-99,Electronics,291.77,378,24.99,4.2
+330,Basic Module X-20,Books,601.07,193,23.75,4.8
+287,Deluxe Component C-92,Home & Garden,178.07,220,14.15,4.0
+63,Modern Gadget A-7,Home & Garden,565.72,324,21.58,1.8
+283,Modern Tool X-86,Food & Beverage,781.01,464,7.50,5.0
+137,Professional Gadget A-22,Automotive,604.66,452,3.22,3.3
+313,Deluxe Device A-3,Automotive,802.34,489,17.90,3.6
+412,Advanced Widget A-92,Home & Garden,206.77,95,2.10,3.3
+34,Professional Device B-70,Automotive,91.98,388,16.20,1.7
+250,Modern System A-83,Health,199.86,442,7.28,4.2
+273,Ultra Component Z-70,Sports,928.77,282,15.52,2.7
+235,Professional Widget Z-42,Sports,836.26,420,10.15,4.2
+165,Modern Gadget X-68,Health,158.66,83,8.32,2.9
+259,Compact Component B-53,Toys,250.71,295,24.37,2.8
+455,Deluxe Kit Z-92,Toys,914.68,175,11.46,3.2
+1,Standard Pack B-77,Home & Garden,183.72,127,19.02,2.0
+225,Deluxe Set A-96,Sports,450.32,175,18.26,2.7
+183,Advanced Kit C-25,Food & Beverage,539.18,398,6.27,4.4
+154,Deluxe Component B-58,Home & Garden,141.00,118,10.26,2.9
+443,Standard Kit B-32,Office,789.04,314,20.80,2.6
+280,Standard System A-73,Toys,574.90,475,8.72,1.5
+64,Modern Unit A-3,Sports,126.63,164,5.17,3.6
+213,Compact Kit X-96,Electronics,724.63,482,3.31,1.6
+91,Classic Bundle C-78,Electronics,26.70,425,7.61,3.5
+301,Premium Kit X-97,Home & Garden,507.69,352,22.66,4.5
+108,Classic Pack Z-97,Clothing,991.06,0,3.25,4.0
+102,Premium Gadget X-49,Books,219.97,499,11.00,3.0
+307,Standard Gadget Z-87,Electronics,317.90,348,8.69,4.1
+126,Ultra System A-92,Health,223.33,174,19.64,1.8
+150,Advanced Kit A-23,Clothing,211.12,44,9.60,3.1
+337,Premium Set Z-51,Clothing,579.63,160,1.88,3.0
+331,Basic Component A-44,Automotive,780.79,404,2.30,3.8
+306,Classic Gadget Z-92,Clothing,337.59,271,12.92,5.0
+256,Basic Accessory B-72,Office,447.15,54,1.62,3.4
+298,Modern Device C-86,Office,454.63,391,24.44,4.7
+162,Modern System A-67,Toys,907.82,380,12.57,2.2
+312,Premium Widget X-40,Clothing,728.21,121,19.96,2.3
+268,Professional Pack A-27,Automotive,462.30,352,23.01,2.0
+292,Premium Unit X-23,Clothing,265.86,10,19.55,4.6
+392,Deluxe Pack C-35,Clothing,57.18,458,14.67,2.6
+404,Professional Module Z-63,Toys,261.07,406,20.16,2.2
+26,Advanced Set B-17,Food & Beverage,902.35,444,10.51,4.8
+305,Classic Gadget A-22,Automotive,639.96,194,10.38,1.1
+71,Standard Accessory B-74,Food & Beverage,6.32,371,14.56,1.3
+43,Premium Tool B-83,Office,264.24,431,2.44,1.0
+389,Modern Widget X-39,Clothing,863.82,456,22.47,4.1
+360,Compact Widget B-50,Office,398.16,109,6.52,1.6
+139,Basic Unit B-97,Toys,512.06,129,3.40,1.6
+476,Advanced Component B-76,Home & Garden,975.38,301,3.42,2.1
+173,Basic Tool A-37,Office,102.53,43,21.64,3.1
+255,Professional Tool B-69,Office,383.31,239,13.09,1.6
+81,Premium Device A-61,Automotive,394.65,444,13.67,2.5
+489,Compact Component A-60,Toys,310.35,386,10.92,4.2
+449,Advanced Tool C-24,Books,277.57,449,6.40,1.9
+170,Professional Pack Z-2,Food & Beverage,345.81,222,18.00,4.4
+350,Advanced System C-41,Health,419.93,77,2.90,3.4
+20,Ultra Tool B-82,Sports,265.41,213,10.27,4.4
+155,Deluxe Component X-45,Electronics,80.94,263,5.42,3.1
+182,Professional Tool A-75,Electronics,51.91,411,8.18,4.8
+60,Modern Component C-10,Electronics,778.05,62,7.13,4.1
+117,Compact Module C-69,Health,84.29,342,1.89,1.3
+419,Modern Device B-86,Health,395.15,272,19.17,2.0
+431,Ultra Gadget X-79,Home & Garden,629.49,313,12.13,2.9
+358,Advanced Set C-63,Electronics,27.24,473,11.22,4.5
+115,Premium Pack C-89,Electronics,913.56,360,4.46,2.4
+300,Modern Device X-26,Electronics,444.60,154,14.64,1.7
+385,Advanced System Z-58,Sports,413.52,224,15.87,4.7
+157,Advanced Unit X-62,Clothing,24.35,115,6.28,3.6
+19,Modern Unit X-25,Sports,383.54,454,8.70,3.7
+396,Compact Widget C-95,Automotive,810.03,30,23.99,4.3
+429,Advanced Device Z-92,Sports,479.47,348,17.53,2.7
+219,Ultra Pack B-59,Home & Garden,220.95,395,10.78,4.8
+418,Professional Bundle B-86,Books,993.21,386,17.49,1.2
+321,Deluxe Module B-9,Books,773.37,197,14.77,1.2
+114,Advanced Module X-2,Automotive,472.70,130,15.16,2.3
+361,Ultra Component B-14,Toys,121.32,232,18.24,3.4
+465,Ultra Set B-69,Clothing,344.49,119,7.85,4.1
+181,Basic Set Z-44,Home & Garden,579.87,99,5.76,2.7
+411,Basic Set B-38,Office,316.57,462,6.18,5.0
+380,Modern Pack C-84,Clothing,830.55,135,6.57,1.9
+226,Compact Bundle X-50,Automotive,116.34,431,1.82,1.3
+180,Deluxe Pack C-31,Clothing,304.25,371,22.54,3.3
+221,Professional Device A-89,Books,288.53,345,2.51,2.0
+452,Compact Tool C-17,Clothing,712.69,485,10.77,2.4
+398,Modern Set A-82,Health,570.56,387,11.37,2.9
+197,Ultra Pack B-42,Automotive,293.15,138,2.25,2.6
+483,Professional Widget A-96,Health,640.42,461,18.83,1.7
+53,Professional Component C-68,Electronics,264.81,231,23.59,1.1
+295,Professional Unit C-74,Books,226.27,34,13.17,3.4
+359,Advanced Widget B-68,Electronics,981.23,292,19.61,2.3
+241,Modern Component A-25,Electronics,806.25,400,20.07,3.1
+248,Classic Set Z-47,Office,755.28,335,14.89,4.6
+466,Professional Widget A-17,Food & Beverage,787.48,332,5.11,1.4
+90,Compact Component A-78,Food & Beverage,224.84,327,4.69,1.5
+374,Compact Device A-93,Books,367.27,160,7.20,1.7
+376,Ultra Gadget Z-4,Food & Beverage,192.97,380,1.42,3.2
+409,Ultra Pack A-32,Clothing,226.93,27,11.90,4.0
+388,Premium Tool A-33,Food & Beverage,368.57,90,5.78,3.2
+415,Premium Module X-24,Office,313.13,205,2.75,5.0
+407,Modern Bundle B-63,Books,108.58,208,9.00,3.0
+140,Advanced Set Z-60,Toys,956.94,175,16.87,1.8
+464,Classic Kit B-90,Sports,146.73,37,24.66,3.8
+481,Classic Accessory X-19,Home & Garden,937.21,38,19.99,2.1
+97,Ultra Set B-1,Health,160.82,237,7.01,4.4
+382,Modern Tool B-61,Automotive,971.80,4,10.83,4.8
+395,Ultra Device X-91,Toys,384.29,117,23.81,4.6
+228,Deluxe Gadget B-67,Electronics,246.98,6,6.79,3.4
+357,Premium Widget A-26,Food & Beverage,638.14,221,13.01,3.8
+278,Premium Widget Z-37,Clothing,687.75,293,17.67,3.5
+364,Advanced Module A-14,Sports,573.48,140,6.62,3.3
+85,Premium System Z-69,Food & Beverage,266.67,126,13.14,1.5
+325,Advanced Tool B-91,Office,968.70,0,24.72,4.3
+362,Basic Kit A-55,Clothing,673.33,261,2.98,4.0
+240,Classic Device B-38,Office,690.54,401,2.49,2.8
+426,Compact Component X-14,Books,593.70,266,16.52,4.1
+104,Professional Unit B-62,Home & Garden,571.29,353,23.88,5.0
+421,Standard Component C-48,Health,581.79,147,3.99,3.0
+121,Premium Device A-40,Home & Garden,987.13,240,1.59,2.2
+367,Basic Device Z-85,Food & Beverage,571.69,272,7.08,3.0
+274,Advanced Component B-98,Sports,737.35,287,1.27,1.0
+244,Advanced Tool B-45,Electronics,192.81,279,7.46,1.9
+377,Classic Component C-40,Clothing,257.46,475,8.85,1.9
+118,Compact Gadget C-50,Sports,862.88,500,21.47,1.2
+185,Modern Widget X-24,Clothing,228.34,289,20.56,3.9
+143,Premium System X-36,Electronics,23.49,186,19.29,2.5
+422,Standard Kit B-20,Toys,571.44,220,0.61,4.7
+124,Standard Set B-79,Sports,839.10,447,5.45,2.7
+433,Classic Component X-69,Books,654.66,467,15.77,2.4
+106,Advanced Accessory A-62,Health,39.25,471,4.90,2.4
+457,Deluxe Module B-14,Clothing,834.12,291,8.55,1.4
+347,Compact Accessory A-83,Office,580.60,181,2.28,1.2
+109,Professional Tool C-3,Electronics,349.84,499,23.96,4.1
+343,Ultra Component C-25,Toys,91.31,441,3.20,1.5
+475,Professional Component B-71,Health,680.04,204,16.52,3.5
+435,Ultra Set A-12,Health,296.82,212,11.72,1.2
+440,Deluxe Component Z-42,Health,379.74,76,4.88,4.6
+253,Advanced Widget B-61,Sports,235.28,283,17.09,3.0
+38,Modern Gadget B-22,Books,775.39,191,7.90,1.2
+186,Compact Set X-75,Food & Beverage,411.28,131,5.16,2.2
+199,Standard Bundle C-9,Health,402.75,246,9.63,2.8
+70,Deluxe System B-65,Office,234.56,181,12.95,1.9
+324,Standard Pack X-56,Toys,380.55,142,3.25,4.6
+172,Premium System C-52,Books,42.42,352,22.19,1.6
+231,Modern Component Z-84,Food & Beverage,320.05,328,20.71,1.1
+397,Classic Component B-63,Books,729.59,185,21.67,1.9
+136,Advanced System C-97,Automotive,481.35,125,15.24,1.4
+247,Compact Gadget A-66,Toys,955.81,46,20.65,1.7
+353,Deluxe Bundle C-57,Office,736.31,159,10.33,2.0
+427,Deluxe System B-31,Clothing,288.20,90,23.73,3.2
+399,Professional Module X-85,Home & Garden,758.71,494,13.76,3.8
+327,Classic Unit C-86,Office,312.40,216,1.40,1.0
+323,Ultra Tool C-16,Sports,24.77,442,5.64,1.2
+269,Premium System B-61,Home & Garden,97.58,72,3.00,3.4
+386,Modern Bundle A-54,Clothing,702.18,352,9.72,2.0
+428,Ultra Kit C-50,Toys,500.54,201,17.21,2.6
+275,Premium Gadget X-26,Health,414.82,311,16.34,1.3
+302,Advanced Device X-74,Toys,193.04,392,11.08,2.6
+297,Advanced Component Z-87,Electronics,815.46,402,22.24,1.3
+478,Ultra Accessory C-15,Health,442.03,480,1.48,3.3
+202,Premium Gadget Z-1,Books,57.90,192,14.94,3.6
+088,Deluxe System B-83,Automotive,927.42,181,24.43,1.3
+461,Basic Module Z-72,Food & Beverage,435.92,401,24.41,2.8
+30,Premium Unit C-53,Office,265.96,69,23.01,2.6
+177,Advanced Module A-77,Electronics,20.24,310,1.78,1.9
+110,Premium Tool B-78,Automotive,994.23,109,18.86,1.7
+290,Ultra Gadget X-22,Home & Garden,43.58,440,14.20,3.2
+286,Standard Unit C-25,Clothing,358.52,102,12.84,2.4
+403,Modern Device C-36,Sports,876.76,346,21.96,3.4
+056,Modern Kit A-83,Food & Beverage,6.73,58,2.12,4.4
+356,Ultra Component X-30,Food & Beverage,850.09,273,17.99,1.9
+265,Compact Gadget B-60,Clothing,754.71,290,5.56,3.4
+260,Modern System B-79,Food & Beverage,129.80,210,7.99,1.5
+68,Ultra Bundle X-17,Health,889.08,306,5.52,5.0
+158,Professional Device B-41,Toys,386.61,429,17.45,3.3
+281,Professional Accessory A-19,Toys,822.92,419,1.97,3.4
+328,Premium Module C-73,Sports,732.84,306,20.85,3.8
+413,Classic System X-70,Health,229.90,357,7.07,2.9
+500,Ultra Component A-84,Office,999.47,104,17.75,1.1
+3,Compact Accessory C-50,Home & Garden,862.31,108,11.59,1.7
+315,Professional Tool Z-66,Office,616.69,480,15.22,2.9
+49,Classic System A-31,Food & Beverage,245.05,116,9.95,3.2
+288,Standard System A-94,Sports,715.45,442,21.93,4.2
+130,Compact System X-42,Home & Garden,923.80,181,17.26,3.6
+348,Classic Device Z-6,Books,317.77,15,0.89,3.9
+2,Standard System Z-12,Sports,938.74,250,10.60,3.5
+308,Classic Module X-41,Books,845.88,372,7.15,4.4
+96,Premium Device Z-29,Food & Beverage,303.94,164,9.03,1.6
+013,Ultra Widget Z-7,Food & Beverage,341.40,193,8.49,4.2
+11,Standard Gadget A-16,Home & Garden,148.79,89,10.31,4.7
+92,Compact Unit X-48,Home & Garden,938.57,255,7.18,2.4
+112,Advanced Gadget B-75,Sports,955.32,420,19.98,2.6
+201,Advanced Kit B-57,Electronics,540.48,60,14.96,2.2
+416,Premium System Z-33,Clothing,369.70,9,2.12,3.8
+161,Advanced Set Z-51,Home & Garden,924.99,346,23.33,1.1
+142,Ultra Module C-59,Home & Garden,944.39,460,5.45,3.5
+103,Professional Module Z-82,Food & Beverage,432.08,446,8.04,3.9
+211,Modern Set Z-76,Home & Garden,15.97,20,9.43,2.1
+479,Deluxe Accessory Z-91,Electronics,948.28,380,24.02,4.9
+400,Professional Widget Z-3,Office,839.94,300,13.35,2.1
+491,Ultra Device B-20,Food & Beverage,292.43,194,24.08,4.9
+487,Basic Pack C-3,Toys,935.58,166,13.84,4.8
+277,Ultra Set X-71,Food & Beverage,259.25,313,11.12,4.4
+232,Deluxe Component A-98,Books,432.77,107,10.58,1.1
+44,Premium Tool B-24,Books,631.47,31,4.66,4.1
+319,Deluxe Pack X-69,Books,297.42,434,9.10,2.9
+58,Deluxe Accessory A-35,Electronics,533.97,32,5.57,2.3
+371,Professional Component X-24,Sports,495.71,466,15.24,1.6
+490,Ultra Unit Z-14,Books,732.53,8,3.30,3.4
+322,Standard Unit X-41,Books,322.98,452,18.42,3.3
+468,Standard Kit A-15,Books,215.34,65,12.42,1.9
+94,Ultra Device Z-33,Food & Beverage,481.73,40,17.71,3.9
+474,Compact System C-92,Clothing,543.83,125,7.09,3.3
+492,Compact Accessory X-15,Health,448.54,277,18.33,1.3
+84,Ultra Pack B-18,Home & Garden,668.98,430,7.25,3.8
+27,Professional Set C-27,Food & Beverage,277.93,293,4.67,4.7
+57,Deluxe Bundle X-72,Automotive,876.81,393,22.62,2.1
+436,Compact Widget B-87,Office,201.17,245,24.36,4.8
+462,Advanced Module Z-49,Books,724.06,353,21.70,1.4
+166,Basic Bundle Z-95,Home & Garden,998.82,496,1.56,3.1
+120,Standard Kit X-95,Office,794.54,86,19.62,3.7
+188,Advanced Component Z-18,Automotive,376.80,296,10.51,3.7
+447,Basic Tool B-50,Home & Garden,925.51,13,1.26,1.8
+264,Ultra Component Z-69,Food & Beverage,789.80,299,10.93,4.8
+9,Compact Accessory A-82,Automotive,216.16,131,10.16,4.1
+309,Premium Module Z-28,Office,132.07,448,23.25,3.3
+52,Ultra Widget Z-68,Toys,299.55,371,2.94,2.4
+276,Basic Gadget A-57,Automotive,599.61,314,7.09,4.5
+373,Modern System A-75,Toys,563.85,119,10.04,4.8
+187,Advanced Accessory C-45,Office,493.76,484,15.26,1.9
+438,Advanced Set A-94,Home & Garden,353.43,397,21.80,2.3
+471,Deluxe System C-92,Electronics,330.29,429,10.44,4.1
+144,Professional Unit Z-35,Food & Beverage,564.12,71,19.05,4.4
+77,Modern Pack X-21,Home & Garden,606.10,285,18.24,4.4
+67,Ultra Kit B-97,Electronics,278.47,63,18.74,4.3
+74,Compact Gadget Z-15,Sports,327.69,494,7.51,2.3
+75,Premium Bundle C-62,Sports,545.00,178,8.77,1.2
+168,Ultra Set X-26,Books,386.03,290,2.50,3.0
+176,Modern Accessory X-89,Automotive,191.84,328,14.68,4.6
+18,Ultra Pack C-53,Office,968.30,423,4.07,2.5
+316,Deluxe System A-94,Health,482.04,101,10.00,1.2
+448,Advanced Pack X-72,Food & Beverage,577.83,253,14.76,3.0
+135,Modern Bundle Z-35,Books,745.61,497,13.02,1.5
+86,Ultra Pack X-12,Electronics,838.59,176,22.42,1.9
+12,Classic Set X-30,Toys,847.04,60,4.73,1.3
+207,Deluxe Module Z-89,Health,997.84,228,14.73,3.2
+204,Premium Accessory X-1,Clothing,877.79,19,1.31,1.7
+272,Standard Accessory A-86,Clothing,491.07,273,17.06,1.9
+222,Ultra Module A-71,Sports,822.27,447,10.01,4.0
+45,Professional Widget A-65,Health,399.44,500,1.94,3.4
+494,Advanced Device C-33,Sports,37.24,427,16.82,2.3
+134,Modern Kit A-31,Automotive,213.61,264,0.55,3.5
+238,Professional Component A-45,Sports,493.64,56,1.44,1.0
+442,Deluxe Module B-94,Sports,137.01,194,5.24,4.3
+174,Ultra System A-60,Home & Garden,227.56,380,20.47,2.4
+48,Professional Bundle B-23,Home & Garden,841.85,131,16.32,3.7
+401,Professional Unit A-60,Health,580.69,312,16.68,3.9
+55,Standard Tool Z-20,Electronics,781.11,11,4.48,1.9
+59,Basic Kit C-80,Health,627.11,108,16.66,3.1
+267,Classic Bundle X-41,Sports,41.22,137,2.92,4.0
+366,Deluxe Widget X-61,Books,638.68,177,19.45,4.1
+346,Professional Unit X-50,Toys,571.72,366,9.84,4.3
+332,Professional Accessory X-89,Health,751.22,316,14.16,3.2
+381,Premium Bundle C-73,Books,446.58,217,7.52,2.9
+107,Premium Pack X-41,Sports,829.37,373,3.25,4.1
+116,Modern Set C-41,Books,918.22,457,9.81,3.4
+148,Deluxe Gadget A-83,Home & Garden,951.93,404,18.69,3.8
+365,Classic Module Z-72,Electronics,601.42,461,8.26,2.6
+72,Standard Gadget X-59,Sports,112.01,2,21.75,1.4
+236,Basic Set C-9,Home & Garden,43.92,134,24.98,2.1
+249,Professional Tool A-84,Toys,199.42,346,5.95,4.7
+303,Compact Widget X-98,Toys,133.56,124,13.47,1.7
+15,Standard Accessory X-30,Sports,315.54,335,16.37,2.2
+46,Deluxe Pack B-62,Toys,917.42,46,12.60,1.9
+141,Ultra Kit B-79,Health,510.08,52,17.49,1.5
+311,Professional Widget C-40,Health,732.05,485,23.54,5.0
+220,Compact Bundle C-32,Automotive,644.47,186,10.48,4.3
+99,Modern Device X-28,Food & Beverage,503.13,406,24.64,4.1
+496,Deluxe Tool X-17,Automotive,893.01,23,8.52,1.6
+369,Classic Component C-72,Sports,129.61,262,16.79,2.1
+344,Modern Component Z-65,Home & Garden,346.27,88,17.22,4.7
+147,Advanced Widget Z-11,Office,458.27,440,14.95,2.0
+113,Ultra Accessory C-44,Health,191.06,346,8.42,2.2
+445,Advanced Accessory A-66,Electronics,144.71,0,23.81,1.9
+160,Professional Widget C-69,Toys,325.10,138,3.14,2.9
+349,Classic Accessory X-2,Toys,360.21,441,10.38,3.7
+450,Modern Accessory X-51,Books,665.42,45,14.81,1.1
+293,Modern Device A-59,Food & Beverage,909.19,460,5.98,4.2
+379,Ultra System C-45,Health,584.13,189,17.88,3.5
+384,Advanced Device A-68,Clothing,939.71,245,2.89,4.2
+78,Classic Kit A-3,Home & Garden,608.25,176,3.29,1.2
+318,Premium System Z-16,Home & Garden,867.91,116,21.97,2.4
+378,Professional Kit C-80,Office,580.71,456,11.84,4.1
+123,Basic Unit A-72,Office,180.90,326,17.18,2.3
+486,Ultra System B-44,Books,544.91,99,22.45,4.4
+192,Classic Bundle Z-70,Sports,686.49,310,0.96,1.2
+54,Compact Device Z-11,Electronics,835.80,194,9.04,2.3
+007,Professional System B-5,Health,115.12,87,17.13,2.7
+93,Professional Component A-43,Automotive,578.56,190,21.05,3.7
+223,Basic Bundle B-68,Sports,468.00,56,17.88,3.1
+212,Deluxe Gadget A-18,Books,693.58,192,23.69,3.7
+341,Ultra Component C-19,Automotive,448.23,10,21.01,2.5
+482,Basic Kit Z-53,Home & Garden,706.31,40,9.71,2.7

@@ -1,0 +1,28 @@
+# Path B baseline: inject curated v0 on family arrival; never modify.
+# Used to compute "Static curated value" = Curated-Static - No-Skill.
+name: curated_static
+description: Inject curated v0 on family arrival; never modify.
+track: path-b
+
+skill_init: curated
+allow_self_gen_induction: false
+allow_zero_shot_creation: false
+allow_curated_inject: true
+
+allow_revision: false
+allow_retirement: false
+
+use_skill_library: true
+skill_retrieval_k: 8
+
+feedback_level: none
+feedback_to_skill_text: false
+
+default_strategy: none
+revision_trigger: never
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5
+
+# Library is fixed entire run -- replay would just measure LLM variance.
+within_env_replay: false

@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E4-LS4
+environment_id: E4
+latent_skill_id: E4-LS4.document-diff-comparison
+slug: document-diff-comparison
+name: document-diff-comparison
+description: Compare two versions of a plain text or markdown document and produce a clear change report. Use this skill when the task is to load two document versions, identify additions, deletions, and modifications, and report each change with its location, original text, and new text. Focus on text-level diff comparison for plain text and markdown documents using basic line-by-line or paragraph-by-paragraph comparison.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E4-LS4-T1
+- E4-LS4-T2
+- E4-LS4-T3
+- E4-LS4-T4
+- E4-LS4-T5
+- E4-LS4-T6
+gap_1_summary: 'Semantic equivalence: the curated skill does line-by-line text diff. ''Increase by 10%'' and ''from 100 to 110'' are semantically equivalent but textually different — the curated skill flags them as a change. Run a semantic-equivalence pass for numeric expressions, dates, and synonyms before reporting differences.'
+gap_2_summary: 'Structural reorganization vs content change: the curated skill doesn''t distinguish ''sections were renumbered'' from ''sections were edited''. A reorganized document looks like every section changed under naive line diff. Detect reorganization (matching paragraphs by content, not position) and report structure-only edits separately from content edits.'

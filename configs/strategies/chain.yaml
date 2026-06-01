@@ -1,0 +1,23 @@
+# Default revision strategy: single-candidate linear revision.
+# Cheap, but accepts whatever the first patch attempt produces.
+name: chain
+
+# Single candidate. The mode IS read by chain.py (post-fix); choose based
+# on the experiment:
+#   "free_form"     -- LLM may add scripts/ references/ assets/ when useful (default)
+#   "minimal_edit"  -- text-only smallest edit; ablation of "no Tier-3 bundling"
+#   "scope_narrow"  -- tighten applicability instead of changing instructions
+#   "refactor"      -- restructure SKILL.md sections (still text-focused)
+#   "retire_replace" -- delete + rewrite from scratch
+n_candidates: 1
+candidate_modes: ["free_form"]
+
+# Skill Author model
+author_model: bedrock/us.anthropic.claude-opus-4-7
+author_temperature: 0.2
+author_max_tokens: 16384
+
+# Judge fields are accepted for config compatibility; chain ignores them.
+judge_model: bedrock/us.anthropic.claude-haiku-4-5-20251001-v1:0
+judge_temperature: 0.0
+judge_max_tokens: 1024

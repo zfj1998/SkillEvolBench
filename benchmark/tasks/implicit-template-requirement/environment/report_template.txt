@@ -1,0 +1,15 @@
+Project Status Report
+Project: Atlas Rollout
+Owner: Priya Nair
+Status: Active
+Region: [TBD]
+Client: [INSERT HERE]
+Launch Date: ___
+Support Tier: Gold
+Primary Contact: <PENDING>
+Deployment Model: [TBD]
+Risk Level: [INSERT HERE]
+Budget Status: On Track
+Next Milestone: ___
+Escalation Lead: <PENDING>
+Summary: Existing deployment remains healthy.

@@ -1,0 +1,114 @@
+{
+  "claims": [
+    {
+      "id": "a1",
+      "doc": "market_memo_a",
+      "entity": "AI software market",
+      "metric": "market_size",
+      "period": "2024",
+      "scope": "global",
+      "value": 500,
+      "polarity": null,
+      "quote": "The 2024 global AI software market is about $500M."
+    },
+    {
+      "id": "b1",
+      "doc": "market_memo_b",
+      "entity": "AI software market",
+      "metric": "market_size",
+      "period": "2024",
+      "scope": "global",
+      "value": 200,
+      "polarity": null,
+      "quote": "The 2024 global AI software market is no more than $200M."
+    },
+    {
+      "id": "a2",
+      "doc": "market_memo_a",
+      "entity": "Atlas launch",
+      "metric": "launch_date",
+      "period": "2023",
+      "scope": "global",
+      "value": "2023",
+      "polarity": null,
+      "quote": "Atlas launched commercially in 2023."
+    },
+    {
+      "id": "b2",
+      "doc": "market_memo_b",
+      "entity": "Atlas launch",
+      "metric": "launch_date",
+      "period": "2023",
+      "scope": "global",
+      "value": "2024",
+      "polarity": null,
+      "quote": "Atlas did not launch until early 2024."
+    },
+    {
+      "id": "a3",
+      "doc": "market_memo_a",
+      "entity": "North expansion",
+      "metric": "expansion",
+      "period": "2025",
+      "scope": "North America",
+      "value": true,
+      "polarity": "affirm",
+      "quote": "The CEO confirmed North America expansion."
+    },
+    {
+      "id": "b3",
+      "doc": "market_memo_b",
+      "entity": "North expansion",
+      "metric": "expansion",
+      "period": "2025",
+      "scope": "North America",
+      "value": false,
+      "polarity": "deny",
+      "quote": "The CEO denied any North America expansion."
+    },
+    {
+      "id": "a4",
+      "doc": "market_memo_a",
+      "entity": "Renewables",
+      "metric": "electricity_share",
+      "period": "2023",
+      "scope": "global",
+      "value": 30,
+      "polarity": null,
+      "quote": "Renewables reached about 30% of global electricity in 2023."
+    },
+    {
+      "id": "b4",
+      "doc": "market_memo_b",
+      "entity": "Renewables",
+      "metric": "electricity_share",
+      "period": "2023",
+      "scope": "global",
+      "value": 30,
+      "polarity": null,
+      "quote": "Renewables supplied around 30% of global electricity in 2023."
+    }
+  ],
+  "candidate_pairs": [
+    {
+      "id": "p_market_size",
+      "left": "a1",
+      "right": "b1"
+    },
+    {
+      "id": "p_launch_date",
+      "left": "a2",
+      "right": "b2"
+    },
+    {
+      "id": "p_ceo_expansion",
+      "left": "a3",
+      "right": "b3"
+    },
+    {
+      "id": "p_renewables_agree",
+      "left": "a4",
+      "right": "b4"
+    }
+  ]
+}

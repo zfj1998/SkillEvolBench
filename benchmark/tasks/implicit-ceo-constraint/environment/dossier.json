@@ -1,0 +1,68 @@
+{
+  "title": "Platform modernization dossier",
+  "sources": [
+    "ENERGY_IEA_RENEWABLES"
+  ],
+  "sections": [
+    {
+      "id": "technical_arch",
+      "order": 1,
+      "priority": 5,
+      "summary": "Kubernetes improves portability and orchestration but adds control-plane, probe, and security-hardening complexity.",
+      "tags": [
+        "architecture",
+        "technical"
+      ]
+    },
+    {
+      "id": "technical_perf",
+      "order": 2,
+      "priority": 5,
+      "summary": "Benchmarks emphasize resource rightsizing, service health probes, and workload reliability.",
+      "tags": [
+        "performance",
+        "technical"
+      ]
+    },
+    {
+      "id": "management_roi",
+      "order": 3,
+      "priority": 5,
+      "summary": "Management value depends on platform scale, staffing, payback horizon, and migration risk.",
+      "tags": [
+        "roi",
+        "management"
+      ]
+    },
+    {
+      "id": "management_risk",
+      "order": 4,
+      "priority": 4,
+      "summary": "Risks include misconfiguration, talent gaps, and operational complexity compared with familiar VM workflows.",
+      "tags": [
+        "risk",
+        "management"
+      ]
+    },
+    {
+      "id": "client_value",
+      "order": 5,
+      "priority": 5,
+      "summary": "Clients care about reliability, launch predictability, and service continuity rather than internal platform details.",
+      "tags": [
+        "user_value",
+        "client"
+      ]
+    },
+    {
+      "id": "client_launch",
+      "order": 6,
+      "priority": 4,
+      "summary": "A staged launch can preserve service continuity while teams mature operations.",
+      "tags": [
+        "launch",
+        "client"
+      ]
+    }
+  ]
+}

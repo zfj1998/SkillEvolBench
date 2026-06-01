@@ -1,0 +1,11 @@
+﻿ Channel , Impressions ,Clicks,Conversions,Notes
+ Organic Search ,50000,2500.0,375,duplicate exact logical row
+organic-search,10000,500,80,incremental row
+organic​_search,10000,500,80,duplicate of previous after normalization
+PAID SEARCH,N/A,100,10,missing impressions
+social  media,"1,000",bad,5,malformed clicks
+email,5000,700,-2,negative conversions
+affiliate,null,300,50,still no impressions
+new-channel,0.0,0,0,duplicate semantic new channel
+display ads,50000,1000,50,extra display row
+video_ads,-,100,10,placeholder impressions

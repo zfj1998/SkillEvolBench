@@ -1,0 +1,30 @@
+schema_version: '1.0'
+task_id: E2-LS4-T6
+task_slug: full-orchestration-retry-validate
+environment_id: E2
+family_id: E2-LS4
+latent_skill_id: E2-LS4.multi-step-orchestration
+task_index: 6
+role: composition
+phase: evaluation
+within_family_difficulty_rank: 6
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E2-LS4.multi-step-orchestration
+required_skills:
+- E2-LS2.retry-and-backoff
+- E2-LS4.multi-step-orchestration
+- E2-LS5.response-validation-fallback
+required_skill_compose_order:
+- E2-LS4.multi-step-orchestration
+- E2-LS2.retry-and-backoff
+- E2-LS5.response-validation-fallback
+composition_type: cross_family
+trap_types: []
+domain_group: tool_api_orchestration
+review_notes:
+- 'composition_note: full orchestration with retry + validate fallback'

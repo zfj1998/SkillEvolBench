@@ -1,0 +1,86 @@
+{
+  "participants": [
+    {
+      "id": "alice",
+      "name": "Alice Chen",
+      "email": "alice@harborworks.example",
+      "timezone": "America/New_York",
+      "work_hours": {
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "preferences": {},
+      "events": [
+        {
+          "uid": "a1",
+          "summary": "Exec sync",
+          "start_utc": "2026-04-24T15:00:00Z",
+          "end_utc": "2026-04-24T16:00:00Z"
+        },
+        {
+          "uid": "a2",
+          "summary": "Design review",
+          "start_utc": "2026-04-24T18:00:00Z",
+          "end_utc": "2026-04-24T19:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "bob",
+      "name": "Bob Rivera",
+      "email": "bob@harborworks.example",
+      "timezone": "America/Los_Angeles",
+      "work_hours": {
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "preferences": {},
+      "events": [
+        {
+          "uid": "b1",
+          "summary": "Customer call",
+          "start_utc": "2026-04-24T16:00:00Z",
+          "end_utc": "2026-04-24T17:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "charlie",
+      "name": "Charlie Weber",
+      "email": "charlie@harborworks.example",
+      "timezone": "Europe/Berlin",
+      "work_hours": {
+        "start": "09:00",
+        "end": "18:00"
+      },
+      "preferences": {},
+      "events": [
+        {
+          "uid": "c1",
+          "summary": "EMEA standup",
+          "start_utc": "2026-04-24T13:00:00Z",
+          "end_utc": "2026-04-24T14:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "diana",
+      "name": "Diana Holt",
+      "email": "diana@harborworks.example",
+      "timezone": "America/New_York",
+      "work_hours": {
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "preferences": {},
+      "events": [
+        {
+          "uid": "d1",
+          "summary": "Support review",
+          "start_utc": "2026-04-24T17:00:00Z",
+          "end_utc": "2026-04-24T18:00:00Z"
+        }
+      ]
+    }
+  ]
+}

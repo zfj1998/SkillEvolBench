@@ -1,0 +1,9 @@
+Message-ID: <email_002@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Nora Schmidt <nora.schmidt@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: CRITICAL: Security breach investigation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Okta alerted on impossible-travel admin login. Need immediate review and containment.

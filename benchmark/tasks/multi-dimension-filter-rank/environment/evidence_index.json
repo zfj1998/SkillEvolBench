@@ -1,0 +1,150 @@
+[
+  {
+    "source_id": "M01",
+    "supported_concepts": [
+      "ai",
+      "medical diagnosis",
+      "skin cancer",
+      "clinical validation"
+    ],
+    "source_type": "peer_reviewed_study",
+    "evidence_strength": "high",
+    "grounding_note": "Clinical image classification study directly about diagnostic performance for skin cancer.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "M02",
+    "supported_concepts": [
+      "ai",
+      "medical diagnosis",
+      "diabetic retinopathy",
+      "validation"
+    ],
+    "source_type": "peer_reviewed_study",
+    "evidence_strength": "high",
+    "grounding_note": "Large validation study for AI-based diabetic retinopathy detection with clinical datasets.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "M03",
+    "supported_concepts": [
+      "ai",
+      "medical diagnosis",
+      "screening",
+      "diabetic retinopathy"
+    ],
+    "source_type": "editorial",
+    "evidence_strength": "medium",
+    "grounding_note": "Diagnosis-focused editorial discussing why AI screening for diabetic retinopathy matters clinically.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "M04",
+    "supported_concepts": [
+      "ai",
+      "medical diagnosis",
+      "regulation",
+      "devices"
+    ],
+    "source_type": "regulatory_reference",
+    "evidence_strength": "medium",
+    "grounding_note": "Regulatory overview tracking FDA-authorized AI-enabled medical devices, many in diagnostic workflows.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "M05",
+    "supported_concepts": [
+      "ai",
+      "medicine",
+      "healthcare",
+      "medical devices"
+    ],
+    "source_type": "research_report",
+    "evidence_strength": "medium",
+    "grounding_note": "Broad but current summary of AI use in science and medicine, including FDA-authorized AI-enabled devices.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "M06",
+    "supported_concepts": [
+      "ai",
+      "healthcare",
+      "ethics",
+      "governance"
+    ],
+    "source_type": "policy_report",
+    "evidence_strength": "medium",
+    "grounding_note": "Healthcare-wide AI governance guidance; relevant to clinical AI but not tightly focused on diagnosis.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "M07",
+    "supported_concepts": [
+      "ai",
+      "business adoption",
+      "healthcare"
+    ],
+    "source_type": "industry_survey",
+    "evidence_strength": "medium",
+    "grounding_note": "Cross-industry survey about AI adoption and value creation; relevant to healthcare strategy but not diagnostic practice.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "M08",
+    "supported_concepts": [
+      "ai",
+      "clinical care",
+      "implementation"
+    ],
+    "source_type": "editorial",
+    "evidence_strength": "medium",
+    "grounding_note": "Broader clinical translation discussion; closer to implementation than to specific diagnosis tasks.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "M09",
+    "supported_concepts": [
+      "medical diagnosis",
+      "patient safety"
+    ],
+    "source_type": "consensus_report",
+    "evidence_strength": "medium",
+    "grounding_note": "Foundational report on diagnosis quality and diagnostic error, but not about AI methods.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "M10",
+    "supported_concepts": [
+      "medical diagnosis",
+      "automation",
+      "diabetic retinopathy"
+    ],
+    "source_type": "editorial",
+    "evidence_strength": "medium",
+    "grounding_note": "Close to diagnosis, but more a commentary on automation trade-offs than a primary validation study.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "M11",
+    "supported_concepts": [
+      "renewables",
+      "energy"
+    ],
+    "source_type": "energy_report",
+    "evidence_strength": "high",
+    "grounding_note": "Authoritative but unrelated to medical diagnosis; included as an irrelevant source.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "M12",
+    "supported_concepts": [
+      "ai",
+      "economy",
+      "investment"
+    ],
+    "source_type": "research_report",
+    "evidence_strength": "high",
+    "grounding_note": "Current AI macro trends and investment data, but not a medical diagnosis source.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  }
+]

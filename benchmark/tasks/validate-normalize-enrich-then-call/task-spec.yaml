@@ -1,0 +1,28 @@
+schema_version: '1.0'
+task_id: E2-LS1-T6
+task_slug: validate-normalize-enrich-then-call
+environment_id: E2
+family_id: E2-LS1
+latent_skill_id: E2-LS1.pre-call-parameter-validation
+task_index: 6
+role: composition
+phase: evaluation
+within_family_difficulty_rank: 6
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E2-LS1.pre-call-parameter-validation
+required_skills:
+- E2-LS1.pre-call-parameter-validation
+- E2-LS5.response-validation-fallback
+required_skill_compose_order:
+- E2-LS1.pre-call-parameter-validation
+- E2-LS5.response-validation-fallback
+composition_type: cross_family
+trap_types: []
+domain_group: tool_api_orchestration
+review_notes:
+- 'composition_note: validate-normalize-enrich-then-call (validation + fallback)'

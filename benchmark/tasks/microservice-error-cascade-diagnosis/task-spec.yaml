@@ -1,0 +1,31 @@
+schema_version: '1.0'
+task_id: E1-LS1-T6
+task_slug: microservice-error-cascade-diagnosis
+environment_id: E1
+family_id: E1-LS1
+latent_skill_id: E1-LS1.systematic-error-diagnosis
+task_index: 6
+role: composition
+phase: evaluation
+within_family_difficulty_rank: 6
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E1-LS1.systematic-error-diagnosis
+required_skills:
+- E1-LS1.systematic-error-diagnosis
+- E1-LS3.safe-refactoring
+- E1-LS4.multi-file-bug-fix
+required_skill_compose_order:
+- E1-LS1.systematic-error-diagnosis
+- E1-LS4.multi-file-bug-fix
+- E1-LS3.safe-refactoring
+composition_type: cross_family
+trap_types: []
+domain_group: code_debugging
+review_notes:
+- 'composition_note: diagnosis -> multi-file-fix -> safe-refactoring (cascade error
+  chain)'

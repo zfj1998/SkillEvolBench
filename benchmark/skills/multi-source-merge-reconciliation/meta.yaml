@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E4-LS5
+environment_id: E4
+latent_skill_id: E4-LS5.multi-source-merge-reconciliation
+slug: multi-source-merge-reconciliation
+name: multi-source-merge-reconciliation
+description: Merge flat data from 2-3 document sources into a single master document using exact key matching. Use this skill when records from multiple sources need to be combined by a shared identifier, duplicate entities need to be unified, conflicting field values need to be flagged, and a source-priority rule should decide which value is kept in the merged output. Focus on exact-key matching across 2-3 sources with flat data structures.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E4-LS5-T1
+- E4-LS5-T2
+- E4-LS5-T3
+- E4-LS5-T4
+- E4-LS5-T5
+- E4-LS5-T6
+gap_1_summary: 'Fuzzy entity matching across sources: the curated skill uses exact key match. Bob / Robert / Bobby / Mr. Robertson are the same person; CRM records use ''Bob R.'' and the HR system uses ''Robert L. Robinson''. Match on a normalized canonical form with a confidence threshold, and surface low-confidence merges for review.'
+gap_2_summary: 'Nested-field conflicts: the curated skill only compares top-level fields. Two sources may agree on `name` and `email` but disagree on `address.street_number` — that conflict is buried inside a sub-object. Walk the full structure and report conflicts at any depth, not just at the root.'

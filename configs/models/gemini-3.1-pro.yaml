@@ -1,0 +1,16 @@
+# Model preset: Gemini 3.1 Pro via Gemini CLI direct.
+name: gemini-3.1-pro
+short_id: gemini-3-1-pro
+provider: gemini
+harbor_agent_name: gemini-cli
+agent_model_name: google/gemini-3.1-pro-preview
+
+agent_env:
+  # GEMINI_API_KEY is already in .harbor-agents.env -- we don't override.
+  # GeminiCli auto-passthroughs it. Setting here is a no-op safety net.
+  GEMINI_CLI_TRUST_WORKSPACE: "true"
+
+# Host-side LiteLLMClient routing (Gemini API direct):
+host_litellm:
+  model: gemini/gemini-3.1-pro-preview
+  api_key_env: GEMINI_API_KEY

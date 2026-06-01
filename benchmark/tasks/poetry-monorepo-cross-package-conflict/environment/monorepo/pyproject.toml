@@ -1,0 +1,6 @@
+[tool.task_poetry]
+name = "monorepo-root"
+version = "0.1.0"
+workspace = ["packages/core", "packages/api", "packages/worker"]
+default_package = "worker-pkg"
+python = ">=3.10,<3.13"

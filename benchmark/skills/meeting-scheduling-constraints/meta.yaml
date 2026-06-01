@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E6-LS4
+environment_id: E6
+latent_skill_id: E6-LS4.meeting-scheduling-constraints
+slug: meeting-scheduling-constraints
+name: meeting-scheduling-constraints
+description: Find a common meeting time for 2-3 participants across 2 time zones using fixed UTC offsets. Use this skill when the task is to list participants and time zones, convert business-hour availability into UTC, find the overlapping UTC range, convert that overlap back into local times, and suggest a specific meeting time within the overlap. Focus on scheduling with fixed UTC offsets and standard business hours.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E6-LS4-T1
+- E6-LS4-T2
+- E6-LS4-T3
+- E6-LS4-T4
+- E6-LS4-T5
+- E6-LS4-T6
+gap_1_summary: 'Daylight Saving Time: the curated skill uses fixed UTC offsets. Across the DST boundary, the offset shifts by an hour and a meeting that was 9am EST becomes 9am EDT but at a different UTC time. Use timezone-aware libraries (`zoneinfo`, `pytz`) instead of fixed offsets, and re-resolve every recurring meeting after a DST transition.'
+gap_2_summary: 'Soft-constraint optimization: the curated skill only handles hard constraints (busy / available). Real preferences are soft — ''morning is better'', ''no Fridays after 3pm'', ''avoid the day before a deadline'' — and a good scheduler picks the best feasible time, not just any feasible time. Score candidate slots against the soft constraints and return the highest-scoring valid one.'

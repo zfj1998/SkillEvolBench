@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E2-LS4
+environment_id: E2
+latent_skill_id: E2-LS4.multi-step-orchestration
+slug: multi-step-orchestration
+name: multi-step-orchestration
+description: Chain two API calls into a simple workflow where the output of the first call is used as input for the second call. Use this skill when a request pattern looks like authenticate then fetch, look up an ID then retrieve details, or any other two-step sequence where Call B depends directly on a value extracted from Call A. Focus on simple two-step API chains only.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E2-LS4-T1
+- E2-LS4-T2
+- E2-LS4-T3
+- E2-LS4-T4
+- E2-LS4-T5
+- E2-LS4-T6
+gap_1_summary: 'Conditional branches: the curated skill teaches linear A→B→C pipelines. Real workflows have decision points: Step 2''s result determines whether Step 3 calls X or Y, with different downstream chains. Model the pipeline as a directed graph with explicit branch conditions, not as a single sequence.'
+gap_2_summary: 'Asynchronous polling: the curated skill only handles synchronous chains. The ''POST creates a task → poll status until done → GET the final result'' pattern is everywhere in modern APIs. Build poll loops with timeout, backoff, and a clear terminal condition; never block forever.'

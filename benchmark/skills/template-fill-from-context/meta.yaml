@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E4-LS3
+environment_id: E4
+latent_skill_id: E4-LS3.template-fill-from-context
+slug: template-fill-from-context
+name: template-fill-from-context
+description: Fill a template document using information found in one or two context documents. Use this skill when a template contains blank fields or placeholders and the task is to locate matching information in surrounding context, insert it into the template, and return a completed version. Focus on straightforward fill-from-context work with one template, one or two context documents, simple field-name matching, and basic output review.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E4-LS3-T1
+- E4-LS3-T2
+- E4-LS3-T3
+- E4-LS3-T4
+- E4-LS3-T5
+- E4-LS3-T6
+gap_1_summary: 'Inferred fills, not just exact matches: the curated skill only does literal lookup. The template asks for `total_budget` but the source has line items that need to be summed. Treat fills as a small computation: locate the relevant context, then derive the answer (sum, max, latest, count) before inserting.'
+gap_2_summary: 'Multi-source conflicts: the curated skill assumes each field has one source. When two source documents disagree on the same field, you cannot silently pick one. Detect conflicts, surface both values with their sources, and require a resolution rule.'

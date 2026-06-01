@@ -1,0 +1,225 @@
+From sam.rivera@harborworks.example 2026-04-23T09:00:00-04:00
+Message-ID: <email_001@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Sam Rivera <sam.rivera@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: URGENT: Production checkout down
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Checkout error rate is above 70%. Incident bridge is open and customer orders are failing.
+
+From nora.schmidt@harborworks.example 2026-04-23T09:00:00-04:00
+Message-ID: <email_002@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Nora Schmidt <nora.schmidt@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: CRITICAL: Security breach investigation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Okta alerted on impossible-travel admin login. Need immediate review and containment.
+
+From casey.holt@harborworks.example 2026-04-23T09:00:00-04:00
+Message-ID: <email_003@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Casey Holt <casey.holt@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: Action required by EOD: renewal redlines
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Northstar legal needs our position by end of day to keep signature on track.
+
+From devin.brooks@harborworks.example 2026-04-23T09:00:00-04:00
+Message-ID: <email_004@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Devin Brooks <devin.brooks@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: Important: Q3 budget approval
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Please approve the Q3 forecast package today so finance can close the board deck.
+
+--- forwarded context from last quarter ---
+Subject: URGENT production down retro
+This quote is historical background only and is not the current request.
+
+From taylor.kim@harborworks.example 2026-04-23T09:00:00-04:00
+Message-ID: <email_005@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Taylor Kim <taylor.kim@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: Please review: launch deadline Friday
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+The launch checklist needs your review before Friday sign-off.
+
+Note: this is not urgent like the old checkout incident; the explicit ask is Friday review.
+
+From jordan.lee@harborworks.example 2026-04-23T09:00:00-04:00
+Message-ID: <email_006@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Jordan Lee <jordan.lee@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: Important customer renewal context
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Sales needs your read on renewal risk before tomorrow's customer call.
+
+From priya.nair@harborworks.example 2026-04-23T09:00:00-04:00
+Message-ID: <email_007@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Priya Nair <priya.nair@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: Prioritize API migration note
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Please prioritize the migration note for the engineering staff update.
+
+From morgan.wells@harborworks.example 2026-04-23T09:00:00-04:00
+Message-ID: <email_008@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Morgan Wells <morgan.wells@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: Important: analyst quote approval
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Can you approve this quote for the analyst briefing?
+
+From taylor.kim@harborworks.example 2026-04-23T08:15:00-04:00
+Message-ID: <email_09@mail.harborworks.example>
+Date: 2026-04-23T08:15:00-04:00
+From: Taylor Kim <taylor.kim@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: FYI: updated timeline notes #9
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Sharing for awareness. No immediate action is required, but it may be useful background this week.
+
+From taylor.kim@harborworks.example 2026-04-23T09:15:00-04:00
+Message-ID: <email_10@mail.harborworks.example>
+Date: 2026-04-23T09:15:00-04:00
+From: Taylor Kim <taylor.kim@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: FYI: updated timeline notes #10
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Sharing for awareness. No immediate action is required, but it may be useful background this week.
+
+From taylor.kim@harborworks.example 2026-04-23T10:15:00-04:00
+Message-ID: <email_11@mail.harborworks.example>
+Date: 2026-04-23T10:15:00-04:00
+From: Taylor Kim <taylor.kim@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: FYI: updated timeline notes #11
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Sharing for awareness. No immediate action is required, but it may be useful background this week.
+
+From taylor.kim@harborworks.example 2026-04-23T11:15:00-04:00
+Message-ID: <email_12@mail.harborworks.example>
+Date: 2026-04-23T11:15:00-04:00
+From: Taylor Kim <taylor.kim@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: FYI: updated timeline notes #12
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Sharing for awareness. No immediate action is required, but it may be useful background this week.
+
+From taylor.kim@harborworks.example 2026-04-23T12:15:00-04:00
+Message-ID: <email_13@mail.harborworks.example>
+Date: 2026-04-23T12:15:00-04:00
+From: Taylor Kim <taylor.kim@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: FYI: updated timeline notes #13
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Sharing for awareness. No immediate action is required, but it may be useful background this week.
+
+From taylor.kim@harborworks.example 2026-04-23T13:15:00-04:00
+Message-ID: <email_14@mail.harborworks.example>
+Date: 2026-04-23T13:15:00-04:00
+From: Taylor Kim <taylor.kim@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: FYI: updated timeline notes #14
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Sharing for awareness. No immediate action is required, but it may be useful background this week.
+
+From taylor.kim@harborworks.example 2026-04-23T14:15:00-04:00
+Message-ID: <email_15@mail.harborworks.example>
+Date: 2026-04-23T14:15:00-04:00
+From: Taylor Kim <taylor.kim@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: FYI: updated timeline notes #15
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Sharing for awareness. No immediate action is required, but it may be useful background this week.
+
+From digest@saasweekly.example 2026-04-23T15:15:00-04:00
+Message-ID: <email_16@mail.harborworks.example>
+Date: 2026-04-23T15:15:00-04:00
+From: SaaS Weekly <digest@saasweekly.example>
+To: alex.morgan@harborworks.example
+Subject: Newsletter: team digest and office notes #16
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Low-priority digest. Read when convenient.
+
+From digest@saasweekly.example 2026-04-23T16:15:00-04:00
+Message-ID: <email_17@mail.harborworks.example>
+Date: 2026-04-23T16:15:00-04:00
+From: SaaS Weekly <digest@saasweekly.example>
+To: alex.morgan@harborworks.example
+Subject: Newsletter: team digest and office notes #17
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Low-priority digest. Read when convenient.
+
+From digest@saasweekly.example 2026-04-23T08:15:00-04:00
+Message-ID: <email_18@mail.harborworks.example>
+Date: 2026-04-23T08:15:00-04:00
+From: SaaS Weekly <digest@saasweekly.example>
+To: alex.morgan@harborworks.example
+Subject: Newsletter: team digest and office notes #18
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Low-priority digest. Read when convenient.
+
+From digest@saasweekly.example 2026-04-23T09:15:00-04:00
+Message-ID: <email_19@mail.harborworks.example>
+Date: 2026-04-23T09:15:00-04:00
+From: SaaS Weekly <digest@saasweekly.example>
+To: alex.morgan@harborworks.example
+Subject: Newsletter: team digest and office notes #19
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Low-priority digest. Read when convenient.
+
+From digest@saasweekly.example 2026-04-23T10:15:00-04:00
+Message-ID: <email_20@mail.harborworks.example>
+Date: 2026-04-23T10:15:00-04:00
+From: SaaS Weekly <digest@saasweekly.example>
+To: alex.morgan@harborworks.example
+Subject: Newsletter: team digest and office notes #20
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Low-priority digest. Read when convenient.

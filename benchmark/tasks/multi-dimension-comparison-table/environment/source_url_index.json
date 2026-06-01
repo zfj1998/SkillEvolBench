@@ -1,0 +1,122 @@
+[
+  {
+    "id": "C01",
+    "title": "Salesforce Sales Pricing",
+    "publisher": "Salesforce",
+    "year": 2026,
+    "url": "https://www.salesforce.com/sales/pricing/",
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "tags": []
+  },
+  {
+    "id": "C02",
+    "title": "HubSpot Sales Hub pricing guide",
+    "publisher": "HubSpot",
+    "year": 2026,
+    "url": "https://blog.hubspot.com/sales/hubspot-sales-hub-pricing",
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "tags": []
+  },
+  {
+    "id": "C03",
+    "title": "Trust and Compliance Documentation",
+    "publisher": "Salesforce",
+    "year": 2026,
+    "url": "https://www.salesforce.com/company/legal/trust-and-compliance-documentation/",
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "tags": []
+  },
+  {
+    "id": "C04",
+    "title": "SOC 2 documentation on Salesforce compliance site",
+    "publisher": "Salesforce",
+    "year": 2026,
+    "url": "https://compliance.salesforce.com/en/categories/soc-2",
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "tags": []
+  },
+  {
+    "id": "C05",
+    "title": "HubSpot cloud infrastructure and data hosting FAQ",
+    "publisher": "HubSpot",
+    "year": 2025,
+    "url": "https://knowledge.hubspot.com/account-security/hubspot-cloud-infrastructure-and-data-hosting-frequently-asked-questions?hsSkipCache=true",
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "tags": []
+  },
+  {
+    "id": "C06",
+    "title": "Salesforce AppExchange homepage announcement",
+    "publisher": "Salesforce",
+    "year": 2022,
+    "url": "https://www.salesforce.com/news/stories/salesforce-launches-intelligent-appexchange-homepage-with-easy-app-discovery/",
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "tags": []
+  },
+  {
+    "id": "C07",
+    "title": "What is Salesforce AppExchange?",
+    "publisher": "Salesforce",
+    "year": 2025,
+    "url": "https://www.salesforce.com/eu/solutions/appexchange/faq/",
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "tags": []
+  },
+  {
+    "id": "C08",
+    "title": "HubSpot Marketplace apps",
+    "publisher": "HubSpot",
+    "year": 2026,
+    "url": "https://ecosystem.hubspot.com/marketplace/apps",
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "tags": []
+  },
+  {
+    "id": "C09",
+    "title": "HubSpot Marketplace hits 2,000+ apps and 2.5M+ installs",
+    "publisher": "HubSpot Community",
+    "year": 2025,
+    "url": "https://community.hubspot.com/t5/Releases-and-Updates/2-000-Apps-2-5M-Active-Installs/ba-p/1209474",
+    "source_type": "vendor_community",
+    "evidence_strength": "medium",
+    "tags": []
+  },
+  {
+    "id": "C10",
+    "title": "Salesforce CRM review",
+    "publisher": "TechRadar",
+    "year": 2026,
+    "url": "https://www.techradar.com/pro/salesforce-crm-review",
+    "source_type": "independent_review",
+    "evidence_strength": "medium",
+    "tags": []
+  },
+  {
+    "id": "C11",
+    "title": "HubSpot CRM review",
+    "publisher": "TechRadar",
+    "year": 2026,
+    "url": "https://www.techradar.com/reviews/hubspot-crm-review",
+    "source_type": "independent_review",
+    "evidence_strength": "medium",
+    "tags": []
+  },
+  {
+    "id": "C12",
+    "title": "Install apps in the HubSpot Marketplace",
+    "publisher": "HubSpot",
+    "year": 2026,
+    "url": "https://knowledge.hubspot.com/marketplace/install-apps-in-the-hubspot-marketplace",
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "tags": []
+  }
+]

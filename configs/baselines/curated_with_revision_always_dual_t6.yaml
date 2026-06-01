@@ -1,0 +1,33 @@
+# Ablation: curated_with_revision_always + dual-T6 retrieval evaluation.
+# Path-B mirror of selfgen_experience_always_dual_t6.
+#
+# Each T6 runs twice: PRIMARY (embedding, same-env scope) +
+# SHADOW (OracleRetriever from task spec required_skills). Library is
+# frozen at T4-T6 so both trials of the same T6 task see identical state
+# -- the uplift t6_oracle_uplift is a paired retrieval-only delta.
+name: curated_with_revision_always_dual_t6
+description: Curated v0 + always trigger + dual-T6 (primary embedding + shadow oracle).
+track: path-b
+
+skill_init: curated
+allow_self_gen_induction: false
+allow_zero_shot_creation: false
+allow_curated_inject: true
+
+allow_revision: true
+allow_retirement: false
+
+use_skill_library: true
+skill_retrieval_k: 8
+
+feedback_level: process
+feedback_to_skill_text: true
+
+default_strategy: chain
+revision_trigger: always
+max_revisions_per_skill: 8
+
+dual_t6_retrieval: true
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5

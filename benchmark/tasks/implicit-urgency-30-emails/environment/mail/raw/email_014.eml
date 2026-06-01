@@ -1,0 +1,9 @@
+Message-ID: <email_014@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Nora Schmidt <nora.schmidt@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: Certificate inventory note
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+The production database SSL certificate shows an expiration date of tomorrow at 06:00 UTC. The vendor dashboard is green, but the PEM bundle in prod is still the old one.

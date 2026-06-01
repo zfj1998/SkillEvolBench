@@ -1,0 +1,77 @@
+{
+  "title": "AI medical diagnosis executive dossier",
+  "sources": [
+    "MED_NATURE_SKIN",
+    "MED_JAMA_DR",
+    "MED_FDA_AI",
+    "MED_WHO_ETHICS",
+    "MED_NASEM_DIAG"
+  ],
+  "sections": [
+    {
+      "id": "background_ai_growth",
+      "order": 1,
+      "priority": 1,
+      "summary": "AI tools are expanding across healthcare, but adoption should be judged against clinical validation and governance evidence.",
+      "tags": [
+        "background"
+      ]
+    },
+    {
+      "id": "finding_skin",
+      "order": 2,
+      "priority": 5,
+      "summary": "Nature's skin-cancer study shows image-classification promise while staying within visual dermatology tasks.",
+      "tags": [
+        "finding",
+        "medical_ai"
+      ]
+    },
+    {
+      "id": "finding_retina",
+      "order": 3,
+      "priority": 5,
+      "summary": "The JAMA diabetic-retinopathy validation study supports retinal-fundus-photo screening rather than broad clinical diagnosis.",
+      "tags": [
+        "finding",
+        "medical_ai"
+      ]
+    },
+    {
+      "id": "governance_fda",
+      "order": 4,
+      "priority": 4,
+      "summary": "FDA's AI-enabled device list provides regulatory transparency for authorized devices in the United States.",
+      "tags": [
+        "governance"
+      ]
+    },
+    {
+      "id": "ethics_who",
+      "order": 5,
+      "priority": 4,
+      "summary": "WHO guidance stresses ethics, human rights, accountability, and governance for AI in health.",
+      "tags": [
+        "risk"
+      ]
+    },
+    {
+      "id": "recommendation",
+      "order": 6,
+      "priority": 5,
+      "summary": "Recommendation: prioritize validated, scoped diagnostic workflows and require post-deployment monitoring before scaling.",
+      "tags": [
+        "recommendation"
+      ]
+    },
+    {
+      "id": "appendix_methods",
+      "order": 7,
+      "priority": 0,
+      "summary": "Appendix details include source collection notes and background definitions.",
+      "tags": [
+        "appendix"
+      ]
+    }
+  ]
+}

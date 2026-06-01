@@ -1,0 +1,56 @@
+{
+  "claims": [
+    {
+      "id": "CL1",
+      "claim": "AI funding grew 77% so the market is already mature and low-risk."
+    },
+    {
+      "id": "CL2",
+      "claim": "Our NPS is twice the industry average, proving superior customer satisfaction."
+    },
+    {
+      "id": "CL3",
+      "claim": "Our costs fell 20%, so we became structurally more efficient."
+    },
+    {
+      "id": "CL4",
+      "claim": "We outgrew all competitors we compared ourselves against."
+    },
+    {
+      "id": "CL5",
+      "claim": "Our 99.9% uptime shows sustained operational excellence."
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "CB Insights State of AI Q2'24",
+      "url": "https://www.cbinsights.com/research/report/ai-trends-q2-2024/",
+      "notes": "Quarterly AI funding hit $23.2B after jumping from a lower quarter; large deals drove the increase."
+    },
+    {
+      "id": "S2",
+      "title": "Stanford AI Index 2025",
+      "url": "https://hai.stanford.edu/ai-index/2025-ai-index-report",
+      "notes": "Provides broader annual AI investment context rather than just one quarter."
+    },
+    {
+      "id": "S3",
+      "title": "CPI Inflation Index",
+      "url": "https://www.bls.gov/cpi/",
+      "notes": "Baseline for distinguishing nominal from real cost changes."
+    },
+    {
+      "id": "S4",
+      "title": "HubSpot Marketplace post",
+      "url": "https://community.hubspot.com/t5/Releases-and-Updates/2-000-Apps-2-5M-Active-Installs/ba-p/1209474",
+      "notes": "Vendor-operated community announcement, not a neutral industry benchmark."
+    },
+    {
+      "id": "S5",
+      "title": "HubSpot marketplace docs",
+      "url": "https://knowledge.hubspot.com/marketplace/install-apps-in-the-hubspot-marketplace",
+      "notes": "Documents review process but not competitive standing."
+    }
+  ]
+}

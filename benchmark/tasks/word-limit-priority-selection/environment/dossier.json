@@ -1,0 +1,72 @@
+{
+  "title": "Remote work evidence dossier",
+  "sources": [
+    "REMOTE_NATURE_HYBRID",
+    "REMOTE_STANFORD_EVOLUTION"
+  ],
+  "sections": [
+    {
+      "id": "background_history",
+      "order": 1,
+      "priority": 0,
+      "summary": "Remote work expanded after the pandemic and survey methods vary.",
+      "tags": [
+        "background"
+      ]
+    },
+    {
+      "id": "background_defs",
+      "order": 2,
+      "priority": 0,
+      "summary": "Hybrid and fully remote arrangements are often conflated in public debate.",
+      "tags": [
+        "background"
+      ]
+    },
+    {
+      "id": "method",
+      "order": 3,
+      "priority": 2,
+      "summary": "The evidence base includes randomized field experiments and working-paper syntheses.",
+      "tags": [
+        "method"
+      ]
+    },
+    {
+      "id": "finding_retention",
+      "order": 4,
+      "priority": 5,
+      "summary": "The Nature Trip.com trial found hybrid work reduced quit rates by roughly one-third without damaging performance.",
+      "tags": [
+        "finding"
+      ]
+    },
+    {
+      "id": "finding_generalization",
+      "order": 5,
+      "priority": 5,
+      "summary": "Stanford SIEPR work distinguishes hybrid schedules from fully remote work and cautions that outcomes vary by task and arrangement.",
+      "tags": [
+        "finding"
+      ]
+    },
+    {
+      "id": "recommendation",
+      "order": 6,
+      "priority": 5,
+      "summary": "Recommendation: treat hybrid work as a retention tool with performance monitoring, not as proof of universal productivity gains.",
+      "tags": [
+        "recommendation"
+      ]
+    },
+    {
+      "id": "appendix_survey",
+      "order": 7,
+      "priority": 0,
+      "summary": "Appendix survey tables list demographic details and survey harmonization notes.",
+      "tags": [
+        "appendix"
+      ]
+    }
+  ]
+}

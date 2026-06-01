@@ -1,0 +1,24 @@
+schema_version: '1.0'
+task_id: E5-LS2-T5
+task_slug: cherry-pick-3-of-10-trap
+environment_id: E5
+family_id: E5-LS2
+latent_skill_id: E5-LS2.evidence-grounded-comparison
+task_index: 5
+role: adversarial
+phase: evaluation
+within_family_difficulty_rank: 5
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E5-LS2.evidence-grounded-comparison
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types:
+- gap1-selective-comparison
+domain_group: research_synthesis
+review_notes: []

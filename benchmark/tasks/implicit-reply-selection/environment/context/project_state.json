@@ -1,0 +1,14 @@
+{
+  "release_note": {
+    "status": "approved"
+  },
+  "board_appendix": {
+    "budget": "$4.2M"
+  },
+  "launch_support": {
+    "coverage_window": "08:00-20:00"
+  },
+  "api_freeze": {
+    "decision": "freeze"
+  }
+}

@@ -1,0 +1,23 @@
+schema_version: '1.0'
+task_id: E5-LS1-T2
+task_slug: distinguish-opinion-from-evidence
+environment_id: E5
+family_id: E5-LS1
+latent_skill_id: E5-LS1.multi-source-search-filter
+task_index: 2
+role: enriched
+phase: learning
+within_family_difficulty_rank: 2
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E5-LS1.multi-source-search-filter
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types: []
+domain_group: research_synthesis
+review_notes: []

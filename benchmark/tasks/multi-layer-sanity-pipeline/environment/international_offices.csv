@@ -1,0 +1,6 @@
+office_id,city,monthly_cost,currency,status
+1,München,50000,€,active
+2,São Paulo,75000,R$,active
+3,Zürich,120000,CHF,active
+4,Malmö,40000,SEK,active
+5,Kraków,35000,PLN,completed

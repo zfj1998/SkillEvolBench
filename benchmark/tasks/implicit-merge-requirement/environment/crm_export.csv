@@ -1,0 +1,501 @@
+id,first_name,last_name,email,phone,city,company,tag
+C0129,Craig,Wright,craig128@corp.io,555-9884,Boston,Company56,customer
+C0063,Maria,Harris,maria62@biz.net,555-2313,Chicago,Company43,lead
+C0842,Petra,Turner,petra841@corp.io,555-1375,Chicago,Company68,vip
+C0288,Lily,Carter,lily287@gmail.com,555-3174,Denver,Company132,vip
+C0601,Alice,Smith,alice600@acme.com,555-9214,San Francisco,Company69,vip
+C0824,Xena,Hall,xena823@gmail.com,555-4639,Boston,Company1,prospect
+C0325,Yuri,Allen,yuri324@yahoo.com,555-1877,New York,Company144,lead
+C0383,Glen,Green,glen382@acme.com,555-6300,New York,Company191,lead
+C0252,Bob,Jones,bob251@gmail.com,555-6062,Austin,Company98,lead
+C0685,Igor,Baker,igor684@gmail.com,555-1195,Austin,Company162,prospect
+C0698,Walt,Collins,walt697@acme.com,555-5330,New York,Company190,vip
+C0511,Karen,Jackson,karen510@yahoo.com,555-8152,Miami,Company138,prospect
+C0080,Dana,Lopez,dana79@yahoo.com,555-8940,Austin,Company184,vip
+C0583,Glen,Green,glen582@gmail.com,555-8185,Miami,Company37,customer
+C0792,Petra,Turner,petra791@biz.net,555-6515,Chicago,Company63,vip
+C0846,Ula,Evans,ula845@biz.net,555-2434,Boston,Company60,customer
+C0312,Leo,White,leo311@yahoo.com,555-5487,Austin,Company28,customer
+C0123,Wendy,Walker,wendy122@corp.io,555-8502,San Francisco,Company22,vip
+C0226,Zara,Young,zara225@gmail.com,555-3993,Austin,Company34,prospect
+C0566,Pete,Garcia,pete565@gmail.com,555-5643,New York,Company131,lead
+C0241,Owen,Roberts,owen240@corp.io,555-3834,Austin,Company160,customer
+C0128,Beth,King,beth127@acme.com,555-9256,New York,Company114,customer
+C0400,Yale,Sanchez,yale399@acme.com,555-8690,Chicago,Company185,vip
+C0106,Frank,Wilson,frank105@yahoo.com,555-2116,Seattle,Company117,lead
+C0450,Yale,Sanchez,yale449@yahoo.com,555-8556,San Francisco,Company57,prospect
+C0731,Evan,Hill,evan730@gmail.com,555-7916,San Francisco,Company170,customer
+C0095,Todd,Parker,todd94@yahoo.com,555-6628,Seattle,Company195,vip
+C0509,Iris,Anderson,iris508@yahoo.com,555-1690,Miami,Company195,prospect
+C0169,Sam,Clark,sam168@corp.io,555-4473,San Francisco,Company177,lead
+C0386,Jane,Gonzalez,jane385@acme.com,555-9770,San Francisco,Company34,vip
+C0668,Rachel,Robinson,rachel667@acme.com,555-1327,Chicago,Company138,lead
+C0781,Evan,Hill,evan780@acme.com,555-1833,San Francisco,Company54,prospect
+C0613,Maria,Harris,maria612@corp.io,555-3726,Boston,Company144,vip
+C0486,Jane,Gonzalez,jane485@acme.com,555-4661,Seattle,Company13,prospect
+C0250,Yale,Sanchez,yale249@gmail.com,555-1405,San Francisco,Company42,prospect
+C0557,Grace,Moore,grace556@corp.io,555-3859,Miami,Company150,prospect
+C0617,Quinn,Martinez,quinn616@corp.io,555-4070,Miami,Company189,prospect
+C0167,Quinn,Martinez,quinn166@acme.com,555-3905,Boston,Company146,prospect
+C0574,Xena,Hall,xena573@biz.net,555-3785,Denver,Company99,customer
+C0263,Maria,Harris,maria262@biz.net,555-9435,New York,Company55,lead
+C0559,Iris,Anderson,iris558@yahoo.com,555-3816,San Francisco,Company41,vip
+C0635,Igor,Baker,igor634@acme.com,555-8262,Austin,Company109,customer
+C0714,Nathan,Martin,nathan713@yahoo.com,555-8804,Austin,Company180,vip
+C0591,Owen,Roberts,owen590@corp.io,555-4778,Denver,Company184,vip
+C0556,Frank,Wilson,frank555@corp.io,555-1837,Austin,Company94,vip
+C0390,Nina,Perez,nina389@gmail.com,555-5399,Miami,Company154,lead
+C0289,Marc,Mitchell,marc288@acme.com,555-9542,Denver,Company200,lead
+C0195,Todd,Parker,todd194@acme.com,555-2770,New York,Company109,customer
+C0007,Grace,Moore,grace6@corp.io,555-6183,Denver,Company11,customer
+C0834,Hana,Adams,hana833@yahoo.com,555-9678,New York,Company55,lead
+C0156,Frank,Wilson,frank155@yahoo.com,555-7446,Boston,Company195,lead
+C0127,Andy,Hernandez,andy126@acme.com,555-1411,Austin,Company77,lead
+C0118,Rachel,Robinson,rachel117@corp.io,555-5640,Chicago,Company49,customer
+C0108,Henry,Taylor,henry107@yahoo.com,555-7717,Austin,Company109,vip
+C0496,Ula,Evans,ula495@yahoo.com,555-6707,Austin,Company18,customer
+C0634,Hana,Adams,hana633@corp.io,555-4627,Denver,Company9,lead
+C0666,Pete,Garcia,pete665@acme.com,555-5681,Chicago,Company154,vip
+C0234,Hana,Adams,hana233@acme.com,555-1268,Seattle,Company99,prospect
+C0475,Yuri,Allen,yuri474@yahoo.com,555-2478,Boston,Company20,lead
+C0102,Bob,Jones,bob101@corp.io,555-9552,New York,Company155,customer
+C0525,Yuri,Allen,yuri524@yahoo.com,555-4094,Seattle,Company142,lead
+C0609,Iris,Anderson,iris608@corp.io,555-6670,Seattle,Company199,customer
+C0405,Eve,Miller,eve404@biz.net,555-5907,Austin,Company102,vip
+C0500,Yale,Sanchez,yale499@gmail.com,555-2227,Chicago,Company71,lead
+C0223,Wendy,Walker,wendy222@gmail.com,555-9441,Boston,Company192,prospect
+C0151,Alice,Smith,alice150@yahoo.com,555-1255,Miami,Company52,lead
+C0042,Petra,Turner,petra41@yahoo.com,555-2640,Denver,Company103,prospect
+C0766,Pete,Garcia,pete765@biz.net,555-3100,Austin,Company157,vip
+C0165,Olivia,Thompson,olivia164@acme.com,555-7136,Chicago,Company2,prospect
+C0317,Quinn,Martinez,quinn316@acme.com,555-7274,Miami,Company198,customer
+C0205,Eve,Miller,eve204@gmail.com,555-3543,New York,Company79,customer
+C0069,Sam,Clark,sam68@acme.com,555-6356,New York,Company97,customer
+C0314,Nathan,Martin,nathan313@corp.io,555-3986,Austin,Company139,vip
+C0010,James,Thomas,james9@biz.net,555-8580,New York,Company92,prospect
+C0248,Walt,Collins,walt247@biz.net,555-9514,Miami,Company1,vip
+C0126,Zara,Young,zara125@yahoo.com,555-4112,San Francisco,Company158,vip
+C0374,Xena,Hall,xena373@corp.io,555-2544,Austin,Company125,customer
+C0318,Rachel,Robinson,rachel317@acme.com,555-9039,Austin,Company188,lead
+C0304,Dave,Davis,dave303@acme.com,555-8357,San Francisco,Company1,vip
+C0305,Eve,Miller,eve304@acme.com,555-7455,Seattle,Company62,customer
+C0340,Nina,Perez,nina339@corp.io,555-7272,Boston,Company116,lead
+C0585,Igor,Baker,igor584@yahoo.com,555-4697,New York,Company146,customer
+C0067,Quinn,Martinez,quinn66@acme.com,555-3025,Miami,Company110,vip
+C0307,Grace,Moore,grace306@gmail.com,555-6351,Boston,Company148,prospect
+C0590,Nina,Perez,nina589@gmail.com,555-5267,Austin,Company168,customer
+C0222,Victor,Lee,victor221@acme.com,555-1699,Austin,Company172,prospect
+C0616,Pete,Garcia,pete615@acme.com,555-2014,Miami,Company185,prospect
+C0675,Yuri,Allen,yuri674@acme.com,555-3817,Austin,Company165,lead
+C0808,Henry,Taylor,henry807@acme.com,555-7425,Seattle,Company182,lead
+C0435,Igor,Baker,igor434@yahoo.com,555-8271,Seattle,Company28,vip
+C0001,Alice,Smith,alice0@corp.io,555-7238,Austin,Company154,prospect
+C0146,Ula,Evans,ula145@corp.io,555-7289,San Francisco,Company89,vip
+C0273,Wendy,Walker,wendy272@acme.com,555-7401,Chicago,Company8,vip
+C0380,Dana,Lopez,dana379@yahoo.com,555-2807,Austin,Company183,lead
+C0203,Carol,Brown,carol202@acme.com,555-6150,Austin,Company97,customer
+C0459,Iris,Anderson,iris458@acme.com,555-8450,Chicago,Company168,lead
+C0533,Glen,Green,glen532@acme.com,555-6921,Austin,Company124,customer
+C0783,Glen,Green,glen782@yahoo.com,555-9286,Boston,Company60,customer
+C0671,Uma,Lewis,uma670@gmail.com,555-3463,Miami,Company66,customer
+C0492,Petra,Turner,petra491@gmail.com,555-2538,New York,Company94,prospect
+C0730,Dana,Lopez,dana729@acme.com,555-8238,Boston,Company142,customer
+C0056,Frank,Wilson,frank55@biz.net,555-3844,Boston,Company168,vip
+C0649,Xin,Stewart,xin648@yahoo.com,555-9958,New York,Company123,customer
+C0052,Bob,Jones,bob51@acme.com,555-9377,Austin,Company143,customer
+C0845,Todd,Parker,todd844@biz.net,555-6954,San Francisco,Company155,vip
+C0548,Walt,Collins,walt547@yahoo.com,555-4936,Boston,Company109,customer
+C0345,Todd,Parker,todd344@biz.net,555-1108,New York,Company109,lead
+C0190,Nina,Perez,nina189@acme.com,555-4995,Seattle,Company5,lead
+C0378,Beth,King,beth377@acme.com,555-1354,Austin,Company102,prospect
+C0422,Victor,Lee,victor421@yahoo.com,555-9574,Boston,Company170,customer
+C0055,Eve,Miller,eve54@acme.com,555-5513,Boston,Company19,prospect
+C0436,Jane,Gonzalez,jane435@corp.io,555-7654,Miami,Company135,lead
+C0432,Faye,Scott,faye431@corp.io,555-5205,Boston,Company36,prospect
+C0020,Tina,Rodriguez,tina19@yahoo.com,555-3910,Denver,Company38,prospect
+C0204,Dave,Davis,dave203@corp.io,555-3929,Chicago,Company182,vip
+C0505,Eve,Miller,eve504@yahoo.com,555-1847,Seattle,Company169,lead
+C0162,Leo,White,leo161@gmail.com,555-5097,Austin,Company45,vip
+C0013,Maria,Harris,maria12@yahoo.com,555-8761,Denver,Company21,lead
+C0399,Xin,Stewart,xin398@corp.io,555-8169,Chicago,Company138,customer
+C0392,Petra,Turner,petra391@acme.com,555-5735,San Francisco,Company14,vip
+C0138,Lily,Carter,lily137@gmail.com,555-8779,Denver,Company110,lead
+C0221,Uma,Lewis,uma220@acme.com,555-2248,Boston,Company45,customer
+C0711,Karen,Jackson,karen710@yahoo.com,555-2194,Austin,Company142,customer
+C0739,Marc,Mitchell,marc738@gmail.com,555-2676,Boston,Company175,vip
+C0453,Carol,Brown,carol452@gmail.com,555-5389,Austin,Company29,lead
+C0237,Kurt,Nelson,kurt236@corp.io,555-6717,Miami,Company44,customer
+C0258,Henry,Taylor,henry257@gmail.com,555-7543,Austin,Company132,customer
+C0381,Evan,Hill,evan380@gmail.com,555-7151,Austin,Company145,customer
+C0301,Alice,Smith,alice300@gmail.com,555-4747,Boston,Company131,lead
+C0152,Bob,Jones,bob151@corp.io,555-1051,Austin,Company187,vip
+C0425,Yuri,Allen,yuri424@yahoo.com,555-7501,Miami,Company74,customer
+C0064,Nathan,Martin,nathan63@acme.com,555-5145,Boston,Company151,vip
+C0558,Henry,Taylor,henry557@biz.net,555-6447,Miami,Company178,customer
+C0802,Bob,Jones,bob801@yahoo.com,555-3798,San Francisco,Company46,customer
+C0825,Yuri,Allen,yuri824@gmail.com,555-1784,San Francisco,Company71,lead
+C0456,Frank,Wilson,frank455@biz.net,555-4398,Miami,Company24,prospect
+C0466,Pete,Garcia,pete465@biz.net,555-8314,San Francisco,Company17,vip
+C0662,Leo,White,leo661@gmail.com,555-3677,Miami,Company116,lead
+C0431,Evan,Hill,evan430@corp.io,555-9359,Seattle,Company94,lead
+C0803,Carol,Brown,carol802@acme.com,555-2759,Seattle,Company158,lead
+C0394,Sasha,Campbell,sasha393@gmail.com,555-7314,Denver,Company7,customer
+C0567,Quinn,Martinez,quinn566@gmail.com,555-5597,Seattle,Company38,lead
+C0747,Vera,Edwards,vera746@corp.io,555-2095,Miami,Company191,lead
+C0157,Grace,Moore,grace156@yahoo.com,555-5656,Boston,Company179,prospect
+C0032,Faye,Scott,faye31@acme.com,555-7706,Chicago,Company73,lead
+C0589,Marc,Mitchell,marc588@gmail.com,555-3630,Miami,Company111,customer
+C0656,Frank,Wilson,frank655@yahoo.com,555-8895,Seattle,Company1,customer
+C0593,Rex,Phillips,rex592@yahoo.com,555-4696,Denver,Company98,lead
+C0552,Bob,Jones,bob551@yahoo.com,555-5603,Chicago,Company105,lead
+C0350,Yale,Sanchez,yale349@gmail.com,555-7533,San Francisco,Company83,prospect
+C0342,Petra,Turner,petra341@biz.net,555-3534,Miami,Company76,prospect
+C0726,Zara,Young,zara725@gmail.com,555-8868,Boston,Company108,prospect
+C0544,Sasha,Campbell,sasha543@biz.net,555-9320,San Francisco,Company156,prospect
+C0402,Bob,Jones,bob401@gmail.com,555-6115,San Francisco,Company91,customer
+C0657,Grace,Moore,grace656@acme.com,555-6247,Seattle,Company44,lead
+C0419,Sam,Clark,sam418@gmail.com,555-6712,Austin,Company194,prospect
+C0522,Victor,Lee,victor521@corp.io,555-1196,New York,Company104,customer
+C0355,Eve,Miller,eve354@gmail.com,555-1882,Denver,Company69,prospect
+C0099,Xin,Stewart,xin98@gmail.com,555-5477,Austin,Company17,vip
+C0551,Alice,Smith,alice550@acme.com,555-2769,San Francisco,Company87,vip
+C0377,Andy,Hernandez,andy376@corp.io,555-5190,San Francisco,Company150,prospect
+C0034,Hana,Adams,hana33@yahoo.com,555-6658,New York,Company171,customer
+C0395,Todd,Parker,todd394@acme.com,555-1693,Denver,Company118,prospect
+C0621,Uma,Lewis,uma620@biz.net,555-4829,Boston,Company103,prospect
+C0085,Igor,Baker,igor84@acme.com,555-6475,Miami,Company49,vip
+C0438,Lily,Carter,lily437@acme.com,555-5159,Boston,Company61,vip
+C0079,Craig,Wright,craig78@corp.io,555-2490,Boston,Company129,prospect
+C0261,Karen,Jackson,karen260@yahoo.com,555-3322,Denver,Company119,lead
+C0407,Grace,Moore,grace406@gmail.com,555-5089,New York,Company124,vip
+C0093,Rex,Phillips,rex92@acme.com,555-7148,Austin,Company138,prospect
+C0112,Leo,White,leo111@gmail.com,555-6075,Chicago,Company193,lead
+C0070,Tina,Rodriguez,tina69@biz.net,555-4713,Chicago,Company178,vip
+C0048,Walt,Collins,walt47@gmail.com,555-6402,Miami,Company19,customer
+C0578,Beth,King,beth577@biz.net,555-1688,Boston,Company45,vip
+C0326,Zara,Young,zara325@biz.net,555-9903,Austin,Company9,vip
+C0454,Dave,Davis,dave453@gmail.com,555-3631,Denver,Company27,prospect
+C0267,Quinn,Martinez,quinn266@yahoo.com,555-2239,Austin,Company137,lead
+C0306,Frank,Wilson,frank305@acme.com,555-2484,Chicago,Company149,vip
+C0830,Dana,Lopez,dana829@yahoo.com,555-2508,Boston,Company41,lead
+C0398,Walt,Collins,walt397@yahoo.com,555-7782,Miami,Company17,customer
+C0665,Olivia,Thompson,olivia664@biz.net,555-1369,Austin,Company151,lead
+C0568,Rachel,Robinson,rachel567@acme.com,555-1346,New York,Company99,prospect
+C0271,Uma,Lewis,uma270@biz.net,555-6259,Austin,Company70,customer
+C0442,Petra,Turner,petra441@yahoo.com,555-1027,Denver,Company85,prospect
+C0275,Yuri,Allen,yuri274@biz.net,555-5751,Miami,Company10,vip
+C0494,Sasha,Campbell,sasha493@acme.com,555-4298,Miami,Company46,vip
+C0270,Tina,Rodriguez,tina269@corp.io,555-7616,Chicago,Company3,customer
+C0132,Faye,Scott,faye131@yahoo.com,555-6694,Chicago,Company187,customer
+C0624,Xena,Hall,xena623@biz.net,555-8486,Seattle,Company97,customer
+C0385,Igor,Baker,igor384@yahoo.com,555-8207,Denver,Company99,vip
+C0625,Yuri,Allen,yuri624@biz.net,555-4472,Denver,Company113,customer
+C0040,Nina,Perez,nina39@gmail.com,555-6038,San Francisco,Company149,vip
+C0299,Xin,Stewart,xin298@yahoo.com,555-6632,Seattle,Company198,lead
+C0033,Glen,Green,glen32@biz.net,555-8209,Austin,Company98,customer
+C0458,Henry,Taylor,henry457@acme.com,555-6354,New York,Company124,customer
+C0293,Rex,Phillips,rex292@acme.com,555-3428,San Francisco,Company63,vip
+C0694,Sasha,Campbell,sasha693@acme.com,555-8839,Austin,Company101,vip
+C0297,Vera,Edwards,vera296@acme.com,555-2676,Boston,Company131,customer
+C0791,Owen,Roberts,owen790@acme.com,555-6903,Miami,Company189,prospect
+C0632,Faye,Scott,faye631@corp.io,555-4648,Boston,Company150,lead
+C0794,Sasha,Campbell,sasha793@biz.net,555-7548,Miami,Company169,lead
+C0160,James,Thomas,james159@corp.io,555-2300,Denver,Company182,lead
+C0489,Marc,Mitchell,marc488@corp.io,555-1095,San Francisco,Company17,customer
+C0228,Beth,King,beth227@yahoo.com,555-9479,New York,Company174,lead
+C0189,Marc,Mitchell,marc188@acme.com,555-8803,Boston,Company94,customer
+C0443,Rex,Phillips,rex442@gmail.com,555-5442,Boston,Company51,vip
+C0091,Owen,Roberts,owen90@gmail.com,555-1445,Boston,Company60,prospect
+C0482,Faye,Scott,faye481@yahoo.com,555-6810,Austin,Company31,customer
+C0178,Beth,King,beth177@yahoo.com,555-8921,Miami,Company119,prospect
+C0155,Eve,Miller,eve154@gmail.com,555-5941,New York,Company161,vip
+C0045,Todd,Parker,todd44@acme.com,555-5098,Austin,Company71,lead
+C0798,Walt,Collins,walt797@acme.com,555-2852,Miami,Company177,lead
+C0734,Hana,Adams,hana733@biz.net,555-5411,Seattle,Company139,lead
+C0524,Xena,Hall,xena523@yahoo.com,555-2946,New York,Company129,customer
+C0018,Rachel,Robinson,rachel17@gmail.com,555-3145,Chicago,Company156,lead
+C0782,Faye,Scott,faye781@yahoo.com,555-5306,Miami,Company4,prospect
+C0035,Igor,Baker,igor34@acme.com,555-4166,Chicago,Company164,customer
+C0209,Iris,Anderson,iris208@biz.net,555-2374,Chicago,Company1,prospect
+C0810,James,Thomas,james809@biz.net,555-6846,Seattle,Company140,prospect
+C0777,Andy,Hernandez,andy776@yahoo.com,555-1303,San Francisco,Company33,lead
+C0729,Craig,Wright,craig728@acme.com,555-1787,Chicago,Company78,customer
+C0527,Andy,Hernandez,andy526@biz.net,555-8202,Miami,Company85,vip
+C0762,Leo,White,leo761@acme.com,555-4996,San Francisco,Company179,customer
+C0716,Pete,Garcia,pete715@corp.io,555-1672,Austin,Company29,customer
+C0043,Rex,Phillips,rex42@acme.com,555-8550,Boston,Company33,prospect
+C0173,Wendy,Walker,wendy172@yahoo.com,555-6589,San Francisco,Company48,vip
+C0290,Nina,Perez,nina289@acme.com,555-4756,San Francisco,Company89,prospect
+C0718,Rachel,Robinson,rachel717@corp.io,555-8818,Miami,Company37,vip
+C0257,Grace,Moore,grace256@corp.io,555-3363,Austin,Company130,vip
+C0760,James,Thomas,james759@gmail.com,555-7261,Denver,Company55,customer
+C0193,Rex,Phillips,rex192@acme.com,555-5941,Miami,Company166,lead
+C0814,Nathan,Martin,nathan813@gmail.com,555-6151,Seattle,Company90,prospect
+C0843,Rex,Phillips,rex842@biz.net,555-1573,Boston,Company84,prospect
+C0627,Andy,Hernandez,andy626@gmail.com,555-6193,Boston,Company133,customer
+C0542,Petra,Turner,petra541@yahoo.com,555-9278,Miami,Company123,prospect
+C0719,Sam,Clark,sam718@biz.net,555-4501,Seattle,Company47,lead
+C0809,Iris,Anderson,iris808@acme.com,555-2027,Seattle,Company2,customer
+C0629,Craig,Wright,craig628@gmail.com,555-4535,San Francisco,Company45,customer
+C0722,Victor,Lee,victor721@acme.com,555-9553,Denver,Company186,prospect
+C0715,Olivia,Thompson,olivia714@corp.io,555-3288,Austin,Company72,prospect
+C0682,Faye,Scott,faye681@biz.net,555-2214,Austin,Company108,customer
+C0530,Dana,Lopez,dana529@yahoo.com,555-7592,Seattle,Company11,vip
+C0434,Hana,Adams,hana433@biz.net,555-9544,Chicago,Company116,vip
+C0046,Ula,Evans,ula45@biz.net,555-7269,Chicago,Company123,lead
+C0053,Carol,Brown,carol52@yahoo.com,555-8193,New York,Company179,lead
+C0008,Henry,Taylor,henry7@biz.net,555-1124,Denver,Company53,customer
+C0136,Jane,Gonzalez,jane135@gmail.com,555-9998,Seattle,Company9,customer
+C0061,Karen,Jackson,karen60@gmail.com,555-3401,Miami,Company165,vip
+C0703,Carol,Brown,carol702@corp.io,555-7049,Austin,Company102,prospect
+C0659,Iris,Anderson,iris658@gmail.com,555-5619,Boston,Company16,customer
+C0477,Andy,Hernandez,andy476@corp.io,555-1687,Denver,Company77,prospect
+C0409,Iris,Anderson,iris408@gmail.com,555-2583,Boston,Company81,prospect
+C0564,Nathan,Martin,nathan563@biz.net,555-5465,Miami,Company25,lead
+C0520,Tina,Rodriguez,tina519@biz.net,555-7326,New York,Company16,lead
+C0172,Victor,Lee,victor171@corp.io,555-3567,Austin,Company183,lead
+C0826,Zara,Young,zara825@acme.com,555-6623,Austin,Company178,lead
+C0137,Kurt,Nelson,kurt136@corp.io,555-4254,Chicago,Company11,prospect
+C0343,Rex,Phillips,rex342@corp.io,555-9809,Denver,Company31,vip
+C0051,Alice,Smith,alice50@yahoo.com,555-1778,Denver,Company10,vip
+C0452,Bob,Jones,bob451@acme.com,555-4818,Miami,Company120,customer
+C0174,Xena,Hall,xena173@gmail.com,555-2411,Miami,Company98,prospect
+C0707,Grace,Moore,grace706@yahoo.com,555-3302,Boston,Company39,prospect
+C0546,Ula,Evans,ula545@corp.io,555-1853,New York,Company2,customer
+C0072,Victor,Lee,victor71@yahoo.com,555-9587,Denver,Company14,prospect
+C0753,Carol,Brown,carol752@yahoo.com,555-9676,Austin,Company52,customer
+C0216,Pete,Garcia,pete215@gmail.com,555-2158,San Francisco,Company44,vip
+C0150,Yale,Sanchez,yale149@acme.com,555-9775,New York,Company17,vip
+C0710,James,Thomas,james709@biz.net,555-4571,Austin,Company73,customer
+C0215,Olivia,Thompson,olivia214@yahoo.com,555-1512,Austin,Company70,lead
+C0206,Frank,Wilson,frank205@corp.io,555-3375,New York,Company36,customer
+C0679,Craig,Wright,craig678@gmail.com,555-2686,Seattle,Company104,vip
+C0457,Grace,Moore,grace456@yahoo.com,555-2905,Austin,Company33,customer
+C0742,Petra,Turner,petra741@gmail.com,555-3399,Austin,Company102,vip
+C0131,Evan,Hill,evan130@yahoo.com,555-9570,Denver,Company184,lead
+C0168,Rachel,Robinson,rachel167@biz.net,555-1790,Denver,Company143,prospect
+C0596,Ula,Evans,ula595@gmail.com,555-3209,Boston,Company147,vip
+C0115,Olivia,Thompson,olivia114@gmail.com,555-2144,Seattle,Company122,lead
+C0637,Kurt,Nelson,kurt636@yahoo.com,555-8692,New York,Company132,lead
+C0828,Beth,King,beth827@yahoo.com,555-2386,San Francisco,Company66,customer
+C0790,Nina,Perez,nina789@gmail.com,555-3060,Boston,Company9,prospect
+C0686,Jane,Gonzalez,jane685@yahoo.com,555-2316,Boston,Company149,customer
+C0550,Yale,Sanchez,yale549@corp.io,555-3555,Denver,Company186,customer
+C0672,Victor,Lee,victor671@acme.com,555-9526,Chicago,Company142,lead
+C0440,Nina,Perez,nina439@acme.com,555-8258,Chicago,Company157,vip
+C0414,Nathan,Martin,nathan413@acme.com,555-7344,New York,Company123,vip
+C0628,Beth,King,beth627@acme.com,555-5144,Miami,Company28,customer
+C0417,Quinn,Martinez,quinn416@yahoo.com,555-9943,New York,Company76,prospect
+C0338,Lily,Carter,lily337@acme.com,555-3272,Chicago,Company111,lead
+C0752,Bob,Jones,bob751@acme.com,555-5398,Austin,Company89,lead
+C0077,Andy,Hernandez,andy76@biz.net,555-7485,Miami,Company19,prospect
+C0124,Xena,Hall,xena123@yahoo.com,555-2443,Austin,Company77,prospect
+C0736,Jane,Gonzalez,jane735@acme.com,555-4982,Chicago,Company98,prospect
+C0324,Xena,Hall,xena323@yahoo.com,555-7402,San Francisco,Company119,lead
+C0623,Wendy,Walker,wendy622@yahoo.com,555-6128,Seattle,Company73,prospect
+C0406,Frank,Wilson,frank405@yahoo.com,555-1811,Boston,Company126,prospect
+C0011,Karen,Jackson,karen10@yahoo.com,555-3634,Miami,Company153,prospect
+C0476,Zara,Young,zara475@acme.com,555-9720,Seattle,Company92,prospect
+C0738,Lily,Carter,lily737@yahoo.com,555-5615,Denver,Company72,prospect
+C0784,Hana,Adams,hana783@yahoo.com,555-9565,Boston,Company17,prospect
+C0652,Bob,Jones,bob651@yahoo.com,555-1237,Chicago,Company156,customer
+C0592,Petra,Turner,petra591@yahoo.com,555-7722,New York,Company10,vip
+C0246,Ula,Evans,ula245@yahoo.com,555-3557,New York,Company132,vip
+C0498,Walt,Collins,walt497@biz.net,555-4480,Seattle,Company32,vip
+C0849,Xin,Stewart,xin848@biz.net,555-2377,Miami,Company139,prospect
+C0071,Uma,Lewis,uma70@acme.com,555-7546,Denver,Company132,prospect
+C0388,Lily,Carter,lily387@biz.net,555-6638,New York,Company88,vip
+C0488,Lily,Carter,lily487@yahoo.com,555-1619,San Francisco,Company48,vip
+C0249,Xin,Stewart,xin248@corp.io,555-7040,Austin,Company89,customer
+C0497,Vera,Edwards,vera496@biz.net,555-7473,Chicago,Company163,customer
+C0587,Kurt,Nelson,kurt586@acme.com,555-7728,Seattle,Company89,lead
+C0412,Leo,White,leo411@biz.net,555-3408,San Francisco,Company93,vip
+C0028,Beth,King,beth27@acme.com,555-2732,Boston,Company56,prospect
+C0603,Carol,Brown,carol602@yahoo.com,555-1294,Seattle,Company101,prospect
+C0164,Nathan,Martin,nathan163@acme.com,555-7445,Boston,Company103,prospect
+C0114,Nathan,Martin,nathan113@acme.com,555-3593,Seattle,Company187,vip
+C0427,Andy,Hernandez,andy426@biz.net,555-6565,Seattle,Company152,prospect
+C0748,Walt,Collins,walt747@biz.net,555-3784,Miami,Company174,lead
+C0463,Maria,Harris,maria462@biz.net,555-4960,Denver,Company12,lead
+C0062,Leo,White,leo61@yahoo.com,555-7174,San Francisco,Company61,lead
+C0379,Craig,Wright,craig378@gmail.com,555-8521,Austin,Company136,lead
+C0352,Bob,Jones,bob351@biz.net,555-5186,New York,Company16,customer
+C0311,Karen,Jackson,karen310@yahoo.com,555-9788,Austin,Company200,lead
+C0357,Grace,Moore,grace356@acme.com,555-1444,Chicago,Company78,prospect
+C0163,Maria,Harris,maria162@yahoo.com,555-9660,Austin,Company77,customer
+C0461,Karen,Jackson,karen460@gmail.com,555-8995,San Francisco,Company175,prospect
+C0699,Xin,Stewart,xin698@yahoo.com,555-3342,Seattle,Company99,customer
+C0779,Craig,Wright,craig778@acme.com,555-2032,Boston,Company81,customer
+C0423,Wendy,Walker,wendy422@acme.com,555-1092,Chicago,Company57,vip
+C0363,Maria,Harris,maria362@biz.net,555-1229,Chicago,Company144,prospect
+C0473,Wendy,Walker,wendy472@biz.net,555-2554,Boston,Company92,customer
+C0302,Bob,Jones,bob301@biz.net,555-4554,Denver,Company181,lead
+C0737,Kurt,Nelson,kurt736@yahoo.com,555-8577,Denver,Company79,prospect
+C0732,Faye,Scott,faye731@biz.net,555-6347,Denver,Company115,prospect
+C0563,Maria,Harris,maria562@acme.com,555-3377,Chicago,Company134,customer
+C0426,Zara,Young,zara425@acme.com,555-9105,Seattle,Company107,lead
+C0027,Andy,Hernandez,andy26@corp.io,555-4771,Seattle,Company168,prospect
+C0171,Uma,Lewis,uma170@gmail.com,555-2466,Austin,Company161,prospect
+C0094,Sasha,Campbell,sasha93@gmail.com,555-1352,New York,Company46,prospect
+C0831,Evan,Hill,evan830@corp.io,555-5574,Boston,Company47,prospect
+C0009,Iris,Anderson,iris8@biz.net,555-2324,Miami,Company133,prospect
+C0607,Grace,Moore,grace606@biz.net,555-1134,Boston,Company83,lead
+C0303,Carol,Brown,carol302@yahoo.com,555-4238,Miami,Company155,customer
+C0143,Rex,Phillips,rex142@yahoo.com,555-3209,Chicago,Company74,vip
+C0499,Xin,Stewart,xin498@yahoo.com,555-8586,Miami,Company170,vip
+C0819,Sam,Clark,sam818@acme.com,555-7211,Denver,Company53,lead
+C0570,Tina,Rodriguez,tina569@acme.com,555-4102,San Francisco,Company79,customer
+C0130,Dana,Lopez,dana129@yahoo.com,555-1704,Boston,Company179,prospect
+C0100,Yale,Sanchez,yale99@yahoo.com,555-5375,Boston,Company159,vip
+C0004,Dave,Davis,dave3@yahoo.com,555-7908,Austin,Company96,lead
+C0339,Marc,Mitchell,marc338@acme.com,555-2077,Denver,Company48,lead
+C0391,Owen,Roberts,owen390@yahoo.com,555-7932,Miami,Company147,prospect
+C0709,Iris,Anderson,iris708@corp.io,555-2673,Seattle,Company169,customer
+C0415,Olivia,Thompson,olivia414@acme.com,555-2563,New York,Company119,vip
+C0309,Iris,Anderson,iris308@gmail.com,555-1756,New York,Company84,vip
+C0827,Andy,Hernandez,andy826@yahoo.com,555-8368,New York,Company135,customer
+C0037,Kurt,Nelson,kurt36@gmail.com,555-2840,Austin,Company1,customer
+C0600,Yale,Sanchez,yale599@gmail.com,555-2901,Chicago,Company117,customer
+C0331,Evan,Hill,evan330@gmail.com,555-3385,Austin,Company183,customer
+C0416,Pete,Garcia,pete415@corp.io,555-4885,Austin,Company89,prospect
+C0214,Nathan,Martin,nathan213@acme.com,555-8652,Austin,Company26,vip
+C0636,Jane,Gonzalez,jane635@acme.com,555-3952,Miami,Company9,prospect
+C0036,Jane,Gonzalez,jane35@corp.io,555-4788,Denver,Company89,lead
+C0644,Sasha,Campbell,sasha643@corp.io,555-8458,San Francisco,Company108,vip
+C0735,Igor,Baker,igor734@acme.com,555-9031,Boston,Company124,customer
+C0291,Owen,Roberts,owen290@biz.net,555-3314,San Francisco,Company10,customer
+C0109,Iris,Anderson,iris108@gmail.com,555-2988,Boston,Company56,prospect
+C0411,Karen,Jackson,karen410@acme.com,555-8382,New York,Company50,vip
+C0389,Marc,Mitchell,marc388@yahoo.com,555-9479,Austin,Company62,vip
+C0648,Walt,Collins,walt647@acme.com,555-6976,Austin,Company46,lead
+C0019,Sam,Clark,sam18@gmail.com,555-2580,San Francisco,Company37,customer
+C0474,Xena,Hall,xena473@corp.io,555-2909,Chicago,Company195,vip
+C0087,Kurt,Nelson,kurt86@yahoo.com,555-1818,Seattle,Company48,customer
+C0413,Maria,Harris,maria412@yahoo.com,555-2523,Denver,Company8,vip
+C0633,Glen,Green,glen632@acme.com,555-5766,Seattle,Company22,customer
+C0014,Nathan,Martin,nathan13@gmail.com,555-3341,Seattle,Company159,vip
+C0510,James,Thomas,james509@yahoo.com,555-4979,Boston,Company138,prospect
+C0230,Dana,Lopez,dana229@biz.net,555-8230,Chicago,Company144,lead
+C0266,Pete,Garcia,pete265@biz.net,555-7723,Miami,Company5,prospect
+C0523,Wendy,Walker,wendy522@yahoo.com,555-4887,San Francisco,Company83,customer
+C0571,Uma,Lewis,uma570@gmail.com,555-5480,Chicago,Company19,customer
+C0468,Rachel,Robinson,rachel467@acme.com,555-8989,Seattle,Company86,lead
+C0334,Hana,Adams,hana333@yahoo.com,555-9698,Boston,Company163,customer
+C0673,Wendy,Walker,wendy672@gmail.com,555-1427,San Francisco,Company172,lead
+C0287,Kurt,Nelson,kurt286@acme.com,555-4715,Chicago,Company82,vip
+C0460,James,Thomas,james459@yahoo.com,555-3942,Seattle,Company146,lead
+C0839,Marc,Mitchell,marc838@acme.com,555-4686,Austin,Company191,vip
+C0264,Nathan,Martin,nathan263@biz.net,555-9750,New York,Company114,lead
+C0743,Rex,Phillips,rex742@gmail.com,555-7230,San Francisco,Company92,lead
+C0207,Grace,Moore,grace206@acme.com,555-5241,Austin,Company81,prospect
+C0023,Wendy,Walker,wendy22@biz.net,555-5713,New York,Company150,vip
+C0757,Grace,Moore,grace756@acme.com,555-3150,Seattle,Company140,prospect
+C0197,Vera,Edwards,vera196@biz.net,555-6555,Seattle,Company82,customer
+C0024,Xena,Hall,xena23@acme.com,555-4544,Denver,Company103,customer
+C0837,Kurt,Nelson,kurt836@yahoo.com,555-4142,Denver,Company156,customer
+C0065,Olivia,Thompson,olivia64@biz.net,555-7496,New York,Company77,prospect
+C0759,Iris,Anderson,iris758@corp.io,555-7725,Denver,Company26,customer
+C0517,Quinn,Martinez,quinn516@acme.com,555-9508,Miami,Company81,customer
+C0755,Eve,Miller,eve754@acme.com,555-1183,Chicago,Company51,prospect
+C0848,Walt,Collins,walt847@corp.io,555-4006,Miami,Company161,vip
+C0502,Bob,Jones,bob501@yahoo.com,555-1324,Chicago,Company163,lead
+C0081,Evan,Hill,evan80@corp.io,555-4304,Chicago,Company35,lead
+C0688,Lily,Carter,lily687@corp.io,555-5584,Austin,Company121,vip
+C0535,Igor,Baker,igor534@corp.io,555-6457,Chicago,Company17,lead
+C0279,Craig,Wright,craig278@biz.net,555-2430,Miami,Company136,prospect
+C0329,Craig,Wright,craig328@acme.com,555-7446,San Francisco,Company25,vip
+C0088,Lily,Carter,lily87@acme.com,555-1166,Seattle,Company51,customer
+C0110,James,Thomas,james109@gmail.com,555-1208,Denver,Company74,prospect
+C0697,Vera,Edwards,vera696@biz.net,555-8203,Austin,Company18,vip
+C0050,Yale,Sanchez,yale49@biz.net,555-6227,Denver,Company67,prospect
+C0278,Beth,King,beth277@biz.net,555-8854,Denver,Company9,prospect
+C0575,Yuri,Allen,yuri574@acme.com,555-7408,Austin,Company200,vip
+C0643,Rex,Phillips,rex642@corp.io,555-5626,Miami,Company189,prospect
+C0515,Olivia,Thompson,olivia514@gmail.com,555-9702,San Francisco,Company132,customer
+C0720,Tina,Rodriguez,tina719@yahoo.com,555-8863,Miami,Company137,customer
+C0134,Hana,Adams,hana133@corp.io,555-1750,San Francisco,Company137,customer
+C0327,Andy,Hernandez,andy326@gmail.com,555-6177,Miami,Company134,prospect
+C0044,Sasha,Campbell,sasha43@corp.io,555-7373,Denver,Company144,prospect
+C0595,Todd,Parker,todd594@corp.io,555-1784,Miami,Company191,lead
+C0113,Maria,Harris,maria112@corp.io,555-2577,San Francisco,Company69,customer
+C0121,Uma,Lewis,uma120@yahoo.com,555-1005,Boston,Company186,lead
+C0507,Grace,Moore,grace506@corp.io,555-3169,Miami,Company147,prospect
+C0821,Uma,Lewis,uma820@biz.net,555-2132,Chicago,Company75,prospect
+C0503,Carol,Brown,carol502@biz.net,555-3442,Miami,Company52,lead
+C0608,Henry,Taylor,henry607@gmail.com,555-6950,New York,Company122,lead
+C0240,Nina,Perez,nina239@biz.net,555-3050,Miami,Company72,customer
+C0602,Bob,Jones,bob601@corp.io,555-9377,San Francisco,Company30,vip
+C0562,Leo,White,leo561@gmail.com,555-9388,Chicago,Company139,customer
+C0806,Frank,Wilson,frank805@corp.io,555-3805,Boston,Company169,customer
+C0844,Sasha,Campbell,sasha843@yahoo.com,555-3131,Chicago,Company72,vip
+C0470,Tina,Rodriguez,tina469@gmail.com,555-1992,New York,Company144,customer
+C0701,Alice,Smith,alice700@gmail.com,555-7488,Seattle,Company46,prospect
+C0761,Karen,Jackson,karen760@yahoo.com,555-2744,Denver,Company146,vip
+C0068,Rachel,Robinson,rachel67@gmail.com,555-6795,Chicago,Company156,customer
+C0122,Victor,Lee,victor121@biz.net,555-2349,New York,Company109,vip
+C0745,Todd,Parker,todd744@corp.io,555-7048,New York,Company45,vip
+C0676,Zara,Young,zara675@yahoo.com,555-9038,San Francisco,Company74,lead
+C0254,Dave,Davis,dave253@gmail.com,555-7251,Chicago,Company137,lead
+C0847,Vera,Edwards,vera846@yahoo.com,555-6609,San Francisco,Company14,prospect
+C0030,Dana,Lopez,dana29@corp.io,555-7899,Seattle,Company18,customer
+C0276,Zara,Young,zara275@corp.io,555-4049,Chicago,Company74,lead
+C0516,Pete,Garcia,pete515@corp.io,555-2517,Boston,Company129,vip
+C0446,Ula,Evans,ula445@gmail.com,555-7333,Denver,Company23,prospect
+C0448,Walt,Collins,walt447@biz.net,555-5317,Seattle,Company181,lead
+C0232,Faye,Scott,faye231@biz.net,555-2781,Chicago,Company18,vip
+C0202,Bob,Jones,bob201@yahoo.com,555-5115,Denver,Company43,vip
+C0801,Alice,Smith,alice800@biz.net,555-2416,Boston,Company99,lead
+C0639,Marc,Mitchell,marc638@acme.com,555-2124,Seattle,Company99,prospect
+C0107,Grace,Moore,grace106@acme.com,555-2394,New York,Company13,vip
+C0708,Henry,Taylor,henry707@biz.net,555-8635,Chicago,Company91,prospect
+C0611,Karen,Jackson,karen610@acme.com,555-6728,Miami,Company200,vip
+C0683,Glen,Green,glen682@acme.com,555-2141,Boston,Company54,customer
+C0159,Iris,Anderson,iris158@corp.io,555-5324,Chicago,Company132,customer
+C0076,Zara,Young,zara75@biz.net,555-8055,Chicago,Company1,vip
+C0047,Vera,Edwards,vera46@yahoo.com,555-2224,Austin,Company118,vip
+C0645,Todd,Parker,todd644@gmail.com,555-7330,Seattle,Company191,lead
+C0142,Petra,Turner,petra141@biz.net,555-3035,Seattle,Company71,lead
+C0225,Yuri,Allen,yuri224@yahoo.com,555-3028,New York,Company42,lead
+C0597,Vera,Edwards,vera596@acme.com,555-5046,New York,Company56,lead
+C0039,Marc,Mitchell,marc38@corp.io,555-8668,Seattle,Company52,vip
+C0717,Quinn,Martinez,quinn716@acme.com,555-2886,Miami,Company158,prospect
+C0501,Alice,Smith,alice500@biz.net,555-2071,Seattle,Company160,customer
+C0577,Andy,Hernandez,andy576@gmail.com,555-1956,Denver,Company185,prospect
+C0491,Owen,Roberts,owen490@biz.net,555-7604,Chicago,Company67,prospect
+C0012,Leo,White,leo11@biz.net,555-3883,New York,Company29,vip
+C0244,Sasha,Campbell,sasha243@biz.net,555-9792,Seattle,Company144,vip
+C0396,Ula,Evans,ula395@acme.com,555-7893,Boston,Company4,prospect
+C0368,Rachel,Robinson,rachel367@corp.io,555-1095,San Francisco,Company75,prospect
+C0669,Sam,Clark,sam668@corp.io,555-3522,Chicago,Company169,prospect
+C0508,Henry,Taylor,henry507@gmail.com,555-6366,Miami,Company100,lead
+C0376,Zara,Young,zara375@yahoo.com,555-3472,Chicago,Company6,customer
+C0403,Carol,Brown,carol402@gmail.com,555-1625,Seattle,Company38,customer
+C0768,Rachel,Robinson,rachel767@biz.net,555-8086,Seattle,Company183,lead
+C0581,Evan,Hill,evan580@biz.net,555-7029,Boston,Company107,prospect
+C0727,Andy,Hernandez,andy726@yahoo.com,555-4968,New York,Company174,customer
+C0186,Jane,Gonzalez,jane185@gmail.com,555-6667,New York,Company12,prospect
+C0614,Nathan,Martin,nathan613@yahoo.com,555-9411,Austin,Company172,vip
+C0268,Rachel,Robinson,rachel267@yahoo.com,555-3301,Austin,Company81,lead
+C0083,Glen,Green,glen82@yahoo.com,555-4940,Austin,Company176,lead
+C0606,Frank,Wilson,frank605@acme.com,555-4512,Seattle,Company86,vip
+C0308,Henry,Taylor,henry307@yahoo.com,555-4726,Denver,Company45,prospect
+C0660,James,Thomas,james659@biz.net,555-5011,Miami,Company187,lead
+C0678,Beth,King,beth677@yahoo.com,555-2191,Boston,Company115,vip
+C0642,Petra,Turner,petra641@gmail.com,555-1681,Boston,Company116,lead
+C0238,Lily,Carter,lily237@acme.com,555-4973,Austin,Company172,customer
+C0015,Olivia,Thompson,olivia14@corp.io,555-6401,Chicago,Company134,lead
+C0424,Xena,Hall,xena423@yahoo.com,555-6647,Austin,Company144,vip
+C0693,Rex,Phillips,rex692@gmail.com,555-2327,Miami,Company169,lead
+C0836,Jane,Gonzalez,jane835@yahoo.com,555-3465,Seattle,Company57,customer
+C0815,Olivia,Thompson,olivia814@gmail.com,555-8634,Seattle,Company116,customer
+C0074,Xena,Hall,xena73@corp.io,555-1070,New York,Company52,prospect
+C0058,Henry,Taylor,henry57@gmail.com,555-9400,Denver,Company43,customer
+C0449,Xin,Stewart,xin448@corp.io,555-6969,Denver,Company52,vip
+C0721,Uma,Lewis,uma720@acme.com,555-6331,Seattle,Company106,prospect
+C0514,Nathan,Martin,nathan513@gmail.com,555-9795,San Francisco,Company130,customer
+C0119,Sam,Clark,sam118@biz.net,555-3109,Austin,Company158,customer
+C0480,Dana,Lopez,dana479@corp.io,555-2693,Austin,Company168,vip
+C0680,Dana,Lopez,dana679@yahoo.com,555-4641,Austin,Company14,vip
+C0181,Evan,Hill,evan180@corp.io,555-1548,Miami,Company50,vip
+C0140,Nina,Perez,nina139@acme.com,555-3205,San Francisco,Company68,vip
+C0610,James,Thomas,james609@gmail.com,555-3541,Seattle,Company137,lead

@@ -1,0 +1,187 @@
+#!/usr/bin/env python3
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib
+
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version
+
+ROOT = Path(__file__).resolve().parent
+ENV_ROOT = ROOT / ".poetry_env"
+SITE_PACKAGES = ENV_ROOT / "site-packages"
+LOCK_PATH = ROOT / "poetry.lock"
+
+VENDOR = {
+    "pydantic": {
+        "1.10.9": {
+            "path": ROOT / "vendor" / "pydantic_v1" / "pydantic",
+            "dependencies": [],
+        },
+        "2.5.0": {
+            "path": ROOT / "vendor" / "pydantic_v2" / "pydantic",
+            "dependencies": [],
+        },
+    },
+    "fastapi": {
+        "0.95.0": {
+            "path": ROOT / "vendor" / "fastapi_0_95" / "fastapi",
+            "dependencies": [("pydantic", "<2.0,>=1.0")],
+        },
+        "0.100.0": {
+            "path": ROOT / "vendor" / "fastapi_0_100" / "fastapi",
+            "dependencies": [("pydantic", ">=2.0,<3.0")],
+        },
+    },
+}
+
+
+def load_toml(path: Path) -> dict:
+    with path.open("rb") as f:
+        return tomllib.load(f)
+
+
+def workspace_packages():
+    root_cfg = load_toml(ROOT / "pyproject.toml")["tool"]["task_poetry"]
+    mapping = {}
+    for rel in root_cfg["workspace"]:
+        pkg_dir = ROOT / rel
+        cfg = load_toml(pkg_dir / "pyproject.toml")
+        mapping[cfg["tool"]["poetry"]["name"]] = {"dir": pkg_dir, "cfg": cfg}
+    return mapping
+
+
+def combine_specs(specs):
+    return ",".join(s for s in specs if s)
+
+
+def compatible_versions(pkg_name, specs):
+    spec = SpecifierSet(combine_specs(specs))
+    versions = sorted((Version(v) for v in VENDOR[pkg_name].keys()), reverse=True)
+    return [str(v) for v in versions if v in spec]
+
+
+def resolve(target_name):
+    ws = workspace_packages()
+    if target_name not in ws:
+        raise SystemExit(f"Unknown workspace package: {target_name}")
+
+    constraints = {}
+    visited = set()
+
+    def visit_workspace(name):
+        if name in visited:
+            return
+        visited.add(name)
+        deps = ws[name]["cfg"]["tool"]["poetry"]["dependencies"]
+        for dep_name, dep_value in deps.items():
+            if dep_name == "python":
+                continue
+            if isinstance(dep_value, dict) and "path" in dep_value:
+                dep_path = (ws[name]["dir"] / dep_value["path"]).resolve()
+                for candidate_name, info in ws.items():
+                    if info["dir"].resolve() == dep_path:
+                        visit_workspace(candidate_name)
+                        break
+                else:
+                    raise SystemExit(f"Workspace path dependency not found for {dep_name}: {dep_value['path']}")
+            else:
+                constraints.setdefault(dep_name, []).append(str(dep_value))
+
+    visit_workspace(target_name)
+
+    resolved = {}
+    changed = True
+    while changed:
+        changed = False
+        for pkg_name, specs in list(constraints.items()):
+            matches = compatible_versions(pkg_name, specs)
+            if not matches:
+                if pkg_name == "pydantic":
+                    raise SystemExit(
+                        "Because worker-pkg depends on core-pkg (0.1.0) which depends on pydantic (>=2.0,<3.0)\n"
+                        " and worker-pkg depends on api-pkg (0.1.0) which depends on fastapi (==0.95.0)\n"
+                        " and fastapi (0.95.0) depends on pydantic (<2.0,>=1.0),\n"
+                        " version solving failed."
+                    )
+                raise SystemExit(f"Version solving failed for {pkg_name}: {combine_specs(specs)}")
+            selected = matches[0]
+            if resolved.get(pkg_name) != selected:
+                resolved[pkg_name] = selected
+                changed = True
+                for dep_name, dep_spec in VENDOR[pkg_name][selected]["dependencies"]:
+                    constraints.setdefault(dep_name, []).append(dep_spec)
+    return resolved
+
+
+def install(target_name):
+    ws = workspace_packages()
+    resolved = resolve(target_name)
+
+    if ENV_ROOT.exists():
+        shutil.rmtree(ENV_ROOT)
+    SITE_PACKAGES.mkdir(parents=True, exist_ok=True)
+
+    lock = {"workspace_target": target_name, "package": []}
+    for pkg_name, version in resolved.items():
+        shutil.copytree(VENDOR[pkg_name][version]["path"], SITE_PACKAGES / pkg_name)
+        lock["package"].append({"name": pkg_name, "version": version, "source": "vendor"})
+
+    for pkg_name in sorted(ws.keys()):
+        pkg_dir = ws[pkg_name]["dir"]
+        for subdir in pkg_dir.iterdir():
+            if subdir.is_dir() and subdir.name.endswith("_pkg"):
+                shutil.copytree(subdir, SITE_PACKAGES / subdir.name)
+        lock["package"].append({
+            "name": pkg_name,
+            "version": ws[pkg_name]["cfg"]["tool"]["poetry"]["version"],
+            "source": "workspace",
+        })
+
+    LOCK_PATH.write_text(json.dumps(lock, indent=2) + "\n", encoding="utf-8")
+    print(f"Installing dependencies for {target_name}")
+    for pkg_name, version in resolved.items():
+        print(f"  - {pkg_name} {version}")
+    print("Writing lock file")
+
+
+def run_python(args):
+    if not SITE_PACKAGES.exists():
+        raise SystemExit("Environment not installed. Run './poetry install' first.")
+    env = os.environ.copy()
+    existing = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = str(SITE_PACKAGES) + (os.pathsep + existing if existing else "")
+    completed = subprocess.run([sys.executable] + args, cwd=ROOT, env=env)
+    raise SystemExit(completed.returncode)
+
+
+def main(argv):
+    if len(argv) < 2:
+        raise SystemExit("Usage: ./poetry <install|run> [args]")
+    command = argv[1]
+    if command == "install":
+        target = "worker-pkg"
+        if "--package" in argv:
+            idx = argv.index("--package")
+            if idx + 1 >= len(argv):
+                raise SystemExit("Missing value for --package")
+            target = argv[idx + 1]
+        install(target)
+        return
+    if command == "run":
+        if len(argv) < 4 or argv[2] != "python":
+            raise SystemExit("Only './poetry run python ...' is supported in this benchmark fixture.")
+        run_python(argv[3:])
+        return
+    raise SystemExit(f"Unsupported command: {command}")
+
+
+if __name__ == "__main__":
+    main(sys.argv)

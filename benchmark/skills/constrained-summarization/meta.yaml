@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E5-LS4
+environment_id: E5
+latent_skill_id: E5-LS4.constrained-summarization
+slug: constrained-summarization
+name: constrained-summarization
+description: Generate summaries that must satisfy explicit constraints such as a word limit, required key points, and a requested presentation format. Use this skill when the task is to condense a long document into a shorter summary while staying within a stated word cap, ensuring required points are included, and checking the final draft against those constraints before returning it. Focus on word-limited summaries with required key point coverage.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E5-LS4-T1
+- E5-LS4-T2
+- E5-LS4-T3
+- E5-LS4-T4
+- E5-LS4-T5
+- E5-LS4-T6
+gap_1_summary: 'Information priority within the budget: the curated skill truncates by paragraph order. A summary should keep the highest-importance points and drop the rest, even if that means skipping the introduction. Score each candidate point, then fill the summary greedily from highest priority down.'
+gap_2_summary: 'Multi-audience tailoring: the curated skill produces one summary. The same document needs different framings for executives (impact + numbers), engineers (architecture + tradeoffs), and customers (benefits + actions). Identify the audience first, then choose what to emphasize and what to drop.'

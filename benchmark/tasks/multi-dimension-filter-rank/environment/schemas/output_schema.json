@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "multi factor source selection output",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "selected"
+  ],
+  "properties": {
+    "selected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "scores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "source_id": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "relevance": {
+            "type": "number"
+          },
+          "evidence": {
+            "type": "number"
+          },
+          "recency": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "source_id"
+        ]
+      }
+    }
+  }
+}

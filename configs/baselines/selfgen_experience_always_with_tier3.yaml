@@ -1,0 +1,43 @@
+# 4th cell of the trigger×Tier-3 ablation matrix:
+#
+#                    | fail_only            | always
+#   ------------------+----------------------+--------------------------
+#   no Tier-3 (free) | selfgen_experience   | selfgen_experience_always
+#   tier3_required   | ..._with_tier3       | ..._always_with_tier3 (THIS)
+#
+# Use the four together to disentangle:
+#   trigger effect   = always - fail_only       (rows)
+#   tier3 effect     = with_tier3 - free        (cols)
+#   interaction      = (always_with_tier3 - always) - (with_tier3 - fail_only)
+#
+# Both axes are valid because the create-vs-revise prompt rule is in the
+# template itself, not the mode -- so all four baselines can grow the
+# library by either updating an existing skill OR creating a new
+# same-family skill (SKILL.md only for the new one).
+name: selfgen_experience_always_with_tier3
+description: selfgen_experience + revision_trigger=always + tier3_required mode.
+track: path-a
+
+skill_init: empty
+allow_self_gen_induction: true
+allow_zero_shot_creation: false
+allow_curated_inject: false
+
+allow_revision: true
+allow_retirement: false
+allow_quarantine: false
+allow_applicability_narrow: false
+allow_rollback: false
+
+use_skill_library: true
+skill_retrieval_k: 8
+
+feedback_level: process
+feedback_to_skill_text: true
+
+default_strategy: chain_tier3
+revision_trigger: always
+max_revisions_per_skill: 8
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5

@@ -1,0 +1,13 @@
+{
+  "name": "ts-promise-allsettled-ignored-rejection",
+  "private": true,
+  "scripts": {
+    "report": "ts-node --transpile-only src/index.ts",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "ts-node": "10.9.2",
+    "typescript": "5.7.3"
+  }
+}

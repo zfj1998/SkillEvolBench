@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E2-LS5
+environment_id: E2
+latent_skill_id: E2-LS5.response-validation-fallback
+slug: response-validation-fallback
+name: response-validation-fallback
+description: Validate REST API responses before using the data, and fall back to a secondary source when validation fails. Use this skill when an HTTP response must pass top-level checks for status code, content type, JSON parsing, and required top-level fields before the payload is trusted. Focus on simple response validation plus optional fallback handling.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E2-LS5-T1
+- E2-LS5-T2
+- E2-LS5-T3
+- E2-LS5-T4
+- E2-LS5-T5
+- E2-LS5-T6
+gap_1_summary: 'Nested wrapper structure changes: the curated skill validates only the top-level envelope. APIs sometimes wrap their payloads more deeply between versions — a response that was `{data: [...]}` becomes `{result: {items: [...]}}` and your top-level check still passes while the parser that follows it returns nothing. Validate the full path you actually depend on, not just the outer key.'
+gap_2_summary: 'Semantic anomalies in valid structures: the curated skill only checks shape. A response with `price: -50` is structurally valid but semantically nonsense. After structural validation passes, run business-rule checks on the values themselves before trusting them.'

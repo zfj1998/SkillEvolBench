@@ -1,0 +1,62 @@
+=== CI Run #3847 ===
+Branch: feature/csv-export
+Trigger: push by alice (PR #147 — CSV export endpoint)
+Runner: ubuntu-22.04 / Python 3.11.7
+Timestamp: 2024-03-12T09:14:22Z
+
+[09:14:23] Step 1/5: Checkout
+[09:14:23]   Fetching feature/csv-export @ a3f8c2d...
+[09:14:24]   Submodule sync: 0 submodules
+[09:14:24]   Working tree clean
+
+[09:14:24] Step 2/5: Environment setup
+[09:14:24]   Creating virtualenv (.venv)...
+[09:14:25]   Python 3.11.7 — pip 24.0 — setuptools 69.0.3
+[09:14:25]   Activating .venv
+
+[09:14:25] Step 3/5: Install dependencies
+[09:14:25]   $ pip install --find-links /ci/package-cache/ --no-index -r requirements.txt
+[09:14:25]   Looking in links: /ci/package-cache/
+[09:14:25]   Collecting flask>=3.0 (from -r requirements/base.txt (line 1))
+[09:14:25]     Using cached flask-3.0.0-py3-none-any.whl
+[09:14:25]   Collecting pandas>=2.0 (from -r requirements/base.txt (line 2))
+[09:14:25]     Using cached pandas-2.0.0-py3-none-any.whl
+[09:14:26]   Collecting scipy>=1.11 (from -r requirements/analytics.txt (line 1))
+[09:14:26]     Using cached scipy-1.11.0-py3-none-any.whl
+[09:14:26]   Collecting custom-ml-utils>=0.3 (from -r requirements/analytics.txt (line 2))
+[09:14:26]     Using cached custom_ml_utils-0.3.0-py3-none-any.whl
+[09:14:27]   Collecting numpy>=1.24 (from pandas>=2.0->-r requirements/base.txt (line 2))
+[09:14:27]     Using cached numpy-1.26.0-py3-none-any.whl
+[09:14:27]   Collecting numpy>=1.26 (from scipy>=1.11->-r requirements/analytics.txt (line 1))
+[09:14:27]   Collecting numpy<1.25 (from custom-ml-utils==0.3.0)
+[09:14:28]   INFO: pip is looking at multiple versions of numpy to determine
+             which version is compatible with other requirements. This could
+             take a while.
+[09:14:28]   ERROR: Cannot install custom-ml-utils==0.3.0 (from -r
+             requirements/analytics.txt (line 2)) and scipy>=1.11 (from -r
+             requirements/analytics.txt (line 1)) because these package
+             versions have conflicting dependencies.
+[09:14:28]
+[09:14:28]   The conflict is caused by:
+[09:14:28]       The user requested (constraint) numpy==1.24.0
+[09:14:28]       scipy 1.11.0 depends on numpy>=1.26
+[09:14:28]       custom-ml-utils 0.3.0 depends on numpy<1.25
+[09:14:28]
+[09:14:28]   To fix this you could try to:
+[09:14:28]   1. loosen the range of package versions you've specified
+[09:14:28]   2. remove package versions to allow pip to attempt to solve
+[09:14:28]      the dependency conflict
+[09:14:28]
+[09:14:28]   ERROR: ResolutionImpossible: for help visit
+[09:14:28]   https://pip.pypa.io/en/latest/topics/dependency-resolution/
+[09:14:28]   #dealing-with-dependency-conflicts
+
+[09:14:29] Step 3/5: FAILED (exit code 1)
+
+[09:14:29] Step 4/5: Lint — SKIPPED (dependency installation failed)
+
+[09:14:29] Step 5/5: Test — SKIPPED (dependency installation failed)
+
+[09:14:30] === CI Run #3847 FAILED ===
+[09:14:30] Duration: 8s
+[09:14:30] Next scheduled: on push

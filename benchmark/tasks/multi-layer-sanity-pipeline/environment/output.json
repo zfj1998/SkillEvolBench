@@ -1,0 +1,64 @@
+{
+  "row_counts": {
+    "monthly_revenue": 52,
+    "department_budget": 11,
+    "projects": 50,
+    "project_departments": 96
+  },
+  "issues": [
+    {
+      "kind": "null_department",
+      "source": "department_budget",
+      "detail": "3 budget rows have NULL department",
+      "impact": "medium"
+    }
+  ],
+  "cross_query": {
+    "projects_total": 13768202.79,
+    "allocations_total": 13768202.74,
+    "match": true
+  },
+  "office_registry": {
+    "row_count": 5,
+    "invalid_status_rows": [],
+    "rows": [
+      {
+        "office_id": "1",
+        "city": "M\u00fcnchen",
+        "monthly_cost": "50000",
+        "currency": "\u20ac",
+        "status": "active"
+      },
+      {
+        "office_id": "2",
+        "city": "S\u00e3o Paulo",
+        "monthly_cost": "75000",
+        "currency": "R$",
+        "status": "active"
+      },
+      {
+        "office_id": "3",
+        "city": "Z\u00fcrich",
+        "monthly_cost": "120000",
+        "currency": "CHF",
+        "status": "active"
+      },
+      {
+        "office_id": "4",
+        "city": "Malm\u00f6",
+        "monthly_cost": "40000",
+        "currency": "SEK",
+        "status": "active"
+      },
+      {
+        "office_id": "5",
+        "city": "Krak\u00f3w",
+        "monthly_cost": "35000",
+        "currency": "PLN",
+        "status": "completed"
+      }
+    ]
+  },
+  "confidence": "medium",
+  "corrected_total_revenue": 5081745.96
+}

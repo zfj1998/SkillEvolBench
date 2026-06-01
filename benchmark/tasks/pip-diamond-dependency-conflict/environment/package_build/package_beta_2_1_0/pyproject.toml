@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "package-beta"
+version = "2.1.0"
+requires-python = ">=3.10"
+dependencies = ["package-data>=1.4"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["package_beta", "package_beta.*"]

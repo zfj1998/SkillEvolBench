@@ -1,0 +1,20 @@
+{
+  "meetings": [
+    {
+      "id": "team_sync",
+      "duration_minutes": 60
+    },
+    {
+      "id": "client_demo",
+      "duration_minutes": 120
+    },
+    {
+      "id": "one_on_one",
+      "duration_minutes": 30
+    }
+  ],
+  "date_range": [
+    "2026-04-27",
+    "2026-05-01"
+  ]
+}

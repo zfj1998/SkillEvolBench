@@ -1,0 +1,31 @@
+app:
+  name: myservice
+  version: "2.0"
+  debug: false
+
+database:
+  host: localhost
+  port: 5432
+<<<<<<< HEAD
+  pool_size: 10
+=======
+  pool_size: 5
+  ssl:
+    enabled: true
+    cert_path: /etc/ssl/certs/db-cert.pem
+    key_path: /etc/ssl/private/db-key.pem
+    ca_path: /etc/ssl/certs/ca-cert.pem
+>>>>>>> feature/add-ssl
+  username: app_user
+  database_name: myservice_prod
+
+logging:
+  level: INFO
+  format: json
+  output: /var/log/myservice.log
+
+cache:
+  enabled: true
+  ttl: 300
+  backend: redis
+  redis_url: redis://localhost:6379/0

@@ -1,0 +1,28 @@
+schema_version: '1.0'
+task_id: E1-LS2-T6
+task_slug: dep-fix-api-migration-config-update
+environment_id: E1
+family_id: E1-LS2
+latent_skill_id: E1-LS2.dependency-conflict-resolution
+task_index: 6
+role: composition
+phase: evaluation
+within_family_difficulty_rank: 6
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E1-LS2.dependency-conflict-resolution
+required_skills:
+- E1-LS2.dependency-conflict-resolution
+- E1-LS4.multi-file-bug-fix
+required_skill_compose_order:
+- E1-LS2.dependency-conflict-resolution
+- E1-LS4.multi-file-bug-fix
+composition_type: cross_family
+trap_types: []
+domain_group: code_debugging
+review_notes:
+- 'composition_note: dep upgrade -> multi-file API migration'

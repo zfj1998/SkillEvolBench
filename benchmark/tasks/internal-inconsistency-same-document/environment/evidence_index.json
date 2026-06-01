@@ -1,0 +1,32 @@
+[
+  {
+    "source_id": "AI_INDEX_2025",
+    "source_type": "research_report",
+    "grounding_note": "Grounding source for AI investment and AI adoption context; used to anchor market-size examples.",
+    "recommended_use": "Use as domain grounding for claim-pair plausibility; do not treat analyst claims as direct quotes from the linked source."
+  },
+  {
+    "source_id": "GARTNER_AI_CHIPS_2024",
+    "source_type": "market_forecast",
+    "grounding_note": "Grounding source for AI semiconductor market estimates and timeframe-sensitive comparisons.",
+    "recommended_use": "Use as domain grounding for claim-pair plausibility; do not treat analyst claims as direct quotes from the linked source."
+  },
+  {
+    "source_id": "IEA_RENEWABLES_2024",
+    "source_type": "energy_report",
+    "grounding_note": "Grounding source for renewable electricity growth, solar and wind capacity additions, and policy gaps.",
+    "recommended_use": "Use as domain grounding for claim-pair plausibility; do not treat analyst claims as direct quotes from the linked source."
+  },
+  {
+    "source_id": "EMBER_GER_2024",
+    "source_type": "energy_report",
+    "grounding_note": "Grounding source for the claim that renewables generated around 30% of global electricity in 2023.",
+    "recommended_use": "Use as domain grounding for claim-pair plausibility; do not treat analyst claims as direct quotes from the linked source."
+  },
+  {
+    "source_id": "NATURE_HYBRID_2024",
+    "source_type": "randomized_controlled_trial",
+    "grounding_note": "Grounding source for distinguishing retention and performance claims in hybrid-work evidence.",
+    "recommended_use": "Use as domain grounding for claim-pair plausibility; do not treat analyst claims as direct quotes from the linked source."
+  }
+]

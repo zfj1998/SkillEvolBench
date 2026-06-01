@@ -1,0 +1,265 @@
+{
+  "exported_at": "2026-04-23T12:00:00-04:00",
+  "messages": [
+    {
+      "id": "sel_01",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Can you approve the release note?",
+      "body": "Can you approve the release note by noon?",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<sel_01@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "sel_02",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Devin Brooks",
+        "email": "devin.brooks@harborworks.example",
+        "role": "Finance Manager",
+        "team": "Finance"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Budget number question",
+      "body": "What budget number should I use for the board appendix?",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<sel_02@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "sel_03",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Ari Gomez",
+        "email": "ari.gomez@northstar-retail.example",
+        "role": "Client Sponsor",
+        "team": "Northstar Retail"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Need answer on support window",
+      "body": "Can you confirm the support window for launch week?",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<sel_03@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "sel_04",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Priya Nair",
+        "email": "priya.nair@harborworks.example",
+        "role": "Engineering Director",
+        "team": "Engineering"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Decision needed on API freeze",
+      "body": "Please decide whether we freeze the API today.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<sel_04@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "sel_05",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Morgan Wells",
+        "email": "morgan.wells@harborworks.example",
+        "role": "Marketing Lead",
+        "team": "Marketing"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "FYI: landing page is published",
+      "body": "FYI, landing page is published.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<sel_05@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "sel_06",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Sam Rivera",
+        "email": "sam.rivera@harborworks.example",
+        "role": "Production Operations",
+        "team": "Operations"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "FYI: incident review posted",
+      "body": "The incident review is posted for awareness.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<sel_06@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "sel_07",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Casey Holt",
+        "email": "casey.holt@harborworks.example",
+        "role": "Legal Counsel",
+        "team": "Legal"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "DPA signed",
+      "body": "DPA is signed. No action, just closing the loop.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<sel_07@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "sel_08",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "SaaS Weekly",
+        "email": "digest@saasweekly.example",
+        "role": "Newsletter",
+        "team": "External"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Newsletter: weekly digest",
+      "body": "Automated weekly digest.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<sel_08@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "sel_09",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Workplace Bot",
+        "email": "workplace-bot@harborworks.example",
+        "role": "Automation",
+        "team": "Workplace"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Automated facilities notice",
+      "body": "Automated notice: lobby lights maintenance tonight.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<sel_09@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "sel_10",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "SaaS Weekly",
+        "email": "digest@saasweekly.example",
+        "role": "Newsletter",
+        "team": "External"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Newsletter: vendor offers",
+      "body": "Vendor promotions.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<sel_10@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    }
+  ]
+}

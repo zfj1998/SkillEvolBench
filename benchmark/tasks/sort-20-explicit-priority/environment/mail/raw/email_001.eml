@@ -1,0 +1,9 @@
+Message-ID: <email_001@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Sam Rivera <sam.rivera@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: URGENT: Production checkout down
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Checkout error rate is above 70%. Incident bridge is open and customer orders are failing.

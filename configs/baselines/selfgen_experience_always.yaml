@@ -1,0 +1,36 @@
+# Path A variant: revise on EVERY learning trial (T1-T3), not only on
+# failure. Hypothesis: even successful trials carry useful detail
+# (gotchas the agent worked around, paths it discovered, fragility it
+# tolerated) that should be distilled into the skill. fail_only baseline
+# misses these.
+#
+# Pair with ``selfgen_experience`` (fail_only) for the comparison.
+# Output is still SKILL.md only -- no Tier-3 files (use the
+# *_with_tier3 variant for that experiment).
+name: selfgen_experience_always
+description: selfgen_experience but revision_trigger=always (revise on pass and fail).
+track: path-a
+
+skill_init: empty
+allow_self_gen_induction: true
+allow_zero_shot_creation: false
+allow_curated_inject: false
+
+allow_revision: true
+allow_retirement: false
+allow_quarantine: false
+allow_applicability_narrow: false
+allow_rollback: false
+
+use_skill_library: true
+skill_retrieval_k: 8
+
+feedback_level: process
+feedback_to_skill_text: true
+
+default_strategy: chain
+revision_trigger: always         # ← every learning trial triggers a propose()
+max_revisions_per_skill: 5       # higher cap since we revise more often
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5

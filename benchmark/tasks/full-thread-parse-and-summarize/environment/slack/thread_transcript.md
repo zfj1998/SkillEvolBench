@@ -1,0 +1,52 @@
+# Slack export: #launch-ops
+
+- `2026-04-23T09:00:00-04:00` **Bob Rivera**: Full launch thread starts here. Keep actions, decisions, and blockers in one place.
+- `2026-04-23T09:02:00-04:00` **Maya Singh**: Decision: the API freeze stays at noon Eastern unless support escalates a customer blocker.
+- `2026-04-23T09:04:00-04:00` **Bob Rivera**: <@U101> please finalize the rollout checklist by Friday.
+- `2026-04-23T09:06:00-04:00` **George Miles**: Northstar is comfortable with the pilot cohort if we keep import limits unchanged.
+- `2026-04-23T09:08:00-04:00` **Alice Chen**: <@U106> update docs with the import limit table by Thursday.
+- `2026-04-23T09:10:00-04:00` **Eli Park**: The smoke suite is green except for one tooltip screenshot.
+- `2026-04-23T09:12:00-04:00` **Bob Rivera**: <@U105> run the smoke tests against the release branch by Friday.
+- `2026-04-23T09:14:00-04:00` **Omar Ruiz**: Performance chart is attached; treat the staging replay spike as noise.
+- `2026-04-23T09:16:00-04:00` **Diana Holt**: <@U107> confirm client attendees by Wednesday.
+- `2026-04-23T09:18:00-04:00` **Charlie Weber**: EMEA is out of scope for the Northstar pilot.
+- `2026-04-23T09:20:00-04:00` **Alice Chen**: <@U109> verify webhook retries by Monday.
+- `2026-04-23T09:22:00-04:00` **Fatima Khan**: Release notes outline is already in the shared folder.
+- `2026-04-23T09:24:00-04:00` **Bob Rivera**: <@U108> upload final mobile mockups by Friday.
+- `2026-04-23T09:26:00-04:00` **Diana Holt**: Support will monitor live chat during the first two hours.
+- `2026-04-23T09:28:00-04:00` **Alice Chen**: <@U110> publish the p95 summary by Tuesday.
+- `2026-04-23T09:30:00-04:00` **George Miles**: The customer sponsor asked for a single recap after launch.
+- `2026-04-23T09:32:00-04:00` **Bob Rivera**: <@U103> send the Northstar recap by EOD.
+- `2026-04-23T09:34:00-04:00` **Maya Singh**: Design is not changing the icon set for this release.
+- `2026-04-23T09:36:00-04:00` **Alice Chen**: <@U104> verify invoice export samples by Monday.
+- `2026-04-23T09:38:00-04:00` **Nora Patel**: The webhook test account is in staging only.
+- `2026-04-23T09:40:00-04:00` **Bob Rivera**: <@U101> upload signed-off design assets by Friday.
+- `2026-04-23T09:42:00-04:00` **Eli Park**: Could the build number be any longer? I had to zoom out to read it.
+- `2026-04-23T09:44:00-04:00` **Alice Chen**: Would help if backend checked the API contracts against staging before the demo.
+- `2026-04-23T09:46:00-04:00` **Fatima Khan**: Docs build passed after the redirect fix.
+- `2026-04-23T09:48:00-04:00` **Bob Rivera**: We should probably update the onboarding docs before GA.
+- `2026-04-23T09:50:00-04:00` **George Miles**: Northstar's sponsor will be offline Monday morning.
+- `2026-04-23T09:52:00-04:00` **Maya Singh**: Design team could review the checkout mockups before tomorrow's critique.
+- `2026-04-23T09:54:00-04:00` **Omar Ruiz**: The p95 chart is less noisy after filtering replay traffic.
+- `2026-04-23T09:56:00-04:00` **Bob Rivera**: Someone should look at performance metrics before the exec review.
+- `2026-04-23T09:58:00-04:00` **Diana Holt**: Support does not need a new escalation path.
+- `2026-04-23T10:00:00-04:00` **Alice Chen**: I think product needs to weigh in on the pricing copy by Friday.
+- `2026-04-23T10:02:00-04:00` **Charlie Weber**: Can we not split the EMEA discussion into this launch thread?
+- `2026-04-23T10:04:00-04:00` **Bob Rivera**: Can we schedule a review session for the migration risk note tomorrow?
+- `2026-04-23T10:06:00-04:00` **Eli Park**: Has this dashboard always loaded this slowly on hotel Wi-Fi?
+- `2026-04-23T10:08:00-04:00` **Fatima Khan**: Could someone update the wiki with the final escalation path?
+- `2026-04-23T10:10:00-04:00` **Maya Singh**: Does anyone actually read these weekly screenshots?
+- `2026-04-23T10:12:00-04:00` **Maya Singh**: Should I send the invite to the mobile review group?
+- `2026-04-23T10:14:00-04:00` **Diana Holt**: Why do we even have this process if every exception becomes a meeting?
+- `2026-04-23T10:16:00-04:00` **Alice Chen**: Would you be able to test this against the Northstar account?
+- `2026-04-23T10:18:00-04:00` **Charlie Weber**: Remember when this used to work without three dashboards?
+- `2026-04-23T10:20:00-04:00` **Alice Chen**: Done: rollout checklist is posted in the launch folder.
+- `2026-04-23T10:22:00-04:00` **Fatima Khan**: Docs update is blocked until product confirms the pricing sentence.
+- `2026-04-23T10:24:00-04:00` **Omar Ruiz**: Performance summary is done; p95 stayed under budget after replay filtering.
+- `2026-04-23T10:26:00-04:00` **George Miles**: Client attendee list is still waiting on procurement; I will reply when they answer.
+- `2026-04-23T10:28:00-04:00` **Bob Rivera**: Key decision: Northstar pilot stays US-only for this release.
+- `2026-04-23T10:30:00-04:00` **Nora Patel**: Webhook retry check found no schema drift.
+- `2026-04-23T10:32:00-04:00` **Diana Holt**: Invoice export sample matched the billing fixture.
+- `2026-04-23T10:34:00-04:00` **Maya Singh**: Mobile mocks are uploaded and ready for the review group.
+- `2026-04-23T10:36:00-04:00` **Eli Park**: Smoke tests are queued for the release branch after the flag flips.
+- `2026-04-23T10:38:00-04:00` **Bob Rivera**: End of thread. Open items are docs pricing, smoke run, and customer attendees.

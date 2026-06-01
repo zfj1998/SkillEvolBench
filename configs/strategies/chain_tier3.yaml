@@ -1,0 +1,20 @@
+# Chain strategy that forces every revision to bundle at least one
+# Tier-3 file (scripts/ references/ assets/). Pair with default chain.yaml
+# (free_form) to compare:
+#
+#   chain (free_form)        → LLM may bundle Tier-3 if helpful
+#   chain_tier3 (required)   → LLM MUST bundle Tier-3
+#
+# Used by *_with_tier3 baseline variants.
+name: chain_tier3
+n_candidates: 1
+candidate_modes: ["tier3_required"]
+
+author_model: bedrock/us.anthropic.claude-opus-4-7
+author_temperature: 0.2
+author_max_tokens: 16384
+
+# Judge fields are accepted for config compatibility; chain_tier3 ignores them.
+judge_model: bedrock/us.anthropic.claude-haiku-4-5-20251001-v1:0
+judge_temperature: 0.0
+judge_max_tokens: 1024

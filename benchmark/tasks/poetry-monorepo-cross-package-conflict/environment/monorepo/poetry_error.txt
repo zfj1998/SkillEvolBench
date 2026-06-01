@@ -1,0 +1,4 @@
+Because worker-pkg depends on core-pkg (0.1.0) which depends on pydantic (>=2.0,<3.0)
+ and worker-pkg depends on api-pkg (0.1.0) which depends on fastapi (==0.95.0)
+ and fastapi (0.95.0) depends on pydantic (<2.0,>=1.0),
+ version solving failed.

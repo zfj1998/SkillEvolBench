@@ -1,0 +1,14 @@
+{
+  "participant": {
+    "id": "eli",
+    "name": "Eli Park",
+    "email": "eli@harborworks.example",
+    "timezone": "America/Los_Angeles",
+    "work_hours": {
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "preferences": {}
+  },
+  "events": []
+}

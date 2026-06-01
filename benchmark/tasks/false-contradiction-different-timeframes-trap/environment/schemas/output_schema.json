@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "E5-LS5-T5 contradiction audit output contract",
+  "type": "object",
+  "required": [
+    "checked_pairs",
+    "contradictions",
+    "results"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "checked_pairs": {
+      "type": "integer"
+    },
+    "contradictions": {
+      "type": "array"
+    },
+    "results": {
+      "type": "array"
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "source_ids",
+        "method"
+      ],
+      "properties": {
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source_urls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "method": {
+          "type": "string"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

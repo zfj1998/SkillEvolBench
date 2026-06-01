@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E3-LS2
+environment_id: E3
+latent_skill_id: E3-LS2.type-normalization-before-sort
+slug: type-normalization-before-sort
+name: type-normalization-before-sort
+description: Normalize inconsistent pandas column types before sorting or comparing values. Use this skill when a dataframe column mixes date formats, stores numbers as strings, or represents booleans in multiple textual forms and must be standardized before order-dependent operations. Focus on date, numeric, and boolean normalization in pandas DataFrames.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E3-LS2-T1
+- E3-LS2-T2
+- E3-LS2-T3
+- E3-LS2-T4
+- E3-LS2-T5
+- E3-LS2-T6
+gap_1_summary: 'Locale-aware ordering: the curated skill uses Python''s default sort, which orders Unicode by codepoint. That''s wrong for German (where `ä = ae`), Chinese (which sorts by stroke count or pinyin depending on context), and any language with collation rules. When sorting user-facing strings, use a locale-aware collator (`locale.strcoll`, `pyicu`).'
+gap_2_summary: 'Stable secondary keys: the curated skill only teaches single-key sorting. With multi-key sorts, the stability of secondary keys matters — sorting by `priority` then by `created_at` gives different results from a single sort with a tuple key when there are ties on priority. Use stable sorts and chain in reverse priority order, or pass a single composite key.'

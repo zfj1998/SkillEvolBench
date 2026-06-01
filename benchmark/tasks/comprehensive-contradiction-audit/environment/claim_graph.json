@@ -1,0 +1,330 @@
+{
+  "claims": [
+    {
+      "id": "explicit_a1",
+      "doc": "market_memo_a",
+      "entity": "AI software market",
+      "metric": "market_size",
+      "period": "2024",
+      "scope": "global",
+      "value": 500,
+      "polarity": null,
+      "quote": "The 2024 global AI software market is about $500M."
+    },
+    {
+      "id": "explicit_b1",
+      "doc": "market_memo_b",
+      "entity": "AI software market",
+      "metric": "market_size",
+      "period": "2024",
+      "scope": "global",
+      "value": 200,
+      "polarity": null,
+      "quote": "The 2024 global AI software market is no more than $200M."
+    },
+    {
+      "id": "explicit_a2",
+      "doc": "market_memo_a",
+      "entity": "Atlas launch",
+      "metric": "launch_date",
+      "period": "2023",
+      "scope": "global",
+      "value": "2023",
+      "polarity": null,
+      "quote": "Atlas launched commercially in 2023."
+    },
+    {
+      "id": "explicit_b2",
+      "doc": "market_memo_b",
+      "entity": "Atlas launch",
+      "metric": "launch_date",
+      "period": "2023",
+      "scope": "global",
+      "value": "2024",
+      "polarity": null,
+      "quote": "Atlas did not launch until early 2024."
+    },
+    {
+      "id": "explicit_a3",
+      "doc": "market_memo_a",
+      "entity": "North expansion",
+      "metric": "expansion",
+      "period": "2025",
+      "scope": "North America",
+      "value": true,
+      "polarity": "affirm",
+      "quote": "The CEO confirmed North America expansion."
+    },
+    {
+      "id": "explicit_b3",
+      "doc": "market_memo_b",
+      "entity": "North expansion",
+      "metric": "expansion",
+      "period": "2025",
+      "scope": "North America",
+      "value": false,
+      "polarity": "deny",
+      "quote": "The CEO denied any North America expansion."
+    },
+    {
+      "id": "implicit_g1",
+      "doc": "growth_note",
+      "entity": "Revenue",
+      "metric": "growth",
+      "period": "2023",
+      "scope": "global",
+      "value": 20,
+      "polarity": null,
+      "quote": "Revenue grew 20% in 2023."
+    },
+    {
+      "id": "implicit_t1",
+      "doc": "trend_note",
+      "entity": "Revenue",
+      "metric": "trend",
+      "period": "2021-2023",
+      "scope": "global",
+      "value": "decline",
+      "polarity": null,
+      "quote": "Revenue declined every year from 2021 through 2023."
+    },
+    {
+      "id": "implicit_c1",
+      "doc": "cost_note_a",
+      "entity": "Migration program",
+      "metric": "cost",
+      "period": "post_implementation",
+      "scope": "global",
+      "value": "lower",
+      "polarity": null,
+      "quote": "After implementation, operating costs decreased."
+    },
+    {
+      "id": "implicit_c2",
+      "doc": "cost_note_b",
+      "entity": "Migration program",
+      "metric": "budget",
+      "period": "before_after",
+      "scope": "global",
+      "value": "same",
+      "polarity": null,
+      "quote": "The before and after operating budgets were identical."
+    },
+    {
+      "id": "implicit_m1",
+      "doc": "positioning_note_a",
+      "entity": "Vendor Z",
+      "metric": "market_position",
+      "period": "2024",
+      "scope": "global",
+      "value": "leader",
+      "polarity": null,
+      "quote": "Vendor Z is the market leader."
+    },
+    {
+      "id": "implicit_m2",
+      "doc": "positioning_note_b",
+      "entity": "Vendor Z",
+      "metric": "market_share",
+      "period": "2024",
+      "scope": "global",
+      "value": 8,
+      "polarity": null,
+      "quote": "Vendor Z holds only 8% market share."
+    },
+    {
+      "id": "internal_s1",
+      "doc": "annual_review_summary",
+      "entity": "Company revenue",
+      "metric": "growth",
+      "period": "2023",
+      "scope": "global",
+      "value": 15,
+      "polarity": null,
+      "quote": "Executive summary: revenue grew 15%."
+    },
+    {
+      "id": "internal_b1",
+      "doc": "annual_review_table",
+      "entity": "Company revenue",
+      "metric": "growth",
+      "period": "2023",
+      "scope": "global",
+      "value": 8,
+      "polarity": null,
+      "quote": "Table 2: revenue growth was 8%."
+    },
+    {
+      "id": "internal_s2",
+      "doc": "annual_review_section_2",
+      "entity": "Project Orion",
+      "metric": "start_date",
+      "period": "launch",
+      "scope": "global",
+      "value": "2023",
+      "polarity": null,
+      "quote": "Project Orion started in 2023."
+    },
+    {
+      "id": "internal_b2",
+      "doc": "annual_review_section_7",
+      "entity": "Project Orion",
+      "metric": "start_date",
+      "period": "launch",
+      "scope": "global",
+      "value": "2022",
+      "polarity": null,
+      "quote": "Project Orion started in early 2022."
+    },
+    {
+      "id": "internal_s3",
+      "doc": "annual_review_conclusion",
+      "entity": "KPI goals",
+      "metric": "completion",
+      "period": "2023",
+      "scope": "global",
+      "value": "all",
+      "polarity": null,
+      "quote": "All five KPI targets were achieved."
+    },
+    {
+      "id": "internal_b3",
+      "doc": "annual_review_body",
+      "entity": "KPI goals",
+      "metric": "completion",
+      "period": "2023",
+      "scope": "global",
+      "value": "3_of_5",
+      "polarity": null,
+      "quote": "The body reports that only 3 of 5 KPI targets were achieved."
+    },
+    {
+      "id": "trap_a3",
+      "doc": "pairs",
+      "entity": "Revenue",
+      "metric": "growth",
+      "period": "2022",
+      "scope": "global",
+      "value": -10,
+      "polarity": null,
+      "quote": "Revenue declined 10% in 2022."
+    },
+    {
+      "id": "trap_b3",
+      "doc": "pairs",
+      "entity": "Revenue",
+      "metric": "growth",
+      "period": "2023",
+      "scope": "global",
+      "value": 20,
+      "polarity": null,
+      "quote": "Revenue grew 20% in 2023."
+    },
+    {
+      "id": "trap_a4",
+      "doc": "pairs",
+      "entity": "Sales",
+      "metric": "growth",
+      "period": "2024",
+      "scope": "US",
+      "value": -5,
+      "polarity": null,
+      "quote": "US sales shrank in 2024."
+    },
+    {
+      "id": "trap_b4",
+      "doc": "pairs",
+      "entity": "Sales",
+      "metric": "growth",
+      "period": "2024",
+      "scope": "global",
+      "value": 8,
+      "polarity": null,
+      "quote": "Global sales grew in 2024."
+    },
+    {
+      "id": "trap_a5",
+      "doc": "pairs",
+      "entity": "Migration",
+      "metric": "cost",
+      "period": "short_term",
+      "scope": "global",
+      "value": "up",
+      "polarity": null,
+      "quote": "Short-term migration costs rose."
+    },
+    {
+      "id": "trap_b5",
+      "doc": "pairs",
+      "entity": "Migration",
+      "metric": "cost",
+      "period": "long_term",
+      "scope": "global",
+      "value": "down",
+      "polarity": null,
+      "quote": "Long-term migration costs are expected to fall."
+    }
+  ],
+  "candidate_pairs": [
+    {
+      "id": "explicit_p_market_size",
+      "left": "explicit_a1",
+      "right": "explicit_b1"
+    },
+    {
+      "id": "explicit_p_launch_date",
+      "left": "explicit_a2",
+      "right": "explicit_b2"
+    },
+    {
+      "id": "explicit_p_ceo_expansion",
+      "left": "explicit_a3",
+      "right": "explicit_b3"
+    },
+    {
+      "id": "implicit_p_growth_timeline",
+      "left": "implicit_g1",
+      "right": "implicit_t1"
+    },
+    {
+      "id": "implicit_p_cost_budget",
+      "left": "implicit_c1",
+      "right": "implicit_c2"
+    },
+    {
+      "id": "implicit_p_leader_share",
+      "left": "implicit_m1",
+      "right": "implicit_m2"
+    },
+    {
+      "id": "internal_p_internal_revenue",
+      "left": "internal_s1",
+      "right": "internal_b1"
+    },
+    {
+      "id": "internal_p_internal_date",
+      "left": "internal_s2",
+      "right": "internal_b2"
+    },
+    {
+      "id": "internal_p_internal_kpi",
+      "left": "internal_s3",
+      "right": "internal_b3"
+    },
+    {
+      "id": "trap_p_false_year",
+      "left": "trap_a3",
+      "right": "trap_b3"
+    },
+    {
+      "id": "trap_p_false_scope",
+      "left": "trap_a4",
+      "right": "trap_b4"
+    },
+    {
+      "id": "trap_p_false_time_scale",
+      "left": "trap_a5",
+      "right": "trap_b5"
+    }
+  ]
+}

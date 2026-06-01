@@ -1,0 +1,211 @@
+COURSE_ID,﻿course_name,﻿department,credits
+ 118,​COURSE_118‌,Economics,2
+ 158, COURSE_158 ,Computer Science,3
+123 , COURSE_123 ,Computer Science,1
+​160‌,COURSE_160,Psychology,3
+ 103 ,COURSE_103,English,3
+176, COURSE_176 ,Art,2
+164 ,COURSE_164,Economics,3
+​126‌,​COURSE_126‌,Psychology,1
+​85‌,​COURSE_085‌,Computer Science,2
+​33‌, COURSE_033 ,Physics,3
+​96‌, COURSE_096 ,Biology,1
+157, COURSE_157 ,Computer Science,1
+​104‌,COURSE_104,Art,1
+71, COURSE_071 ,Art,4
+​200‌,COURSE_200,Chemistry,2
+37,​COURSE_037‌,Biology,2
+86 ,​COURSE_086‌,History,2
+abc,BAD_ID,X,3
+ 44,COURSE_044,History,2
+​98‌,​COURSE_098‌,Economics,1
+4 , COURSE_004 ,Economics,2
+ 119 ,​COURSE_119‌,Computer Science,3
+ 5,​COURSE_005‌,Art,1
+ 70, COURSE_070 ,History,2
+93 ,COURSE_093,Chemistry,4
+ 26 , COURSE_026 ,Psychology,3
+201,   ,X,3
+ 53,COURSE_053,Biology,4
+35,​COURSE_035‌,English,4
+ 84,COURSE_084,Chemistry,4
+139,​COURSE_139‌,English,2
+ 15 ,COURSE_015,History,2
+24 ,​COURSE_024‌,English,1
+120 ,​COURSE_120‌,Mathematics,3
+16 ,​COURSE_016‌,History,1
+ 146 , COURSE_146 ,Mathematics,2
+ 55, COURSE_055 ,English,1
+​125‌, COURSE_125 ,English,4
+ 82,COURSE_082,Economics,1
+77 ,COURSE_077,Biology,3
+81,​COURSE_081‌,Biology,1
+ 66, COURSE_066 ,Economics,4
+​110‌,​COURSE_110‌,Chemistry,4
+36 , COURSE_036 ,Psychology,1
+124,COURSE_124,Mathematics,3
+18 , COURSE_018 ,Mathematics,3
+72, COURSE_072 ,English,4
+195 , COURSE_195 ,Computer Science,2
+142,COURSE_142,Mathematics,1
+ 115, COURSE_115 ,Physics,1
+ 189, COURSE_189 ,Mathematics,4
+​75‌, COURSE_075 ,Psychology,2
+113,​COURSE_113‌,Mathematics,4
+ 107 , COURSE_107 ,Mathematics,2
+127 , COURSE_127 ,History,3
+141, COURSE_141 ,Mathematics,4
+​197‌,​COURSE_197‌,Physics,1
+52,COURSE_052,Art,2
+ 187, COURSE_187 ,Physics,4
+​117‌,​COURSE_117‌,Mathematics,1
+151 ,​COURSE_151‌,Art,4
+​163‌,COURSE_163,Mathematics,4
+136 ,COURSE_136,History,2
+129,COURSE_129,Psychology,1
+114 ,COURSE_114,Psychology,2
+ 101,​COURSE_101‌,Biology,2
+6,​COURSE_006‌,History,2
+​64‌, COURSE_064 ,Computer Science,1
+ 144 ,COURSE_144,History,4
+​182‌, COURSE_182 ,English,4
+ 83, COURSE_083 ,Psychology,3
+​166‌, COURSE_166 ,English,1
+188, COURSE_188 ,English,1
+ 31 ,COURSE_031,History,4
+ 159,COURSE_159,Psychology,4
+ 7,WRONG_NAME_7,Biology,2
+​23‌,​COURSE_023‌,Biology,4
+ 56, COURSE_056 ,Physics,2
+91 ,​COURSE_091‌,Psychology,1
+ 46, COURSE_046 ,Psychology,1
+ 143 ,COURSE_143,Chemistry,4
+88 , COURSE_088 ,English,3
+ 34,COURSE_034,Biology,3
+ 137, COURSE_137 ,English,3
+149 , COURSE_149 ,History,2
+178,COURSE_178,History,3
+154,COURSE_154,Mathematics,2
+42,​COURSE_042‌,Physics,2
+ 162,COURSE_162,Art,3
+161,COURSE_161,History,2
+90 ,​COURSE_090‌,English,2
+ 13,​COURSE_013‌,Biology,2
+102 ,​COURSE_102‌,English,4
+177 ,COURSE_177,Biology,3
+​57‌, COURSE_057 ,History,2
+ 27 ,COURSE_027,Psychology,1
+116 ,​COURSE_116‌,Chemistry,1
+​1‌, COURSE_001 ,Physics,3
+153 ,​COURSE_153‌,Physics,3
+ 155,COURSE_155,History,4
+145,​COURSE_145‌,Biology,3
+​74‌,​COURSE_074‌,Chemistry,2
+140 , COURSE_140 ,Mathematics,3
+ 7,​COURSE_007‌,Physics,2
+​51‌,​COURSE_051‌,Physics,3
+171,COURSE_171,History,2
+​150‌,COURSE_150,Economics,3
+78, COURSE_078 ,Chemistry,3
+135,​COURSE_135‌,History,3
+185,COURSE_185,Computer Science,1
+194 , COURSE_194 ,English,2
+28 ,COURSE_028,Art,4
+ 170,​COURSE_170‌,History,3
+30,​COURSE_030‌,Computer Science,4
+ 165 ,COURSE_165,Mathematics,1
+169,COURSE_169,Computer Science,1
+40,​COURSE_040‌,Psychology,2
+ 50,COURSE_050,Art,1
+ 62 ,​COURSE_062‌,Biology,2
+32,COURSE_032,Biology,3
+​132‌,​COURSE_132‌,Art,4
+172,​COURSE_172‌,History,4
+ 80 , COURSE_080 ,History,4
+ 199 , COURSE_199 ,Art,4
+​21‌,​COURSE_021‌,Computer Science,1
+168 , COURSE_168 ,Chemistry,4
+14 , COURSE_014 ,Economics,1
+ 79,COURSE_079,History,2
+ 108 ,​COURSE_108‌,Chemistry,4
+7,WRONG_NAME_7,Physics,1
+​198‌, COURSE_198 ,History,2
+ 190 , COURSE_190 ,Psychology,3
+ 58 , COURSE_058 ,English,3
+17 ,COURSE_017,English,4
+ 29,​COURSE_029‌,Psychology,3
+173, COURSE_173 ,Physics,2
+ 183 ,COURSE_183,English,4
+41,COURSE_041,Mathematics,4
+​38‌,COURSE_038,Biology,2
+​111‌,​COURSE_111‌,Economics,2
+ 147 ,​COURSE_147‌,History,2
+ 9,​COURSE_009‌,Chemistry,3
+ 19 ,​COURSE_019‌,Computer Science,4
+45,COURSE_045,History,3
+134 , COURSE_134 ,English,4
+ 12,​COURSE_012‌,Computer Science,1
+43 , COURSE_043 ,History,1
+​112‌,​COURSE_112‌,Chemistry,2
+131 ,​COURSE_131‌,Biology,2
+ 10 , COURSE_010 ,Art,3
+ 68 ,COURSE_068,Mathematics,3
+ 39 ,COURSE_039,Biology,1
+ 47,COURSE_047,Biology,4
+​122‌,​COURSE_122‌,Chemistry,4
+ 179 , COURSE_179 ,History,4
+150 ,WRONG_NAME_150,English,4
+76 ,COURSE_076,Economics,2
+ 148 ,​COURSE_148‌,Physics,1
+ 100,COURSE_100,Economics,3
+94,​COURSE_094‌,Computer Science,3
+ 67, COURSE_067 ,Mathematics,3
+69 ,​COURSE_069‌,Economics,2
+​22‌, COURSE_022 ,Mathematics,3
+65,COURSE_065,Art,1
+92, COURSE_092 ,English,1
+ 60 , COURSE_060 ,Computer Science,4
+​167‌,COURSE_167,Computer Science,2
+ 184, COURSE_184 ,Computer Science,4
+ 87 ,​COURSE_087‌,Chemistry,2
+​196‌, COURSE_196 ,Psychology,3
+​175‌, COURSE_175 ,Psychology,2
+-1,NEG_ID,X,3
+0,ZERO_ID,X,3
+191,​COURSE_191‌,Biology,4
+ 54,COURSE_054,Mathematics,1
+ 174,​COURSE_174‌,English,4
+97 , COURSE_097 ,Mathematics,3
+ 193,​COURSE_193‌,Art,2
+​11‌, COURSE_011 ,Physics,3
+ 99 ,​COURSE_099‌,Psychology,2
+ 109 ,COURSE_109,Computer Science,2
+49 ,​COURSE_049‌,Art,1
+61, COURSE_061 ,Economics,3
+ 181 ,COURSE_181,Economics,3
+ ,NO_ID,X,3
+25,COURSE_025,Art,4
+ 48 ,COURSE_048,English,1
+128,​COURSE_128‌,Economics,1
+20 , COURSE_020 ,Computer Science,4
+​73‌,​COURSE_073‌,English,1
+121,COURSE_121,English,1
+180,​COURSE_180‌,Chemistry,4
+202,​‌,X,3
+186 , COURSE_186 ,Psychology,3
+ 59,COURSE_059,Chemistry,3
+ 95 ,​COURSE_095‌,English,4
+ 192,​COURSE_192‌,English,3
+2 ,COURSE_002,Physics,2
+ 89,​COURSE_089‌,Mathematics,1
+​138‌,​COURSE_138‌,History,1
+8, COURSE_008 ,Art,2
+​156‌,​COURSE_156‌,Psychology,3
+​3‌,​COURSE_003‌,Biology,4
+106 ,COURSE_106,Art,2
+ 130 ,COURSE_130,Physics,2
+133,​COURSE_133‌,Physics,3
+105, COURSE_105 ,Biology,4
+​152‌,​COURSE_152‌,Mathematics,3
+ 63, COURSE_063 ,Chemistry,1
+ 42,WRONG_NAME_42,Economics,2

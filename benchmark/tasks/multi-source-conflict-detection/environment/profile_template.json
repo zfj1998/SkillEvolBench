@@ -1,0 +1,12 @@
+{
+  "profile": {
+    "name": "",
+    "employee_id": "",
+    "department": "",
+    "phone": "",
+    "title": "",
+    "location": "",
+    "email": ""
+  },
+  "conflicts": []
+}

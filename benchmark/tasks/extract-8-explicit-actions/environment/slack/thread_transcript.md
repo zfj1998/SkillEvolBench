@@ -1,0 +1,22 @@
+# Slack export: #launch-ops
+
+- `2026-04-23T09:00:00-04:00` **Bob Rivera**: Morning. The Northstar launch thread is getting long, so let's keep decisions and asks here.
+- `2026-04-23T09:03:00-04:00` **Maya Singh**: Decision from yesterday: we keep the onboarding copy frozen unless legal finds a blocker.
+- `2026-04-23T09:06:00-04:00` **Bob Rivera**: <@U101> please finalize the launch checklist by Friday.
+- `2026-04-23T09:09:00-04:00` **Alice Chen**: <@U106> update the API docs by Thursday with the new rate-limit table.
+- `2026-04-23T09:12:00-04:00` **Diana Holt**: Do we really need another dashboard review before launch?
+- `2026-04-23T09:15:00-04:00` **George Miles**: Thanks all, Northstar is comfortable with the phased rollout plan.
+- `2026-04-23T09:18:00-04:00` **Bob Rivera**: <@U103> send the Northstar recap by EOD.
+- `2026-04-23T09:21:00-04:00` **Maya Singh**: The empty state treatment is aligned with the brand review notes.
+- `2026-04-23T09:24:00-04:00` **Alice Chen**: <@U104> verify the invoice export sample by Monday.
+- `2026-04-23T09:27:00-04:00` **Eli Park**: Can we not bikeshed the button color again?
+- `2026-04-23T09:30:00-04:00` **Alice Chen**: <@U105> run the smoke tests by Friday after the feature flag lands.
+- `2026-04-23T09:33:00-04:00` **Nora Patel**: API freeze is still noon Eastern; deployments after that need explicit approval.
+- `2026-04-23T09:36:00-04:00` **Bob Rivera**: <@U106> publish the release notes by Tuesday.
+- `2026-04-23T09:39:00-04:00` **Omar Ruiz**: The incident retro covered the alert noise; no new launch blocker came out of it.
+- `2026-04-23T09:42:00-04:00` **Diana Holt**: <@U107> confirm client attendees by Wednesday so support can prep access.
+- `2026-04-23T09:45:00-04:00` **George Miles**: Who owns the coffee card for the war room?
+- `2026-04-23T09:48:00-04:00` **Maya Singh**: <@U101> upload the final design assets by Friday.
+- `2026-04-23T09:51:00-04:00` **Charlie Weber**: Northstar will not need translated collateral for this pilot.
+- `2026-04-23T09:54:00-04:00` **Fatima Khan**: Release note outline is in the shared folder for review.
+- `2026-04-23T09:57:00-04:00` **Bob Rivera**: Good thread. Let's avoid adding side conversations here.

@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E6-LS3
+environment_id: E6
+latent_skill_id: E6-LS3.follow-up-tracking
+slug: follow-up-tracking
+name: follow-up-tracking
+description: Identify email threads that are overdue for a response by checking the direction of the last message, whether it contains a question or request, and how many business days have passed since it was received. Use this skill when the task is to scan one or more email threads, find items waiting on your reply, and produce an overdue follow-up list sorted by age. Focus on basic overdue detection based on last-message date and direction.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E6-LS3-T1
+- E6-LS3-T2
+- E6-LS3-T3
+- E6-LS3-T4
+- E6-LS3-T5
+- E6-LS3-T6
+gap_1_summary: 'Implicit commitments, not just explicit promises: the curated skill tracks ''I will...'' phrasings. The harder commitments are ''Let me look into that'', ''Will get back to you'', ''I''ll think about it'' — they sound noncommittal but the sender does expect a follow-up. Treat soft commitments as trackable too, with a longer default deadline.'
+gap_2_summary: 'Deadline expiration, not just message age: the curated skill reports ''last reply was 5 days ago''. The interesting case is ''commit-by date was Friday and it''s now Monday'' — the action item was on a clock, the clock has expired, and the sender is waiting. Parse explicit dates from the original commitment and flag overdue items separately from stale threads.'

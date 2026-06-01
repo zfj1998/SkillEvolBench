@@ -1,0 +1,56 @@
+# Runtime state
+workspace/runs/
+workspace/**/library/
+workspace/**/runtime/
+workspace/**/stores/
+workspace/**/reports/
+workspace/**/harbor-job/
+!workspace/.gitkeep
+!workspace/_README.md
+workspace/logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+
+tests/
+analysis/
+analysis-results/
+analysis/output/
+
+# Local assistant / compatibility shims
+.codex/
+.podman-compat/
+
+# Paper drafts and generated local artifacts
+*.pdf
+*.aux
+*.bbl
+*.blg
+*.log
+scripts/upload_to_hf.py
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# API keys (never commit)
+.env
+.env.local
+.gemini_api_key
+*.key
+.harbor-agents.env

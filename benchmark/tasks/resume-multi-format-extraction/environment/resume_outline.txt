@@ -1,0 +1,18 @@
+1. Contact
+1.1 Name: Elena Gomez
+1.2 Email: elena.gomez@example.com
+1.3 Phone: 555-0104
+
+2. Education
+2.1 M.S. Data Science | Columbia University | 2020
+2.2 B.S. Mathematics | University of Florida | 2018
+
+3. Experience
+3.1 Capital Lens | Data Scientist | 2020-2023
+3.2 Nova Health | Senior Data Scientist | 2023-2024
+
+4. Skills
+4.1 Python
+4.2 Machine Learning
+4.3 MLOps
+4.4 Communication

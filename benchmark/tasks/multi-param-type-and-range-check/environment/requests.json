@@ -1,0 +1,12 @@
+[
+  {"city": "New York", "days": 3, "units": "metric"},
+  {"city": "Boston", "days": 14, "units": "imperial"},
+  {"city": "Miami", "days": 1, "units": "metric"},
+  {"city": "Austin", "days": 7, "units": "metric"},
+  {"city": "   ", "days": 5, "units": "metric"},
+  {"city": "Seattle", "days": 0, "units": "metric"},
+  {"city": "Denver", "days": "seven", "units": "metric"},
+  {"city": "Chicago", "days": 2, "units": "celsius"},
+  {"city": null, "days": 2, "units": "metric"},
+  {"city": "Phoenix", "days": 20, "units": "foo"}
+]

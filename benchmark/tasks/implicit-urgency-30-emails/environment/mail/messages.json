@@ -1,0 +1,785 @@
+{
+  "exported_at": "2026-04-23T12:00:00-04:00",
+  "messages": [
+    {
+      "id": "email_001",
+      "thread_id": "thread-email_001",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Sam Rivera",
+        "email": "sam.rivera@harborworks.example",
+        "role": "Production Operations",
+        "team": "Operations"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "URGENT: production error budget exhausted",
+      "body": "Incident bridge is active. Checkout workers are unhealthy.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_001@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_002",
+      "thread_id": "thread-email_002",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Devin Brooks",
+        "email": "devin.brooks@harborworks.example",
+        "role": "Finance Manager",
+        "team": "Finance"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Important: board forecast refresh",
+      "body": "Need your review today so the deck can be distributed.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_002@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_003",
+      "thread_id": "thread-email_003",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "FYI: customer research notes",
+      "body": "Sharing the interview summary for background.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_003@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_004",
+      "thread_id": "thread-email_004",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "SaaS Weekly",
+        "email": "digest@saasweekly.example",
+        "role": "Newsletter",
+        "team": "External"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Newsletter: SaaS metrics weekly",
+      "body": "Digest for later reading.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_004@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_005",
+      "thread_id": "thread-email_005",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Nora Schmidt",
+        "email": "nora.schmidt@harborworks.example",
+        "role": "Security Lead",
+        "team": "Security"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "CRITICAL: leaked API token",
+      "body": "Token found in a public gist. Rotation should start immediately.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_005@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_006",
+      "thread_id": "thread-email_006",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Morgan Wells",
+        "email": "morgan.wells@harborworks.example",
+        "role": "Marketing Lead",
+        "team": "Marketing"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Meeting notes from launch standup",
+      "body": "No action needed now; reference for this week.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_006@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_007",
+      "thread_id": "thread-email_007",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Ari Gomez",
+        "email": "ari.gomez@northstar-retail.example",
+        "role": "Client Sponsor",
+        "team": "Northstar Retail"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Demo prep question",
+      "body": "Checking in on the workflow deliverable. The client team is arriving Thursday morning for the demo and we still do not have the final sandbox data.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_007@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_008",
+      "thread_id": "thread-email_008",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Workplace Bot",
+        "email": "workplace-bot@harborworks.example",
+        "role": "Automation",
+        "team": "Workplace"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Lunch poll closes Friday",
+      "body": "Vote for next week's lunch.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_008@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_009",
+      "thread_id": "thread-email_009",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Jordan Lee",
+        "email": "jordan.lee@harborworks.example",
+        "role": "VP Sales",
+        "team": "Sales"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Please review: renewal assumptions",
+      "body": "Could you review the renewal assumptions before the customer call?",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_009@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_010",
+      "thread_id": "thread-email_010",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Updated timeline for website copy",
+      "body": "Sharing a small schedule update for awareness.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_010@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_011",
+      "thread_id": "thread-email_011",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Casey Holt",
+        "email": "casey.holt@harborworks.example",
+        "role": "Legal Counsel",
+        "team": "Legal"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Action required by EOD: DPA clause",
+      "body": "Need a yes/no by EOD.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_011@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_012",
+      "thread_id": "thread-email_012",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "SaaS Weekly",
+        "email": "digest@saasweekly.example",
+        "role": "Newsletter",
+        "team": "External"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Office supplies confirmation",
+      "body": "Paper delivery confirmed.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_012@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_013",
+      "thread_id": "thread-email_013",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Devin Brooks",
+        "email": "devin.brooks@harborworks.example",
+        "role": "Finance Manager",
+        "team": "Finance"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "FYI: expense policy cleanup",
+      "body": "Background for next week.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_013@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_014",
+      "thread_id": "thread-email_014",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Nora Schmidt",
+        "email": "nora.schmidt@harborworks.example",
+        "role": "Security Lead",
+        "team": "Security"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Certificate inventory note",
+      "body": "The production database SSL certificate shows an expiration date of tomorrow at 06:00 UTC. The vendor dashboard is green, but the PEM bundle in prod is still the old one.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_014@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_015",
+      "thread_id": "thread-email_015",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Important: pricing page copy",
+      "body": "Please review by Friday.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_015@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_016",
+      "thread_id": "thread-email_016",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "SaaS Weekly",
+        "email": "digest@saasweekly.example",
+        "role": "Newsletter",
+        "team": "External"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Newsletter: workplace events",
+      "body": "Optional events this month.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_016@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_017",
+      "thread_id": "thread-email_017",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Priya Nair",
+        "email": "priya.nair@harborworks.example",
+        "role": "Engineering Director",
+        "team": "Engineering"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "FYI: dependency upgrade notes",
+      "body": "No action this week.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_017@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_018",
+      "thread_id": "thread-email_018",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Morgan Wells",
+        "email": "morgan.wells@harborworks.example",
+        "role": "Marketing Lead",
+        "team": "Marketing"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Updated timeline: webinar assets",
+      "body": "Sharing updated dates.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_018@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_019",
+      "thread_id": "thread-email_019",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Workplace Bot",
+        "email": "workplace-bot@harborworks.example",
+        "role": "Automation",
+        "team": "Workplace"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Lunch options next month",
+      "body": "Preference survey.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_019@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_020",
+      "thread_id": "thread-email_020",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Devin Brooks",
+        "email": "devin.brooks@harborworks.example",
+        "role": "Finance Manager",
+        "team": "Finance"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Important: vendor invoice exception",
+      "body": "Need your approval today to avoid payment hold.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_020@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_021",
+      "thread_id": "thread-email_021",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Meeting notes: onboarding funnel",
+      "body": "For awareness.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_021@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_022",
+      "thread_id": "thread-email_022",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Priya Nair",
+        "email": "priya.nair@harborworks.example",
+        "role": "Engineering Director",
+        "team": "Engineering"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Following up on the rollout decision",
+      "body": "Following up on this. I asked Monday whether we can freeze the API contract before the partner QA window opens, and I have not seen an answer yet.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_022@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_23",
+      "thread_id": "thread-email_23",
+      "timestamp": "2026-04-23T13:15:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "FYI: updated timeline notes #23",
+      "body": "Sharing for awareness. No immediate action is required, but it may be useful background this week.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_23@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_24",
+      "thread_id": "thread-email_24",
+      "timestamp": "2026-04-23T14:15:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "FYI: updated timeline notes #24",
+      "body": "Sharing for awareness. No immediate action is required, but it may be useful background this week.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_24@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_25",
+      "thread_id": "thread-email_25",
+      "timestamp": "2026-04-23T15:15:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "FYI: updated timeline notes #25",
+      "body": "Sharing for awareness. No immediate action is required, but it may be useful background this week.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_25@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_26",
+      "thread_id": "thread-email_26",
+      "timestamp": "2026-04-23T16:15:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "FYI: updated timeline notes #26",
+      "body": "Sharing for awareness. No immediate action is required, but it may be useful background this week.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_26@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_27",
+      "thread_id": "thread-email_27",
+      "timestamp": "2026-04-23T08:15:00-04:00",
+      "from": {
+        "name": "SaaS Weekly",
+        "email": "digest@saasweekly.example",
+        "role": "Newsletter",
+        "team": "External"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Newsletter: team digest and office notes #27",
+      "body": "Low-priority digest. Read when convenient.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_27@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_28",
+      "thread_id": "thread-email_28",
+      "timestamp": "2026-04-23T09:15:00-04:00",
+      "from": {
+        "name": "SaaS Weekly",
+        "email": "digest@saasweekly.example",
+        "role": "Newsletter",
+        "team": "External"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Newsletter: team digest and office notes #28",
+      "body": "Low-priority digest. Read when convenient.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_28@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_29",
+      "thread_id": "thread-email_29",
+      "timestamp": "2026-04-23T10:15:00-04:00",
+      "from": {
+        "name": "SaaS Weekly",
+        "email": "digest@saasweekly.example",
+        "role": "Newsletter",
+        "team": "External"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Newsletter: team digest and office notes #29",
+      "body": "Low-priority digest. Read when convenient.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_29@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "email_30",
+      "thread_id": "thread-email_30",
+      "timestamp": "2026-04-23T11:15:00-04:00",
+      "from": {
+        "name": "SaaS Weekly",
+        "email": "digest@saasweekly.example",
+        "role": "Newsletter",
+        "team": "External"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Newsletter: team digest and office notes #30",
+      "body": "Low-priority digest. Read when convenient.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<email_30@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    }
+  ]
+}

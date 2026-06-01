@@ -1,0 +1,31 @@
+{
+  "exported_at": "2026-04-23T12:00:00-04:00",
+  "messages": [
+    {
+      "id": "reply_001",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Project questions and meeting next week",
+      "body": "Could you share the current project progress, whether the budget is approved, whether hiring is still planned, and a meeting time next week?",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<reply_001@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    }
+  ]
+}

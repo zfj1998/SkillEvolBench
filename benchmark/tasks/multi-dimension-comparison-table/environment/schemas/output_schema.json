@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "comparison table output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["rows"],
+  "properties": {
+    "rows": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["dimension", "crm_a", "crm_b", "winner", "sources"],
+        "properties": {
+          "dimension": {"type": "string"},
+          "crm_a": {"type": "string", "minLength": 1},
+          "crm_b": {"type": "string", "minLength": 1},
+          "winner": {
+            "type": "string",
+            "enum": ["salesforce", "hubspot", "tie", "insufficient_evidence"]
+          },
+          "sources": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1
+          }
+        }
+      }
+    }
+  }
+}

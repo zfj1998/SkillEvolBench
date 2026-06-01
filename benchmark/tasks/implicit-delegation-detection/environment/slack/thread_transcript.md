@@ -1,0 +1,25 @@
+# Slack export: #launch-ops
+
+- `2026-04-23T09:00:00-04:00` **Bob Rivera**: We are missing a few owners from the checkout readiness thread.
+- `2026-04-23T09:03:00-04:00` **Maya Singh**: Design already posted the Figma link in #launch-assets.
+- `2026-04-23T09:06:00-04:00` **Alice Chen**: The mockups match the mobile spacing spec now.
+- `2026-04-23T09:09:00-04:00` **Bob Rivera**: Design team, could you review the checkout mockups before tomorrow's critique?
+- `2026-04-23T09:12:00-04:00` **Eli Park**: Smoke test notes are clean except for the Safari tooltip bug.
+- `2026-04-23T09:15:00-04:00` **Fatima Khan**: The docs page still points at the preview host.
+- `2026-04-23T09:18:00-04:00` **Alice Chen**: We should probably update the onboarding docs before GA so support stops answering the same question.
+- `2026-04-23T09:21:00-04:00` **George Miles**: Northstar asked whether the import limit changed; I answered in the customer thread.
+- `2026-04-23T09:24:00-04:00` **Nora Patel**: The API contract diff is in staging, but nobody has signed it off.
+- `2026-04-23T09:27:00-04:00` **Bob Rivera**: Would help if backend checked the API contracts against staging before the partner demo.
+- `2026-04-23T09:30:00-04:00` **Omar Ruiz**: Metrics are noisy because yesterday's traffic replay was still running.
+- `2026-04-23T09:33:00-04:00` **Maya Singh**: The perf chart is hard to read on projector screens.
+- `2026-04-23T09:36:00-04:00` **Alice Chen**: Someone should look at performance metrics before the exec review.
+- `2026-04-23T09:39:00-04:00` **Diana Holt**: Support can cover the live chat window if volume stays below the forecast.
+- `2026-04-23T09:42:00-04:00` **George Miles**: Is the calendar invite already updated for the partner demo?
+- `2026-04-23T09:45:00-04:00` **Bob Rivera**: Pricing copy is still in draft and the launch note references it.
+- `2026-04-23T09:48:00-04:00` **Alice Chen**: I think product needs to weigh in on the pricing copy by Friday.
+- `2026-04-23T09:51:00-04:00` **Charlie Weber**: EMEA customers are not in this pilot cohort.
+- `2026-04-23T09:54:00-04:00` **Eli Park**: Why is the staging banner still orange?
+- `2026-04-23T09:57:00-04:00` **Fatima Khan**: Docs build is green after the redirect fix.
+- `2026-04-23T10:00:00-04:00` **Nora Patel**: Backend can pick up contract validation if design is done today.
+- `2026-04-23T10:03:00-04:00` **Omar Ruiz**: The p95 chart is attached for context only.
+- `2026-04-23T10:06:00-04:00` **Bob Rivera**: Let's sync async here instead of opening a second thread.

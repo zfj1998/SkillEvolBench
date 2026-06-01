@@ -1,0 +1,20 @@
+[
+  {
+    "region": "us",
+    "endpoint": "/sales/us",
+    "enabled": true,
+    "lane": "primary"
+  },
+  {
+    "region": "eu",
+    "endpoint": "/sales/eu",
+    "enabled": true,
+    "lane": "primary"
+  },
+  {
+    "region": "apac",
+    "endpoint": "/sales/apac",
+    "enabled": true,
+    "lane": "secondary"
+  }
+]

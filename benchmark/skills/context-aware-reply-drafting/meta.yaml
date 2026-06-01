@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E6-LS2
+environment_id: E6
+latent_skill_id: E6-LS2.context-aware-reply-drafting
+slug: context-aware-reply-drafting
+name: context-aware-reply-drafting
+description: Draft professional reply emails that reference the prior context of a business email thread. Use this skill when a user provides a thread of 3-5 messages and wants a reply that reads the conversation history, identifies the latest question or request, answers it directly, references relevant earlier context when helpful, and matches the tone of the original sender. Focus on concise professional reply drafting for standard business email threads.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E6-LS2-T1
+- E6-LS2-T2
+- E6-LS2-T3
+- E6-LS2-T4
+- E6-LS2-T5
+- E6-LS2-T6
+gap_1_summary: 'Conversation history beyond the latest message: the curated skill only reads the message you''re replying to. Multi-turn threads carry context — earlier promises, recent decisions, parties added or removed — that should shape the reply. Read the last 3-5 messages and let the historical context inform tone, references, and what you commit to.'
+gap_2_summary: 'Multi-stakeholder balancing on cc: the curated skill ignores the cc list. When a reply goes to your direct counterpart but cc''s their manager, your manager, and the customer, the wording must serve all four readers — informative for the counterpart, professional for the managers, and reassuring for the customer. Check who''s reading before you write.'

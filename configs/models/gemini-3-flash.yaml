@@ -1,0 +1,19 @@
+# Model preset: Gemini 3 Flash Preview via Gemini CLI direct.
+# NOTE: "gemini-3.1-flash" does not exist on your API key as of probe time.
+# The closest available models are:
+#   - gemini-3-flash-preview (v3 Flash, used here)
+#   - gemini-3.1-flash-lite-preview (3.1 Flash Lite, smaller)
+# Change this if you have access to a different Flash variant.
+name: gemini-3.1-flash
+short_id: gemini-3-flash
+provider: gemini
+harbor_agent_name: gemini-cli
+agent_model_name: google/gemini-3-flash-preview
+
+agent_env:
+  GEMINI_CLI_TRUST_WORKSPACE: "true"
+
+# Host-side LiteLLMClient routing (Gemini API direct):
+host_litellm:
+  model: gemini/gemini-3-flash-preview
+  api_key_env: GEMINI_API_KEY

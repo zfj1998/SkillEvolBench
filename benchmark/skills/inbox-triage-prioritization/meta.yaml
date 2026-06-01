@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E6-LS1
+environment_id: E6
+latent_skill_id: E6-LS1.inbox-triage-prioritization
+slug: inbox-triage-prioritization
+name: inbox-triage-prioritization
+description: Classify and prioritize incoming emails using simple category labels and explicit urgency markers. Use this skill when the task is to scan a batch of emails, assign each one to a fixed category, detect clear urgency keywords in the subject or opening sentences, and output a sorted list with High priority first, then Medium, then Low. Focus on keyword-based classification and explicit urgency markers.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E6-LS1-T1
+- E6-LS1-T2
+- E6-LS1-T3
+- E6-LS1-T4
+- E6-LS1-T5
+- E6-LS1-T6
+gap_1_summary: 'Implicit urgency signals: the curated skill only fires on explicit markers (''URGENT'', ''ASAP''). The high-priority emails are often calm in tone but carry implicit urgency — ''Board meeting tomorrow and I still don''t have slides'' has no urgency keyword but is a P0. Look for time references, blocking-language, and consequence framing, not just keywords.'
+gap_2_summary: 'Sender-hierarchy weighting: the curated skill ignores who sent the email. A casual note from the CEO often outranks an all-caps demand from an intern. Maintain a relationship graph (your boss, your boss''s boss, customers, vendors) and combine it with content urgency for the final score.'

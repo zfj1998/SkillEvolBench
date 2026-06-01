@@ -1,0 +1,28 @@
+schema_version: '1.0'
+task_id: E5-LS4-T6
+task_slug: hierarchical-series-summarization
+environment_id: E5
+family_id: E5-LS4
+latent_skill_id: E5-LS4.constrained-summarization
+task_index: 6
+role: composition
+phase: evaluation
+within_family_difficulty_rank: 6
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E5-LS4.constrained-summarization
+required_skills:
+- E5-LS1.multi-source-search-filter
+- E5-LS4.constrained-summarization
+required_skill_compose_order:
+- E5-LS4.constrained-summarization
+- E5-LS1.multi-source-search-filter
+composition_type: cross_family
+trap_types: []
+domain_group: research_synthesis
+review_notes:
+- 'composition_note: hierarchical-series-summarization'

@@ -1,0 +1,20 @@
+{
+  "candidate_slots": [
+    {
+      "id": "slot_a",
+      "start_utc": "2026-04-28T14:00:00Z",
+      "label": "Tue 10am New York"
+    },
+    {
+      "id": "slot_b",
+      "start_utc": "2026-04-30T18:00:00Z",
+      "label": "Thu 2pm New York"
+    },
+    {
+      "id": "slot_c",
+      "start_utc": "2026-05-01T15:00:00Z",
+      "label": "Fri 11am New York"
+    }
+  ],
+  "duration_minutes": 60
+}

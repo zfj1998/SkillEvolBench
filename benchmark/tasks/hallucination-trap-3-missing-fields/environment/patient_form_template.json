@@ -1,0 +1,14 @@
+{
+  "patient_name": "",
+  "patient_id": "",
+  "date_of_birth": "",
+  "admission_date": "",
+  "diagnosis": "",
+  "attending_physician": "",
+  "room": "",
+  "medications": "",
+  "insurance_provider": "",
+  "emergency_contact": "",
+  "blood_type": "",
+  "allergies": ""
+}

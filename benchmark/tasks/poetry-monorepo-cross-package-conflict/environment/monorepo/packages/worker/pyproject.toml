@@ -1,0 +1,9 @@
+[tool.poetry]
+name = "worker-pkg"
+version = "0.1.0"
+description = "Background worker depending on both core and api"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+core-pkg = { path = "../core" }
+api-pkg = { path = "../api" }

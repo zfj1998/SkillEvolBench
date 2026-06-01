@@ -1,0 +1,30 @@
+schema_version: '1.0'
+task_id: E1-LS5-T6
+task_slug: three-way-merge-plus-integration-validation
+environment_id: E1
+family_id: E1-LS5
+latent_skill_id: E1-LS5.merge-conflict-resolution
+task_index: 6
+role: composition
+phase: evaluation
+within_family_difficulty_rank: 6
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E1-LS5.merge-conflict-resolution
+required_skills:
+- E1-LS1.systematic-error-diagnosis
+- E1-LS4.multi-file-bug-fix
+- E1-LS5.merge-conflict-resolution
+required_skill_compose_order:
+- E1-LS5.merge-conflict-resolution
+- E1-LS4.multi-file-bug-fix
+- E1-LS1.systematic-error-diagnosis
+composition_type: cross_family
+trap_types: []
+domain_group: code_debugging
+review_notes:
+- 'composition_note: three-way merge + integration validation'

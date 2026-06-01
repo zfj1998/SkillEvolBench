@@ -1,0 +1,242 @@
+[
+  {
+    "employee_id": "E001",
+    "name": "Alice Chen",
+    "dept": "Finance",
+    "status": "active",
+    "address": {
+      "street": "123 Main St",
+      "city": "San Francisco",
+      "zip": "94105"
+    },
+    "compensation": {
+      "salary": 90000,
+      "bonus": "10%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E002",
+    "name": "Bob Torres",
+    "dept": "Finance",
+    "status": "active",
+    "address": {
+      "street": "200 River Rd",
+      "city": "San Francisco",
+      "zip": "94101"
+    },
+    "compensation": {
+      "salary": 95000,
+      "bonus": "15%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E003",
+    "name": "Carol Park",
+    "dept": "HR",
+    "status": "active",
+    "address": {
+      "street": "789 Pine Rd",
+      "city": "San Francisco",
+      "zip": "10001"
+    },
+    "compensation": {
+      "salary": 100000,
+      "bonus": "10%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E004",
+    "name": "David Kim",
+    "dept": "HR",
+    "status": "active",
+    "address": {
+      "street": "400 Valley Blvd",
+      "city": "San Francisco",
+      "zip": "94103"
+    },
+    "compensation": {
+      "salary": 105000,
+      "bonus": "12%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E005",
+    "name": "Emma Wang",
+    "dept": "HR",
+    "status": "active",
+    "address": {
+      "street": "55 Market St",
+      "city": "San Francisco",
+      "zip": "60601"
+    },
+    "compensation": {
+      "salary": 110000,
+      "bonus": "10%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E006",
+    "name": "Frank Liu",
+    "dept": "HR",
+    "status": "active",
+    "address": {
+      "street": "600 Park Ln",
+      "city": "San Francisco",
+      "zip": "94105"
+    },
+    "compensation": {
+      "salary": 115000,
+      "bonus": "10%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E007",
+    "name": "Grace Lee",
+    "dept": "HR",
+    "status": "active",
+    "address": {
+      "street": "8 Harbor Dr",
+      "city": "San Francisco",
+      "zip": "98101"
+    },
+    "compensation": {
+      "salary": 120000,
+      "bonus": "10%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E008",
+    "name": "Henry Zhao",
+    "dept": "HR",
+    "status": "active",
+    "address": {
+      "street": "800 Ocean Blvd",
+      "city": "San Francisco",
+      "zip": "94107"
+    },
+    "compensation": {
+      "salary": 125000,
+      "bonus": "10%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E009",
+    "name": "Iris Tan",
+    "dept": "Engineering",
+    "status": "active",
+    "address": {
+      "street": "900 Mountain Rd",
+      "city": "San Francisco",
+      "zip": "94108"
+    },
+    "compensation": {
+      "salary": 130000,
+      "bonus": "8%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E010",
+    "name": "James Wu",
+    "dept": "HR",
+    "status": "active",
+    "address": {
+      "street": "101 Summit St",
+      "city": "San Francisco",
+      "zip": "94109"
+    },
+    "compensation": {
+      "salary": 135000,
+      "bonus": "10%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E011",
+    "name": "Karen Ho",
+    "dept": "Finance",
+    "status": "active",
+    "address": {
+      "street": "202 Canyon Blvd",
+      "city": "San Francisco",
+      "zip": "941010"
+    },
+    "compensation": {
+      "salary": 140000,
+      "bonus": "10%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E012",
+    "name": "Leo Zhang",
+    "dept": "Engineering",
+    "status": "active",
+    "address": {
+      "street": "303 Desert Way",
+      "city": "San Francisco",
+      "zip": "941011"
+    },
+    "compensation": {
+      "salary": 145000,
+      "bonus": "10%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E013",
+    "name": "Maria Xu",
+    "dept": "Sales",
+    "status": "active",
+    "address": {
+      "street": "404 Meadow Ln",
+      "city": "San Francisco",
+      "zip": "941012"
+    },
+    "compensation": {
+      "salary": 150000,
+      "bonus": "10%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E014",
+    "name": "Nathan Lin",
+    "dept": "HR",
+    "status": "active",
+    "address": {
+      "street": "505 Prairie Ave",
+      "city": "San Francisco",
+      "zip": "941013"
+    },
+    "compensation": {
+      "salary": 155000,
+      "bonus": "10%",
+      "currency": "USD"
+    }
+  },
+  {
+    "employee_id": "E015",
+    "name": "Olivia Ng",
+    "dept": "Engineering",
+    "status": "active",
+    "address": {
+      "street": "606 Cliff Rd",
+      "city": "San Francisco",
+      "zip": "941014"
+    },
+    "compensation": {
+      "salary": 160000,
+      "bonus": "10%",
+      "currency": "USD"
+    }
+  }
+]

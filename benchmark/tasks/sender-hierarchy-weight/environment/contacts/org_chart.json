@@ -1,0 +1,22 @@
+{
+  "company": "HarborWorks",
+  "current_user": {
+    "name": "Alex Morgan",
+    "email": "alex.morgan@harborworks.example",
+    "role": "Chief of Staff",
+    "level": 3,
+    "team": "Executive Office"
+  },
+  "levels": {
+    "5": "CEO",
+    "4": "VP / external executive sponsor",
+    "3": "Director / senior function owner",
+    "2": "Manager / IC owner",
+    "1": "IC",
+    "0": "automation / intern / low business authority"
+  },
+  "manager_chain": [
+    "Alex Morgan",
+    "Maya Patel"
+  ]
+}

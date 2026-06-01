@@ -1,0 +1,14 @@
+{
+  "alice": {
+    "prefer_morning": true
+  },
+  "bob": {
+    "avoid_friday": true
+  },
+  "charlie": {
+    "office_days": [
+      "Tuesday",
+      "Friday"
+    ]
+  }
+}

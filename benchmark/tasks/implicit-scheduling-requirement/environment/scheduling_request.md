@@ -1,0 +1,1 @@
+Schedule the weekly team sync for next week. Infer participants from team.json rather than only last week's attendee list.

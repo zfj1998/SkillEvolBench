@@ -1,0 +1,11 @@
+{
+  "logical_customer_total": 0,
+  "active_customer_count": 0,
+  "inactive_customer_count": 0,
+  "active_customer_ids": [],
+  "sanity": {
+    "active_le_total": false,
+    "active_plus_inactive_equals_total": false
+  },
+  "note": "Starter placeholder only; regenerate by running count_active_customers.py after fixing the join logic."
+}

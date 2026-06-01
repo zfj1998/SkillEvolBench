@@ -1,0 +1,1 @@
+Schedule these 3 meetings across next week. Minimize fragmentation, respect hard constraints, and satisfy soft preferences where possible.

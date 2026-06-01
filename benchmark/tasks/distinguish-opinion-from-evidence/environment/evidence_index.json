@@ -1,0 +1,98 @@
+[
+  {
+    "source_id": "R01",
+    "supported_concepts": [],
+    "source_type": "randomized_controlled_trial",
+    "evidence_strength": "high",
+    "grounding_note": "Randomized field experiment at Trip.com showing hybrid work improved retention without harming performance.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "R02",
+    "supported_concepts": [],
+    "source_type": "working_paper",
+    "evidence_strength": "high",
+    "grounding_note": "Research synthesis arguing hybrid work is typically productivity-neutral while fully remote can be lower productivity.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "R03",
+    "supported_concepts": [],
+    "source_type": "working_paper",
+    "evidence_strength": "high",
+    "grounding_note": "Firm-level study of a Turkish call center showing fully remote employees with in-person onboarding had higher productivity.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "R04",
+    "supported_concepts": [],
+    "source_type": "peer_reviewed_article",
+    "evidence_strength": "high",
+    "grounding_note": "Survey-based evidence on productivity perceptions and worker preferences about remote work.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "R05",
+    "supported_concepts": [],
+    "source_type": "working_paper",
+    "evidence_strength": "high",
+    "grounding_note": "Measurement paper harmonizing WFH survey estimates; evidence-heavy and explicit about survey design.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "R06",
+    "supported_concepts": [],
+    "source_type": "peer_reviewed_article",
+    "evidence_strength": "high",
+    "grounding_note": "Evidence about remote work's mobility impacts; relevant but not directly about productivity.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "R07",
+    "supported_concepts": [],
+    "source_type": "research_brief",
+    "evidence_strength": "medium",
+    "grounding_note": "Survey brief with explicit sample details for global WFH patterns.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "R08",
+    "supported_concepts": [],
+    "source_type": "opinion_post",
+    "evidence_strength": "low",
+    "grounding_note": "Executive opinion piece advocating remote work with anecdotes and no formal methodology.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "R09",
+    "supported_concepts": [],
+    "source_type": "opinion_post",
+    "evidence_strength": "low",
+    "grounding_note": "CEO opinion about remote work as retention strategy; anecdotal and advocacy oriented.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "R10",
+    "supported_concepts": [],
+    "source_type": "commentary",
+    "evidence_strength": "low",
+    "grounding_note": "Commentary article built around quoted experiences rather than a formal study.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "R11",
+    "supported_concepts": [],
+    "source_type": "news_quote",
+    "evidence_strength": "low",
+    "grounding_note": "News article centered on a prominent executive's opinion that WFH harms productivity.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "R12",
+    "supported_concepts": [],
+    "source_type": "news_analysis",
+    "evidence_strength": "medium",
+    "grounding_note": "Journalistic synthesis with some survey references, but a lot of narrative around CEO sentiment.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  }
+]

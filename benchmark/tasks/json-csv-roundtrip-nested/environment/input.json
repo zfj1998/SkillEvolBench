@@ -1,0 +1,32 @@
+{
+  "user": {
+    "id": "U-1007",
+    "name": "Dana Rivera",
+    "active": true,
+    "score": 98.5,
+    "nickname": null,
+    "address": {
+      "city": "Seattle",
+      "postal_code": "98109",
+      "verified": false
+    },
+    "orders": [
+      {
+        "id": 1,
+        "amount": 12.5,
+        "paid": true,
+        "coupon": null
+      },
+      {
+        "id": 2,
+        "amount": 18.0,
+        "paid": false,
+        "coupon": "SPRING"
+      }
+    ]
+  },
+  "meta": {
+    "source": "roundtrip-fixture",
+    "version": 3
+  }
+}

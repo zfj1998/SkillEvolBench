@@ -1,0 +1,38 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": ["app", "database", "logging"],
+    "properties": {
+        "app": {
+            "type": "object",
+            "required": ["name", "version"]
+        },
+        "database": {
+            "type": "object",
+            "required": ["host", "port", "pool_size"],
+            "properties": {
+                "host": {"type": "string"},
+                "port": {"type": "integer"},
+                "pool_size": {"type": "integer", "minimum": 1},
+                "username": {"type": "string"},
+                "database_name": {"type": "string"},
+                "ssl": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {"type": "boolean"},
+                        "cert_path": {"type": "string"},
+                        "key_path": {"type": "string"},
+                        "ca_path": {"type": "string"}
+                    }
+                }
+            }
+        },
+        "logging": {
+            "type": "object",
+            "required": ["level"]
+        },
+        "cache": {
+            "type": "object"
+        }
+    }
+}

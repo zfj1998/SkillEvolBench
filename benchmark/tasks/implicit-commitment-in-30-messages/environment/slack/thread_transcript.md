@@ -1,0 +1,32 @@
+# Slack transcript: #project-launch
+
+- `2026-04-23T10:00:00-04:00` **Bob Rivera**: Kickoff: launch blockers and commitments.
+- `2026-04-23T10:01:00-04:00` **Alice Chen**: Let me look into the webhook retries after standup.
+- `2026-04-23T10:02:00-04:00` **Bob Rivera**: We should address the pricing copy before launch.
+- `2026-04-23T10:03:00-04:00` **Charlie Weber**: I can probably help with migration mapping if nobody else has it.
+- `2026-04-23T10:04:00-04:00` **Diana Holt**: Yeah I'll circle back on the customer quote wording.
+- `2026-04-23T10:05:00-04:00` **Fatima Khan**: We definitely need to update docs before launch.
+- `2026-04-23T10:06:00-04:00` **Eli Park**: I will run the explicit load test by Friday.
+- `2026-04-23T10:07:00-04:00` **Bob Rivera**: Who has the latest logo?
+- `2026-04-23T10:08:00-04:00` **Charlie Weber**: Has anyone tried the office espresso?
+- `2026-04-23T10:09:00-04:00` **Alice Chen**: This is just a note, no action from me.
+- `2026-04-23T10:11:00-04:00` **Bob Rivera**: Background note 11: no action, just context from the launch room.
+- `2026-04-23T10:12:00-04:00` **Bob Rivera**: Background note 12: no action, just context from the launch room.
+- `2026-04-23T10:13:00-04:00` **Bob Rivera**: Background note 13: no action, just context from the launch room.
+- `2026-04-23T10:14:00-04:00` **Bob Rivera**: Background note 14: no action, just context from the launch room.
+- `2026-04-23T10:15:00-04:00` **Bob Rivera**: Background note 15: no action, just context from the launch room.
+- `2026-04-23T10:16:00-04:00` **Bob Rivera**: Background note 16: no action, just context from the launch room.
+- `2026-04-23T10:17:00-04:00` **Bob Rivera**: Background note 17: no action, just context from the launch room.
+- `2026-04-23T10:18:00-04:00` **Bob Rivera**: Background note 18: no action, just context from the launch room.
+- `2026-04-23T10:19:00-04:00` **Bob Rivera**: Background note 19: no action, just context from the launch room.
+- `2026-04-23T10:20:00-04:00` **Bob Rivera**: Background note 20: no action, just context from the launch room.
+- `2026-04-23T10:21:00-04:00` **Bob Rivera**: Background note 21: no action, just context from the launch room.
+- `2026-04-23T10:22:00-04:00` **Bob Rivera**: Background note 22: no action, just context from the launch room.
+- `2026-04-23T10:23:00-04:00` **Bob Rivera**: Background note 23: no action, just context from the launch room.
+- `2026-04-23T10:24:00-04:00` **Bob Rivera**: Background note 24: no action, just context from the launch room.
+- `2026-04-23T10:25:00-04:00` **Bob Rivera**: Background note 25: no action, just context from the launch room.
+- `2026-04-23T10:26:00-04:00` **Bob Rivera**: Background note 26: no action, just context from the launch room.
+- `2026-04-23T10:27:00-04:00` **Bob Rivera**: Background note 27: no action, just context from the launch room.
+- `2026-04-23T10:28:00-04:00` **Bob Rivera**: Background note 28: no action, just context from the launch room.
+- `2026-04-23T10:29:00-04:00` **Bob Rivera**: Background note 29: no action, just context from the launch room.
+- `2026-04-23T10:30:00-04:00` **Bob Rivera**: Background note 30: no action, just context from the launch room.

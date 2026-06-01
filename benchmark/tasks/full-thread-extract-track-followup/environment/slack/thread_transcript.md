@@ -1,0 +1,22 @@
+# Slack transcript: #project-launch
+
+- `2026-04-16T09:00:00-04:00` **Alice Chen**: I will publish the webhook runbook by last Monday.
+- `2026-04-16T09:02:00-04:00` **Bob Rivera**: Please finish the pricing FAQ by last Wednesday.
+- `2026-04-16T09:04:00-04:00` **Charlie Weber**: Let me look into the EMEA DNS issue.
+- `2026-04-16T09:06:00-04:00` **Diana Holt**: I will update customer comms by Friday.
+- `2026-04-16T09:08:00-04:00` **Eli Park**: I'll complete regression by next Monday.
+- `2026-04-16T09:10:00-04:00` **Fatima Khan**: We should update docs before launch.
+- `2026-04-16T09:12:00-04:00` **Alice Chen**: I can probably help with migration mapping.
+- `2026-04-16T09:14:00-04:00` **Bob Rivera**: Please schedule partner QA by Friday.
+- `2026-04-23T09:00:00-04:00` **Diana Holt**: Customer comms done and sent.
+- `2026-04-23T09:02:00-04:00` **Charlie Weber**: EMEA DNS is delayed; provider ticket still open.
+- `2026-04-23T09:11:00-04:00` **Eli Park**: Background discussion 11, no new owner.
+- `2026-04-23T09:12:00-04:00` **Eli Park**: Background discussion 12, no new owner.
+- `2026-04-23T09:13:00-04:00` **Eli Park**: Background discussion 13, no new owner.
+- `2026-04-23T09:14:00-04:00` **Eli Park**: Background discussion 14, no new owner.
+- `2026-04-23T09:15:00-04:00` **Eli Park**: Background discussion 15, no new owner.
+- `2026-04-23T09:16:00-04:00` **Eli Park**: Background discussion 16, no new owner.
+- `2026-04-23T09:17:00-04:00` **Eli Park**: Background discussion 17, no new owner.
+- `2026-04-23T09:18:00-04:00` **Eli Park**: Background discussion 18, no new owner.
+- `2026-04-23T09:19:00-04:00` **Eli Park**: Background discussion 19, no new owner.
+- `2026-04-23T09:20:00-04:00` **Eli Park**: Background discussion 20, no new owner.

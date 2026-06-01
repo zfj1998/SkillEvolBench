@@ -1,0 +1,23 @@
+schema_version: '1.0'
+task_id: E5-LS3-T2
+task_slug: citation-exists-but-misrepresented
+environment_id: E5
+family_id: E5-LS3
+latent_skill_id: E5-LS3.citation-verification
+task_index: 2
+role: enriched
+phase: learning
+within_family_difficulty_rank: 2
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E5-LS3.citation-verification
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types: []
+domain_group: research_synthesis
+review_notes: []

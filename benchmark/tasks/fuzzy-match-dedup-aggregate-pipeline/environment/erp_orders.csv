@@ -1,0 +1,78 @@
+company_name,order_amount,order_date,region
+ACME,29285.56,2024-12-23,West
+ACME,25219.61,2024-02-25,East
+ACME,80864.91,2024-02-16,North
+ACME,24241.36,2024-04-28,West
+ACME,81341.52,2024-01-26,North
+GlobalTech,16083.05,2024-04-07,East
+GlobalTech,55820.49,2024-03-24,East
+GlobalTech,39774.03,2024-08-15,South
+GlobalTech,54899.63,2024-11-06,North
+GlobalTech,18865.98,2024-08-27,West
+Premier Sol,57480.93,2024-03-31,West
+Premier Sol,76640.09,2024-09-26,East
+Premier Sol,66429.47,2024-11-08,North
+Premier Sol,85044.79,2024-08-30,East
+Premier Sol,30299.62,2024-06-22,East
+Delta Ind,62698.1,2024-04-03,East
+Delta Ind,90617.72,2024-12-23,West
+Delta Ind,9306.9,2024-07-04,East
+Delta Ind,7143.4,2024-01-16,North
+Omega Sys,27445.32,2024-12-24,East
+Omega Sys,62949.1,2024-05-26,West
+Omega Sys,48802.86,2024-10-23,West
+Omega Sys,57509.2,2024-01-03,South
+Omega Sys,66918.67,2024-11-14,West
+Zenith,40099.43,2024-10-22,West
+Zenith,50338.54,2024-12-21,North
+Zenith,58361.29,2024-01-18,North
+Zenith,79756.22,2024-07-04,East
+Atlas,45440.89,2024-11-14,West
+Atlas,58196.61,2024-11-14,South
+Atlas,68775.97,2024-06-27,North
+Atlas,30924.47,2024-02-15,North
+Atlas,39263.5,2024-09-05,North
+Pinnacle,87838.21,2024-01-23,East
+Pinnacle,38127.64,2024-01-02,South
+Pinnacle,30212.92,2024-02-23,West
+Summit,62203.05,2024-07-08,South
+Summit,88254.22,2024-08-26,North
+Vertex,61990.56,2024-07-31,East
+Vertex,51113.98,2024-07-05,East
+Company_11,20357.92,2024-10-30,North
+Company_11,28237.63,2024-09-03,North
+Company_11,48913.06,2024-09-10,South
+Company_12,39035.87,2024-01-18,South
+Company_12,33247.75,2024-04-26,East
+Company_12,24957.19,2024-07-31,South
+Company_13,3561.14,2024-04-06,West
+Company_13,5503.36,2024-03-05,North
+Company_13,32123.01,2024-05-02,North
+Company_14,17204.39,2024-09-17,East
+Company_15,17409.74,2024-04-04,East
+Company_15,33559.51,2024-06-25,East
+Company_16,18549.11,2024-07-05,West
+Company_17,36915.83,2024-05-19,North
+Company_18,7212.99,2024-06-12,East
+Company_18,47465.25,2024-04-15,East
+Company_18,26733.33,2024-04-18,West
+Company_19,39240.64,2024-06-03,East
+Company_19,2755.92,2024-07-13,North
+Company_19,41307.66,2024-07-22,East
+Company_20,45203.16,2024-12-15,East
+Company_20,37702.11,2024-10-27,West
+Company_21,22873.92,2024-12-11,South
+Company_21,14457.19,2024-08-19,West
+Company_21,18643.62,2024-03-06,East
+Company_22,33097.63,2024-12-19,East
+Company_23,29005.19,2024-03-26,South
+Company_23,13502.87,2024-07-22,West
+Company_24,46671.51,2024-11-30,East
+Company_25,2256.18,2024-10-05,North
+Company_25,22000.24,2024-07-06,West
+Company_25,3260.78,2024-12-26,East
+Company_26,42471.7,2024-01-26,North
+Company_27,11281.72,2024-09-17,West
+Company_28,6532.57,2024-02-28,West
+Company_29,21590.68,2024-11-24,South
+Company_30,27190.39,2024-12-06,East

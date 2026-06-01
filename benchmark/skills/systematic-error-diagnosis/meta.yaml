@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E1-LS1
+environment_id: E1
+latent_skill_id: E1-LS1.systematic-error-diagnosis
+slug: systematic-error-diagnosis
+name: systematic-error-diagnosis
+description: Systematically diagnose and fix runtime errors in multi-file Python and JavaScript/TypeScript projects. Use this skill when a task includes a traceback, stack trace, failing command, failing test, or clear crash across 3-7 source files and you need to trace the root cause through the call chain. Focus on failures with explicit error output or crashes. Trigger on requests like "fix the bug", "resolve the traceback", "debug this project", or "make the failing test pass" when the failure already points to a concrete runtime error.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E1-LS1-T1
+- E1-LS1-T2
+- E1-LS1-T3
+- E1-LS1-T4
+- E1-LS1-T5
+- E1-LS1-T6
+gap_1_summary: 'Silent behavioral bugs: the curated skill''s workflow starts from a traceback, but programs that run to completion with the wrong output give it nothing to anchor on. Treat ''no crash but wrong result'' as a first-class case — build an expected-behavior model, then diff it against actual output.'
+gap_2_summary: 'Silent async failures: the curated skill only mentions forgetting `await`, but real async bugs often look fine. `Promise.allSettled` rejected entries get filtered out unnoticed, EventEmitter `error` events without listeners crash the process days later, and unhandled rejections vanish from the main flow. Audit every async branch for swallowed errors.'

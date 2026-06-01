@@ -1,0 +1,37 @@
+{
+  "vp_sales": {
+    "name": "Jordan Lee",
+    "email": "jordan.lee@harborworks.example",
+    "role": "VP Sales",
+    "level": 4,
+    "team": "Sales"
+  },
+  "vp_eng": {
+    "name": "Riley Chen",
+    "email": "riley.chen@harborworks.example",
+    "role": "VP Engineering",
+    "level": 4,
+    "team": "Engineering"
+  },
+  "pm": {
+    "name": "Taylor Kim",
+    "email": "taylor.kim@harborworks.example",
+    "role": "Product Manager",
+    "level": 2,
+    "team": "Product"
+  },
+  "eng_dir": {
+    "name": "Priya Nair",
+    "email": "priya.nair@harborworks.example",
+    "role": "Engineering Director",
+    "level": 3,
+    "team": "Engineering"
+  },
+  "client": {
+    "name": "Ari Gomez",
+    "email": "ari.gomez@northstar-retail.example",
+    "role": "Client Sponsor",
+    "level": 4,
+    "team": "Northstar Retail"
+  }
+}

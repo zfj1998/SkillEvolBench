@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E2-LS3
+environment_id: E2
+latent_skill_id: E2-LS3.pagination-complete-retrieval
+slug: pagination-complete-retrieval
+name: pagination-complete-retrieval
+description: Retrieve the complete dataset from offset-based paginated REST APIs by fetching every page in sequence. Use this skill when an API returns results in numbered pages such as `page=1&per_page=25` and the user needs all records, not just the first page. Focus on page-number plus page-size pagination with JSON results that can be combined into one list.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E2-LS3-T1
+- E2-LS3-T2
+- E2-LS3-T3
+- E2-LS3-T4
+- E2-LS3-T5
+- E2-LS3-T6
+gap_1_summary: 'Cursor-based pagination and variable page size: the curated skill covers offset / page-number paging only. Cursor-based APIs return an opaque `next_cursor` that must be threaded through, and some APIs change page size based on response weight (small items → larger pages). Drive the loop off the API''s continuation token, not off a counter you maintain.'
+gap_2_summary: 'Concurrent writes during pagination: the curated skill assumes the dataset is frozen for the duration of the fetch. When records are inserted or deleted while you paginate, an offset-based loop will skip rows or duplicate them. Snapshot the result with a stable sort plus a pinning timestamp, or detect and recover from drift between pages.'

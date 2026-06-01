@@ -1,0 +1,1393 @@
+{
+  "matching_method": "exact normalized email",
+  "resolution_strategy": "system_a > system_b > system_c",
+  "total_conflicts": 231,
+  "conflicts": [
+    {
+      "field_path": "address.street",
+      "source_a_value": "418 Oak St",
+      "source_b_value": null,
+      "record_id": "P038"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10037",
+      "source_b_value": null,
+      "record_id": "P038"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "8%",
+      "source_b_value": null,
+      "record_id": "P038"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "0%",
+      "source_b_value": null,
+      "record_id": "P038"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "627 Oak St",
+      "source_b_value": null,
+      "record_id": "P057"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10056",
+      "source_b_value": null,
+      "record_id": "P057"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "8%",
+      "source_b_value": null,
+      "record_id": "P057"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "0%",
+      "source_b_value": null,
+      "record_id": "P057"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "541 Maple Ave",
+      "source_b_value": "744 Birch Blvd",
+      "record_id": "P092"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "92461",
+      "source_b_value": "82568",
+      "record_id": "P092"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "13%",
+      "source_b_value": "15%",
+      "record_id": "P092"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "2%",
+      "source_b_value": null,
+      "record_id": "P092"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "541 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P092"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "92461",
+      "source_b_value": null,
+      "record_id": "P092"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "13%",
+      "source_b_value": null,
+      "record_id": "P092"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "2%",
+      "source_b_value": null,
+      "record_id": "P092"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "913 Oak St",
+      "source_b_value": null,
+      "record_id": "P083"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10082",
+      "source_b_value": null,
+      "record_id": "P083"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "8%",
+      "source_b_value": null,
+      "record_id": "P083"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "4%",
+      "source_b_value": null,
+      "record_id": "P083"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "2035 Oak St",
+      "source_b_value": null,
+      "record_id": "P185"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10184",
+      "source_b_value": null,
+      "record_id": "P185"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "9%",
+      "source_b_value": null,
+      "record_id": "P185"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "4%",
+      "source_b_value": null,
+      "record_id": "P185"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "264 Maple Ave",
+      "source_b_value": "724 Birch Blvd",
+      "record_id": "P033"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "98193",
+      "source_b_value": "83110",
+      "record_id": "P033"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "20%",
+      "source_b_value": "5%",
+      "record_id": "P033"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "4%",
+      "source_b_value": null,
+      "record_id": "P033"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "264 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P033"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "98193",
+      "source_b_value": null,
+      "record_id": "P033"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "20%",
+      "source_b_value": null,
+      "record_id": "P033"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "4%",
+      "source_b_value": null,
+      "record_id": "P033"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "536 Maple Ave",
+      "source_b_value": "983 Birch Blvd",
+      "record_id": "P178"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "94798",
+      "source_b_value": "81501",
+      "record_id": "P178"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "8%",
+      "source_b_value": "25%",
+      "record_id": "P178"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P178"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "536 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P178"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "94798",
+      "source_b_value": null,
+      "record_id": "P178"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "8%",
+      "source_b_value": null,
+      "record_id": "P178"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P178"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "748 Oak St",
+      "source_b_value": null,
+      "record_id": "P068"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10067",
+      "source_b_value": null,
+      "record_id": "P068"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "16%",
+      "source_b_value": null,
+      "record_id": "P068"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "1%",
+      "source_b_value": null,
+      "record_id": "P068"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "716 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P103"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "96216",
+      "source_b_value": null,
+      "record_id": "P103"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "17%",
+      "source_b_value": null,
+      "record_id": "P103"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P103"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "922 Maple Ave",
+      "source_b_value": "891 Birch Blvd",
+      "record_id": "P177"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "92947",
+      "source_b_value": "84624",
+      "record_id": "P177"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "15%",
+      "source_b_value": "20%",
+      "record_id": "P177"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P177"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "922 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P177"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "92947",
+      "source_b_value": null,
+      "record_id": "P177"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "15%",
+      "source_b_value": null,
+      "record_id": "P177"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P177"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "1639 Oak St",
+      "source_b_value": null,
+      "record_id": "P149"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10148",
+      "source_b_value": null,
+      "record_id": "P149"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "6%",
+      "source_b_value": null,
+      "record_id": "P149"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "4%",
+      "source_b_value": null,
+      "record_id": "P149"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "0%",
+      "source_b_value": null,
+      "record_id": "P179"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "2255 Oak St",
+      "source_b_value": null,
+      "record_id": "P205"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10204",
+      "source_b_value": null,
+      "record_id": "P205"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "9%",
+      "source_b_value": null,
+      "record_id": "P205"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P205"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "300 Maple Ave",
+      "source_b_value": "252 Birch Blvd",
+      "record_id": "P238"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "95742",
+      "source_b_value": "86335",
+      "record_id": "P238"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "13%",
+      "source_b_value": "12%",
+      "record_id": "P238"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "0%",
+      "source_b_value": null,
+      "record_id": "P238"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "300 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P238"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "95742",
+      "source_b_value": null,
+      "record_id": "P238"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "13%",
+      "source_b_value": null,
+      "record_id": "P238"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "0%",
+      "source_b_value": null,
+      "record_id": "P238"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P052"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P064"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P084"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "1309 Oak St",
+      "source_b_value": null,
+      "record_id": "P119"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10118",
+      "source_b_value": null,
+      "record_id": "P119"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "10%",
+      "source_b_value": null,
+      "record_id": "P119"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "1%",
+      "source_b_value": null,
+      "record_id": "P119"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "2310 Oak St",
+      "source_b_value": null,
+      "record_id": "P210"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10209",
+      "source_b_value": null,
+      "record_id": "P210"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "15%",
+      "source_b_value": null,
+      "record_id": "P210"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P210"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "2200 Oak St",
+      "source_b_value": null,
+      "record_id": "P200"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10199",
+      "source_b_value": null,
+      "record_id": "P200"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P200"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P200"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "1%",
+      "source_b_value": null,
+      "record_id": "P027"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "440 Oak St",
+      "source_b_value": null,
+      "record_id": "P040"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10039",
+      "source_b_value": null,
+      "record_id": "P040"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "8%",
+      "source_b_value": null,
+      "record_id": "P040"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "2%",
+      "source_b_value": null,
+      "record_id": "P040"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "0%",
+      "source_b_value": null,
+      "record_id": "P193"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "799 Maple Ave",
+      "source_b_value": "987 Birch Blvd",
+      "record_id": "P081"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "96259",
+      "source_b_value": "82984",
+      "record_id": "P081"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "18%",
+      "source_b_value": "15%",
+      "record_id": "P081"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "1%",
+      "source_b_value": null,
+      "record_id": "P081"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "799 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P081"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "96259",
+      "source_b_value": null,
+      "record_id": "P081"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "18%",
+      "source_b_value": null,
+      "record_id": "P081"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "1%",
+      "source_b_value": null,
+      "record_id": "P081"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "4%",
+      "source_b_value": null,
+      "record_id": "P140"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P059"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "0%",
+      "source_b_value": null,
+      "record_id": "P086"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "627 Maple Ave",
+      "source_b_value": "594 Birch Blvd",
+      "record_id": "P214"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "98741",
+      "source_b_value": "83486",
+      "record_id": "P214"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "7%",
+      "source_b_value": "18%",
+      "record_id": "P214"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "0%",
+      "source_b_value": null,
+      "record_id": "P214"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "627 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P214"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "98741",
+      "source_b_value": null,
+      "record_id": "P214"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "7%",
+      "source_b_value": null,
+      "record_id": "P214"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "0%",
+      "source_b_value": null,
+      "record_id": "P214"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "2%",
+      "source_b_value": null,
+      "record_id": "P075"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "814 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P066"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "91077",
+      "source_b_value": null,
+      "record_id": "P066"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "20%",
+      "source_b_value": null,
+      "record_id": "P066"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P066"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "944 Maple Ave",
+      "source_b_value": "131 Birch Blvd",
+      "record_id": "P115"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "93387",
+      "source_b_value": "88847",
+      "record_id": "P115"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "19%",
+      "source_b_value": "18%",
+      "record_id": "P115"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P115"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "944 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P115"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "93387",
+      "source_b_value": null,
+      "record_id": "P115"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "19%",
+      "source_b_value": null,
+      "record_id": "P115"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P115"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "484 Oak St",
+      "source_b_value": null,
+      "record_id": "P044"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10043",
+      "source_b_value": null,
+      "record_id": "P044"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "12%",
+      "source_b_value": null,
+      "record_id": "P044"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "4%",
+      "source_b_value": null,
+      "record_id": "P044"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P144"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "682 Oak St",
+      "source_b_value": null,
+      "record_id": "P062"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10061",
+      "source_b_value": null,
+      "record_id": "P062"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "13%",
+      "source_b_value": null,
+      "record_id": "P062"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "1%",
+      "source_b_value": null,
+      "record_id": "P062"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "1474 Oak St",
+      "source_b_value": null,
+      "record_id": "P134"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10133",
+      "source_b_value": null,
+      "record_id": "P134"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "6%",
+      "source_b_value": null,
+      "record_id": "P134"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "2%",
+      "source_b_value": null,
+      "record_id": "P134"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "2%",
+      "source_b_value": null,
+      "record_id": "P009"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "840 Maple Ave",
+      "source_b_value": "457 Birch Blvd",
+      "record_id": "P136"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "97590",
+      "source_b_value": "84906",
+      "record_id": "P136"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "12%",
+      "source_b_value": "14%",
+      "record_id": "P136"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P136"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "840 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P136"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "97590",
+      "source_b_value": null,
+      "record_id": "P136"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "12%",
+      "source_b_value": null,
+      "record_id": "P136"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P136"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P087"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "880 Oak St",
+      "source_b_value": null,
+      "record_id": "P080"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10079",
+      "source_b_value": null,
+      "record_id": "P080"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "9%",
+      "source_b_value": null,
+      "record_id": "P080"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "1%",
+      "source_b_value": null,
+      "record_id": "P080"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "0%",
+      "source_b_value": null,
+      "record_id": "P088"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "4%",
+      "source_b_value": null,
+      "record_id": "P109"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "364 Maple Ave",
+      "source_b_value": "954 Birch Blvd",
+      "record_id": "P221"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "99800",
+      "source_b_value": "81262",
+      "record_id": "P221"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "9%",
+      "source_b_value": "6%",
+      "record_id": "P221"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P221"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "364 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P221"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "99800",
+      "source_b_value": null,
+      "record_id": "P221"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "9%",
+      "source_b_value": null,
+      "record_id": "P221"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P221"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "517 Oak St",
+      "source_b_value": null,
+      "record_id": "P047"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10046",
+      "source_b_value": null,
+      "record_id": "P047"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "18%",
+      "source_b_value": null,
+      "record_id": "P047"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P047"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "638 Maple Ave",
+      "source_b_value": "707 Birch Blvd",
+      "record_id": "P175"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "96031",
+      "source_b_value": "88931",
+      "record_id": "P175"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "4%",
+      "source_b_value": null,
+      "record_id": "P175"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "638 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P175"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "96031",
+      "source_b_value": null,
+      "record_id": "P175"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "11%",
+      "source_b_value": null,
+      "record_id": "P175"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "4%",
+      "source_b_value": null,
+      "record_id": "P175"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "144 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P018"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "95481",
+      "source_b_value": null,
+      "record_id": "P018"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "14%",
+      "source_b_value": null,
+      "record_id": "P018"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "2%",
+      "source_b_value": null,
+      "record_id": "P018"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P162"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "252 Maple Ave",
+      "source_b_value": "732 Birch Blvd",
+      "record_id": "P212"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "98834",
+      "source_b_value": "87153",
+      "record_id": "P212"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "9%",
+      "source_b_value": "7%",
+      "record_id": "P212"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "0%",
+      "source_b_value": null,
+      "record_id": "P212"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "252 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P212"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "98834",
+      "source_b_value": null,
+      "record_id": "P212"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "9%",
+      "source_b_value": null,
+      "record_id": "P212"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "0%",
+      "source_b_value": null,
+      "record_id": "P212"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "1188 Oak St",
+      "source_b_value": null,
+      "record_id": "P108"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10107",
+      "source_b_value": null,
+      "record_id": "P108"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "18%",
+      "source_b_value": null,
+      "record_id": "P108"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P108"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "847 Oak St",
+      "source_b_value": null,
+      "record_id": "P077"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10076",
+      "source_b_value": null,
+      "record_id": "P077"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P077"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "4%",
+      "source_b_value": null,
+      "record_id": "P077"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "509 Maple Ave",
+      "source_b_value": "492 Birch Blvd",
+      "record_id": "P188"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "92618",
+      "source_b_value": "82691",
+      "record_id": "P188"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "5%",
+      "source_b_value": "10%",
+      "record_id": "P188"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "2%",
+      "source_b_value": null,
+      "record_id": "P188"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "509 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P188"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "92618",
+      "source_b_value": null,
+      "record_id": "P188"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P188"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "2%",
+      "source_b_value": null,
+      "record_id": "P188"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "1793 Oak St",
+      "source_b_value": null,
+      "record_id": "P163"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10162",
+      "source_b_value": null,
+      "record_id": "P163"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "13%",
+      "source_b_value": null,
+      "record_id": "P163"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "3%",
+      "source_b_value": null,
+      "record_id": "P163"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P186"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "1%",
+      "source_b_value": null,
+      "record_id": "P160"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "176 Oak St",
+      "source_b_value": null,
+      "record_id": "P016"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "10015",
+      "source_b_value": null,
+      "record_id": "P016"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "12%",
+      "source_b_value": null,
+      "record_id": "P016"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P016"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "1%",
+      "source_b_value": null,
+      "record_id": "P126"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "2%",
+      "source_b_value": null,
+      "record_id": "P159"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "965 Maple Ave",
+      "source_b_value": "104 Birch Blvd",
+      "record_id": "P105"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "95654",
+      "source_b_value": "84475",
+      "record_id": "P105"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "9%",
+      "source_b_value": "23%",
+      "record_id": "P105"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "2%",
+      "source_b_value": null,
+      "record_id": "P105"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "965 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P105"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "95654",
+      "source_b_value": null,
+      "record_id": "P105"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "9%",
+      "source_b_value": null,
+      "record_id": "P105"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "2%",
+      "source_b_value": null,
+      "record_id": "P105"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "630 Maple Ave",
+      "source_b_value": "100 Birch Blvd",
+      "record_id": "P135"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "95656",
+      "source_b_value": "83074",
+      "record_id": "P135"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "11%",
+      "source_b_value": "5%",
+      "record_id": "P135"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P135"
+    },
+    {
+      "field_path": "address.street",
+      "source_a_value": "630 Maple Ave",
+      "source_b_value": null,
+      "record_id": "P135"
+    },
+    {
+      "field_path": "address.zip",
+      "source_a_value": "95656",
+      "source_b_value": null,
+      "record_id": "P135"
+    },
+    {
+      "field_path": "compensation.bonus",
+      "source_a_value": "11%",
+      "source_b_value": null,
+      "record_id": "P135"
+    },
+    {
+      "field_path": "compensation.equity",
+      "source_a_value": "5%",
+      "source_b_value": null,
+      "record_id": "P135"
+    }
+  ]
+}

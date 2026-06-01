@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "citation audit output",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "audited_count",
+    "labels",
+    "results"
+  ],
+  "properties": {
+    "audited_count": {
+      "type": "integer"
+    },
+    "labels": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "citation_id": {
+            "type": "string"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "article_claim": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "citation_id",
+          "label",
+          "reason"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "E5-LS2-T5 output contract",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "dimensions_used"
+  ],
+  "properties": {
+    "dimensions_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "All comparison dimensions used in the final evaluation, not just a flattering subset."
+    },
+    "comparison": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "source_ids",
+        "method"
+      ],
+      "properties": {
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "method": {
+          "type": "string"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "family": {
+      "const": "evidence-grounded-comparison"
+    }
+  }
+}

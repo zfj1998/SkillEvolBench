@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E2-LS1
+environment_id: E2
+latent_skill_id: E2-LS1.pre-call-parameter-validation
+slug: pre-call-parameter-validation
+name: pre-call-parameter-validation
+description: Validate REST API request parameters locally before sending the request. Use this skill when parameters come from user input, config, or upstream code and an invalid request would waste quota or fail predictably. Focus on single-request validation for required fields, types, ranges, enums, and string formats before making the API call.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E2-LS1-T1
+- E2-LS1-T2
+- E2-LS1-T3
+- E2-LS1-T4
+- E2-LS1-T5
+- E2-LS1-T6
+gap_1_summary: 'Cross-parameter constraints: the curated skill validates each parameter in isolation. The interesting bugs come from constraints that span multiple parameters — `start_date <= end_date` (with timezone-aware comparison), `quantity * unit_price <= max_total`, mutually exclusive flags. Validate the parameter set, not just each parameter.'
+gap_2_summary: 'Partial-rejection in batches: the curated skill is all-or-nothing. When 6 of 10 items in a batch are invalid, the right behavior is to accept the 4 valid ones, reject the 6 with per-item reasons, and return both lists — not to fail the entire request. Design batch validators that report per-item verdicts.'

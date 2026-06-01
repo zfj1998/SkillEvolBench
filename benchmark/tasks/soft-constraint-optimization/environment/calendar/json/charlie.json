@@ -1,0 +1,16 @@
+{
+  "participant": {
+    "id": "charlie",
+    "name": "Charlie Weber",
+    "email": "charlie@harborworks.example",
+    "timezone": "Europe/Berlin",
+    "work_hours": {
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "preferences": {
+      "prefer_office_day": true
+    }
+  },
+  "events": []
+}

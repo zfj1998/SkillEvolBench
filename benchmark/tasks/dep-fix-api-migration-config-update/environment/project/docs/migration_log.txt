@@ -1,0 +1,1 @@
+Legacy migration stack currently uses alembic 1.11.0 and SQLAlchemy 1.4.x.

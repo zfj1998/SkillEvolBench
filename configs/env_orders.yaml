@@ -1,0 +1,29 @@
+# Environment order seeds for the Order Sensitivity ablation (Stage 6).
+# Default is seed_a (E1->E2->...->E6). seed_b/seed_c rotate to test whether
+# global no-reset performance is order-dependent.
+#
+# scheduler.py reads this file via the order_seed field of RunConfig.
+
+seed_a:
+  - E1
+  - E2
+  - E3
+  - E4
+  - E5
+  - E6
+
+seed_b:
+  - E3
+  - E5
+  - E1
+  - E6
+  - E2
+  - E4
+
+seed_c:
+  - E6
+  - E4
+  - E2
+  - E5
+  - E3
+  - E1

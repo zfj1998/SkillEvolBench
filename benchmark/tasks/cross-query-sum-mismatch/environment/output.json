@@ -1,0 +1,13 @@
+{
+  "overall_total": 5153185.18,
+  "product_line_total": 13913109.76,
+  "match": false,
+  "difference": 8759924.58,
+  "by_product_line": {
+    "Consulting": 3873820.15,
+    "Hardware": 3454525.15,
+    "Services": 3218496.73,
+    "Software": 3366267.73
+  },
+  "mismatch_reason": null
+}

@@ -1,0 +1,52 @@
+{
+  "participants": [
+    {
+      "id": "alice",
+      "name": "Alice Chen",
+      "email": "alice@harborworks.example",
+      "timezone": "America/New_York",
+      "work_hours": {
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "preferences": {},
+      "events": []
+    },
+    {
+      "id": "bob",
+      "name": "Bob Rivera",
+      "email": "bob@harborworks.example",
+      "timezone": "America/Los_Angeles",
+      "work_hours": {
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "preferences": {},
+      "events": []
+    },
+    {
+      "id": "charlie",
+      "name": "Charlie Weber",
+      "email": "charlie@harborworks.example",
+      "timezone": "Europe/Berlin",
+      "work_hours": {
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "preferences": {},
+      "events": []
+    },
+    {
+      "id": "george",
+      "name": "George Miles",
+      "email": "george@harborworks.example",
+      "timezone": "Europe/London",
+      "work_hours": {
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "preferences": {},
+      "events": []
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "employee_name": "Riley Chen",
+  "employee_id": "EMP-5510",
+  "department": "Operations",
+  "title": "Operations Mgr",
+  "phone": "555-2001",
+  "email": "riley.chen@example.com",
+  "office": "Austin"
+}

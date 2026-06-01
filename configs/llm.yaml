@@ -1,0 +1,24 @@
+# Default LLM endpoint configuration.
+# Per-baseline override happens in configs/baselines/*.yaml (model_name) and
+# per-strategy override happens in configs/strategies/*.yaml (author_model,
+# judge_model). Values here are fallbacks consumed by RunConfig.
+
+# Default API base. Set to null to use provider's official endpoint based on
+# the model_name prefix (anthropic/, openai/, google/).
+api_base: null
+
+# Environment variable that holds the API key. Resolved via os.environ at
+# runtime; not embedded in run configs (so configs are checkable into git).
+api_key_env_var: ANTHROPIC_API_KEY
+
+# Default models (used when a baseline / strategy yaml does not override).
+default_agent_model: anthropic/claude-opus-4-5
+default_author_model: anthropic/claude-opus-4-5
+default_judge_model: anthropic/claude-haiku-4-5
+default_embed_model: Qwen/Qwen3-Embedding-4B
+
+# Defaults applied when a strategy yaml does not specify (chain inherits these).
+author_temperature: 0.2
+author_max_tokens: 16384
+judge_temperature: 0.0
+judge_max_tokens: 1024

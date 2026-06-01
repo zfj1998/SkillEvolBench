@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E1-LS5
+environment_id: E1
+latent_skill_id: E1-LS5.merge-conflict-resolution
+slug: merge-conflict-resolution
+name: merge-conflict-resolution
+description: Resolve git merge conflicts in Python and JavaScript code by combining changes from two branches correctly. Use this skill when `git merge` reports conflicted files, when a file contains conflict markers like `<<<<<<<`, `=======`, and `>>>>>>>`, or when the user asks for help merging two branches without discarding either side's important changes. Focus on conflicts that git reports explicitly in source files with conflict markers.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E1-LS5-T1
+- E1-LS5-T2
+- E1-LS5-T3
+- E1-LS5-T4
+- E1-LS5-T5
+- E1-LS5-T6
+gap_1_summary: 'Semantic conflicts without markers: the curated skill only handles textual conflicts that git already flagged. The dangerous case is a clean auto-merge where two branches changed unrelated lines that now interact incorrectly — both sides compile, neither side conflicts, but the combined behavior is wrong. Always run the test suite after a merge, even when there were no conflict markers.'
+gap_2_summary: 'Format-sensitive config files: the curated skill assumes `.py` / `.js` source files where line-based merge is reliable. YAML and JSON depend on indentation and brace structure; a textual merge can produce syntactically invalid output that no longer parses. Merge structured config by parsing into a tree, merging at the key level, then re-emitting.'

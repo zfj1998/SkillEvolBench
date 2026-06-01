@@ -1,0 +1,30 @@
+{
+  "unrepresentable_or_partially_representable": [
+    {
+      "element_type": "merged_table_cell",
+      "description": "A 3x2 planning table contains a vertically merged cell spanning rows 2-3 in column 1."
+    },
+    {
+      "element_type": "footnote",
+      "description": "Four footnotes are attached to glossary terms in the original document."
+    },
+    {
+      "element_type": "image",
+      "description": "Two inline images are embedded and should at least be referenced from Markdown."
+    },
+    {
+      "element_type": "textbox",
+      "description": "One floating textbox summarizes an exception workflow."
+    },
+    {
+      "element_type": "highlight",
+      "description": "Five highlighted phrases are used for reviewer attention."
+    }
+  ],
+  "safe_features": [
+    {
+      "element_type": "bold",
+      "description": "Bold emphasis is representable in Markdown and should not be reported as loss."
+    }
+  ]
+}

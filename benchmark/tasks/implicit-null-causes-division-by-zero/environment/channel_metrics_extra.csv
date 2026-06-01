@@ -1,0 +1,8 @@
+channel,impressions,clicks,conversions,misc
+referral,15000,2250,450,dup
+direct,5000.0,400,80,extra
+affiliate,20000,1500,200,activated
+  ,300,30,3,blank channel
+display_ads,50000,1000,50,"exact duplicate of normalized display ads row? no, channel variant differs elsewhere only"
+new_channel,NA,1,1,missing impressions but stray activity
+social-media,2000,100,10,extra social row

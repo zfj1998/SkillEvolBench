@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/workspace/project/src/main.py", line 10, in run_alpha_feature
+    return _runtime.run_alpha_pipeline("sample")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/project/src/runtime.py", line 8, in run_alpha_pipeline
+    return run_alpha(payload)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/pip-install-xyz/package_alpha/package_alpha/__init__.py", line 4, in run_alpha
+    return initialize(payload)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/pip-install-xyz/package_core/package_core/__init__.py", line 4, in initialize
+    result = process(payload, mode="legacy")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: process() got an unexpected keyword argument 'mode'
+
+Installed versions during failure:
+  package-alpha==1.2.0
+  package-beta==2.1.0
+  package-core==1.9.0
+  package-data==1.5.0

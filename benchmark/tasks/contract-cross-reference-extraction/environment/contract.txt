@@ -1,0 +1,58 @@
+MASTER SERVICES AGREEMENT
+
+Section 1. Definitions
+1.1 "Services" means the services described in Schedule A.
+1.2 "Security Incident" has the meaning given in Section 7.2.
+
+Section 2. Payment
+2.1 Fees. Fees are payable in accordance with the invoicing terms set forth in Section 3.2(b).
+2.2 Taxes. Customer shall pay applicable taxes as described in Section 4.3.
+
+Section 3. Invoicing
+3.1 Invoices. Provider will issue monthly invoices.
+3.2 Payment Mechanics.
+(a) Timing. Payment is due within thirty (30) days.
+(b) Late Payment. Any unpaid amount may trigger the remedies in Section 5.1.
+
+Section 4. Compliance
+4.1 Compliance Program. Each party shall maintain a compliance program.
+4.2 Audit Cooperation. Audit procedures are described in Appendix I.
+4.3 Tax Records. The parties shall retain tax records consistent with Schedule B.
+
+Section 5. Remedies
+5.1 Suspension. Provider may suspend Services under the conditions in Section 2.1.
+5.2 Termination. Termination rights are subject to Section 9.4.
+
+Section 6. Confidentiality
+6.1 Use Restrictions. Confidential Information may only be used for contract performance.
+6.2 Survival. Obligations survive as stated in Section 9.2.
+
+Section 7. Security
+7.1 Controls. Provider shall implement reasonable safeguards.
+7.2 Incident Notice. Notice content must include the items listed in Appendix II.
+
+Section 8. Miscellaneous
+8.1 Assignment. Neither party may assign this Agreement without consent.
+8.2 Notices. Formal notices must be sent to the addresses in Schedule C.
+For convenience, this section summarizes operational sections used across the Agreement.
+
+Section 9. General
+9.1 Entire Agreement. This Agreement includes the schedules and appendices.
+9.2 Survival List. Sections 6.1 and 6.2 survive expiration.
+9.3 Interpretation. References to section headers are for convenience only.
+9.4 Order of Precedence. In case of conflict, Appendix I prevails over Schedule A.
+
+Appendix I. Audit Procedures
+The audit scope is described here.
+
+Appendix II. Incident Notice Items
+The required notice fields are described here.
+
+Schedule A. Services Description
+Detailed services description.
+
+Schedule B. Record Retention Matrix
+Retention periods.
+
+Schedule C. Notice Addresses
+Official notice addresses.

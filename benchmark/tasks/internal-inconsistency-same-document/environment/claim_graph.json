@@ -1,0 +1,114 @@
+{
+  "claims": [
+    {
+      "id": "s1",
+      "doc": "annual_review_summary",
+      "entity": "Company revenue",
+      "metric": "growth",
+      "period": "2023",
+      "scope": "global",
+      "value": 15,
+      "polarity": null,
+      "quote": "Executive summary: revenue grew 15%."
+    },
+    {
+      "id": "b1",
+      "doc": "annual_review_table",
+      "entity": "Company revenue",
+      "metric": "growth",
+      "period": "2023",
+      "scope": "global",
+      "value": 8,
+      "polarity": null,
+      "quote": "Table 2: revenue growth was 8%."
+    },
+    {
+      "id": "s2",
+      "doc": "annual_review_section_2",
+      "entity": "Project Orion",
+      "metric": "start_date",
+      "period": "launch",
+      "scope": "global",
+      "value": "2023",
+      "polarity": null,
+      "quote": "Project Orion started in 2023."
+    },
+    {
+      "id": "b2",
+      "doc": "annual_review_section_7",
+      "entity": "Project Orion",
+      "metric": "start_date",
+      "period": "launch",
+      "scope": "global",
+      "value": "2022",
+      "polarity": null,
+      "quote": "Project Orion started in early 2022."
+    },
+    {
+      "id": "s3",
+      "doc": "annual_review_conclusion",
+      "entity": "KPI goals",
+      "metric": "completion",
+      "period": "2023",
+      "scope": "global",
+      "value": "all",
+      "polarity": null,
+      "quote": "All five KPI targets were achieved."
+    },
+    {
+      "id": "b3",
+      "doc": "annual_review_body",
+      "entity": "KPI goals",
+      "metric": "completion",
+      "period": "2023",
+      "scope": "global",
+      "value": "3_of_5",
+      "polarity": null,
+      "quote": "The body reports that only 3 of 5 KPI targets were achieved."
+    },
+    {
+      "id": "ok1",
+      "doc": "annual_review_body",
+      "entity": "Attrition",
+      "metric": "rate",
+      "period": "2023",
+      "scope": "global",
+      "value": 12,
+      "polarity": null,
+      "quote": "Attrition was 12%."
+    },
+    {
+      "id": "ok2",
+      "doc": "annual_review_appendix",
+      "entity": "Attrition",
+      "metric": "rate",
+      "period": "2023",
+      "scope": "global",
+      "value": 12,
+      "polarity": null,
+      "quote": "Appendix confirms attrition was 12%."
+    }
+  ],
+  "candidate_pairs": [
+    {
+      "id": "p_internal_revenue",
+      "left": "s1",
+      "right": "b1"
+    },
+    {
+      "id": "p_internal_date",
+      "left": "s2",
+      "right": "b2"
+    },
+    {
+      "id": "p_internal_kpi",
+      "left": "s3",
+      "right": "b3"
+    },
+    {
+      "id": "p_internal_attrition_ok",
+      "left": "ok1",
+      "right": "ok2"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "duration_minutes": 60,
+  "date_range": [
+    "2026-04-27",
+    "2026-05-01"
+  ],
+  "expected_local_times": [
+    "Fatima",
+    "BST"
+  ]
+}

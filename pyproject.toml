@@ -1,0 +1,27 @@
+[project]
+name = "skillevolbench"
+version = "0.1.0"
+description = "SkillEvolBench: lifelong skill evolution benchmark harness."
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.5",
+    "PyYAML>=6.0",
+    "tomli>=2.0; python_version < '3.11'",
+    "click>=8.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+skillevolbench = "skillevolbench.cli:cli"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["skillevolbench*", "agents_port*"]
+exclude = ["benchmark*", "workspace*", "scripts*", "docker*"]

@@ -1,0 +1,20 @@
+{
+  "profile": {
+    "employee_name": "",
+    "employee_id": "",
+    "department": "",
+    "title": "",
+    "manager": "",
+    "office": "",
+    "phone": "",
+    "email": "",
+    "employment_type": "",
+    "slack_handle": "",
+    "total_compensation": "",
+    "cost_center": "",
+    "emergency_contact": ""
+  },
+  "conflicts": [],
+  "missing_fields": [],
+  "validation": {}
+}

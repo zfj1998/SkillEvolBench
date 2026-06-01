@@ -1,0 +1,14 @@
+{
+  "participant": {
+    "id": "ldn",
+    "name": "London Lead",
+    "email": "ldn@harborworks.example",
+    "timezone": "Europe/London",
+    "work_hours": {
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "preferences": {}
+  },
+  "events": []
+}

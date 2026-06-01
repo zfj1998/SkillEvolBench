@@ -1,0 +1,77 @@
+[
+  {
+    "citation_id": "C01",
+    "source_id": "MED_NATURE_SKIN",
+    "article_claim": "The Nature paper concerns deep learning for visual skin-cancer classification."
+  },
+  {
+    "citation_id": "C02",
+    "source_id": "MED_JAMA_DR",
+    "article_claim": "The JAMA paper validates diabetic-retinopathy detection from retinal fundus photographs."
+  },
+  {
+    "citation_id": "C03",
+    "source_id": "MED_FDA_AI",
+    "article_claim": "The FDA maintains a public list of AI-enabled medical devices authorized for marketing."
+  },
+  {
+    "citation_id": "C04",
+    "source_id": "MED_WHO_ETHICS",
+    "article_claim": "WHO frames AI for health around ethics, rights, governance, and accountability."
+  },
+  {
+    "citation_id": "C05",
+    "source_id": "MED_NASEM_DIAG",
+    "article_claim": "The National Academies report treats diagnostic error as a quality and safety challenge."
+  },
+  {
+    "citation_id": "M01",
+    "source_id": "REMOTE_NATURE_HYBRID",
+    "article_claim": "Hybrid work objectively increased productivity by 30%."
+  },
+  {
+    "citation_id": "M02",
+    "source_id": "MED_WHO_ETHICS",
+    "article_claim": "WHO recommends exactly eight cups of water per adult per day."
+  },
+  {
+    "citation_id": "M03",
+    "source_id": "MED_JAMA_DR",
+    "article_claim": "The JAMA diabetic-retinopathy algorithm significantly outperformed every human clinician in all settings."
+  },
+  {
+    "citation_id": "S01",
+    "source_id": "MED_NATURE_SKIN",
+    "article_claim": "AI achieved dermatologist-level skin-cancer classification."
+  },
+  {
+    "citation_id": "S02",
+    "source_id": "MED_JAMA_DR",
+    "article_claim": "AI can detect diabetic retinopathy from retinal images."
+  },
+  {
+    "citation_id": "S03",
+    "source_id": "REMOTE_NATURE_HYBRID",
+    "article_claim": "Hybrid work improved retention without damaging performance."
+  },
+  {
+    "citation_id": "R08",
+    "source_id": "FAKE_REMOTE_DOI",
+    "article_claim": "Fake DOI-format-valid remote-work citation."
+  },
+  {
+    "citation_id": "R09",
+    "source_id": "FAKE_SKIN_TABLE",
+    "article_claim": "Fake near-match skin-cancer journal citation."
+  },
+  {
+    "citation_id": "R10",
+    "source_id": "NO_SUCH_SOURCE",
+    "article_claim": "Fake author-title combination with no matching source."
+  },
+  {
+    "citation_id": "F01",
+    "source_id": "ENERGY_IEA_RENEWABLES",
+    "article_claim": "IEA forecasts strong renewable growth through 2030."
+  }
+]

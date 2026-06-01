@@ -1,0 +1,30 @@
+# Model preset: GPT 5.4 via Codex CLI through Azure OpenAI.
+# IMPORTANT: agent_model_name must match the deployment name in your
+# Azure OpenAI resource. Confirm via:
+#   az cognitiveservices account deployment list \
+#       --name <resource> --resource-group <rg>
+
+name: gpt-5.4
+short_id: gpt-5-4
+provider: azure_openai
+harbor_agent_name: codex
+agent_model_name: openai/gpt-5.4
+
+agent_env:
+  # Codex CLI passthrough -- it reads OPENAI_BASE_URL and OPENAI_API_KEY.
+  # We forward Azure's endpoint + key under those names so the same Codex
+  # adapter can talk to Azure OpenAI's v1 OpenAI-compatible API.
+  OPENAI_BASE_URL: "${AZURE_OPENAI_ENDPOINT}"
+  OPENAI_API_KEY: "${AZURE_OPENAI_API_KEY}"
+  CODEX_MODEL_PROVIDER: azure_openai
+  CODEX_PROVIDER_ENV_KEY: OPENAI_API_KEY
+  CODEX_WIRE_API: responses
+  # Pin verbosity=medium so codex CLI doesn't fall back to its "low"
+  # default; matches the constraint Azure enforces on gpt-5.2-codex.
+  CODEX_MODEL_VERBOSITY: medium
+
+# Host-side LiteLLMClient routing (Azure OpenAI v1 endpoint):
+host_litellm:
+  model: openai/gpt-5.4
+  api_base_env: AZURE_OPENAI_ENDPOINT
+  api_key_env: AZURE_OPENAI_API_KEY

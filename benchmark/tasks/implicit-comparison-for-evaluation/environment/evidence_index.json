@@ -1,0 +1,66 @@
+[
+  {
+    "source_id": "K01",
+    "supported_concepts": [],
+    "source_type": "benchmark_report",
+    "evidence_strength": "high",
+    "grounding_note": "Reports Kubernetes rightsizing, missing probes, and security misconfiguration challenges at scale.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "K02",
+    "supported_concepts": [],
+    "source_type": "survey",
+    "evidence_strength": "medium",
+    "grounding_note": "Survey-based cloud native security posture report.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "K03",
+    "supported_concepts": [],
+    "source_type": "analysis_article",
+    "evidence_strength": "medium",
+    "grounding_note": "Narrative review of Kubernetes security evolution and hardening complexity.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "K04",
+    "supported_concepts": [],
+    "source_type": "analysis_article",
+    "evidence_strength": "medium",
+    "grounding_note": "Arguments for Kubernetes in multicloud and platform-scale settings.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "K05",
+    "supported_concepts": [],
+    "source_type": "vendor_press_release",
+    "evidence_strength": "low",
+    "grounding_note": "Vendor framing about multicloud container platforms and developer experience; useful but should be treated carefully.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "K06",
+    "supported_concepts": [],
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "grounding_note": "VM-oriented operational simplicity source for snapshots and recovery workflows.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "K07",
+    "supported_concepts": [],
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "grounding_note": "Represents VM hardening and operational guidance.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "K08",
+    "supported_concepts": [],
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "grounding_note": "General comparison source useful for framing but still vendor-authored.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  }
+]

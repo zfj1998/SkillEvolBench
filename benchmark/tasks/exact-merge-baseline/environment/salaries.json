@@ -1,0 +1,702 @@
+[
+  {
+    "employee_id": "E001",
+    "salary": 69494,
+    "grade": "L5",
+    "start_date": "2016-06-19",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E002",
+    "salary": 71265,
+    "grade": "L4",
+    "start_date": "2021-02-08",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E003",
+    "salary": 168377,
+    "grade": "L5",
+    "start_date": "2016-04-21",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E004",
+    "salary": 136748,
+    "grade": "L4",
+    "start_date": "2015-04-02",
+    "dept": "Finance"
+  },
+  {
+    "employee_id": "E005",
+    "salary": 78907,
+    "grade": "L5",
+    "start_date": "2016-10-10",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E006",
+    "salary": 136231,
+    "grade": "L5",
+    "start_date": "2018-06-04",
+    "dept": "Marketing"
+  },
+  {
+    "employee_id": "E007",
+    "salary": 67812,
+    "grade": "L5",
+    "start_date": "2018-08-22",
+    "dept": "Marketing"
+  },
+  {
+    "employee_id": "E008",
+    "salary": 121027,
+    "grade": "L5",
+    "start_date": "2022-06-10",
+    "dept": "Operations"
+  },
+  {
+    "employee_id": "E009",
+    "salary": 70728,
+    "grade": "L5",
+    "start_date": "2019-09-16",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E010",
+    "salary": 139817,
+    "grade": "L1",
+    "start_date": "2016-09-14",
+    "dept": "Marketing"
+  },
+  {
+    "employee_id": "E011",
+    "salary": 115272,
+    "grade": "L1",
+    "start_date": "2016-09-19",
+    "dept": "Operations"
+  },
+  {
+    "employee_id": "E012",
+    "salary": 137905,
+    "grade": "L4",
+    "start_date": "2022-02-27",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E013",
+    "salary": 67952,
+    "grade": "L6",
+    "start_date": "2019-11-19",
+    "dept": "Operations"
+  },
+  {
+    "employee_id": "E014",
+    "salary": 176266,
+    "grade": "L6",
+    "start_date": "2020-01-15",
+    "dept": "Operations"
+  },
+  {
+    "employee_id": "E015",
+    "salary": 124709,
+    "grade": "L1",
+    "start_date": "2018-05-05",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E016",
+    "salary": 174219,
+    "grade": "L4",
+    "start_date": "2016-03-15",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E017",
+    "salary": 167384,
+    "grade": "L4",
+    "start_date": "2023-05-23",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E018",
+    "salary": 90245,
+    "grade": "L2",
+    "start_date": "2016-03-05",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E019",
+    "salary": 123565,
+    "grade": "L5",
+    "start_date": "2017-05-10",
+    "dept": "Marketing"
+  },
+  {
+    "employee_id": "E020",
+    "salary": 108398,
+    "grade": "L5",
+    "start_date": "2020-03-23",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E021",
+    "salary": 145847,
+    "grade": "L6",
+    "start_date": "2015-08-28",
+    "dept": "Marketing"
+  },
+  {
+    "employee_id": "E022",
+    "salary": 111429,
+    "grade": "L4",
+    "start_date": "2021-07-04",
+    "dept": "Marketing"
+  },
+  {
+    "employee_id": "E023",
+    "salary": 68158,
+    "grade": "L2",
+    "start_date": "2016-04-15",
+    "dept": "Operations"
+  },
+  {
+    "employee_id": "E024",
+    "salary": 138738,
+    "grade": "L1",
+    "start_date": "2016-01-19",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E025",
+    "salary": 107659,
+    "grade": "L5",
+    "start_date": "2015-02-28",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E026",
+    "salary": 79470,
+    "grade": "L6",
+    "start_date": "2019-06-20",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E027",
+    "salary": 75119,
+    "grade": "L4",
+    "start_date": "2022-08-16",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E028",
+    "salary": 73393,
+    "grade": "L6",
+    "start_date": "2020-12-09",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E029",
+    "salary": 127676,
+    "grade": "L1",
+    "start_date": "2018-09-12",
+    "dept": "Operations"
+  },
+  {
+    "employee_id": "E030",
+    "salary": 179818,
+    "grade": "L1",
+    "start_date": "2023-05-21",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E031",
+    "salary": 127947,
+    "grade": "L3",
+    "start_date": "2017-06-25",
+    "dept": "Marketing"
+  },
+  {
+    "employee_id": "E032",
+    "salary": 162112,
+    "grade": "L5",
+    "start_date": "2020-11-08",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E033",
+    "salary": 165654,
+    "grade": "L2",
+    "start_date": "2021-12-26",
+    "dept": "Finance"
+  },
+  {
+    "employee_id": "E034",
+    "salary": 124589,
+    "grade": "L3",
+    "start_date": "2015-01-26",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E035",
+    "salary": 85381,
+    "grade": "L6",
+    "start_date": "2020-08-26",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E036",
+    "salary": 70556,
+    "grade": "L2",
+    "start_date": "2016-04-16",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E037",
+    "salary": 123262,
+    "grade": "L5",
+    "start_date": "2015-08-21",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E038",
+    "salary": 169399,
+    "grade": "L6",
+    "start_date": "2016-07-26",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E039",
+    "salary": 122656,
+    "grade": "L2",
+    "start_date": "2021-11-11",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E040",
+    "salary": 120707,
+    "grade": "L4",
+    "start_date": "2016-12-06",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E041",
+    "salary": 79811,
+    "grade": "L5",
+    "start_date": "2022-11-05",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E042",
+    "salary": 122174,
+    "grade": "L6",
+    "start_date": "2020-03-18",
+    "dept": "Finance"
+  },
+  {
+    "employee_id": "E043",
+    "salary": 61866,
+    "grade": "L6",
+    "start_date": "2016-09-24",
+    "dept": "Finance"
+  },
+  {
+    "employee_id": "E044",
+    "salary": 168285,
+    "grade": "L2",
+    "start_date": "2015-05-07",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E045",
+    "salary": 160097,
+    "grade": "L5",
+    "start_date": "2020-05-18",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E046",
+    "salary": 67982,
+    "grade": "L6",
+    "start_date": "2020-08-22",
+    "dept": "Operations"
+  },
+  {
+    "employee_id": "E047",
+    "salary": 115132,
+    "grade": "L5",
+    "start_date": "2017-09-05",
+    "dept": "Finance"
+  },
+  {
+    "employee_id": "E048",
+    "salary": 174400,
+    "grade": "L4",
+    "start_date": "2017-10-01",
+    "dept": "Finance"
+  },
+  {
+    "employee_id": "E049",
+    "salary": 82589,
+    "grade": "L2",
+    "start_date": "2022-10-24",
+    "dept": "Marketing"
+  },
+  {
+    "employee_id": "E050",
+    "salary": 102727,
+    "grade": "L6",
+    "start_date": "2023-09-18",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E051",
+    "salary": 175766,
+    "grade": "L5",
+    "start_date": "2015-04-07",
+    "dept": "Operations"
+  },
+  {
+    "employee_id": "E052",
+    "salary": 126547,
+    "grade": "L4",
+    "start_date": "2023-01-25",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E053",
+    "salary": 140285,
+    "grade": "L5",
+    "start_date": "2023-04-23",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E054",
+    "salary": 129898,
+    "grade": "L4",
+    "start_date": "2023-04-23",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E055",
+    "salary": 133336,
+    "grade": "L2",
+    "start_date": "2022-03-14",
+    "dept": "Finance"
+  },
+  {
+    "employee_id": "E056",
+    "salary": 101416,
+    "grade": "L1",
+    "start_date": "2018-07-03",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E057",
+    "salary": 162752,
+    "grade": "L1",
+    "start_date": "2017-12-21",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E058",
+    "salary": 93175,
+    "grade": "L2",
+    "start_date": "2022-04-24",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E059",
+    "salary": 81337,
+    "grade": "L6",
+    "start_date": "2018-03-23",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E060",
+    "salary": 104448,
+    "grade": "L4",
+    "start_date": "2018-06-11",
+    "dept": "Operations"
+  },
+  {
+    "employee_id": "E061",
+    "salary": 62553,
+    "grade": "L3",
+    "start_date": "2023-08-15",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E062",
+    "salary": 103450,
+    "grade": "L5",
+    "start_date": "2019-09-03",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E063",
+    "salary": 174870,
+    "grade": "L1",
+    "start_date": "2016-05-09",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E064",
+    "salary": 95447,
+    "grade": "L2",
+    "start_date": "2021-11-27",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E065",
+    "salary": 130333,
+    "grade": "L5",
+    "start_date": "2022-12-11",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E066",
+    "salary": 164803,
+    "grade": "L6",
+    "start_date": "2017-07-03",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E067",
+    "salary": 165071,
+    "grade": "L3",
+    "start_date": "2016-10-28",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E068",
+    "salary": 173085,
+    "grade": "L1",
+    "start_date": "2022-01-11",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E069",
+    "salary": 141487,
+    "grade": "L2",
+    "start_date": "2015-09-23",
+    "dept": "Finance"
+  },
+  {
+    "employee_id": "E070",
+    "salary": 94327,
+    "grade": "L1",
+    "start_date": "2017-04-10",
+    "dept": "HR"
+  },
+  {
+    "employee_id": "E071",
+    "salary": 159548,
+    "grade": "L2",
+    "start_date": "2019-08-17",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E072",
+    "salary": 105482,
+    "grade": "L1",
+    "start_date": "2019-01-01",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E073",
+    "salary": 132227,
+    "grade": "L2",
+    "start_date": "2023-08-08",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E074",
+    "salary": 146050,
+    "grade": "L4",
+    "start_date": "2023-07-17",
+    "dept": "Operations"
+  },
+  {
+    "employee_id": "E075",
+    "salary": 90089,
+    "grade": "L3",
+    "start_date": "2018-12-24",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E076",
+    "salary": 105554,
+    "grade": "L1",
+    "start_date": "2017-01-03",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E077",
+    "salary": 116458,
+    "grade": "L2",
+    "start_date": "2015-02-22",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E078",
+    "salary": 147889,
+    "grade": "L3",
+    "start_date": "2018-12-10",
+    "dept": "Marketing"
+  },
+  {
+    "employee_id": "E079",
+    "salary": 80648,
+    "grade": "L3",
+    "start_date": "2022-01-09",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E080",
+    "salary": 102406,
+    "grade": "L2",
+    "start_date": "2015-05-07",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E081",
+    "salary": 103952,
+    "grade": "L4",
+    "start_date": "2016-08-09",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E082",
+    "salary": 92529,
+    "grade": "L5",
+    "start_date": "2015-02-09",
+    "dept": "Finance"
+  },
+  {
+    "employee_id": "E083",
+    "salary": 112364,
+    "grade": "L5",
+    "start_date": "2015-07-01",
+    "dept": "Marketing"
+  },
+  {
+    "employee_id": "E084",
+    "salary": 71073,
+    "grade": "L5",
+    "start_date": "2023-03-22",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E085",
+    "salary": 111054,
+    "grade": "L3",
+    "start_date": "2022-03-10",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E086",
+    "salary": 65739,
+    "grade": "L6",
+    "start_date": "2023-11-14",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E087",
+    "salary": 78259,
+    "grade": "L5",
+    "start_date": "2023-10-27",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E088",
+    "salary": 168319,
+    "grade": "L6",
+    "start_date": "2018-02-01",
+    "dept": "Marketing"
+  },
+  {
+    "employee_id": "E089",
+    "salary": 73751,
+    "grade": "L4",
+    "start_date": "2022-09-02",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E090",
+    "salary": 149216,
+    "grade": "L2",
+    "start_date": "2022-05-01",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E091",
+    "salary": 158076,
+    "grade": "L5",
+    "start_date": "2023-02-22",
+    "dept": "Operations"
+  },
+  {
+    "employee_id": "E092",
+    "salary": 93055,
+    "grade": "L1",
+    "start_date": "2019-04-24",
+    "dept": "Finance"
+  },
+  {
+    "employee_id": "E093",
+    "salary": 156970,
+    "grade": "L6",
+    "start_date": "2022-08-28",
+    "dept": "Marketing"
+  },
+  {
+    "employee_id": "E094",
+    "salary": 179336,
+    "grade": "L6",
+    "start_date": "2019-01-20",
+    "dept": "Operations"
+  },
+  {
+    "employee_id": "E095",
+    "salary": 70154,
+    "grade": "L5",
+    "start_date": "2017-06-09",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E096",
+    "salary": 141415,
+    "grade": "L5",
+    "start_date": "2017-01-16",
+    "dept": "Legal"
+  },
+  {
+    "employee_id": "E097",
+    "salary": 148080,
+    "grade": "L1",
+    "start_date": "2018-11-16",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E098",
+    "salary": 97426,
+    "grade": "L4",
+    "start_date": "2022-08-25",
+    "dept": "Sales"
+  },
+  {
+    "employee_id": "E099",
+    "salary": 86116,
+    "grade": "L3",
+    "start_date": "2016-08-01",
+    "dept": "Engineering"
+  },
+  {
+    "employee_id": "E100",
+    "salary": 167465,
+    "grade": "L5",
+    "start_date": "2022-05-13",
+    "dept": "Sales"
+  }
+]

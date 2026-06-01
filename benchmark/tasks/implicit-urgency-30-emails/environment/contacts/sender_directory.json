@@ -1,0 +1,107 @@
+{
+  "alex": {
+    "name": "Alex Morgan",
+    "email": "alex.morgan@harborworks.example",
+    "role": "Chief of Staff",
+    "level": 3,
+    "team": "Executive Office"
+  },
+  "ceo": {
+    "name": "Maya Patel",
+    "email": "maya.patel@harborworks.example",
+    "role": "CEO",
+    "level": 5,
+    "team": "Executive"
+  },
+  "vp_sales": {
+    "name": "Jordan Lee",
+    "email": "jordan.lee@harborworks.example",
+    "role": "VP Sales",
+    "level": 4,
+    "team": "Sales"
+  },
+  "vp_eng": {
+    "name": "Riley Chen",
+    "email": "riley.chen@harborworks.example",
+    "role": "VP Engineering",
+    "level": 4,
+    "team": "Engineering"
+  },
+  "eng_dir": {
+    "name": "Priya Nair",
+    "email": "priya.nair@harborworks.example",
+    "role": "Engineering Director",
+    "level": 3,
+    "team": "Engineering"
+  },
+  "security": {
+    "name": "Nora Schmidt",
+    "email": "nora.schmidt@harborworks.example",
+    "role": "Security Lead",
+    "level": 3,
+    "team": "Security"
+  },
+  "ops": {
+    "name": "Sam Rivera",
+    "email": "sam.rivera@harborworks.example",
+    "role": "Production Operations",
+    "level": 2,
+    "team": "Operations"
+  },
+  "finance": {
+    "name": "Devin Brooks",
+    "email": "devin.brooks@harborworks.example",
+    "role": "Finance Manager",
+    "level": 2,
+    "team": "Finance"
+  },
+  "pm": {
+    "name": "Taylor Kim",
+    "email": "taylor.kim@harborworks.example",
+    "role": "Product Manager",
+    "level": 2,
+    "team": "Product"
+  },
+  "client": {
+    "name": "Ari Gomez",
+    "email": "ari.gomez@northstar-retail.example",
+    "role": "Client Sponsor",
+    "level": 4,
+    "team": "Northstar Retail"
+  },
+  "intern": {
+    "name": "Ben Fox",
+    "email": "ben.fox@harborworks.example",
+    "role": "Facilities Intern",
+    "level": 0,
+    "team": "Workplace"
+  },
+  "office": {
+    "name": "Workplace Bot",
+    "email": "workplace-bot@harborworks.example",
+    "role": "Automation",
+    "level": 0,
+    "team": "Workplace"
+  },
+  "legal": {
+    "name": "Casey Holt",
+    "email": "casey.holt@harborworks.example",
+    "role": "Legal Counsel",
+    "level": 3,
+    "team": "Legal"
+  },
+  "marketing": {
+    "name": "Morgan Wells",
+    "email": "morgan.wells@harborworks.example",
+    "role": "Marketing Lead",
+    "level": 2,
+    "team": "Marketing"
+  },
+  "newsletter": {
+    "name": "SaaS Weekly",
+    "email": "digest@saasweekly.example",
+    "role": "Newsletter",
+    "level": 0,
+    "team": "External"
+  }
+}

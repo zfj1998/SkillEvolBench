@@ -1,0 +1,9 @@
+{
+  "raw_records": 700,
+  "unique_records": 650,
+  "sources_seen": [
+    "crm_export.csv",
+    "event_attendees.csv"
+  ],
+  "dedup_method": "normalized email"
+}

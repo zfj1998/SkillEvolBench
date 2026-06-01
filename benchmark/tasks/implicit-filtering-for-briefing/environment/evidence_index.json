@@ -1,0 +1,123 @@
+[
+  {
+    "source_id": "E01",
+    "supported_concepts": [
+      "renewables",
+      "overview",
+      "policy"
+    ],
+    "source_type": "energy_report",
+    "evidence_strength": "high",
+    "grounding_note": "Flagship renewables report with forecasts to 2030.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "E02",
+    "supported_concepts": [
+      "renewables",
+      "solar",
+      "wind",
+      "capacity"
+    ],
+    "source_type": "energy_report",
+    "evidence_strength": "high",
+    "grounding_note": "Explains solar PV and wind as the main drivers of renewable capacity additions.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "E03",
+    "supported_concepts": [
+      "renewables",
+      "hydrogen",
+      "biofuels",
+      "e-fuels"
+    ],
+    "source_type": "energy_report",
+    "evidence_strength": "high",
+    "grounding_note": "Specific source for hydrogen and other renewable fuels.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "E04",
+    "supported_concepts": [
+      "renewables",
+      "capacity",
+      "statistics"
+    ],
+    "source_type": "statistics_report",
+    "evidence_strength": "high",
+    "grounding_note": "Trilingual capacity dataset for 2013-2023, useful for baseline statistics.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "E05",
+    "supported_concepts": [
+      "renewables",
+      "generation",
+      "statistics"
+    ],
+    "source_type": "statistics_report",
+    "evidence_strength": "high",
+    "grounding_note": "Complements capacity data with generation and balances.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "E06",
+    "supported_concepts": [
+      "renewables",
+      "solar",
+      "wind",
+      "electricity share"
+    ],
+    "source_type": "analysis_report",
+    "evidence_strength": "high",
+    "grounding_note": "Ember reports renewables generated a record 30% of global electricity in 2023.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "E07",
+    "supported_concepts": [
+      "renewables",
+      "global overview",
+      "demand"
+    ],
+    "source_type": "energy_report",
+    "evidence_strength": "high",
+    "grounding_note": "Summarizes growth across electricity, heat, and transport.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "E08",
+    "supported_concepts": [
+      "renewables",
+      "tripling pledge",
+      "policy"
+    ],
+    "source_type": "energy_report",
+    "evidence_strength": "high",
+    "grounding_note": "Highlights growth and the remaining gap to the tripling target.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "E09",
+    "supported_concepts": [
+      "semiconductors",
+      "ai chips"
+    ],
+    "source_type": "market_report",
+    "evidence_strength": "medium",
+    "grounding_note": "Energy-adjacent but not renewable energy; included as a noise source.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "E10",
+    "supported_concepts": [
+      "ai",
+      "investment"
+    ],
+    "source_type": "research_report",
+    "evidence_strength": "high",
+    "grounding_note": "Completely off-topic for a renewable energy briefing; useful noise source.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  }
+]

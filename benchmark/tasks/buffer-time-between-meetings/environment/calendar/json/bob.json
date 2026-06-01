@@ -1,0 +1,14 @@
+{
+  "participant": {
+    "id": "bob",
+    "name": "Bob Rivera",
+    "email": "bob@harborworks.example",
+    "timezone": "America/New_York",
+    "work_hours": {
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "preferences": {}
+  },
+  "events": []
+}

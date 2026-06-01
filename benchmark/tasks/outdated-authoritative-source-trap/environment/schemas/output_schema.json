@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "investment estimate output",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "topic",
+    "selected_source",
+    "estimate",
+    "rationale"
+  ],
+  "properties": {
+    "topic": {
+      "type": "string"
+    },
+    "selected_source": {
+      "type": "string"
+    },
+    "estimate": {
+      "type": "string"
+    },
+    "rationale": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+Message-ID: <r1@mail.harborworks.example>
+Date: 2026-04-21T09:00:00-04:00
+From: Taylor Kim <taylor.kim@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: A/B launch plan
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Option A is a narrower integration path. Option B has more automation but likely takes longer.

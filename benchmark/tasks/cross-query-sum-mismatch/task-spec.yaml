@@ -1,0 +1,23 @@
+schema_version: '1.0'
+task_id: E3-LS5-T3
+task_slug: cross-query-sum-mismatch
+environment_id: E3
+family_id: E3-LS5
+latent_skill_id: E3-LS5.result-sanity-reconciliation
+task_index: 3
+role: variant
+phase: learning
+within_family_difficulty_rank: 3
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E3-LS5.result-sanity-reconciliation
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types: []
+domain_group: data_processing
+review_notes: []

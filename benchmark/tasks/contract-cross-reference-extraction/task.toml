@@ -1,0 +1,25 @@
+version = "1.0"
+
+[metadata]
+task_id = "E4-LS1-T3"
+environment = "document-parsing-extraction-transformation"
+skill_id = "E4-LS1"
+skill = "structured-field-extraction"
+split = "learning"
+role = "variant"
+difficulty = "hard"
+gap_exposure = "gap2-cross-reference-graph-cycle"
+
+[verifier]
+timeout_sec = 900.0
+env = { PROJECT_ROOT = "/root/task", HARBOR_LOG_DIR = "/logs/verifier" }
+
+[agent]
+timeout_sec = 900.0
+
+[environment]
+build_timeout_sec = 900.0
+cpus = 1
+memory_mb = 4096
+storage_mb = 10240
+allow_internet = true

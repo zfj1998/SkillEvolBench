@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E4-LS1
+environment_id: E4
+latent_skill_id: E4-LS1.structured-field-extraction
+slug: structured-field-extraction
+name: structured-field-extraction
+description: Extract structured data from semi-structured documents such as invoices, forms, and reports, then convert the extracted fields to JSON. Use this skill when a document contains label-value pairs, markdown-style tables, or section headers that organize fields into simple categories. Focus on flat key-value extraction from single-format documents, with basic field validation after extraction.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E4-LS1-T1
+- E4-LS1-T2
+- E4-LS1-T3
+- E4-LS1-T4
+- E4-LS1-T5
+- E4-LS1-T6
+gap_1_summary: 'Conditional and nested fields: the curated skill only does flat key-value extraction. Real invoices have conditional discounts (''apply only if subtotal > 1000''), nested line items, and tables that span pages. Build the schema as a tree, not a dictionary, and capture conditional logic as part of the field definition.'
+gap_2_summary: 'Multi-currency / multi-unit values: the curated skill assumes one currency or unit per document. Real-world docs mix USD / EUR / JPY, or grams / pounds / pieces, sometimes in adjacent fields. Capture each value with its unit attached and reject extractions that lose the unit metadata.'

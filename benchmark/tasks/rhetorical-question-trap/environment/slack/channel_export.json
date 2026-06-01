@@ -1,0 +1,111 @@
+{
+  "workspace": "HarborWorks",
+  "channel": "launch-ops",
+  "messages": [
+    {
+      "id": "r01",
+      "client_msg_id": "r01-client",
+      "type": "message",
+      "channel": "C-launch-ops",
+      "thread_ts": "1745413200.000000",
+      "ts": "2026-04-23T09:00:00-04:00",
+      "user": "U104",
+      "user_name": "Diana Holt",
+      "team": "Customer Success",
+      "text": "Has anyone tried the new coffee machine?",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Has anyone tried the new coffee machine?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "r02",
+      "client_msg_id": "r02-client",
+      "type": "message",
+      "channel": "C-launch-ops",
+      "thread_ts": "1745413200.000000",
+      "ts": "2026-04-23T09:05:00-04:00",
+      "user": "U102",
+      "user_name": "Bob Rivera",
+      "team": "Product",
+      "text": "Could we revisit the Q4 targets in planning tomorrow?",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Could we revisit the Q4 targets in planning tomorrow?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "r03",
+      "client_msg_id": "r03-client",
+      "type": "message",
+      "channel": "C-launch-ops",
+      "thread_ts": "1745413200.000000",
+      "ts": "2026-04-23T09:10:00-04:00",
+      "user": "U105",
+      "user_name": "Eli Park",
+      "team": "QA",
+      "text": "Who even uses this feature anymore?",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Who even uses this feature anymore?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "r04",
+      "client_msg_id": "r04-client",
+      "type": "message",
+      "channel": "C-launch-ops",
+      "thread_ts": "1745413200.000000",
+      "ts": "2026-04-23T09:15:00-04:00",
+      "user": "U108",
+      "user_name": "Maya Singh",
+      "team": "Design",
+      "text": "Should we set up a call to discuss the redesign handoff?",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Should we set up a call to discuss the redesign handoff?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "r05",
+      "client_msg_id": "r05-client",
+      "type": "message",
+      "channel": "C-launch-ops",
+      "thread_ts": "1745413200.000000",
+      "ts": "2026-04-23T09:20:00-04:00",
+      "user": "U101",
+      "user_name": "Alice Chen",
+      "team": "Engineering",
+      "text": "Why do we even have this process if every exception becomes a meeting?",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Why do we even have this process if every exception becomes a meeting?"
+          }
+        }
+      ]
+    }
+  ]
+}

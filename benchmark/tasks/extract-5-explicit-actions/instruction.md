@@ -1,0 +1,34 @@
+# E6-LS3: extract-5-explicit-actions
+
+Extract action items from this Slack thread. Include assignee, deadline, source message, confidence, and a short reason.
+
+Write `output/actions.json` using the provided Slack export and tracking pipeline.
+
+## Output Contract
+Write `output/actions.json` as JSON with this schema:
+
+```json
+{
+  "actions": [
+    {
+      "id": "stable action id",
+      "source_message_id": "Slack message id",
+      "description": "normalized action description",
+      "description_terms": ["key terms that should appear in the description"],
+      "assignee": "owner name or team",
+      "deadline": "YYYY-MM-DD or null",
+      "status": "open|completed|delayed|overdue|no_update",
+      "confidence": 0.0,
+      "implicit": false,
+      "reason": "evidence for extraction/status"
+    }
+  ],
+  "followups": [
+    {"action_id": "stable action id", "to": "assignee", "body": "polite follow-up"}
+  ],
+  "summary": {"total_actions": 0, "completed": 0, "delayed": 0, "overdue": 0, "no_update": 0}
+}
+```
+
+Extract explicit commitments and implied commitments, ignore rhetorical questions and background chatter, normalize relative dates using the supplied current-date context, and update each action status from later status messages. Use `description_terms` to expose the key evidence terms for each normalized description; use `confidence` to distinguish strong explicit commitments from weaker implicit commitments; keep `summary` counts consistent with action statuses. Draft follow-ups only for items that need a polite status check.
+

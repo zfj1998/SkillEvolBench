@@ -1,0 +1,28 @@
+# Control baseline: persist raw trajectories, retrieve at task time.
+# Used to compute "Skill abstraction value" = Self-Gen-Experience - Raw-Trajectory-RAG.
+name: raw_trajectory_rag
+description: Persist raw trajectories; retrieve at task time. No skill abstraction.
+track: control
+
+skill_init: empty
+allow_self_gen_induction: false
+allow_zero_shot_creation: false
+allow_curated_inject: false
+
+allow_revision: false
+allow_retirement: false
+
+use_skill_library: false
+use_trajectory_rag: true
+use_history_context: false
+use_feedback_memory: false
+
+trajectory_retrieval_k: 3
+feedback_level: process
+feedback_to_skill_text: false
+
+default_strategy: none
+revision_trigger: never
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5

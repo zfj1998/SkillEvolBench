@@ -1,0 +1,5 @@
+[
+  {"city": "Paris", "days": 3, "units": "metric"},
+  {"city": "", "days": 3, "units": "metric"},
+  {"city": "Berlin", "days": 20, "units": "metric"}
+]

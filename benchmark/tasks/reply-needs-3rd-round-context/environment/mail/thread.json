@@ -1,0 +1,135 @@
+{
+  "exported_at": "2026-04-23T12:00:00-04:00",
+  "messages": [
+    {
+      "id": "r1",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-21T09:00:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "A/B launch plan",
+      "body": "Option A is a narrower integration path. Option B has more automation but likely takes longer.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<r1@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "r2",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-21T11:00:00-04:00",
+      "from": {
+        "name": "Jordan Lee",
+        "email": "jordan.lee@harborworks.example",
+        "role": "VP Sales",
+        "team": "Sales"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Re: A/B launch plan",
+      "body": "I lean B if it gives the customer more polish.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<r2@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "r3",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-22T09:30:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Decision: use Plan A",
+      "body": "Decision after the risk review: we are choosing Plan A because it has the shorter timeline and keeps the pilot date safe.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<r3@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "r4",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T08:00:00-04:00",
+      "from": {
+        "name": "Priya Nair",
+        "email": "priya.nair@harborworks.example",
+        "role": "Engineering Director",
+        "team": "Engineering"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Which plan did we choose?",
+      "body": "Charlie asked me which plan was final. Can you reply so the team is aligned?",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<r4@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    },
+    {
+      "id": "reply_latest",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T10:00:00-04:00",
+      "from": {
+        "name": "Priya Nair",
+        "email": "priya.nair@harborworks.example",
+        "role": "Engineering Director",
+        "team": "Engineering"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Need final answer for Charlie",
+      "body": "Can you confirm the final choice and reason?",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<reply_latest@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    }
+  ]
+}

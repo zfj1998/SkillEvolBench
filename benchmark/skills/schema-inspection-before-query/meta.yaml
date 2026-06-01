@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E3-LS1
+environment_id: E3
+latent_skill_id: E3-LS1.schema-inspection-before-query
+slug: schema-inspection-before-query
+name: schema-inspection-before-query
+description: Inspect CSV files and SQL tables before writing queries or data-processing code. Use this skill whenever the user asks for filtering, aggregation, joins, or analysis on tabular data and the schema must be checked first. Focus on quick practical inspection of columns, types, shape, sample rows, and join-key presence before any query is written.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E3-LS1-T1
+- E3-LS1-T2
+- E3-LS1-T3
+- E3-LS1-T4
+- E3-LS1-T5
+- E3-LS1-T6
+gap_1_summary: 'Invisible-character / encoding traps: the curated skill checks column names by spelling. Real-world CSVs hide BOM bytes (U+FEFF), zero-width spaces (ZWSP, U+200B), and Latin-1 vs UTF-8 mismatches that make `df.columns == ''price''` fail silently. Always inspect column names with `repr()` and check the file''s actual encoding before trusting the schema.'
+gap_2_summary: 'Mixed-type columns: the curated skill assumes one type per column. A single column may contain `int`, `str`, and `float` values mixed together — `sum()` then crashes with a TypeError or, worse, silently coerces and produces wrong results. Inspect each column''s `dtype` and `value_counts(type)` before any aggregation.'

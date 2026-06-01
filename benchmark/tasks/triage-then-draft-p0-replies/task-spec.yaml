@@ -1,0 +1,28 @@
+schema_version: '1.0'
+task_id: E6-LS1-T6
+task_slug: triage-then-draft-p0-replies
+environment_id: E6
+family_id: E6-LS1
+latent_skill_id: E6-LS1.inbox-triage-prioritization
+task_index: 6
+role: composition
+phase: evaluation
+within_family_difficulty_rank: 6
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E6-LS1.inbox-triage-prioritization
+required_skills:
+- E6-LS1.inbox-triage-prioritization
+- E6-LS2.context-aware-reply-drafting
+required_skill_compose_order:
+- E6-LS1.inbox-triage-prioritization
+- E6-LS2.context-aware-reply-drafting
+composition_type: cross_family
+trap_types: []
+domain_group: communication_scheduling
+review_notes:
+- 'composition_note: triage-then-draft-p0-replies'

@@ -1,0 +1,19 @@
+{
+  "team_sync": {
+    "prefer_days": [
+      "Monday",
+      "Tuesday"
+    ]
+  },
+  "client_demo": {
+    "avoid_days": [
+      "Monday"
+    ]
+  },
+  "one_on_one": {
+    "prefer_time": "afternoon"
+  },
+  "global": {
+    "spread_across_days": true
+  }
+}

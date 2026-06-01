@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E1-LS4
+environment_id: E1
+latent_skill_id: E1-LS4.multi-file-bug-fix
+slug: multi-file-bug-fix
+name: multi-file-bug-fix
+description: Trace and fix bugs that span multiple files in Python and JavaScript projects. Use this skill when the visible symptom appears in one file but the root cause is likely upstream or downstream in another file, and the fix requires coordinated updates across several files. Trigger when a user reports wrong output, a broken flow, a changed function contract, a module move, or any bug where one local edit is unlikely to be enough. Focus on projects with roughly 4-7 files involved in the debugging path.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E1-LS4-T1
+- E1-LS4-T2
+- E1-LS4-T3
+- E1-LS4-T4
+- E1-LS4-T5
+- E1-LS4-T6
+gap_1_summary: 'Naming-convention drift across boundaries: the curated skill doesn''t address what happens when one half of the system uses camelCase and the other uses snake_case for the same field. The data silently drops at the boundary; both sides ''work'' in isolation. Fix by aligning the convention end-to-end, not by case-converting on the fly.'
+gap_2_summary: 'Numeric precision across serializations: the curated skill ignores Decimal → float → JSON round-tripping. A Python `Decimal(''1.10'')` becomes `1.1` in float, then `1.1` in JSON, and your invoice total is one cent off. Treat serialization boundaries as lossy and assert precision invariants explicitly.'

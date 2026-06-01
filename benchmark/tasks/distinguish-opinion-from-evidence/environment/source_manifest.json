@@ -1,0 +1,134 @@
+[
+  {
+    "id": "R01",
+    "title": "Hybrid working from home improves retention without damaging performance",
+    "publisher": "Nature",
+    "year": 2024,
+    "url": "https://www.nature.com/articles/s41586-024-07500-2",
+    "source_type": "randomized_controlled_trial",
+    "evidence_strength": "high",
+    "label": "evidence",
+    "notes": "Randomized field experiment at Trip.com showing hybrid work improved retention without harming performance."
+  },
+  {
+    "id": "R02",
+    "title": "The Evolution of Working from Home",
+    "publisher": "Stanford SIEPR",
+    "year": 2023,
+    "url": "https://siepr.stanford.edu/publications/working-paper/evolution-working-home",
+    "source_type": "working_paper",
+    "evidence_strength": "high",
+    "label": "evidence",
+    "notes": "Research synthesis arguing hybrid work is typically productivity-neutral while fully remote can be lower productivity."
+  },
+  {
+    "id": "R03",
+    "title": "Remote Work, Employee Mix, and Performance",
+    "publisher": "Stanford SIEPR",
+    "year": 2025,
+    "url": "https://siepr.stanford.edu/publications/working-paper/remote-work-employee-mix-and-performance",
+    "source_type": "working_paper",
+    "evidence_strength": "high",
+    "label": "evidence",
+    "notes": "Firm-level study of a Turkish call center showing fully remote employees with in-person onboarding had higher productivity."
+  },
+  {
+    "id": "R04",
+    "title": "The Rise of Remote Work: Evidence on Productivity and Preferences from Firm and Worker Surveys",
+    "publisher": "Harvard Business School",
+    "year": 2025,
+    "url": "https://www.hbs.edu/faculty/Pages/item.aspx?num=66633",
+    "source_type": "peer_reviewed_article",
+    "evidence_strength": "high",
+    "label": "evidence",
+    "notes": "Survey-based evidence on productivity perceptions and worker preferences about remote work."
+  },
+  {
+    "id": "R05",
+    "title": "Measuring Work from Home",
+    "publisher": "Stanford SIEPR",
+    "year": 2025,
+    "url": "https://siepr.stanford.edu/publications/working-paper/measuring-work-home",
+    "source_type": "working_paper",
+    "evidence_strength": "high",
+    "label": "evidence",
+    "notes": "Measurement paper harmonizing WFH survey estimates; evidence-heavy and explicit about survey design."
+  },
+  {
+    "id": "R06",
+    "title": "Impacts of remote work on vehicle miles traveled and transit ridership in the USA",
+    "publisher": "Nature Cities",
+    "year": 2024,
+    "url": "https://www.nature.com/articles/s44284-024-00057-1",
+    "source_type": "peer_reviewed_article",
+    "evidence_strength": "high",
+    "label": "evidence",
+    "notes": "Evidence about remote work's mobility impacts; relevant but not directly about productivity."
+  },
+  {
+    "id": "R07",
+    "title": "Working from Home in 2025: Five Key Facts",
+    "publisher": "Stanford SIEPR",
+    "year": 2025,
+    "url": "https://siepr.stanford.edu/publications/essay/working-home-2025-five-key-facts",
+    "source_type": "research_brief",
+    "evidence_strength": "medium",
+    "label": "evidence",
+    "notes": "Survey brief with explicit sample details for global WFH patterns."
+  },
+  {
+    "id": "R08",
+    "title": "Remote Work Is The Future—Here's How To Integrate It",
+    "publisher": "Forbes Technology Council",
+    "year": 2024,
+    "url": "https://www.forbes.com/councils/forbestechcouncil/2024/03/28/remote-work-is-the-future-heres-how-to-integrate-it/",
+    "source_type": "opinion_post",
+    "evidence_strength": "low",
+    "label": "opinion",
+    "notes": "Executive opinion piece advocating remote work with anecdotes and no formal methodology."
+  },
+  {
+    "id": "R09",
+    "title": "The Secret To Retaining Top Talent: Why Remote Work Is Your Best Strategy For Long-Term Employee Satisfaction",
+    "publisher": "Forbes Business Council",
+    "year": 2024,
+    "url": "https://www.forbes.com/councils/forbesbusinesscouncil/2024/09/03/the-secret-to-retaining-top-talent-why-remote-work-is-your-best-strategy-for-long-term-employee-satisfaction/",
+    "source_type": "opinion_post",
+    "evidence_strength": "low",
+    "label": "opinion",
+    "notes": "CEO opinion about remote work as retention strategy; anecdotal and advocacy oriented."
+  },
+  {
+    "id": "R10",
+    "title": "Remote Work Doesn’t Boost Productivity In 2024—This Does",
+    "publisher": "Forbes",
+    "year": 2024,
+    "url": "https://www.forbes.com/sites/rachelwells/2024/11/05/remote-work-doesnt-boost-productivity-in-2024-this-does/",
+    "source_type": "commentary",
+    "evidence_strength": "low",
+    "label": "opinion",
+    "notes": "Commentary article built around quoted experiences rather than a formal study."
+  },
+  {
+    "id": "R11",
+    "title": "Former M&S boss says working from home is 'not doing proper work'",
+    "publisher": "The Guardian",
+    "year": 2025,
+    "url": "https://www.theguardian.com/business/2025/jan/20/working-from-home-not-doing-proper-work-stuart-rose",
+    "source_type": "news_quote",
+    "evidence_strength": "low",
+    "label": "opinion",
+    "notes": "News article centered on a prominent executive's opinion that WFH harms productivity."
+  },
+  {
+    "id": "R12",
+    "title": "The CEO 'return to office or else' is having limited success in 2024",
+    "publisher": "CNBC",
+    "year": 2024,
+    "url": "https://www.cnbc.com/2024/02/04/the-ceo-return-to-office-or-else-is-having-limited-success-this-year.html",
+    "source_type": "news_analysis",
+    "evidence_strength": "medium",
+    "label": "mixed",
+    "notes": "Journalistic synthesis with some survey references, but a lot of narrative around CEO sentiment."
+  }
+]

@@ -1,0 +1,133 @@
+{
+  "workspace": "HarborWorks",
+  "channel": "project-launch",
+  "exported_at": "2026-04-23T17:00:00-04:00",
+  "messages": [
+    {
+      "id": "od01",
+      "client_msg_id": "od01-client",
+      "type": "message",
+      "channel": "C-project-launch",
+      "thread_ts": "T-main",
+      "ts": "2026-04-16T09:00:00-04:00",
+      "user": "U101",
+      "user_name": "Alice Chen",
+      "text": "I will send the report by last Monday.",
+      "reactions": [],
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "I will send the report by last Monday."
+          }
+        }
+      ]
+    },
+    {
+      "id": "od02",
+      "client_msg_id": "od02-client",
+      "type": "message",
+      "channel": "C-project-launch",
+      "thread_ts": "T-main",
+      "ts": "2026-04-16T09:05:00-04:00",
+      "user": "U102",
+      "user_name": "Bob Rivera",
+      "text": "I will review the vendor terms by last Wednesday.",
+      "reactions": [],
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "I will review the vendor terms by last Wednesday."
+          }
+        }
+      ]
+    },
+    {
+      "id": "od03",
+      "client_msg_id": "od03-client",
+      "type": "message",
+      "channel": "C-project-launch",
+      "thread_ts": "T-main",
+      "ts": "2026-04-16T09:10:00-04:00",
+      "user": "U103",
+      "user_name": "Charlie Weber",
+      "text": "I will publish the API spec by Friday.",
+      "reactions": [],
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "I will publish the API spec by Friday."
+          }
+        }
+      ]
+    },
+    {
+      "id": "od04",
+      "client_msg_id": "od04-client",
+      "type": "message",
+      "channel": "C-project-launch",
+      "thread_ts": "T-main",
+      "ts": "2026-04-16T09:15:00-04:00",
+      "user": "U105",
+      "user_name": "Eli Park",
+      "text": "Testing by next Monday is on me.",
+      "reactions": [],
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Testing by next Monday is on me."
+          }
+        }
+      ]
+    },
+    {
+      "id": "od05",
+      "client_msg_id": "od05-client",
+      "type": "message",
+      "channel": "C-project-launch",
+      "thread_ts": "T-main",
+      "ts": "2026-04-16T09:20:00-04:00",
+      "user": "U104",
+      "user_name": "Diana Holt",
+      "text": "Launch readiness by end of quarter remains my workstream.",
+      "reactions": [],
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Launch readiness by end of quarter remains my workstream."
+          }
+        }
+      ]
+    },
+    {
+      "id": "od06",
+      "client_msg_id": "od06-client",
+      "type": "message",
+      "channel": "C-project-launch",
+      "thread_ts": "T-main",
+      "ts": "2026-04-23T08:00:00-04:00",
+      "user": "U106",
+      "user_name": "Fatima Khan",
+      "text": "Reminder that today is Thursday 2026-04-23 for status tracking.",
+      "reactions": [],
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Reminder that today is Thursday 2026-04-23 for status tracking."
+          }
+        }
+      ]
+    }
+  ]
+}

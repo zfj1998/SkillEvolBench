@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "src/services/user_service.py", line 4, in create_user
+    engine.execute(...)
+AttributeError: 'Engine' object has no attribute 'execute'
+
+Additional note:
+NoSuchModuleError: Can't load plugin: sqlalchemy.dialects:postgres

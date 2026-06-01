@@ -1,0 +1,51 @@
+{
+  "alice": {
+    "id": "U101",
+    "name": "Alice Chen",
+    "email": "alice.chen@harborworks.example",
+    "role": "Backend Lead",
+    "timezone": "America/New_York"
+  },
+  "bob": {
+    "id": "U102",
+    "name": "Bob Rivera",
+    "email": "bob.rivera@harborworks.example",
+    "role": "Product Manager",
+    "timezone": "America/Los_Angeles"
+  },
+  "charlie": {
+    "id": "U103",
+    "name": "Charlie Weber",
+    "email": "charlie.weber@harborworks.example",
+    "role": "EMEA Solutions",
+    "timezone": "Europe/Berlin"
+  },
+  "diana": {
+    "id": "U104",
+    "name": "Diana Holt",
+    "email": "diana.holt@harborworks.example",
+    "role": "Customer Success",
+    "timezone": "America/New_York"
+  },
+  "eli": {
+    "id": "U105",
+    "name": "Eli Park",
+    "email": "eli.park@harborworks.example",
+    "role": "QA Lead",
+    "timezone": "America/Los_Angeles"
+  },
+  "fatima": {
+    "id": "U106",
+    "name": "Fatima Khan",
+    "email": "fatima.khan@harborworks.example",
+    "role": "Docs Owner",
+    "timezone": "Europe/London"
+  },
+  "george": {
+    "id": "U107",
+    "name": "George Miles",
+    "email": "george.miles@northstar.example",
+    "role": "Client Sponsor",
+    "timezone": "Europe/London"
+  }
+}

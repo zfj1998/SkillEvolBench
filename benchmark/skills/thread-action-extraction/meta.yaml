@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E6-LS5
+environment_id: E6
+latent_skill_id: E6-LS5.thread-action-extraction
+slug: thread-action-extraction
+name: thread-action-extraction
+description: Extract explicit action items from formal business email threads. Use this skill when the task is to read an email conversation, identify direct requests, named assignments, and explicit sender commitments, and output structured action items with a task description, assignee, deadline, and source email. Focus on extracting explicit action items from professional email threads.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E6-LS5-T1
+- E6-LS5-T2
+- E6-LS5-T3
+- E6-LS5-T4
+- E6-LS5-T5
+- E6-LS5-T6
+gap_1_summary: 'Question vs action distinction: the curated skill treats every interrogative as an action item. Rhetorical questions (''Doesn''t that seem high?'') and confirmation questions (''Does Friday work?'') aren''t action items. Filter on whether the asker actually expects a deliverable or just a yes / no acknowledgment.'
+gap_2_summary: 'Implicit delegation: the curated skill only catches ''@name, please do X''. Real delegation is often softer — ''It would be great if design could look into this'', ''Maybe we should ask infra''. These are real assignments that need to be tracked, even though no name is tagged. Resolve the implied owner from team context.'

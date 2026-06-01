@@ -1,0 +1,41 @@
+{
+  "participants": [
+    {
+      "id": "alice",
+      "name": "Alice Chen",
+      "email": "alice@harborworks.example",
+      "timezone": "America/New_York",
+      "work_hours": {
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "preferences": {},
+      "events": [
+        {
+          "uid": "a1",
+          "summary": "Previous meeting",
+          "start_utc": "2026-04-24T14:00:00Z",
+          "end_utc": "2026-04-24T15:00:00Z"
+        },
+        {
+          "uid": "a2",
+          "summary": "Next meeting",
+          "start_utc": "2026-04-24T16:00:00Z",
+          "end_utc": "2026-04-24T17:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "bob",
+      "name": "Bob Rivera",
+      "email": "bob@harborworks.example",
+      "timezone": "America/New_York",
+      "work_hours": {
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "preferences": {},
+      "events": []
+    }
+  ]
+}

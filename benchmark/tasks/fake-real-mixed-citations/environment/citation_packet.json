@@ -1,0 +1,67 @@
+[
+  {
+    "citation_id": "R01",
+    "source_id": "MED_NATURE_SKIN",
+    "article_claim": "Real Nature skin-cancer citation."
+  },
+  {
+    "citation_id": "R02",
+    "source_id": "MED_JAMA_DR",
+    "article_claim": "Real JAMA retinopathy citation."
+  },
+  {
+    "citation_id": "R03",
+    "source_id": "MED_FDA_AI",
+    "article_claim": "Real FDA AI-device citation."
+  },
+  {
+    "citation_id": "R04",
+    "source_id": "ENERGY_IEA_RENEWABLES",
+    "article_claim": "Real IEA renewables citation."
+  },
+  {
+    "citation_id": "R05",
+    "source_id": "ENERGY_EMBER_GER",
+    "article_claim": "Real Ember electricity citation."
+  },
+  {
+    "citation_id": "R06",
+    "source_id": "REMOTE_NATURE_HYBRID",
+    "article_claim": "Real Nature hybrid-work citation."
+  },
+  {
+    "citation_id": "R07",
+    "source_id": "MED_WHO_ETHICS",
+    "article_claim": "Real WHO AI-health ethics citation."
+  },
+  {
+    "citation_id": "R08",
+    "source_id": "REMOTE_JWF_PRODUCTIVITY",
+    "article_claim": "Unverified DOI-format-valid remote-work citation."
+  },
+  {
+    "citation_id": "R09",
+    "source_id": "MED_NATURE_TABLE3_DEPLOYMENT",
+    "article_claim": "Unverified near-match skin-cancer journal citation."
+  },
+  {
+    "citation_id": "R10",
+    "source_id": "NO_SUCH_SOURCE",
+    "article_claim": "Fake author-title combination with no matching source."
+  },
+  {
+    "citation_id": "R11",
+    "source_id": "MED_NATURE_SKIN",
+    "article_claim": "Misrepresented citation claiming the Nature skin-cancer paper proves universal diagnosis for all cancers."
+  },
+  {
+    "citation_id": "R12",
+    "source_id": "REMOTE_NATURE_HYBRID",
+    "article_claim": "Selective citation claiming hybrid work proves a universal 30% productivity gain without caveat."
+  },
+  {
+    "citation_id": "R13",
+    "source_id": "MED_NATURE_TABLE3_DEPLOYMENT",
+    "article_claim": "Invalid near-match citation to a deployment table that is not present in the verified source registry."
+  }
+]

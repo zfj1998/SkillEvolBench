@@ -1,0 +1,23 @@
+schema_version: '1.0'
+task_id: E2-LS2-T4
+task_slug: retry-step-3-in-5-step-pipeline
+environment_id: E2
+family_id: E2-LS2
+latent_skill_id: E2-LS2.retry-and-backoff
+task_index: 4
+role: context-shift
+phase: evaluation
+within_family_difficulty_rank: 4
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E2-LS2.retry-and-backoff
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types: []
+domain_group: tool_api_orchestration
+review_notes: []

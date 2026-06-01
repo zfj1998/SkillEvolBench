@@ -1,0 +1,83 @@
+{
+  "title": "Renewable electricity briefing dossier",
+  "sources": [
+    "ENERGY_IEA_RENEWABLES",
+    "ENERGY_IEA_ELECTRICITY",
+    "ENERGY_EMBER_GER",
+    "ENERGY_IRENA_CAPACITY"
+  ],
+  "sections": [
+    {
+      "id": "intro_context",
+      "order": 1,
+      "priority": 0,
+      "summary": "Renewable energy reporting often begins with policy background and definitions.",
+      "tags": [
+        "background"
+      ]
+    },
+    {
+      "id": "history",
+      "order": 2,
+      "priority": 0,
+      "summary": "Historical electricity statistics show gradual change over two decades.",
+      "tags": [
+        "background"
+      ]
+    },
+    {
+      "id": "method",
+      "order": 3,
+      "priority": 1,
+      "summary": "IEA, IRENA, and Ember use different but complementary measurement frames.",
+      "tags": [
+        "method"
+      ]
+    },
+    {
+      "id": "finding_30",
+      "order": 4,
+      "priority": 5,
+      "summary": "Ember reports renewables reached a record 30% of global electricity in 2023.",
+      "tags": [
+        "finding"
+      ]
+    },
+    {
+      "id": "finding_solar_wind",
+      "order": 5,
+      "priority": 5,
+      "summary": "IEA forecasts solar PV and wind will account for 95% of renewable capacity additions through 2030.",
+      "tags": [
+        "finding"
+      ]
+    },
+    {
+      "id": "finding_gap",
+      "order": 6,
+      "priority": 5,
+      "summary": "IEA still identifies a gap between current trajectories and the tripling-renewables ambition.",
+      "tags": [
+        "finding"
+      ]
+    },
+    {
+      "id": "recommendation_grid",
+      "order": 7,
+      "priority": 4,
+      "summary": "Grid investment, permitting, and finance are the practical constraints to watch.",
+      "tags": [
+        "recommendation"
+      ]
+    },
+    {
+      "id": "appendix_tables",
+      "order": 8,
+      "priority": 0,
+      "summary": "Appendix tables list detailed capacity and generation statistics.",
+      "tags": [
+        "appendix"
+      ]
+    }
+  ]
+}

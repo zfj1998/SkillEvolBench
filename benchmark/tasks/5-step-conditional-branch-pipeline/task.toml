@@ -1,0 +1,25 @@
+version = "1.0"
+
+[metadata]
+task_id = "E2-LS4-T2"
+environment = "multi-step-tool-api-orchestration"
+skill_id = "E2-LS4"
+skill = "multi-step-orchestration"
+split = "learning"
+role = "enriched"
+difficulty = "medium"
+gap_exposure = "gap1-conditional-branch-pipeline"
+
+[verifier]
+timeout_sec = 600.0
+env = { PROJECT_ROOT = "/root/task", HARBOR_LOG_DIR = "/logs/verifier" }
+
+[agent]
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 900.0
+cpus = 1
+memory_mb = 4096
+storage_mb = 10240
+allow_internet = true

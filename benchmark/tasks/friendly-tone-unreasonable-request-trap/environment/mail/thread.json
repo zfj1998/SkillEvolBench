@@ -1,0 +1,31 @@
+{
+  "exported_at": "2026-04-23T12:00:00-04:00",
+  "messages": [
+    {
+      "id": "reply_unreasonable",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Taylor Kim",
+        "email": "taylor.kim@harborworks.example",
+        "role": "Product Manager",
+        "team": "Product"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Tiny favor by Friday? 😊",
+      "body": "Would you mind rewriting the entire backend by Friday? No pressure at all 😊 I know it is a big ask but it would really help the launch narrative.",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<reply_unreasonable@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    }
+  ]
+}

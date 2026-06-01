@@ -1,0 +1,23 @@
+schema_version: '1.0'
+task_id: E3-LS1-T2
+task_slug: latin1-bom-zwsp-encoding-chaos
+environment_id: E3
+family_id: E3-LS1
+latent_skill_id: E3-LS1.schema-inspection-before-query
+task_index: 2
+role: enriched
+phase: learning
+within_family_difficulty_rank: 2
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E3-LS1.schema-inspection-before-query
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types: []
+domain_group: data_processing
+review_notes: []

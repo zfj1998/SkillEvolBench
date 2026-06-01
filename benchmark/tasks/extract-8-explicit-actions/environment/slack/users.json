@@ -1,0 +1,52 @@
+{
+  "alice": {
+    "id": "U101",
+    "name": "Alice Chen",
+    "team": "Engineering"
+  },
+  "bob": {
+    "id": "U102",
+    "name": "Bob Rivera",
+    "team": "Product"
+  },
+  "charlie": {
+    "id": "U103",
+    "name": "Charlie Weber",
+    "team": "Solutions"
+  },
+  "diana": {
+    "id": "U104",
+    "name": "Diana Holt",
+    "team": "Customer Success"
+  },
+  "eli": {
+    "id": "U105",
+    "name": "Eli Park",
+    "team": "QA"
+  },
+  "fatima": {
+    "id": "U106",
+    "name": "Fatima Khan",
+    "team": "Docs"
+  },
+  "george": {
+    "id": "U107",
+    "name": "George Miles",
+    "team": "Northstar"
+  },
+  "maya": {
+    "id": "U108",
+    "name": "Maya Singh",
+    "team": "Design"
+  },
+  "nora": {
+    "id": "U109",
+    "name": "Nora Patel",
+    "team": "Backend"
+  },
+  "omar": {
+    "id": "U110",
+    "name": "Omar Ruiz",
+    "team": "Performance"
+  }
+}

@@ -1,0 +1,27 @@
+[
+  {
+    "citation_id": "M01",
+    "source_id": "REMOTE_NATURE_HYBRID",
+    "article_claim": "Hybrid work objectively increased productivity by 30%."
+  },
+  {
+    "citation_id": "M02",
+    "source_id": "MED_WHO_ETHICS",
+    "article_claim": "WHO recommends exactly eight cups of water per adult per day."
+  },
+  {
+    "citation_id": "M03",
+    "source_id": "MED_JAMA_DR",
+    "article_claim": "The JAMA diabetic-retinopathy algorithm significantly outperformed every human clinician in all settings."
+  },
+  {
+    "citation_id": "M04",
+    "source_id": "ENERGY_EMBER_GER",
+    "article_claim": "Ember reports renewables reached about 30% of global electricity in 2023."
+  },
+  {
+    "citation_id": "M05",
+    "source_id": "MED_FDA_AI",
+    "article_claim": "FDA lists AI-enabled devices authorized for marketing in the United States."
+  }
+]

@@ -1,0 +1,5829 @@
+[
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P114"
+    ],
+    "record_id": "P114",
+    "_record_id_winner": "system_c",
+    "name": "Alexander Martin",
+    "_name_winner": "system_c",
+    "email": "alexander113@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-6520",
+    "_phone_winner": "system_c",
+    "department": "Engineering",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P014"
+    ],
+    "record_id": "P014",
+    "_record_id_winner": "system_a",
+    "name": "Alexander Martin",
+    "_name_winner": "system_a",
+    "email": "alexander13@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-6436",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "154 Oak St",
+      "city": "Chicago",
+      "zip": "10013"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P164"
+    ],
+    "record_id": "P164",
+    "_record_id_winner": "system_c",
+    "name": "Alexander Martin",
+    "_name_winner": "system_c",
+    "email": "alexander163@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-8142",
+    "_phone_winner": "system_c",
+    "department": "Sales",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P214"
+    ],
+    "record_id": "P214",
+    "_record_id_winner": "system_a",
+    "name": "Alexander Martin",
+    "_name_winner": "system_a",
+    "email": "alexander213@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-4943",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "627 Maple Ave",
+      "city": "SF",
+      "zip": "98741"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P064"
+    ],
+    "record_id": "P064",
+    "_record_id_winner": "system_a",
+    "name": "Alexander Martin",
+    "_name_winner": "system_a",
+    "email": "alexander63@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-4805",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "704 Oak St",
+      "city": "New York",
+      "zip": "10063"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P001"
+    ],
+    "record_id": "P001",
+    "_record_id_winner": "system_c",
+    "name": "Alice Smith",
+    "_name_winner": "system_c",
+    "email": "alice0@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-3977",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P101"
+    ],
+    "record_id": "P101",
+    "_record_id_winner": "system_a",
+    "name": "Alice Smith",
+    "_name_winner": "system_a",
+    "email": "alice100@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-3351",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1111 Oak St",
+      "city": "SF",
+      "zip": "10100"
+    },
+    "compensation": {
+      "bonus": "11%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P201"
+    ],
+    "record_id": "P201",
+    "_record_id_winner": "system_c",
+    "name": "Alice Smith",
+    "_name_winner": "system_c",
+    "email": "alice200@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-4008",
+    "_phone_winner": "system_c",
+    "department": "Sales",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P051"
+    ],
+    "record_id": "P051",
+    "_record_id_winner": "system_a",
+    "name": "Alice Smith",
+    "_name_winner": "system_a",
+    "email": "alice50@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-2525",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "561 Oak St",
+      "city": "New York",
+      "zip": "10050"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P127"
+    ],
+    "record_id": "P127",
+    "_record_id_winner": "system_c",
+    "name": "Andy Hernandez",
+    "_name_winner": "system_c",
+    "email": "andy126@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-5996",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "SF"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P177"
+    ],
+    "record_id": "P177",
+    "_record_id_winner": "system_a",
+    "name": "Andy Hernandez",
+    "_name_winner": "system_a",
+    "email": "andy176@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-9878",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "922 Maple Ave",
+      "city": "SF",
+      "zip": "92947"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P227"
+    ],
+    "record_id": "P227",
+    "_record_id_winner": "system_c",
+    "name": "Andy Hernandez",
+    "_name_winner": "system_c",
+    "email": "andy226@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-4164",
+    "_phone_winner": "system_c",
+    "department": "Finance",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "SF"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P027"
+    ],
+    "record_id": "P027",
+    "_record_id_winner": "system_a",
+    "name": "Andy Hernandez",
+    "_name_winner": "system_a",
+    "email": "andy26@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-4405",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "297 Oak St",
+      "city": "New York",
+      "zip": "10026"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P077"
+    ],
+    "record_id": "P077",
+    "_record_id_winner": "system_a",
+    "name": "Andy Hernandez",
+    "_name_winner": "system_a",
+    "email": "andy76@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-3472",
+    "_phone_winner": "system_a",
+    "department": "Engineering",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "847 Oak St",
+      "city": "SF",
+      "zip": "10076"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P128"
+    ],
+    "record_id": "P128",
+    "_record_id_winner": "system_c",
+    "name": "Beth King",
+    "_name_winner": "system_c",
+    "email": "beth127@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-2268",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P178"
+    ],
+    "record_id": "P178",
+    "_record_id_winner": "system_a",
+    "name": "Beth King",
+    "_name_winner": "system_a",
+    "email": "beth177@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-4919",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "536 Maple Ave",
+      "city": "SF",
+      "zip": "94798"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P228"
+    ],
+    "record_id": "P228",
+    "_record_id_winner": "system_c",
+    "name": "Beth King",
+    "_name_winner": "system_c",
+    "email": "beth227@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-2708",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P028"
+    ],
+    "record_id": "P028",
+    "_record_id_winner": "system_b",
+    "name": "Beth King",
+    "_name_winner": "system_b",
+    "email": "beth27@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-6139",
+    "_phone_winner": "system_b",
+    "department": "Sales",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "308 Oak St",
+      "city": "Chicago",
+      "zip": "10027"
+    },
+    "compensation": {
+      "bonus": "19%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P078"
+    ],
+    "record_id": "P078",
+    "_record_id_winner": "system_a",
+    "name": "Beth King",
+    "_name_winner": "system_a",
+    "email": "beth77@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-6163",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "858 Oak St",
+      "city": "New York",
+      "zip": "10077"
+    },
+    "compensation": {
+      "bonus": "14%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P103"
+    ],
+    "record_id": "P103",
+    "_record_id_winner": "system_b",
+    "name": "Brown, Carol",
+    "_name_winner": "system_b",
+    "email": "",
+    "_email_winner": "system_b",
+    "phone": "555-4923",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "793 Birch Blvd",
+      "city": "SF",
+      "zip": "86936"
+    },
+    "compensation": {
+      "bonus": "9%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P103"
+    ],
+    "record_id": "P103",
+    "_record_id_winner": "system_a",
+    "name": "Carol Brown",
+    "_name_winner": "system_a",
+    "email": "carol102@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-4923",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "716 Maple Ave",
+      "city": "SF",
+      "zip": "96216"
+    },
+    "compensation": {
+      "bonus": "17%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P153"
+    ],
+    "record_id": "P153",
+    "_record_id_winner": "system_b",
+    "name": "Carol Brown",
+    "_name_winner": "system_b",
+    "email": "carol152@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-9257",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1683 Oak St",
+      "city": "New York",
+      "zip": "10152"
+    },
+    "compensation": {
+      "bonus": "20%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P003"
+    ],
+    "record_id": "P003",
+    "_record_id_winner": "system_b",
+    "name": "Carol Brown",
+    "_name_winner": "system_b",
+    "email": "carol2@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-9639",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "33 Oak St",
+      "city": "Chicago",
+      "zip": "10002"
+    },
+    "compensation": {
+      "bonus": "11%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P053"
+    ],
+    "record_id": "P053",
+    "_record_id_winner": "system_a",
+    "name": "Carol Brown",
+    "_name_winner": "system_a",
+    "email": "carol52@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-4011",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "583 Oak St",
+      "city": "SF",
+      "zip": "10052"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P112"
+    ],
+    "record_id": "P112",
+    "_record_id_winner": "system_c",
+    "name": "Christopher White",
+    "_name_winner": "system_c",
+    "email": "christopher111@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-5486",
+    "_phone_winner": "system_c",
+    "department": "HR",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P012"
+    ],
+    "record_id": "P012",
+    "_record_id_winner": "system_a",
+    "name": "Christopher White",
+    "_name_winner": "system_a",
+    "email": "christopher11@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-9082",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "132 Oak St",
+      "city": "Chicago",
+      "zip": "10011"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P162"
+    ],
+    "record_id": "P162",
+    "_record_id_winner": "system_a",
+    "name": "Christopher White",
+    "_name_winner": "system_a",
+    "email": "christopher161@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-7488",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1782 Oak St",
+      "city": "Chicago",
+      "zip": "10161"
+    },
+    "compensation": {
+      "bonus": "6%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P212"
+    ],
+    "record_id": "P212",
+    "_record_id_winner": "system_a",
+    "name": "Christopher White",
+    "_name_winner": "system_a",
+    "email": "christopher211@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-1708",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "252 Maple Ave",
+      "city": "New York",
+      "zip": "98834"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P062"
+    ],
+    "record_id": "P062",
+    "_record_id_winner": "system_a",
+    "name": "Christopher White",
+    "_name_winner": "system_a",
+    "email": "christopher61@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-5380",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "682 Oak St",
+      "city": "Chicago",
+      "zip": "10061"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P098"
+    ],
+    "record_id": "P098",
+    "_record_id_winner": "system_b",
+    "name": "Collins, Walt",
+    "_name_winner": "system_b",
+    "email": "",
+    "_email_winner": "system_b",
+    "phone": "555-2406",
+    "_phone_winner": "system_b",
+    "department": "HR",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "635 Birch Blvd",
+      "city": "New York",
+      "zip": "84229"
+    },
+    "compensation": {
+      "bonus": "25%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P129"
+    ],
+    "record_id": "P129",
+    "_record_id_winner": "system_b",
+    "name": "Craig Wright",
+    "_name_winner": "system_b",
+    "email": "craig128@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-7666",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1419 Oak St",
+      "city": "New York",
+      "zip": "10128"
+    },
+    "compensation": {
+      "bonus": "19%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P179"
+    ],
+    "record_id": "P179",
+    "_record_id_winner": "system_a",
+    "name": "Craig Wright",
+    "_name_winner": "system_a",
+    "email": "craig178@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-1820",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1969 Oak St",
+      "city": "New York",
+      "zip": "10178"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P229"
+    ],
+    "record_id": "P229",
+    "_record_id_winner": "system_a",
+    "name": "Craig Wright",
+    "_name_winner": "system_a",
+    "email": "craig228@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-4768",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2519 Oak St",
+      "city": "New York",
+      "zip": "10228"
+    },
+    "compensation": {
+      "bonus": "14%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P029"
+    ],
+    "record_id": "P029",
+    "_record_id_winner": "system_c",
+    "name": "Craig Wright",
+    "_name_winner": "system_c",
+    "email": "craig28@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-4559",
+    "_phone_winner": "system_c",
+    "department": "Operations",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P079"
+    ],
+    "record_id": "P079",
+    "_record_id_winner": "system_b",
+    "name": "Craig Wright",
+    "_name_winner": "system_b",
+    "email": "craig78@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-3614",
+    "_phone_winner": "system_b",
+    "department": "Engineering",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "869 Oak St",
+      "city": "SF",
+      "zip": "10078"
+    },
+    "compensation": {
+      "bonus": "13%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P130"
+    ],
+    "record_id": "P130",
+    "_record_id_winner": "system_b",
+    "name": "Dana Lopez",
+    "_name_winner": "system_b",
+    "email": "dana129@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-5707",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1430 Oak St",
+      "city": "Chicago",
+      "zip": "10129"
+    },
+    "compensation": {
+      "bonus": "8%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P180"
+    ],
+    "record_id": "P180",
+    "_record_id_winner": "system_c",
+    "name": "Dana Lopez",
+    "_name_winner": "system_c",
+    "email": "dana179@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-4006",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P230"
+    ],
+    "record_id": "P230",
+    "_record_id_winner": "system_a",
+    "name": "Dana Lopez",
+    "_name_winner": "system_a",
+    "email": "dana229@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-6179",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2530 Oak St",
+      "city": "New York",
+      "zip": "10229"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P030"
+    ],
+    "record_id": "P030",
+    "_record_id_winner": "system_c",
+    "name": "Dana Lopez",
+    "_name_winner": "system_c",
+    "email": "dana29@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-4432",
+    "_phone_winner": "system_c",
+    "department": "HR",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "SF"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P080"
+    ],
+    "record_id": "P080",
+    "_record_id_winner": "system_a",
+    "name": "Dana Lopez",
+    "_name_winner": "system_a",
+    "email": "dana79@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-7757",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "880 Oak St",
+      "city": "Chicago",
+      "zip": "10079"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P110"
+    ],
+    "record_id": "P110",
+    "_record_id_winner": "system_b",
+    "name": "Elizabeth Thomas",
+    "_name_winner": "system_b",
+    "email": "elizabeth109@corp.net",
+    "_email_winner": "system_b",
+    "phone": "555-3834",
+    "_phone_winner": "system_b",
+    "department": "HR",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1210 Oak St",
+      "city": "Chicago",
+      "zip": "10109"
+    },
+    "compensation": {
+      "bonus": "18%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P160"
+    ],
+    "record_id": "P160",
+    "_record_id_winner": "system_a",
+    "name": "Elizabeth Thomas",
+    "_name_winner": "system_a",
+    "email": "elizabeth159@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-7510",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1760 Oak St",
+      "city": "New York",
+      "zip": "10159"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P210"
+    ],
+    "record_id": "P210",
+    "_record_id_winner": "system_a",
+    "name": "Elizabeth Thomas",
+    "_name_winner": "system_a",
+    "email": "elizabeth209@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-4915",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2310 Oak St",
+      "city": "Chicago",
+      "zip": "10209"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P060"
+    ],
+    "record_id": "P060",
+    "_record_id_winner": "system_a",
+    "name": "Elizabeth Thomas",
+    "_name_winner": "system_a",
+    "email": "elizabeth59@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-2765",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "660 Oak St",
+      "city": "SF",
+      "zip": "10059"
+    },
+    "compensation": {
+      "bonus": "18%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P010"
+    ],
+    "record_id": "P010",
+    "_record_id_winner": "system_a",
+    "name": "Elizabeth Thomas",
+    "_name_winner": "system_a",
+    "email": "elizabeth9@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-7898",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "110 Oak St",
+      "city": "New York",
+      "zip": "10009"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P105"
+    ],
+    "record_id": "P105",
+    "_record_id_winner": "system_a",
+    "name": "Emma Miller",
+    "_name_winner": "system_a",
+    "email": "emma104@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-9896",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "965 Maple Ave",
+      "city": "Chicago",
+      "zip": "95654"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P155"
+    ],
+    "record_id": "P155",
+    "_record_id_winner": "system_c",
+    "name": "Emma Miller",
+    "_name_winner": "system_c",
+    "email": "emma154@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-3880",
+    "_phone_winner": "system_c",
+    "department": "Operations",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P205"
+    ],
+    "record_id": "P205",
+    "_record_id_winner": "system_a",
+    "name": "Emma Miller",
+    "_name_winner": "system_a",
+    "email": "emma204@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-2982",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2255 Oak St",
+      "city": "SF",
+      "zip": "10204"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P005"
+    ],
+    "record_id": "P005",
+    "_record_id_winner": "system_c",
+    "name": "Emma Miller",
+    "_name_winner": "system_c",
+    "email": "emma4@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-3430",
+    "_phone_winner": "system_c",
+    "department": "Finance",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P055"
+    ],
+    "record_id": "P055",
+    "_record_id_winner": "system_c",
+    "name": "Emma Miller",
+    "_name_winner": "system_c",
+    "email": "emma54@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-4126",
+    "_phone_winner": "system_c",
+    "department": "Engineering",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P131"
+    ],
+    "record_id": "P131",
+    "_record_id_winner": "system_c",
+    "name": "Evan Hill",
+    "_name_winner": "system_c",
+    "email": "evan130@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-6960",
+    "_phone_winner": "system_c",
+    "department": "Finance",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P181"
+    ],
+    "record_id": "P181",
+    "_record_id_winner": "system_b",
+    "name": "Evan Hill",
+    "_name_winner": "system_b",
+    "email": "evan180@corp.net",
+    "_email_winner": "system_b",
+    "phone": "555-2316",
+    "_phone_winner": "system_b",
+    "department": "Sales",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1991 Oak St",
+      "city": "New York",
+      "zip": "10180"
+    },
+    "compensation": {
+      "bonus": "12%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P231"
+    ],
+    "record_id": "P231",
+    "_record_id_winner": "system_a",
+    "name": "Evan Hill",
+    "_name_winner": "system_a",
+    "email": "evan230@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-8726",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2541 Oak St",
+      "city": "Chicago",
+      "zip": "10230"
+    },
+    "compensation": {
+      "bonus": "11%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P031"
+    ],
+    "record_id": "P031",
+    "_record_id_winner": "system_c",
+    "name": "Evan Hill",
+    "_name_winner": "system_c",
+    "email": "evan30@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-6843",
+    "_phone_winner": "system_c",
+    "department": "Operations",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P081"
+    ],
+    "record_id": "P081",
+    "_record_id_winner": "system_a",
+    "name": "Evan Hill",
+    "_name_winner": "system_a",
+    "email": "evan80@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-1217",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "799 Maple Ave",
+      "city": "SF",
+      "zip": "96259"
+    },
+    "compensation": {
+      "bonus": "18%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P132"
+    ],
+    "record_id": "P132",
+    "_record_id_winner": "system_a",
+    "name": "Faye Scott",
+    "_name_winner": "system_a",
+    "email": "faye131@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-4528",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1452 Oak St",
+      "city": "SF",
+      "zip": "10131"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P182"
+    ],
+    "record_id": "P182",
+    "_record_id_winner": "system_b",
+    "name": "Faye Scott",
+    "_name_winner": "system_b",
+    "email": "faye181@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-1031",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2002 Oak St",
+      "city": "New York",
+      "zip": "10181"
+    },
+    "compensation": {
+      "bonus": "19%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P232"
+    ],
+    "record_id": "P232",
+    "_record_id_winner": "system_c",
+    "name": "Faye Scott",
+    "_name_winner": "system_c",
+    "email": "faye231@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-5339",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P032"
+    ],
+    "record_id": "P032",
+    "_record_id_winner": "system_b",
+    "name": "Faye Scott",
+    "_name_winner": "system_b",
+    "email": "faye31@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-1047",
+    "_phone_winner": "system_b",
+    "department": "HR",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "352 Oak St",
+      "city": "Chicago",
+      "zip": "10031"
+    },
+    "compensation": {
+      "bonus": "18%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P082"
+    ],
+    "record_id": "P082",
+    "_record_id_winner": "system_a",
+    "name": "Faye Scott",
+    "_name_winner": "system_a",
+    "email": "faye81@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-6612",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "902 Oak St",
+      "city": "SF",
+      "zip": "10081"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P066"
+    ],
+    "record_id": "P066",
+    "_record_id_winner": "system_b",
+    "name": "Garcia, Richard",
+    "_name_winner": "system_b",
+    "email": "",
+    "_email_winner": "system_b",
+    "phone": "555-8552",
+    "_phone_winner": "system_b",
+    "department": "Sales",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "274 Birch Blvd",
+      "city": "SF",
+      "zip": "88936"
+    },
+    "compensation": {
+      "bonus": "6%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P133"
+    ],
+    "record_id": "P133",
+    "_record_id_winner": "system_a",
+    "name": "Glen Green",
+    "_name_winner": "system_a",
+    "email": "glen132@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-1420",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1463 Oak St",
+      "city": "New York",
+      "zip": "10132"
+    },
+    "compensation": {
+      "bonus": "12%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P233"
+    ],
+    "record_id": "P233",
+    "_record_id_winner": "system_b",
+    "name": "Glen Green",
+    "_name_winner": "system_b",
+    "email": "glen232@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-8566",
+    "_phone_winner": "system_b",
+    "department": "Engineering",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2563 Oak St",
+      "city": "SF",
+      "zip": "10232"
+    },
+    "compensation": {
+      "bonus": "13%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P033"
+    ],
+    "record_id": "P033",
+    "_record_id_winner": "system_a",
+    "name": "Glen Green",
+    "_name_winner": "system_a",
+    "email": "glen32@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-4509",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "264 Maple Ave",
+      "city": "SF",
+      "zip": "98193"
+    },
+    "compensation": {
+      "bonus": "20%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P083"
+    ],
+    "record_id": "P083",
+    "_record_id_winner": "system_a",
+    "name": "Glen Green",
+    "_name_winner": "system_a",
+    "email": "glen82@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-8241",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "913 Oak St",
+      "city": "New York",
+      "zip": "10082"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P107"
+    ],
+    "record_id": "P107",
+    "_record_id_winner": "system_b",
+    "name": "Grace Moore",
+    "_name_winner": "system_b",
+    "email": "grace106@corp.net",
+    "_email_winner": "system_b",
+    "phone": "555-3057",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1177 Oak St",
+      "city": "New York",
+      "zip": "10106"
+    },
+    "compensation": {
+      "bonus": "19%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P157"
+    ],
+    "record_id": "P157",
+    "_record_id_winner": "system_c",
+    "name": "Grace Moore",
+    "_name_winner": "system_c",
+    "email": "grace156@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-8285",
+    "_phone_winner": "system_c",
+    "department": "Sales",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P207"
+    ],
+    "record_id": "P207",
+    "_record_id_winner": "system_a",
+    "name": "Grace Moore",
+    "_name_winner": "system_a",
+    "email": "grace206@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-6206",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2277 Oak St",
+      "city": "New York",
+      "zip": "10206"
+    },
+    "compensation": {
+      "bonus": "11%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P057"
+    ],
+    "record_id": "P057",
+    "_record_id_winner": "system_a",
+    "name": "Grace Moore",
+    "_name_winner": "system_a",
+    "email": "grace56@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-5361",
+    "_phone_winner": "system_a",
+    "department": "Engineering",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "627 Oak St",
+      "city": "SF",
+      "zip": "10056"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P007"
+    ],
+    "record_id": "P007",
+    "_record_id_winner": "system_c",
+    "name": "Grace Moore",
+    "_name_winner": "system_c",
+    "email": "grace6@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-6420",
+    "_phone_winner": "system_c",
+    "department": "Sales",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P134"
+    ],
+    "record_id": "P134",
+    "_record_id_winner": "system_a",
+    "name": "Hana Adams",
+    "_name_winner": "system_a",
+    "email": "hana133@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-7904",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1474 Oak St",
+      "city": "New York",
+      "zip": "10133"
+    },
+    "compensation": {
+      "bonus": "6%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P184"
+    ],
+    "record_id": "P184",
+    "_record_id_winner": "system_b",
+    "name": "Hana Adams",
+    "_name_winner": "system_b",
+    "email": "hana183@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-4575",
+    "_phone_winner": "system_b",
+    "department": "Operations",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2024 Oak St",
+      "city": "Chicago",
+      "zip": "10183"
+    },
+    "compensation": {
+      "bonus": "18%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P034"
+    ],
+    "record_id": "P034",
+    "_record_id_winner": "system_a",
+    "name": "Hana Adams",
+    "_name_winner": "system_a",
+    "email": "hana33@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-8070",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "374 Oak St",
+      "city": "New York",
+      "zip": "10033"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P084"
+    ],
+    "record_id": "P084",
+    "_record_id_winner": "system_a",
+    "name": "Hana Adams",
+    "_name_winner": "system_a",
+    "email": "hana83@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-9113",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "924 Oak St",
+      "city": "SF",
+      "zip": "10083"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P135"
+    ],
+    "record_id": "P135",
+    "_record_id_winner": "system_a",
+    "name": "Igor Baker",
+    "_name_winner": "system_a",
+    "email": "igor134@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-6151",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "630 Maple Ave",
+      "city": "Chicago",
+      "zip": "95656"
+    },
+    "compensation": {
+      "bonus": "11%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P185"
+    ],
+    "record_id": "P185",
+    "_record_id_winner": "system_a",
+    "name": "Igor Baker",
+    "_name_winner": "system_a",
+    "email": "igor184@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-1203",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2035 Oak St",
+      "city": "Chicago",
+      "zip": "10184"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P235"
+    ],
+    "record_id": "P235",
+    "_record_id_winner": "system_a",
+    "name": "Igor Baker",
+    "_name_winner": "system_a",
+    "email": "igor234@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-4182",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2585 Oak St",
+      "city": "SF",
+      "zip": "10234"
+    },
+    "compensation": {
+      "bonus": "12%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P035"
+    ],
+    "record_id": "P035",
+    "_record_id_winner": "system_b",
+    "name": "Igor Baker",
+    "_name_winner": "system_b",
+    "email": "igor34@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-3582",
+    "_phone_winner": "system_b",
+    "department": "HR",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "385 Oak St",
+      "city": "Chicago",
+      "zip": "10034"
+    },
+    "compensation": {
+      "bonus": "8%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P085"
+    ],
+    "record_id": "P085",
+    "_record_id_winner": "system_a",
+    "name": "Igor Baker",
+    "_name_winner": "system_a",
+    "email": "igor84@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-1724",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "935 Oak St",
+      "city": "SF",
+      "zip": "10084"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P109"
+    ],
+    "record_id": "P109",
+    "_record_id_winner": "system_a",
+    "name": "Iris Anderson",
+    "_name_winner": "system_a",
+    "email": "iris108@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-8979",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1199 Oak St",
+      "city": "Chicago",
+      "zip": "10108"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P159"
+    ],
+    "record_id": "P159",
+    "_record_id_winner": "system_a",
+    "name": "Iris Anderson",
+    "_name_winner": "system_a",
+    "email": "iris158@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-4561",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1749 Oak St",
+      "city": "New York",
+      "zip": "10158"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P209"
+    ],
+    "record_id": "P209",
+    "_record_id_winner": "system_a",
+    "name": "Iris Anderson",
+    "_name_winner": "system_a",
+    "email": "iris208@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-6064",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2299 Oak St",
+      "city": "New York",
+      "zip": "10208"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P059"
+    ],
+    "record_id": "P059",
+    "_record_id_winner": "system_a",
+    "name": "Iris Anderson",
+    "_name_winner": "system_a",
+    "email": "iris58@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-3692",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "649 Oak St",
+      "city": "Chicago",
+      "zip": "10058"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P009"
+    ],
+    "record_id": "P009",
+    "_record_id_winner": "system_a",
+    "name": "Iris Anderson",
+    "_name_winner": "system_a",
+    "email": "iris8@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-1663",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "99 Oak St",
+      "city": "New York",
+      "zip": "10008"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P156"
+    ],
+    "record_id": "P156",
+    "_record_id_winner": "system_a",
+    "name": "James Wilson",
+    "_name_winner": "system_a",
+    "email": "james155@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-1783",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1716 Oak St",
+      "city": "Chicago",
+      "zip": "10155"
+    },
+    "compensation": {
+      "bonus": "14%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P206"
+    ],
+    "record_id": "P206",
+    "_record_id_winner": "system_b",
+    "name": "James Wilson",
+    "_name_winner": "system_b",
+    "email": "james205@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-1677",
+    "_phone_winner": "system_b",
+    "department": "HR",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2266 Oak St",
+      "city": "Chicago",
+      "zip": "10205"
+    },
+    "compensation": {
+      "bonus": "7%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P056"
+    ],
+    "record_id": "P056",
+    "_record_id_winner": "system_b",
+    "name": "James Wilson",
+    "_name_winner": "system_b",
+    "email": "james55@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-9528",
+    "_phone_winner": "system_b",
+    "department": "HR",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "616 Oak St",
+      "city": "SF",
+      "zip": "10055"
+    },
+    "compensation": {
+      "bonus": "10%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P136"
+    ],
+    "record_id": "P136",
+    "_record_id_winner": "system_a",
+    "name": "Jane Gonzalez",
+    "_name_winner": "system_a",
+    "email": "jane135@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-4797",
+    "_phone_winner": "system_a",
+    "department": "Engineering",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "840 Maple Ave",
+      "city": "Chicago",
+      "zip": "97590"
+    },
+    "compensation": {
+      "bonus": "12%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P186"
+    ],
+    "record_id": "P186",
+    "_record_id_winner": "system_a",
+    "name": "Jane Gonzalez",
+    "_name_winner": "system_a",
+    "email": "jane185@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-9470",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2046 Oak St",
+      "city": "SF",
+      "zip": "10185"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P236"
+    ],
+    "record_id": "P236",
+    "_record_id_winner": "system_c",
+    "name": "Jane Gonzalez",
+    "_name_winner": "system_c",
+    "email": "jane235@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-2709",
+    "_phone_winner": "system_c",
+    "department": "Sales",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P036"
+    ],
+    "record_id": "P036",
+    "_record_id_winner": "system_b",
+    "name": "Jane Gonzalez",
+    "_name_winner": "system_b",
+    "email": "jane35@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-3182",
+    "_phone_winner": "system_b",
+    "department": "HR",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "396 Oak St",
+      "city": "New York",
+      "zip": "10035"
+    },
+    "compensation": {
+      "bonus": "15%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P086"
+    ],
+    "record_id": "P086",
+    "_record_id_winner": "system_a",
+    "name": "Jane Gonzalez",
+    "_name_winner": "system_a",
+    "email": "jane85@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-7057",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "946 Oak St",
+      "city": "Chicago",
+      "zip": "10085"
+    },
+    "compensation": {
+      "bonus": "16%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P120"
+    ],
+    "record_id": "P120",
+    "_record_id_winner": "system_c",
+    "name": "Jennifer Rodriguez",
+    "_name_winner": "system_c",
+    "email": "jennifer119@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-5223",
+    "_phone_winner": "system_c",
+    "department": "Operations",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P170"
+    ],
+    "record_id": "P170",
+    "_record_id_winner": "system_b",
+    "name": "Jennifer Rodriguez",
+    "_name_winner": "system_b",
+    "email": "jennifer169@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-5770",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1870 Oak St",
+      "city": "SF",
+      "zip": "10169"
+    },
+    "compensation": {
+      "bonus": "16%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P020"
+    ],
+    "record_id": "P020",
+    "_record_id_winner": "system_c",
+    "name": "Jennifer Rodriguez",
+    "_name_winner": "system_c",
+    "email": "jennifer19@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-7366",
+    "_phone_winner": "system_c",
+    "department": "HR",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P220"
+    ],
+    "record_id": "P220",
+    "_record_id_winner": "system_b",
+    "name": "Jennifer Rodriguez",
+    "_name_winner": "system_b",
+    "email": "jennifer219@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-8085",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2420 Oak St",
+      "city": "New York",
+      "zip": "10219"
+    },
+    "compensation": {
+      "bonus": "10%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P070"
+    ],
+    "record_id": "P070",
+    "_record_id_winner": "system_b",
+    "name": "Jennifer Rodriguez",
+    "_name_winner": "system_b",
+    "email": "jennifer69@corp.net",
+    "_email_winner": "system_b",
+    "phone": "555-8202",
+    "_phone_winner": "system_b",
+    "department": "Operations",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "770 Oak St",
+      "city": "SF",
+      "zip": "10069"
+    },
+    "compensation": {
+      "bonus": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P011"
+    ],
+    "record_id": "P011",
+    "_record_id_winner": "system_a",
+    "name": "Karen Jackson",
+    "_name_winner": "system_a",
+    "email": "karen10@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-4867",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "121 Oak St",
+      "city": "SF",
+      "zip": "10010"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P111"
+    ],
+    "record_id": "P111",
+    "_record_id_winner": "system_b",
+    "name": "Karen Jackson",
+    "_name_winner": "system_b",
+    "email": "karen110@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-9420",
+    "_phone_winner": "system_b",
+    "department": "Sales",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1221 Oak St",
+      "city": "New York",
+      "zip": "10110"
+    },
+    "compensation": {
+      "bonus": "14%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P161"
+    ],
+    "record_id": "P161",
+    "_record_id_winner": "system_c",
+    "name": "Karen Jackson",
+    "_name_winner": "system_c",
+    "email": "karen160@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-8946",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P211"
+    ],
+    "record_id": "P211",
+    "_record_id_winner": "system_c",
+    "name": "Karen Jackson",
+    "_name_winner": "system_c",
+    "email": "karen210@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-2223",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P061"
+    ],
+    "record_id": "P061",
+    "_record_id_winner": "system_a",
+    "name": "Karen Jackson",
+    "_name_winner": "system_a",
+    "email": "karen60@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-9962",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "671 Oak St",
+      "city": "New York",
+      "zip": "10060"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P123"
+    ],
+    "record_id": "P123",
+    "_record_id_winner": "system_c",
+    "name": "Katherine Walker",
+    "_name_winner": "system_c",
+    "email": "katherine122@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-5670",
+    "_phone_winner": "system_c",
+    "department": "HR",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P173"
+    ],
+    "record_id": "P173",
+    "_record_id_winner": "system_c",
+    "name": "Katherine Walker",
+    "_name_winner": "system_c",
+    "email": "katherine172@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-6497",
+    "_phone_winner": "system_c",
+    "department": "Finance",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P223"
+    ],
+    "record_id": "P223",
+    "_record_id_winner": "system_c",
+    "name": "Katherine Walker",
+    "_name_winner": "system_c",
+    "email": "katherine222@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-6581",
+    "_phone_winner": "system_c",
+    "department": "Sales",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P023"
+    ],
+    "record_id": "P023",
+    "_record_id_winner": "system_c",
+    "name": "Katherine Walker",
+    "_name_winner": "system_c",
+    "email": "katherine22@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-9259",
+    "_phone_winner": "system_c",
+    "department": "HR",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P073"
+    ],
+    "record_id": "P073",
+    "_record_id_winner": "system_a",
+    "name": "Katherine Walker",
+    "_name_winner": "system_a",
+    "email": "katherine72@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-9402",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "803 Oak St",
+      "city": "SF",
+      "zip": "10072"
+    },
+    "compensation": {
+      "bonus": "20%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P137"
+    ],
+    "record_id": "P137",
+    "_record_id_winner": "system_c",
+    "name": "Kurt Nelson",
+    "_name_winner": "system_c",
+    "email": "kurt136@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-8905",
+    "_phone_winner": "system_c",
+    "department": "Finance",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P187"
+    ],
+    "record_id": "P187",
+    "_record_id_winner": "system_a",
+    "name": "Kurt Nelson",
+    "_name_winner": "system_a",
+    "email": "kurt186@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-9460",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2057 Oak St",
+      "city": "SF",
+      "zip": "10186"
+    },
+    "compensation": {
+      "bonus": "12%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P237"
+    ],
+    "record_id": "P237",
+    "_record_id_winner": "system_b",
+    "name": "Kurt Nelson",
+    "_name_winner": "system_b",
+    "email": "kurt236@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-3384",
+    "_phone_winner": "system_b",
+    "department": "HR",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2607 Oak St",
+      "city": "Chicago",
+      "zip": "10236"
+    },
+    "compensation": {
+      "bonus": "17%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P037"
+    ],
+    "record_id": "P037",
+    "_record_id_winner": "system_c",
+    "name": "Kurt Nelson",
+    "_name_winner": "system_c",
+    "email": "kurt36@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-9110",
+    "_phone_winner": "system_c",
+    "department": "HR",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "SF"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P087"
+    ],
+    "record_id": "P087",
+    "_record_id_winner": "system_a",
+    "name": "Kurt Nelson",
+    "_name_winner": "system_a",
+    "email": "kurt86@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-8931",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "957 Oak St",
+      "city": "Chicago",
+      "zip": "10086"
+    },
+    "compensation": {
+      "bonus": "20%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P138"
+    ],
+    "record_id": "P138",
+    "_record_id_winner": "system_c",
+    "name": "Lily Carter",
+    "_name_winner": "system_c",
+    "email": "lily137@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-8389",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "SF"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P188"
+    ],
+    "record_id": "P188",
+    "_record_id_winner": "system_a",
+    "name": "Lily Carter",
+    "_name_winner": "system_a",
+    "email": "lily187@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-2288",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "509 Maple Ave",
+      "city": "SF",
+      "zip": "92618"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P238"
+    ],
+    "record_id": "P238",
+    "_record_id_winner": "system_a",
+    "name": "Lily Carter",
+    "_name_winner": "system_a",
+    "email": "lily237@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-6542",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "300 Maple Ave",
+      "city": "SF",
+      "zip": "95742"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P038"
+    ],
+    "record_id": "P038",
+    "_record_id_winner": "system_a",
+    "name": "Lily Carter",
+    "_name_winner": "system_a",
+    "email": "lily37@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-6346",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "418 Oak St",
+      "city": "New York",
+      "zip": "10037"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P088"
+    ],
+    "record_id": "P088",
+    "_record_id_winner": "system_a",
+    "name": "Lily Carter",
+    "_name_winner": "system_a",
+    "email": "lily87@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-7670",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "968 Oak St",
+      "city": "SF",
+      "zip": "10087"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P139"
+    ],
+    "record_id": "P139",
+    "_record_id_winner": "system_c",
+    "name": "Marc Mitchell",
+    "_name_winner": "system_c",
+    "email": "marc138@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-2024",
+    "_phone_winner": "system_c",
+    "department": "Engineering",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P189"
+    ],
+    "record_id": "P189",
+    "_record_id_winner": "system_b",
+    "name": "Marc Mitchell",
+    "_name_winner": "system_b",
+    "email": "marc188@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-2247",
+    "_phone_winner": "system_b",
+    "department": "Engineering",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2079 Oak St",
+      "city": "SF",
+      "zip": "10188"
+    },
+    "compensation": {
+      "bonus": "19%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P039"
+    ],
+    "record_id": "P039",
+    "_record_id_winner": "system_c",
+    "name": "Marc Mitchell",
+    "_name_winner": "system_c",
+    "email": "marc38@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-7974",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P089"
+    ],
+    "record_id": "P089",
+    "_record_id_winner": "system_b",
+    "name": "Marc Mitchell",
+    "_name_winner": "system_b",
+    "email": "marc88@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-5093",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "979 Oak St",
+      "city": "Chicago",
+      "zip": "10088"
+    },
+    "compensation": {
+      "bonus": "18%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P113"
+    ],
+    "record_id": "P113",
+    "_record_id_winner": "system_a",
+    "name": "Maria Harris",
+    "_name_winner": "system_a",
+    "email": "maria112@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-6656",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1243 Oak St",
+      "city": "Chicago",
+      "zip": "10112"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P013"
+    ],
+    "record_id": "P013",
+    "_record_id_winner": "system_c",
+    "name": "Maria Harris",
+    "_name_winner": "system_c",
+    "email": "maria12@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-6525",
+    "_phone_winner": "system_c",
+    "department": "Sales",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P163"
+    ],
+    "record_id": "P163",
+    "_record_id_winner": "system_a",
+    "name": "Maria Harris",
+    "_name_winner": "system_a",
+    "email": "maria162@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-8105",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1793 Oak St",
+      "city": "New York",
+      "zip": "10162"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P213"
+    ],
+    "record_id": "P213",
+    "_record_id_winner": "system_b",
+    "name": "Maria Harris",
+    "_name_winner": "system_b",
+    "email": "maria212@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-8811",
+    "_phone_winner": "system_b",
+    "department": "HR",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2343 Oak St",
+      "city": "Chicago",
+      "zip": "10212"
+    },
+    "compensation": {
+      "bonus": "8%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P063"
+    ],
+    "record_id": "P063",
+    "_record_id_winner": "system_c",
+    "name": "Maria Harris",
+    "_name_winner": "system_c",
+    "email": "maria62@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-8021",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P108"
+    ],
+    "record_id": "P108",
+    "_record_id_winner": "system_a",
+    "name": "Michael Taylor",
+    "_name_winner": "system_a",
+    "email": "michael107@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-8620",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1188 Oak St",
+      "city": "Chicago",
+      "zip": "10107"
+    },
+    "compensation": {
+      "bonus": "18%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P158"
+    ],
+    "record_id": "P158",
+    "_record_id_winner": "system_c",
+    "name": "Michael Taylor",
+    "_name_winner": "system_c",
+    "email": "michael157@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-1896",
+    "_phone_winner": "system_c",
+    "department": "Engineering",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "SF"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P208"
+    ],
+    "record_id": "P208",
+    "_record_id_winner": "system_b",
+    "name": "Michael Taylor",
+    "_name_winner": "system_b",
+    "email": "michael207@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-2534",
+    "_phone_winner": "system_b",
+    "department": "HR",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2288 Oak St",
+      "city": "SF",
+      "zip": "10207"
+    },
+    "compensation": {
+      "bonus": "8%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P058"
+    ],
+    "record_id": "P058",
+    "_record_id_winner": "system_b",
+    "name": "Michael Taylor",
+    "_name_winner": "system_b",
+    "email": "michael57@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-3135",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "638 Oak St",
+      "city": "SF",
+      "zip": "10057"
+    },
+    "compensation": {
+      "bonus": "8%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P008"
+    ],
+    "record_id": "P008",
+    "_record_id_winner": "system_b",
+    "name": "Michael Taylor",
+    "_name_winner": "system_b",
+    "email": "michael7@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-6184",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "88 Oak St",
+      "city": "New York",
+      "zip": "10007"
+    },
+    "compensation": {
+      "bonus": "18%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P140"
+    ],
+    "record_id": "P140",
+    "_record_id_winner": "system_a",
+    "name": "Nina Perez",
+    "_name_winner": "system_a",
+    "email": "nina139@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-3143",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1540 Oak St",
+      "city": "Chicago",
+      "zip": "10139"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P240"
+    ],
+    "record_id": "P240",
+    "_record_id_winner": "system_c",
+    "name": "Nina Perez",
+    "_name_winner": "system_c",
+    "email": "nina239@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-4388",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P040"
+    ],
+    "record_id": "P040",
+    "_record_id_winner": "system_a",
+    "name": "Nina Perez",
+    "_name_winner": "system_a",
+    "email": "nina39@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-1429",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "440 Oak St",
+      "city": "New York",
+      "zip": "10039"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P090"
+    ],
+    "record_id": "P090",
+    "_record_id_winner": "system_b",
+    "name": "Nina Perez",
+    "_name_winner": "system_b",
+    "email": "nina89@corp.net",
+    "_email_winner": "system_b",
+    "phone": "555-4093",
+    "_phone_winner": "system_b",
+    "department": "Engineering",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "990 Oak St",
+      "city": "New York",
+      "zip": "10089"
+    },
+    "compensation": {
+      "bonus": "13%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P041"
+    ],
+    "record_id": "P041",
+    "_record_id_winner": "system_c",
+    "name": "O. Roberts",
+    "_name_winner": "system_c",
+    "email": "",
+    "_email_winner": "system_c",
+    "phone": "555-4479",
+    "_phone_winner": "system_c",
+    "department": "Finance",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P115"
+    ],
+    "record_id": "P115",
+    "_record_id_winner": "system_a",
+    "name": "Olivia Thompson",
+    "_name_winner": "system_a",
+    "email": "olivia114@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-4328",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "944 Maple Ave",
+      "city": "SF",
+      "zip": "93387"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P015"
+    ],
+    "record_id": "P015",
+    "_record_id_winner": "system_b",
+    "name": "Olivia Thompson",
+    "_name_winner": "system_b",
+    "email": "olivia14@corp.net",
+    "_email_winner": "system_b",
+    "phone": "555-1070",
+    "_phone_winner": "system_b",
+    "department": "HR",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "165 Oak St",
+      "city": "SF",
+      "zip": "10014"
+    },
+    "compensation": {
+      "bonus": "12%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P165"
+    ],
+    "record_id": "P165",
+    "_record_id_winner": "system_c",
+    "name": "Olivia Thompson",
+    "_name_winner": "system_c",
+    "email": "olivia164@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-8649",
+    "_phone_winner": "system_c",
+    "department": "Sales",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P215"
+    ],
+    "record_id": "P215",
+    "_record_id_winner": "system_b",
+    "name": "Olivia Thompson",
+    "_name_winner": "system_b",
+    "email": "olivia214@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-5492",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2365 Oak St",
+      "city": "Chicago",
+      "zip": "10214"
+    },
+    "compensation": {
+      "bonus": "17%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P065"
+    ],
+    "record_id": "P065",
+    "_record_id_winner": "system_a",
+    "name": "Olivia Thompson",
+    "_name_winner": "system_a",
+    "email": "olivia64@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-1551",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "715 Oak St",
+      "city": "New York",
+      "zip": "10064"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P141"
+    ],
+    "record_id": "P141",
+    "_record_id_winner": "system_c",
+    "name": "Owen Roberts",
+    "_name_winner": "system_c",
+    "email": "owen140@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-9147",
+    "_phone_winner": "system_c",
+    "department": "HR",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P191"
+    ],
+    "record_id": "P191",
+    "_record_id_winner": "system_b",
+    "name": "Owen Roberts",
+    "_name_winner": "system_b",
+    "email": "owen190@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-4945",
+    "_phone_winner": "system_b",
+    "department": "Operations",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2101 Oak St",
+      "city": "New York",
+      "zip": "10190"
+    },
+    "compensation": {
+      "bonus": "15%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P041"
+    ],
+    "record_id": "P041",
+    "_record_id_winner": "system_a",
+    "name": "Owen Roberts",
+    "_name_winner": "system_a",
+    "email": "owen40@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-4479",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "380 Maple Ave",
+      "city": "Chicago",
+      "zip": "94077"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P091"
+    ],
+    "record_id": "P091",
+    "_record_id_winner": "system_c",
+    "name": "Owen Roberts",
+    "_name_winner": "system_c",
+    "email": "owen90@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-6475",
+    "_phone_winner": "system_c",
+    "department": "HR",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P142"
+    ],
+    "record_id": "P142",
+    "_record_id_winner": "system_c",
+    "name": "Petra Turner",
+    "_name_winner": "system_c",
+    "email": "petra141@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-7169",
+    "_phone_winner": "system_c",
+    "department": "Sales",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P192"
+    ],
+    "record_id": "P192",
+    "_record_id_winner": "system_b",
+    "name": "Petra Turner",
+    "_name_winner": "system_b",
+    "email": "petra191@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-8344",
+    "_phone_winner": "system_b",
+    "department": "Operations",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2112 Oak St",
+      "city": "New York",
+      "zip": "10191"
+    },
+    "compensation": {
+      "bonus": "16%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P092"
+    ],
+    "record_id": "P092",
+    "_record_id_winner": "system_a",
+    "name": "Petra Turner",
+    "_name_winner": "system_a",
+    "email": "petra91@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-2243",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "541 Maple Ave",
+      "city": "New York",
+      "zip": "92461"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P117"
+    ],
+    "record_id": "P117",
+    "_record_id_winner": "system_b",
+    "name": "Quinn Martinez",
+    "_name_winner": "system_b",
+    "email": "quinn116@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-9230",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1287 Oak St",
+      "city": "SF",
+      "zip": "10116"
+    },
+    "compensation": {
+      "bonus": "7%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P167"
+    ],
+    "record_id": "P167",
+    "_record_id_winner": "system_b",
+    "name": "Quinn Martinez",
+    "_name_winner": "system_b",
+    "email": "quinn166@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-6369",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1837 Oak St",
+      "city": "Chicago",
+      "zip": "10166"
+    },
+    "compensation": {
+      "bonus": "15%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P017"
+    ],
+    "record_id": "P017",
+    "_record_id_winner": "system_a",
+    "name": "Quinn Martinez",
+    "_name_winner": "system_a",
+    "email": "quinn16@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-5319",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "187 Oak St",
+      "city": "Chicago",
+      "zip": "10016"
+    },
+    "compensation": {
+      "bonus": "18%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P217"
+    ],
+    "record_id": "P217",
+    "_record_id_winner": "system_c",
+    "name": "Quinn Martinez",
+    "_name_winner": "system_c",
+    "email": "quinn216@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-5784",
+    "_phone_winner": "system_c",
+    "department": "Finance",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P067"
+    ],
+    "record_id": "P067",
+    "_record_id_winner": "system_b",
+    "name": "Quinn Martinez",
+    "_name_winner": "system_b",
+    "email": "quinn66@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-1515",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "737 Oak St",
+      "city": "SF",
+      "zip": "10066"
+    },
+    "compensation": {
+      "bonus": "10%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P193"
+    ],
+    "record_id": "P193",
+    "_record_id_winner": "system_a",
+    "name": "Rex Phillips",
+    "_name_winner": "system_a",
+    "email": "rex192@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-7248",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2123 Oak St",
+      "city": "Chicago",
+      "zip": "10192"
+    },
+    "compensation": {
+      "bonus": "16%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P043"
+    ],
+    "record_id": "P043",
+    "_record_id_winner": "system_c",
+    "name": "Rex Phillips",
+    "_name_winner": "system_c",
+    "email": "rex42@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-9426",
+    "_phone_winner": "system_c",
+    "department": "Engineering",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P093"
+    ],
+    "record_id": "P093",
+    "_record_id_winner": "system_b",
+    "name": "Rex Phillips",
+    "_name_winner": "system_b",
+    "email": "rex92@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-9576",
+    "_phone_winner": "system_b",
+    "department": "Sales",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1023 Oak St",
+      "city": "Chicago",
+      "zip": "10092"
+    },
+    "compensation": {
+      "bonus": "10%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P116"
+    ],
+    "record_id": "P116",
+    "_record_id_winner": "system_b",
+    "name": "Richard Garcia",
+    "_name_winner": "system_b",
+    "email": "richard115@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-3387",
+    "_phone_winner": "system_b",
+    "department": "Operations",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1276 Oak St",
+      "city": "Chicago",
+      "zip": "10115"
+    },
+    "compensation": {
+      "bonus": "18%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P016"
+    ],
+    "record_id": "P016",
+    "_record_id_winner": "system_a",
+    "name": "Richard Garcia",
+    "_name_winner": "system_a",
+    "email": "richard15@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-2334",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "176 Oak St",
+      "city": "SF",
+      "zip": "10015"
+    },
+    "compensation": {
+      "bonus": "12%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P166"
+    ],
+    "record_id": "P166",
+    "_record_id_winner": "system_c",
+    "name": "Richard Garcia",
+    "_name_winner": "system_c",
+    "email": "richard165@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-4287",
+    "_phone_winner": "system_c",
+    "department": "HR",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P066"
+    ],
+    "record_id": "P066",
+    "_record_id_winner": "system_a",
+    "name": "Richard Garcia",
+    "_name_winner": "system_a",
+    "email": "richard65@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-8552",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "814 Maple Ave",
+      "city": "SF",
+      "zip": "91077"
+    },
+    "compensation": {
+      "bonus": "20%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P102"
+    ],
+    "record_id": "P102",
+    "_record_id_winner": "system_b",
+    "name": "Robert Jones",
+    "_name_winner": "system_b",
+    "email": "robert101@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-1326",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1122 Oak St",
+      "city": "Chicago",
+      "zip": "10101"
+    },
+    "compensation": {
+      "bonus": "9%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P152"
+    ],
+    "record_id": "P152",
+    "_record_id_winner": "system_c",
+    "name": "Robert Jones",
+    "_name_winner": "system_c",
+    "email": "robert151@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-5180",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P202"
+    ],
+    "record_id": "P202",
+    "_record_id_winner": "system_a",
+    "name": "Robert Jones",
+    "_name_winner": "system_a",
+    "email": "robert201@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-5585",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2222 Oak St",
+      "city": "New York",
+      "zip": "10201"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P052"
+    ],
+    "record_id": "P052",
+    "_record_id_winner": "system_a",
+    "name": "Robert Jones",
+    "_name_winner": "system_a",
+    "email": "robert51@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-5860",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "572 Oak St",
+      "city": "Chicago",
+      "zip": "10051"
+    },
+    "compensation": {
+      "bonus": "17%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P041"
+    ],
+    "record_id": "P041",
+    "_record_id_winner": "system_b",
+    "name": "Roberts, Owen",
+    "_name_winner": "system_b",
+    "email": "",
+    "_email_winner": "system_b",
+    "phone": "555-4479",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "936 Birch Blvd",
+      "city": "Chicago",
+      "zip": "89941"
+    },
+    "compensation": {
+      "bonus": "12%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P119"
+    ],
+    "record_id": "P119",
+    "_record_id_winner": "system_a",
+    "name": "Sarah Clark",
+    "_name_winner": "system_a",
+    "email": "sarah118@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-4578",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1309 Oak St",
+      "city": "Chicago",
+      "zip": "10118"
+    },
+    "compensation": {
+      "bonus": "10%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P169"
+    ],
+    "record_id": "P169",
+    "_record_id_winner": "system_c",
+    "name": "Sarah Clark",
+    "_name_winner": "system_c",
+    "email": "sarah168@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-2070",
+    "_phone_winner": "system_c",
+    "department": "Sales",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P019"
+    ],
+    "record_id": "P019",
+    "_record_id_winner": "system_b",
+    "name": "Sarah Clark",
+    "_name_winner": "system_b",
+    "email": "sarah18@corp.net",
+    "_email_winner": "system_b",
+    "phone": "555-5096",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "209 Oak St",
+      "city": "New York",
+      "zip": "10018"
+    },
+    "compensation": {
+      "bonus": "20%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P219"
+    ],
+    "record_id": "P219",
+    "_record_id_winner": "system_c",
+    "name": "Sarah Clark",
+    "_name_winner": "system_c",
+    "email": "sarah218@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-8649",
+    "_phone_winner": "system_c",
+    "department": "Sales",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P144"
+    ],
+    "record_id": "P144",
+    "_record_id_winner": "system_a",
+    "name": "Sasha Campbell",
+    "_name_winner": "system_a",
+    "email": "sasha143@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-3216",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1584 Oak St",
+      "city": "Chicago",
+      "zip": "10143"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P194"
+    ],
+    "record_id": "P194",
+    "_record_id_winner": "system_c",
+    "name": "Sasha Campbell",
+    "_name_winner": "system_c",
+    "email": "sasha193@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-4506",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P044"
+    ],
+    "record_id": "P044",
+    "_record_id_winner": "system_a",
+    "name": "Sasha Campbell",
+    "_name_winner": "system_a",
+    "email": "sasha43@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-8302",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "484 Oak St",
+      "city": "New York",
+      "zip": "10043"
+    },
+    "compensation": {
+      "bonus": "12%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P094"
+    ],
+    "record_id": "P094",
+    "_record_id_winner": "system_c",
+    "name": "Sasha Campbell",
+    "_name_winner": "system_c",
+    "email": "sasha93@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-5141",
+    "_phone_winner": "system_c",
+    "department": "Engineering",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P118"
+    ],
+    "record_id": "P118",
+    "_record_id_winner": "system_c",
+    "name": "Thomas Robinson",
+    "_name_winner": "system_c",
+    "email": "thomas117@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-2360",
+    "_phone_winner": "system_c",
+    "department": "Finance",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P168"
+    ],
+    "record_id": "P168",
+    "_record_id_winner": "system_c",
+    "name": "Thomas Robinson",
+    "_name_winner": "system_c",
+    "email": "thomas167@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-7573",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P018"
+    ],
+    "record_id": "P018",
+    "_record_id_winner": "system_a",
+    "name": "Thomas Robinson",
+    "_name_winner": "system_a",
+    "email": "thomas17@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-4292",
+    "_phone_winner": "system_a",
+    "department": "Engineering",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "144 Maple Ave",
+      "city": "SF",
+      "zip": "95481"
+    },
+    "compensation": {
+      "bonus": "14%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P218"
+    ],
+    "record_id": "P218",
+    "_record_id_winner": "system_b",
+    "name": "Thomas Robinson",
+    "_name_winner": "system_b",
+    "email": "thomas217@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-5823",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2398 Oak St",
+      "city": "New York",
+      "zip": "10217"
+    },
+    "compensation": {
+      "bonus": "6%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P068"
+    ],
+    "record_id": "P068",
+    "_record_id_winner": "system_a",
+    "name": "Thomas Robinson",
+    "_name_winner": "system_a",
+    "email": "thomas67@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-6918",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "748 Oak St",
+      "city": "SF",
+      "zip": "10067"
+    },
+    "compensation": {
+      "bonus": "16%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P195"
+    ],
+    "record_id": "P195",
+    "_record_id_winner": "system_b",
+    "name": "Todd Parker",
+    "_name_winner": "system_b",
+    "email": "todd194@corp.net",
+    "_email_winner": "system_b",
+    "phone": "555-6516",
+    "_phone_winner": "system_b",
+    "department": "Sales",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2145 Oak St",
+      "city": "New York",
+      "zip": "10194"
+    },
+    "compensation": {
+      "bonus": "9%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P095"
+    ],
+    "record_id": "P095",
+    "_record_id_winner": "system_c",
+    "name": "Todd Parker",
+    "_name_winner": "system_c",
+    "email": "todd94@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-1591",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P018"
+    ],
+    "record_id": "P018",
+    "_record_id_winner": "system_b",
+    "name": "Tom Robinson",
+    "_name_winner": "system_b",
+    "email": "",
+    "_email_winner": "system_b",
+    "phone": "555-4292",
+    "_phone_winner": "system_b",
+    "department": "Engineering",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "722 Birch Blvd",
+      "city": "SF",
+      "zip": "89491"
+    },
+    "compensation": {
+      "bonus": "22%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P146"
+    ],
+    "record_id": "P146",
+    "_record_id_winner": "system_b",
+    "name": "Ula Evans",
+    "_name_winner": "system_b",
+    "email": "ula145@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-1672",
+    "_phone_winner": "system_b",
+    "department": "Operations",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1606 Oak St",
+      "city": "New York",
+      "zip": "10145"
+    },
+    "compensation": {
+      "bonus": "11%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P196"
+    ],
+    "record_id": "P196",
+    "_record_id_winner": "system_b",
+    "name": "Ula Evans",
+    "_name_winner": "system_b",
+    "email": "ula195@corp.net",
+    "_email_winner": "system_b",
+    "phone": "555-8707",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2156 Oak St",
+      "city": "New York",
+      "zip": "10195"
+    },
+    "compensation": {
+      "bonus": "16%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P046"
+    ],
+    "record_id": "P046",
+    "_record_id_winner": "system_b",
+    "name": "Ula Evans",
+    "_name_winner": "system_b",
+    "email": "ula45@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-7626",
+    "_phone_winner": "system_b",
+    "department": "Operations",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "506 Oak St",
+      "city": "SF",
+      "zip": "10045"
+    },
+    "compensation": {
+      "bonus": "15%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P096"
+    ],
+    "record_id": "P096",
+    "_record_id_winner": "system_c",
+    "name": "Ula Evans",
+    "_name_winner": "system_c",
+    "email": "ula95@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-8543",
+    "_phone_winner": "system_c",
+    "department": "HR",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "SF"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P121"
+    ],
+    "record_id": "P121",
+    "_record_id_winner": "system_a",
+    "name": "Uma Lewis",
+    "_name_winner": "system_a",
+    "email": "uma120@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-6595",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1331 Oak St",
+      "city": "New York",
+      "zip": "10120"
+    },
+    "compensation": {
+      "bonus": "19%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P171"
+    ],
+    "record_id": "P171",
+    "_record_id_winner": "system_a",
+    "name": "Uma Lewis",
+    "_name_winner": "system_a",
+    "email": "uma170@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-2411",
+    "_phone_winner": "system_a",
+    "department": "Engineering",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1881 Oak St",
+      "city": "SF",
+      "zip": "10170"
+    },
+    "compensation": {
+      "bonus": "16%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P021"
+    ],
+    "record_id": "P021",
+    "_record_id_winner": "system_b",
+    "name": "Uma Lewis",
+    "_name_winner": "system_b",
+    "email": "uma20@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-1747",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "231 Oak St",
+      "city": "Chicago",
+      "zip": "10020"
+    },
+    "compensation": {
+      "bonus": "17%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P221"
+    ],
+    "record_id": "P221",
+    "_record_id_winner": "system_a",
+    "name": "Uma Lewis",
+    "_name_winner": "system_a",
+    "email": "uma220@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-9712",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "364 Maple Ave",
+      "city": "Chicago",
+      "zip": "99800"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P071"
+    ],
+    "record_id": "P071",
+    "_record_id_winner": "system_a",
+    "name": "Uma Lewis",
+    "_name_winner": "system_a",
+    "email": "uma70@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-7931",
+    "_phone_winner": "system_a",
+    "department": "Engineering",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "781 Oak St",
+      "city": "SF",
+      "zip": "10070"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P147"
+    ],
+    "record_id": "P147",
+    "_record_id_winner": "system_b",
+    "name": "Vera Edwards",
+    "_name_winner": "system_b",
+    "email": "vera146@corp.net",
+    "_email_winner": "system_b",
+    "phone": "555-4943",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1617 Oak St",
+      "city": "SF",
+      "zip": "10146"
+    },
+    "compensation": {
+      "bonus": "10%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P197"
+    ],
+    "record_id": "P197",
+    "_record_id_winner": "system_a",
+    "name": "Vera Edwards",
+    "_name_winner": "system_a",
+    "email": "vera196@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-1166",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2167 Oak St",
+      "city": "New York",
+      "zip": "10196"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P047"
+    ],
+    "record_id": "P047",
+    "_record_id_winner": "system_a",
+    "name": "Vera Edwards",
+    "_name_winner": "system_a",
+    "email": "vera46@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-4900",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "517 Oak St",
+      "city": "New York",
+      "zip": "10046"
+    },
+    "compensation": {
+      "bonus": "18%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P097"
+    ],
+    "record_id": "P097",
+    "_record_id_winner": "system_b",
+    "name": "Vera Edwards",
+    "_name_winner": "system_b",
+    "email": "vera96@corp.net",
+    "_email_winner": "system_b",
+    "phone": "555-4424",
+    "_phone_winner": "system_b",
+    "department": "Sales",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1067 Oak St",
+      "city": "New York",
+      "zip": "10096"
+    },
+    "compensation": {
+      "bonus": "8%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P122"
+    ],
+    "record_id": "P122",
+    "_record_id_winner": "system_b",
+    "name": "Victor Lee",
+    "_name_winner": "system_b",
+    "email": "victor121@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-8379",
+    "_phone_winner": "system_b",
+    "department": "Engineering",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1342 Oak St",
+      "city": "Chicago",
+      "zip": "10121"
+    },
+    "compensation": {
+      "bonus": "6%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P172"
+    ],
+    "record_id": "P172",
+    "_record_id_winner": "system_a",
+    "name": "Victor Lee",
+    "_name_winner": "system_a",
+    "email": "victor171@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-1179",
+    "_phone_winner": "system_a",
+    "department": "Engineering",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1892 Oak St",
+      "city": "New York",
+      "zip": "10171"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P022"
+    ],
+    "record_id": "P022",
+    "_record_id_winner": "system_a",
+    "name": "Victor Lee",
+    "_name_winner": "system_a",
+    "email": "victor21@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-2942",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "242 Oak St",
+      "city": "New York",
+      "zip": "10021"
+    },
+    "compensation": {
+      "bonus": "9%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P222"
+    ],
+    "record_id": "P222",
+    "_record_id_winner": "system_b",
+    "name": "Victor Lee",
+    "_name_winner": "system_b",
+    "email": "victor221@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-8511",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2442 Oak St",
+      "city": "Chicago",
+      "zip": "10221"
+    },
+    "compensation": {
+      "bonus": "20%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P072"
+    ],
+    "record_id": "P072",
+    "_record_id_winner": "system_c",
+    "name": "Victor Lee",
+    "_name_winner": "system_c",
+    "email": "victor71@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-8860",
+    "_phone_winner": "system_c",
+    "department": "Operations",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P098"
+    ],
+    "record_id": "P098",
+    "_record_id_winner": "system_c",
+    "name": "W. Collins",
+    "_name_winner": "system_c",
+    "email": "",
+    "_email_winner": "system_c",
+    "phone": "555-2406",
+    "_phone_winner": "system_c",
+    "department": "HR",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P148"
+    ],
+    "record_id": "P148",
+    "_record_id_winner": "system_b",
+    "name": "Walt Collins",
+    "_name_winner": "system_b",
+    "email": "walt147@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-2230",
+    "_phone_winner": "system_b",
+    "department": "Engineering",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1628 Oak St",
+      "city": "New York",
+      "zip": "10147"
+    },
+    "compensation": {
+      "bonus": "8%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P198"
+    ],
+    "record_id": "P198",
+    "_record_id_winner": "system_c",
+    "name": "Walt Collins",
+    "_name_winner": "system_c",
+    "email": "walt197@corp.net",
+    "_email_winner": "system_c",
+    "phone": "555-5090",
+    "_phone_winner": "system_c",
+    "department": "Operations",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "SF"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P048"
+    ],
+    "record_id": "P048",
+    "_record_id_winner": "system_c",
+    "name": "Walt Collins",
+    "_name_winner": "system_c",
+    "email": "walt47@biz.org",
+    "_email_winner": "system_c",
+    "phone": "555-5690",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P098"
+    ],
+    "record_id": "P098",
+    "_record_id_winner": "system_a",
+    "name": "Walt Collins",
+    "_name_winner": "system_a",
+    "email": "walt97@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-2406",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "167 Maple Ave",
+      "city": "New York",
+      "zip": "98053"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P104"
+    ],
+    "record_id": "P104",
+    "_record_id_winner": "system_a",
+    "name": "William Davis",
+    "_name_winner": "system_a",
+    "email": "william103@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-7316",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1144 Oak St",
+      "city": "SF",
+      "zip": "10103"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "5%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P204"
+    ],
+    "record_id": "P204",
+    "_record_id_winner": "system_a",
+    "name": "William Davis",
+    "_name_winner": "system_a",
+    "email": "william203@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-2415",
+    "_phone_winner": "system_a",
+    "department": "Engineering",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2244 Oak St",
+      "city": "SF",
+      "zip": "10203"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P054"
+    ],
+    "record_id": "P054",
+    "_record_id_winner": "system_b",
+    "name": "William Davis",
+    "_name_winner": "system_b",
+    "email": "william53@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-2049",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "594 Oak St",
+      "city": "New York",
+      "zip": "10053"
+    },
+    "compensation": {
+      "bonus": "8%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P124"
+    ],
+    "record_id": "P124",
+    "_record_id_winner": "system_c",
+    "name": "Xavier Hall",
+    "_name_winner": "system_c",
+    "email": "xavier123@acme.com",
+    "_email_winner": "system_c",
+    "phone": "555-3296",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "New York"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P174"
+    ],
+    "record_id": "P174",
+    "_record_id_winner": "system_a",
+    "name": "Xavier Hall",
+    "_name_winner": "system_a",
+    "email": "xavier173@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-1044",
+    "_phone_winner": "system_a",
+    "department": "Engineering",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1914 Oak St",
+      "city": "Chicago",
+      "zip": "10173"
+    },
+    "compensation": {
+      "bonus": "7%",
+      "equity": "0%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P224"
+    ],
+    "record_id": "P224",
+    "_record_id_winner": "system_b",
+    "name": "Xavier Hall",
+    "_name_winner": "system_b",
+    "email": "xavier223@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-4176",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2464 Oak St",
+      "city": "SF",
+      "zip": "10223"
+    },
+    "compensation": {
+      "bonus": "16%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P024"
+    ],
+    "record_id": "P024",
+    "_record_id_winner": "system_a",
+    "name": "Xavier Hall",
+    "_name_winner": "system_a",
+    "email": "xavier23@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-3654",
+    "_phone_winner": "system_a",
+    "department": "Engineering",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "264 Oak St",
+      "city": "New York",
+      "zip": "10023"
+    },
+    "compensation": {
+      "bonus": "8%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P149"
+    ],
+    "record_id": "P149",
+    "_record_id_winner": "system_a",
+    "name": "Xin Stewart",
+    "_name_winner": "system_a",
+    "email": "xin148@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-6115",
+    "_phone_winner": "system_a",
+    "department": "Sales",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1639 Oak St",
+      "city": "SF",
+      "zip": "10148"
+    },
+    "compensation": {
+      "bonus": "6%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P199"
+    ],
+    "record_id": "P199",
+    "_record_id_winner": "system_b",
+    "name": "Xin Stewart",
+    "_name_winner": "system_b",
+    "email": "xin198@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-9052",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2189 Oak St",
+      "city": "Chicago",
+      "zip": "10198"
+    },
+    "compensation": {
+      "bonus": "19%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P049"
+    ],
+    "record_id": "P049",
+    "_record_id_winner": "system_a",
+    "name": "Xin Stewart",
+    "_name_winner": "system_a",
+    "email": "xin48@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-5132",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "539 Oak St",
+      "city": "Chicago",
+      "zip": "10048"
+    },
+    "compensation": {
+      "bonus": "11%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P099"
+    ],
+    "record_id": "P099",
+    "_record_id_winner": "system_b",
+    "name": "Xin Stewart",
+    "_name_winner": "system_b",
+    "email": "xin98@enterprise.io",
+    "_email_winner": "system_b",
+    "phone": "555-4440",
+    "_phone_winner": "system_b",
+    "department": "Legal",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1089 Oak St",
+      "city": "New York",
+      "zip": "10098"
+    },
+    "compensation": {
+      "bonus": "12%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P150"
+    ],
+    "record_id": "P150",
+    "_record_id_winner": "system_b",
+    "name": "Yale Sanchez",
+    "_name_winner": "system_b",
+    "email": "yale149@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-9821",
+    "_phone_winner": "system_b",
+    "department": "Engineering",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1650 Oak St",
+      "city": "New York",
+      "zip": "10149"
+    },
+    "compensation": {
+      "bonus": "18%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P200"
+    ],
+    "record_id": "P200",
+    "_record_id_winner": "system_a",
+    "name": "Yale Sanchez",
+    "_name_winner": "system_a",
+    "email": "yale199@acme.com",
+    "_email_winner": "system_a",
+    "phone": "555-3445",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "2200 Oak St",
+      "city": "Chicago",
+      "zip": "10199"
+    },
+    "compensation": {
+      "bonus": "5%",
+      "equity": "3%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a"
+    ],
+    "_record_ids": [
+      "P050"
+    ],
+    "record_id": "P050",
+    "_record_id_winner": "system_a",
+    "name": "Yale Sanchez",
+    "_name_winner": "system_a",
+    "email": "yale49@enterprise.io",
+    "_email_winner": "system_a",
+    "phone": "555-9487",
+    "_phone_winner": "system_a",
+    "department": "HR",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "550 Oak St",
+      "city": "Chicago",
+      "zip": "10049"
+    },
+    "compensation": {
+      "bonus": "15%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P100"
+    ],
+    "record_id": "P100",
+    "_record_id_winner": "system_c",
+    "name": "Yale Sanchez",
+    "_name_winner": "system_c",
+    "email": "yale99@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-2283",
+    "_phone_winner": "system_c",
+    "department": "Legal",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "SF"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P125"
+    ],
+    "record_id": "P125",
+    "_record_id_winner": "system_b",
+    "name": "Yara Allen",
+    "_name_winner": "system_b",
+    "email": "yara124@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-2677",
+    "_phone_winner": "system_b",
+    "department": "Sales",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "1375 Oak St",
+      "city": "New York",
+      "zip": "10124"
+    },
+    "compensation": {
+      "bonus": "8%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b",
+      "system_c"
+    ],
+    "_record_ids": [
+      "P175"
+    ],
+    "record_id": "P175",
+    "_record_id_winner": "system_a",
+    "name": "Yara Allen",
+    "_name_winner": "system_a",
+    "email": "yara174@biz.org",
+    "_email_winner": "system_a",
+    "phone": "555-1485",
+    "_phone_winner": "system_a",
+    "department": "Finance",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "638 Maple Ave",
+      "city": "New York",
+      "zip": "96031"
+    },
+    "compensation": {
+      "bonus": "11%",
+      "equity": "4%"
+    }
+  },
+  {
+    "_sources": [
+      "system_c"
+    ],
+    "_record_ids": [
+      "P225"
+    ],
+    "record_id": "P225",
+    "_record_id_winner": "system_c",
+    "name": "Yara Allen",
+    "_name_winner": "system_c",
+    "email": "yara224@enterprise.io",
+    "_email_winner": "system_c",
+    "phone": "555-1040",
+    "_phone_winner": "system_c",
+    "department": "Engineering",
+    "_department_winner": "system_c",
+    "address": {
+      "city": "Chicago"
+    },
+    "compensation": {}
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P025"
+    ],
+    "record_id": "P025",
+    "_record_id_winner": "system_b",
+    "name": "Yara Allen",
+    "_name_winner": "system_b",
+    "email": "yara24@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-2768",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "275 Oak St",
+      "city": "New York",
+      "zip": "10024"
+    },
+    "compensation": {
+      "bonus": "15%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P075"
+    ],
+    "record_id": "P075",
+    "_record_id_winner": "system_a",
+    "name": "Yara Allen",
+    "_name_winner": "system_a",
+    "email": "yara74@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-6060",
+    "_phone_winner": "system_a",
+    "department": "Legal",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "825 Oak St",
+      "city": "SF",
+      "zip": "10074"
+    },
+    "compensation": {
+      "bonus": "13%",
+      "equity": "2%"
+    }
+  },
+  {
+    "_sources": [
+      "system_a",
+      "system_b"
+    ],
+    "_record_ids": [
+      "P126"
+    ],
+    "record_id": "P126",
+    "_record_id_winner": "system_a",
+    "name": "Zach Young",
+    "_name_winner": "system_a",
+    "email": "zach125@corp.net",
+    "_email_winner": "system_a",
+    "phone": "555-9429",
+    "_phone_winner": "system_a",
+    "department": "Operations",
+    "_department_winner": "system_a",
+    "address": {
+      "street": "1386 Oak St",
+      "city": "New York",
+      "zip": "10125"
+    },
+    "compensation": {
+      "bonus": "20%",
+      "equity": "1%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P226"
+    ],
+    "record_id": "P226",
+    "_record_id_winner": "system_b",
+    "name": "Zach Young",
+    "_name_winner": "system_b",
+    "email": "zach225@biz.org",
+    "_email_winner": "system_b",
+    "phone": "555-6681",
+    "_phone_winner": "system_b",
+    "department": "Operations",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "2486 Oak St",
+      "city": "New York",
+      "zip": "10225"
+    },
+    "compensation": {
+      "bonus": "12%"
+    }
+  },
+  {
+    "_sources": [
+      "system_b"
+    ],
+    "_record_ids": [
+      "P076"
+    ],
+    "record_id": "P076",
+    "_record_id_winner": "system_b",
+    "name": "Zach Young",
+    "_name_winner": "system_b",
+    "email": "zach75@acme.com",
+    "_email_winner": "system_b",
+    "phone": "555-3294",
+    "_phone_winner": "system_b",
+    "department": "Finance",
+    "_department_winner": "system_b",
+    "address": {
+      "street": "836 Oak St",
+      "city": "Chicago",
+      "zip": "10075"
+    },
+    "compensation": {
+      "bonus": "13%"
+    }
+  }
+]

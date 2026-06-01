@@ -1,0 +1,23 @@
+schema_version: '1.0'
+task_id: E4-LS4-T3
+task_slug: structure-reorg-not-content-change
+environment_id: E4
+family_id: E4-LS4
+latent_skill_id: E4-LS4.document-diff-comparison
+task_index: 3
+role: variant
+phase: learning
+within_family_difficulty_rank: 3
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E4-LS4.document-diff-comparison
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types: []
+domain_group: document_parsing
+review_notes: []

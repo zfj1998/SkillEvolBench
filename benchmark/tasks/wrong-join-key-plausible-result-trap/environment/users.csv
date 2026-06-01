@@ -1,0 +1,706 @@
+id,name,email,plan
+304,User_304,  user304@example.com,  basic 
+284,User_284﻿,  user284@example.com,free
+201,User_201,‌  user201@example.com, premium  
+ 403,​User_403,user403@example.com, basic  
+ 406  ﻿,,broken406@example.com,premium​
+,​,bad@example.com,basic
+‍ 240 , User_240 ,user240@example.com, free 
+393,User_393,user393@example.com,basic
+235,  User_235 ,​ user235@example.com  ,basic
+​  169,  User_169,user169@example.com,  premium 
+144‌,User_144,‌user144@example.com,﻿premium
+149,User_149,  user149@example.com,free
+321‍,User_321, user321@example.com,free
+17,User_017,user17@example.com,  free
+  391 ‍,  User_391, user391@example.com ,  free
+86 ,  User_086 ,user86@example.com​,‌basic
+  168 ,User_168, user168@example.com  ,  basic 
+201,User_201_OLD,old_user201@example.com,basic
+274,User_274,​user274@example.com,​premium
+  387  ‍,User_387,user387@example.com ,basic 
+485 ,User_485, user485@example.com ,  basic​
+364, User_364 ,‍user364@example.com ,premium
+  121 ,User_121‌,  user121@example.com  ,​  premium 
+242, ,broken242@example.com , basic 
+ 431  ,User_431,user431@example.com,free
+  52, User_052  , user52@example.com,​free
+60  ,‌  User_060 ,user60@example.com,﻿ free
+ 51  ,‌User_051,user51@example.com﻿,premium 
+133,User_133,user133@example.com,​ basic
+ 186,User_186‍, user186@example.com  , free  
+445,User_445,user445@example.com,free﻿
+427,User_427,user427@example.com,﻿free
+﻿392,User_392,user392@example.com,free
+40,User_040,user40@example.com, premium
+10.5,​,bad@example.com,‍premium
+53,​User_053, user53@example.com  ,premium
+‌462 ,  User_462  ,user462@example.com﻿, basic  
+48  ​,User_048,‍ user48@example.com  ,premium 
+152  ,  User_152  ,‌  user152@example.com  ,​premium
+458,‌ User_458,user458@example.com,basic
+ 159,‌ User_159  ,user159@example.com,free
+450,User_450‌, user450@example.com  ,basic
+266 ,User_266,user266@example.com ,premium  
+‍ 294,User_294 ,user294@example.com​,free
+ID7,BadUser,bad@example.com,premium
+499,‌ User_499 ,user499@example.com‌,​premium 
+‌424,User_424  ,user424@example.com,free 
+420, User_420, user420@example.com ,premium
+  260 , User_260,user260@example.com,premium
+‌73, User_073  , user73@example.com  ,free
+‌50,User_050,user50@example.com,premium
+113,User_113,user113@example.com,  free  ‌
+38, User_038  ,user38@example.com,free
+﻿131,User_131, user131@example.com,‌ basic  
+ 54  ,​  User_054 ,user54@example.com,  premium  
+ ,BadUser,bad@example.com,free
+ 198  ,User_198,user198@example.com,basic
+211, User_211,user211@example.com, basic 
+20,  User_020  ,  user20@example.com ,basic
+409,User_409,‌ user409@example.com ,free
+231,User_231,‌  user231@example.com  , basic 
+  44  ‌,User_044,user44@example.com,  basic  ‍
+414﻿,User_414,user414@example.com ,premium  
+402‌,User_402,user402@example.com,premium
+224,User_224, user224@example.com ,free
+  246 ,User_246,user246@example.com,premium
+367 ,User_367,user367@example.com, premium  
+  31,User_031  ,user31@example.com,premium
+430,User_430, user430@example.com  ,  free ‍
+126,User_126‌,​user126@example.com,  basic
+﻿  213  ,User_213﻿,​ user213@example.com,‍free
+‍221,User_221,  user221@example.com ,‌premium 
+36,  User_036,user36@example.com,premium
+ 283,User_283 ﻿, user283@example.com ,  free 
+  359,User_359,user359@example.com,  premium  
+193,User_193,user193@example.com,﻿free
+ 344  ,User_344,user344@example.com,  premium
+194,User_194‌,user194@example.com,basic
+145, User_145,user145@example.com,premium‌
+308,User_308, user308@example.com  ,  premium 
+106,  User_106  ,user106@example.com,premium 
+﻿150,User_150,  user150@example.com,premium
+454,User_454,user454@example.com ,premium
+‍  467, User_467  ,user467@example.com , basic 
+,,bad@example.com,premium  
+‍478,User_478  ,user478@example.com  , premium  
+ID7,​,‌  bad@example.com  ,basic‌
+‍  500,User_500,user500@example.com,premium  
+,  ,‌bad@example.com,‍premium
+171,User_171,user171@example.com‌,  basic 
+  10 ,User_010,user10@example.com﻿,basic
+351,  User_351 ,‍user351@example.com,  free 
+160,User_160 ,  user160@example.com,  free 
+﻿102,User_102,  user102@example.com ,premium
+497​,User_497,user497@example.com,basic
+371,  User_371 ,  user371@example.com  ,premium
+46,User_046,  user46@example.com , free
+9​,  User_009  ,user9@example.com,  basic 
+472,User_472,  user472@example.com,free
+ 255 ,User_255,  user255@example.com  ,basic
+443,User_443,user443@example.com,free
+493,User_493,user493@example.com  ,‌premium
+  21,  User_021  , user21@example.com,free
+  146 ,User_146,user146@example.com,  basic 
+  395 ,User_395 ,‍user395@example.com,  premium 
+114 ‍,User_114,user114@example.com,premium
+ 419 ,  User_419 ,user419@example.com  , premium
+ 179  ,User_179,user179@example.com,  basic 
+26,‍ User_026  ,​user26@example.com,premium
+﻿63,User_063,  user63@example.com ,  free 
+ 87,User_087,﻿ user87@example.com,premium
+220,User_220,user220@example.com, premium  
+124,  User_124 , user124@example.com​,﻿premium
+  276 ‍,User_276 ,  user276@example.com , free 
+470‍,‌User_470,user470@example.com‍,‍ basic 
+306,User_306,user306@example.com‌,  free ​
+205,User_205,  user205@example.com  ,free
+442,User_442 ,user442@example.com,﻿free
+  224,​, broken224@example.com‍,basic
+270,User_270_OLD,  old_user270@example.com  ​,free  
+278,User_278 ,﻿user278@example.com,  premium 
+﻿22,User_022,  user22@example.com  ,‌basic
+  68  ,User_068,user68@example.com,premium
+227,User_227,user227@example.com,  basic  
+469,User_469, user469@example.com,  free 
+  473,User_473,user473@example.com , premium
+250, User_250  ,user250@example.com,‌  premium
+90, User_090 ,  user90@example.com,premium
+256,‍User_256_OLD  , old_user256@example.com,basic
+112, User_112  ,user112@example.com,  free
+264 ,User_264,user264@example.com,‍  premium  
+  375  ,  User_375  ,user375@example.com,free
+6,User_006,user6@example.com,free
+  117  ,User_117‍,user117@example.com,free
+ 5,User_005,  user5@example.com ,free
+  422 ,User_422,user422@example.com,premium
+32,User_032, user32@example.com  ,basic
+  176 , User_176,user176@example.com,free
+412  ,  User_412_OLD,old_user412@example.com,basic
+370,  User_370  ,‍user370@example.com,premium
+14  ,User_014,‌user14@example.com,free
+ 125,‍User_125,user125@example.com ,premium
+397 ,﻿User_397,​user397@example.com, basic  ‌
+ID7,BadUser, bad@example.com  ,basic
+﻿  414 , User_414_OLD ,old_user414@example.com,free
+165,User_165 ,user165@example.com,basic  ‌
+​491,User_491﻿, user491@example.com  ,premium 
+ 64 ,User_064 ,user64@example.com,free
+180,‌ User_180_OLD ,old_user180@example.com,basic
+429,User_429,user429@example.com,premium
+151,  User_151 , user151@example.com ​,free 
+ID7,BadUser,‍bad@example.com,free
+411,  User_411,user411@example.com,premium
+280,‍User_280  ,user280@example.com,basic  
+200,User_200,user200@example.com,  basic  
+  340  ,User_340, user340@example.com,premium 
+61, User_061  ​,user61@example.com  ,premium
+142,User_142,user142@example.com  ,  premium 
+444, User_444 ,user444@example.com,free
+399 , NA ,  broken399@example.com  ,free  ‌
+110 ,User_110,user110@example.com,premium
+180﻿,User_180,user180@example.com,  free 
+﻿115,User_115, user115@example.com ,premium
+7,  User_007 ,user7@example.com,premium
+363,User_363_OLD,old_user363@example.com,  basic
+366‍,User_366, user366@example.com ,premium  
+  400,​User_400, user400@example.com ,premium
+270,User_270,‍ user270@example.com  ,premium
+128​,User_128,user128@example.com,premium
+  143​,User_143  , user143@example.com,premium 
+,  ,bad@example.com,premium
+275,  User_275  ,user275@example.com,premium
+  394,User_394, user394@example.com ,premium
+215,User_215,​user215@example.com,free
+107,User_107​, user107@example.com  ,  basic
+‌ 354 ,User_354,‌ user354@example.com,free
+​24,User_024,  user24@example.com‍,  free
+  270,  User_270  ‍,user270@example.com,free
+ 331  ,User_331, user331@example.com ,premium
+117 ,User_117,​user117@example.com,‌premium
+88,User_088,​user88@example.com,premium  
+55,User_055,user55@example.com,basic
+262,  User_262  ,user262@example.com,free
+‌286,User_286‍,user286@example.com‍, basic
+ 479,‍User_479,user479@example.com,basic
+‍343,User_343  ,  user343@example.com,‍free
+452,User_452,user452@example.com‍,free
+  108  ,  User_108 ,  user108@example.com,basic﻿
+187,  User_187 ,user187@example.com,premium
+​  95 ,User_095, user95@example.com  ,basic
+  353,User_353,user353@example.com,free
+ ,BadUser,bad@example.com ,​ basic 
+  332,  User_332 ,user332@example.com,  premium
+309﻿, User_309  , user309@example.com ,basic
+ 447  ,User_447,user447@example.com , premium
+341,  User_341  ,  user341@example.com ,  basic  
+327﻿,User_327,​user327@example.com,premium
+345﻿,  User_345,user345@example.com, basic 
+181,User_181, user181@example.com ,premium
+98﻿,User_098 ,user98@example.com,‌premium
+127‌,User_127,user127@example.com,‌  basic  
+134,​,broken134@example.com,  premium 
+ 459,User_459,user459@example.com,free
+210,User_210 ,user210@example.com,premium
+‍199,﻿User_199, user199@example.com,free  
+407,‌ User_407 ,user407@example.com,basic
+  214  ,User_214‌,user214@example.com, basic
+x,,‌bad@example.com,premium
+189,User_189,user189@example.com,free
+ 307  ,User_307,user307@example.com‌,free
+353 ,User_353_OLD​,  old_user353@example.com  ,free
+﻿ 413  ,User_413,‍user413@example.com,premium  
+385,User_385,﻿ user385@example.com ,premium﻿
+495,User_495,user495@example.com,free
+374,User_374,  user374@example.com  ,  basic  
+59 ,User_059‍,user59@example.com,free
+494,User_494‌,user494@example.com,basic  
+299, User_299  ,user299@example.com,basic
+180,User_180  ,  user180@example.com,free
+271,User_271,user271@example.com,  free 
+365,  User_365  ‍,user365@example.com,premium  
+  356 ,User_356, user356@example.com  ,premium
+ 135  ,  User_135 ,user135@example.com, premium  
+191,User_191,user191@example.com,basic  
+239,User_239,user239@example.com,free
+282,User_282,user282@example.com,free
+408, User_408,​user408@example.com, free 
+23,  User_023 , user23@example.com  ,basic
+118  , User_118,user118@example.com﻿, premium 
+263  ,User_263﻿,user263@example.com,basic
+251‌,User_251,user251@example.com‍,‌basic
+486,User_486  ,user486@example.com,  basic  
+ 132 ,User_132, user132@example.com  ,  premium  
+,​,  bad@example.com ,free  
+ 104 ,User_104,user104@example.com,premium
+‍81  , User_081 ,user81@example.com,premium
+ 420, User_420  ,user420@example.com,basic
+ 324 ,User_324,user324@example.com,basic
+ 171 ,  User_171_OLD  ,﻿old_user171@example.com, premium
+‌  292  ,User_292,user292@example.com,basic  
+208,‌ User_208 ,user208@example.com,basic
+ 57 ,User_057,‌user57@example.com,  premium
+69‍, User_069,user69@example.com,  basic 
+‍447, NA ,broken447@example.com,‍basic
+﻿238, User_238,‌ user238@example.com  ,‌free
+323,User_323_OLD  ,old_user323@example.com  ,​basic
+437,User_437,user437@example.com,free
+302,  User_302, user302@example.com,free
+88,​,broken88@example.com, premium
+  483,User_483,  user483@example.com  ​,  basic  
+412,User_412, user412@example.com,free
+  457 ,  User_457  , user457@example.com  ,basic‍
+441 ,User_441﻿, user441@example.com ​,‍basic
+105,User_105,user105@example.com, premium 
+338﻿,User_338,‍user338@example.com,free
+41  ,User_041 ,user41@example.com, premium
+  30 ﻿,User_030  , user30@example.com  ﻿,premium
+363,User_363,user363@example.com,free
+241 ,User_241,user241@example.com,basic 
+178,  User_178,‍ user178@example.com  ,basic
+72,User_072,user72@example.com,​free
+2,  User_002 ,user2@example.com,  basic 
+​395,User_395_OLD,old_user395@example.com  ,free
+312 ,User_312,user312@example.com,premium  
+453﻿,  User_453,user453@example.com,free
+​ 418,User_418,​user418@example.com  ,  premium  
+4,User_004,user4@example.com,free
+421  ,User_421, user421@example.com  ,free
+ 499  ,User_499,user499@example.com,free
+420,User_420_OLD,  old_user420@example.com , free 
+490, User_490  , user490@example.com ,free
+  463  ,​User_463,  user463@example.com,premium
+236,User_236,  user236@example.com ,‌free
+353 , User_353 ,  user353@example.com ,free  
+334,User_334,user334@example.com, basic ‍
+218,User_218, user218@example.com ,‌premium
+18,User_018,user18@example.com ,  basic
+ 279,User_279,user279@example.com﻿,basic  
+66,  User_066 , user66@example.com,  basic 
+103,  User_103 ,user103@example.com,free
+265,User_265,user265@example.com,basic
+237,User_237,user237@example.com‍, free  
+342,User_342,user342@example.com﻿,free
+  9  ,​,  broken9@example.com,basic
+‍229,‍User_229,user229@example.com,  basic  
+  281 ,‌User_281,user281@example.com,basic
+ 379 ,User_379, user379@example.com ,free
+414 ,User_414  ,user414@example.com,basic
+83,User_083,user83@example.com,premium
+158‍,User_158 , user158@example.com ,  premium  
+164,‍  User_164 ,‌user164@example.com, premium
+378,‍User_378,user378@example.com,‌  basic  
+438, User_438  ,  user438@example.com, premium 
+28,,broken28@example.com,  free 
+468,﻿User_468  , user468@example.com ,‍basic
+80,  User_080 ,‌user80@example.com,basic
+ 27,﻿User_027,user27@example.com,  premium 
+ 131,User_131, user131@example.com ,basic
+﻿425 ,﻿User_425,user425@example.com ,​basic
+440,‍ User_440,user440@example.com  ﻿,  free
+460,User_460  ,user460@example.com  ,premium
+116‍, User_116, user116@example.com,basic
+217,User_217,  user217@example.com,  premium  
+348,User_348, user348@example.com  ,free
+198,User_198,user198@example.com,basic
+461,User_461,user461@example.com,free 
+313,  User_313  ,user313@example.com ,basic
+‍330 ,  User_330 ​,﻿user330@example.com,basic
+  183  , ,  broken183@example.com  ,free
+361,User_361,‍user361@example.com, free 
+129,User_129,user129@example.com  , free 
+  35  ,User_035,user35@example.com,basic
+357  ,User_357,  user357@example.com,​ basic  
+ 245 , User_245  ,‍user245@example.com,﻿ free 
+ 97  ,User_097,‍  user97@example.com ,  basic 
+ 488 , User_488, user488@example.com  ,premium​
+  172,User_172,user172@example.com,basic
+﻿ 230 ,User_230​,‍ user230@example.com  ,​premium
+225, User_225 ,user225@example.com,free
+362,‍User_362 ,user362@example.com​, premium ‌
+ 244,  User_244 ‍,​user244@example.com,free
+ 347 ,User_347, user347@example.com ,basic
+382,  User_382  ,user382@example.com ,premium
+141‌,‌User_141,  user141@example.com  ,premium
+10.5,  ,  bad@example.com  ,  premium
+ 311,User_311,user311@example.com,  basic
+ 434,User_434 ,user434@example.com‌,basic
+314,User_314_OLD,old_user314@example.com,free
+131 ,User_131_OLD,old_user131@example.com ,basic
+ ,BadUser, bad@example.com ,free
+320,  User_320  ‍,user320@example.com ,premium
+x,BadUser, bad@example.com  ,﻿ basic
+  418,User_418_OLD,old_user418@example.com,premium
+442,User_442,user442@example.com,basic
+3 ,  User_003_OLD ,old_user3@example.com,free  
+268  ,﻿  User_268 ,﻿user268@example.com,premium
+ 428,User_428, user428@example.com‌,premium
+355, , broken355@example.com,﻿basic
+171,User_171 ,user171@example.com,basic
+43,User_043,  user43@example.com  ,free
+  381 ,User_381,user381@example.com, free
+336,User_336, user336@example.com,premium
+247,User_247,user247@example.com,premium
+296,‍  User_296,user296@example.com,‌ free 
+  489‌,  User_489 ‌,﻿user489@example.com,‍  basic 
+85,User_085,user85@example.com, free  
+  248 ,User_248‌,user248@example.com,  premium  
+471 ,User_471,﻿  user471@example.com ,​basic
+166,User_166,user166@example.com,basic
+193,User_193_OLD,  old_user193@example.com  ,‍free
+​417,User_417  ,﻿user417@example.com,premium
+‌  70  , User_070 ,user70@example.com,free
+ 105 ,‌ User_105_OLD  ,old_user105@example.com,  premium 
+92,User_092, user92@example.com ,free
+ 185,User_185,user185@example.com, premium
+ 175,User_175,  user175@example.com  ,free‌
+287,User_287,user287@example.com,free 
+ 210  ,  User_210_OLD,  old_user210@example.com, premium 
+‌163,User_163,‍user163@example.com,basic 
+335,User_335,  user335@example.com ,free​
+‍395,User_395, user395@example.com‌,free
+389,﻿User_389,user389@example.com,premium‌
+‍366,,﻿broken366@example.com,free 
+ 58,User_058,user58@example.com,  basic 
+  384 ,User_384  ,  user384@example.com ,‍basic
+‌368,User_368, user368@example.com,basic  
+ 196,User_196,user196@example.com,﻿free
+249,User_249, user249@example.com ,free
+  210,User_210‍,‍user210@example.com  ,free
+298,User_298  , user298@example.com  ,﻿basic
+  406 ​,​User_406,user406@example.com, basic
+360  , User_360 ,  user360@example.com ,free  
+256,User_256  ,user256@example.com ,premium 
+322,User_322 ,user322@example.com,  basic﻿
+202,User_202,user202@example.com,premium
+  76,User_076,user76@example.com,premium
+446,User_446  , user446@example.com,free
+26, , broken26@example.com ,  premium
+477,User_477, user477@example.com ,﻿ basic
+ 222  ,User_222,user222@example.com  ‍,basic
+84,﻿User_084,user84@example.com,premium
+204,‌User_204,  user204@example.com, free 
+232,  User_232,  user232@example.com,  premium 
+ 418  ,User_418,﻿user418@example.com,  basic 
+352,User_352_OLD  ​,old_user352@example.com,free
+399,User_399,user399@example.com,  free  
+  25  ,User_025,user25@example.com  ,  premium  
+99,  User_099,user99@example.com,premium​
+310 ,User_310,‍user310@example.com,premium﻿
+184,User_184, user184@example.com ,free
+435,User_435,user435@example.com ,‍premium
+140 ,User_140  ,‌  user140@example.com,free
+205, NA ,‍broken205@example.com,﻿basic
+318​,User_318  ,user318@example.com, free 
+﻿78,User_078  ,user78@example.com ,‍premium
+29,User_029, user29@example.com  ,free 
+ 193 ,  User_193,user193@example.com,premium
+67,User_067,user67@example.com, basic
+﻿ 11 ,User_011,  user11@example.com ,  free
+170  ,User_170,user170@example.com,free
+183,User_183,user183@example.com,basic
+  147  ,﻿User_147_OLD,old_user147@example.com,basic
+ 476  ,‌ User_476 ,user476@example.com,basic
+49,User_049,‍user49@example.com, free
+121, User_121,user121@example.com,basic‍
+153​,​User_153, user153@example.com ,premium
+ 110,  User_110_OLD,old_user110@example.com,premium
+  375,User_375 ,‌user375@example.com,premium
+‍219,User_219,‌user219@example.com,premium
+  267 ,User_267,user267@example.com,premium
+139‌,﻿User_139  ,user139@example.com ,free 
+  37,User_037,﻿user37@example.com,​free
+415‌,User_415,user415@example.com,basic
+137 ‍,User_137,  user137@example.com,free
+  148,User_148,user148@example.com‌,free
+455,User_455,user455@example.com,basic
+396,User_396 ,user396@example.com,free
+‍242,User_242,  user242@example.com, basic
+ 197 ,User_197,user197@example.com,basic
+323,User_323,  user323@example.com  , basic  
+13, User_013 ,  user13@example.com,premium‌
+326,User_326 ,user326@example.com,premium
+223, User_223, user223@example.com,premium
+78,‌ User_078  ,​user78@example.com,  free ‌
+301,  User_301  ,user301@example.com  ,﻿premium
+277﻿,User_277,​  user277@example.com ,free
+91,User_091,user91@example.com,free
+  323 ,User_323,﻿user323@example.com,basic
+3,User_003,user3@example.com,basic
+  436,User_436, user436@example.com,free
+254,﻿User_254  ,  user254@example.com  ,  free
+  346,User_346, user346@example.com  , premium  
+377,​  User_377  ,user377@example.com,  premium  
+x,  ,bad@example.com,basic 
+‍404,‌  User_404,user404@example.com,free‍
+145,User_145,user145@example.com,free  
+207,  User_207  ,user207@example.com, free 
+ 352  ,User_352,user352@example.com,free
+233,User_233,user233@example.com,premium
+ 243  ,User_243,user243@example.com,free
+62 ,User_062​,‌user62@example.com,basic
+339,  User_339  ,user339@example.com ,basic
+ 226  ​,User_226,user226@example.com,﻿  premium  
+303,  User_303  ,user303@example.com,premium
+123,  User_123‌,  user123@example.com,  basic 
+  289, User_289﻿,user289@example.com,free
+  449,User_449,user449@example.com,‍ free 
+147,User_147,user147@example.com,premium
+ 188  ﻿,User_188  ,user188@example.com,free
+448,​,broken448@example.com,premium
+﻿130, User_130﻿,user130@example.com,‌premium
+﻿  156 ,User_156‍, user156@example.com,basic
+160,User_160, user160@example.com  ﻿, basic  
+  182  ,  User_182,user182@example.com ,free
+372​,User_372,user372@example.com,  premium
+‍  167,User_167,user167@example.com﻿,‍basic 
+161,User_161,user161@example.com,premium
+  435,User_435_OLD,old_user435@example.com,free
+​ 105,User_105 ,  user105@example.com  ,premium 
+‌315  , User_315  ,user315@example.com,premium
+480,User_480_OLD,old_user480@example.com‍,﻿premium
+ 329,User_329,user329@example.com, basic  
+ 442,User_442_OLD, old_user442@example.com‍,  basic 
+  117,User_117_OLD ,old_user117@example.com  ,free
+‌94,User_094, user94@example.com,premium‌
+257,User_257 ,user257@example.com ,basic
+  363,User_363,user363@example.com​,free
+215,User_215,user215@example.com,premium
+  426  ,‍User_426 ,​user426@example.com,‍premium
+325,User_325  ,user325@example.com,premium
+398,User_398,user398@example.com,premium
+122  ,User_122 ,user122@example.com,free
+456,User_456‍,user456@example.com  ,premium
+305,User_305,user305@example.com,basic
+96 ,User_096,  user96@example.com,basic
+484,User_484,user484@example.com,basic
+ 147 ,User_147 ,‌user147@example.com,‌free
+ 138 ,User_138,user138@example.com,free
+,,bad@example.com,free  
+  253  ,User_253,‌  user253@example.com  ,free
+3,User_003, user3@example.com, premium  
+ ,BadUser,​bad@example.com  ,basic
+  120  , User_120 , user120@example.com ,basic
+ ,  ,bad@example.com,free
+380,User_380,user380@example.com  ‍,premium‌
+ 234  ,  User_234  ,user234@example.com, premium
+  439,User_439,user439@example.com‍,free
+317,﻿User_317,user317@example.com,  free 
+﻿ 258,User_258 ,user258@example.com  ,free
+405,  User_405  ​,user405@example.com , premium 
+93,User_093 ,user93@example.com,basic
+  109  ,​User_109, user109@example.com, free  
+201, User_201﻿,user201@example.com,  basic  
+  300  ,User_300,​user300@example.com,free
+241, NA ,‍broken241@example.com,  basic
+﻿259,  User_259 ​,‌  user259@example.com ,basic
+449  , User_449,  user449@example.com  ﻿,premium
+  410  ,User_410  ,user410@example.com,premium
+474, User_474,user474@example.com,‍premium  
+  435  ,User_435,  user435@example.com ,‌free
+174,User_174,​user174@example.com,  basic
+  383 ,User_383,user383@example.com ,﻿  free  
+285,User_285,‍user285@example.com,basic
+ 154 ,User_154,user154@example.com ,premium
+ ,BadUser,bad@example.com, free 
+376, User_376, user376@example.com,free
+261,User_261,  user261@example.com ,‍  basic 
+203  ,​User_203,​user203@example.com,free
+ 350,  User_350 , user350@example.com  ,basic
+388  ,User_388,  user388@example.com‍,‌premium
+  252 ,‍ User_252  ,‌ user252@example.com,free
+162,‌User_162, user162@example.com  , free 
+297,User_297,user297@example.com,basic
+﻿433,User_433  ,  user433@example.com  ,​  free 
+448,User_448,user448@example.com﻿,  basic  
+45,User_045,  user45@example.com ,‍free 
+190,﻿User_190,user190@example.com,  basic  
+  264 ,User_264_OLD,old_user264@example.com﻿,basic﻿
+475,User_475,user475@example.com,premium
+39,User_039,‍user39@example.com,  premium  
+293,User_293,user293@example.com,free
+ 195  ‌, User_195  ​,user195@example.com﻿,basic
+269,  User_269,user269@example.com‍,free
+101,User_101,user101@example.com, free
+42, User_042  ,  user42@example.com ,basic﻿
+  295,User_295  , user295@example.com , free  
+​ 74 , User_074, user74@example.com, free  
+216,User_216 ,  user216@example.com  ,basic
+358,﻿User_358, user358@example.com ,premium
+192,User_192, user192@example.com,free  
+465,​User_465,user465@example.com,﻿free
+  424,, broken424@example.com  ,basic
+ 336,  User_336 ,user336@example.com,free
+177,User_177,user177@example.com,free
+‌229,User_229_OLD, old_user229@example.com,  free
+375,User_375_OLD,old_user375@example.com,premium
+423,​User_423,user423@example.com ‌,  premium 
+93,User_093_OLD,old_user93@example.com,﻿premium
+90, ,broken90@example.com,free﻿
+486,​User_486,  user486@example.com,premium
+328  ,User_328 ,  user328@example.com‍,basic
+  71 ,User_071  ‌,  user71@example.com ,premium
+  198 ,User_198_OLD,old_user198@example.com,free﻿
+480,User_480 ,user480@example.com, free  
+498,﻿  User_498  ,  user498@example.com  ,premium‌
+​78,  User_078_OLD ,old_user78@example.com,free
+47,  User_047  ‍,user47@example.com,free
+ 355  ,User_355,user355@example.com,free
+ 157 ,User_157,user157@example.com,basic
+‌  111 ,User_111 ,user111@example.com ,basic﻿
+‌273,User_273,‍user273@example.com ,basic  
+82,User_082,  user82@example.com ,basic
+79,User_079,  user79@example.com ‍,free‍
+499,User_499_OLD,old_user499@example.com,free
+  56  ,User_056, user56@example.com,basic
+65‍, User_065, user65@example.com,  free 
+‍  134, User_134  ,‍ user134@example.com , basic 
+288,User_288  ,user288@example.com, premium
+ ,​,bad@example.com  ,  premium  
+482, User_482,user482@example.com,  basic  
+‌466  ,User_466 ,user466@example.com,basic
+‌8  ,User_008,‌user8@example.com,  basic
+  100,User_100,﻿user100@example.com,free 
+​75,User_075,﻿user75@example.com,basic 
+  369 ,User_369﻿,user369@example.com,premium
+487, User_487,  user487@example.com, free
+,  , bad@example.com ,free
+‍336, User_336_OLD , old_user336@example.com,premium
+12 ,User_012,user12@example.com,​free
+486,  User_486_OLD,old_user486@example.com,free
+10.5,BadUser,bad@example.com ,﻿  basic 
+‍449  ,User_449_OLD​, old_user449@example.com  ﻿, basic  
+  480 ,User_480,user480@example.com,free 
+316,﻿  User_316  ,user316@example.com,  basic 
+333,  User_333  ,user333@example.com,premium
+ 290 , User_290 ,user290@example.com,basic
+390,  User_390 ,user390@example.com,‍  basic
+28,User_028,user28@example.com,free
+  272  ,  User_272  ,user272@example.com‍,premium
+ 337 ,User_337,user337@example.com,  premium 
+  160 ,  User_160_OLD ,old_user160@example.com,free
+119,User_119,​user119@example.com, premium  
+ 481,User_481,user481@example.com,free
+,,bad@example.com,  basic  
+386,User_386,user386@example.com,  basic  
+ 314,User_314,user314@example.com,basic
+209,User_209,user209@example.com , premium  
+264 , User_264 ,user264@example.com,premium
+ 77 ​, User_077  ,​user77@example.com,free
+496,User_496  ,user496@example.com,premium
+415,,broken415@example.com,basic  
+﻿416,User_416 , user416@example.com,basic  
+15,User_015,user15@example.com,‍free
+352,​User_352,user352@example.com, free  
+‍ 110  ,User_110,user110@example.com,premium 
+﻿34  , User_034,user34@example.com,basic
+﻿401,User_401, user401@example.com ,  basic
+ 256  ,﻿  User_256 ,  user256@example.com ,free
+492,  User_492﻿,  user492@example.com ,  free 
+229,User_229, user229@example.com  ,free 
+138,,broken138@example.com,free 
+314‌,  User_314,user314@example.com,free
+  206 , User_206  ,user206@example.com‌,premium
+173,  User_173 ,user173@example.com,‍premium
+﻿145,User_145_OLD,old_user145@example.com, premium 
+‌136,User_136,user136@example.com,  free 
+ 319  ,User_319,user319@example.com, premium ​
+464,  User_464  , user464@example.com, basic  
+212 ​,  User_212 ,user212@example.com,premium
+89,User_089 ,user89@example.com,basic
+412, User_412,‌user412@example.com,free
+  155  ,  User_155 ,user155@example.com,  free  
+1,  User_001  ,user1@example.com,  basic
+373, User_373,user373@example.com,free
+93,User_093, user93@example.com  ,free‌
+291 , User_291  ,user291@example.com,  free 
+215,User_215_OLD,old_user215@example.com,free
+16,User_016,user16@example.com‌,premium
+ 19  ,User_019, user19@example.com,  free
+228,User_228,user228@example.com,free
+ 33  ,User_033 ,  user33@example.com,  basic  ‍
+  451  ﻿,‌User_451,user451@example.com,basic  
+349,User_349,  user349@example.com,basic
+﻿432,User_432,user432@example.com,  basic 
+ 121 ,  User_121_OLD ﻿,old_user121@example.com,‍premium
+433  , User_433_TEMP, temp433@example.com ,free
+ 433 ,User_433,user433@example.com,‍basic
+497,User_497_TEMP,  temp497@example.com ,free
+497,User_497,user497@example.com,premium
+302, User_302_TEMP  ,​  temp302@example.com  ,‌  premium 
+302, User_302,user302@example.com,﻿premium
+ 401,User_401_TEMP,  temp401@example.com,premium﻿
+401 ,User_401,user401@example.com, free
+﻿465, User_465_TEMP ,‍temp465@example.com,free
+ 465 ,User_465  ,user465@example.com,free
+267,User_267_TEMP,temp267@example.com, free 
+ 267 ,‍User_267,user267@example.com,‍  premium  
+​155,﻿ User_155_TEMP  ,temp155@example.com,free 
+155,User_155‍, user155@example.com  ,premium
+﻿  22 ,User_022_TEMP,  temp22@example.com  ,basic
+22,User_022,user22@example.com,free
+447,‍ User_447_TEMP ,temp447@example.com, basic  
+447,User_447, user447@example.com,free​
+​413,User_413_TEMP ,temp413@example.com,free  
+ 413 ,  User_413  ,​ user413@example.com  ,​ free
+335,‍User_335_TEMP,﻿temp335@example.com ,  free 
+  335 ,User_335,user335@example.com, basic
+326,User_326_TEMP,﻿  temp326@example.com,​basic
+326,User_326, user326@example.com​,free
+269,  User_269_TEMP  ,temp269@example.com,free
+269,‍User_269,user269@example.com,basic
+60, User_060_TEMP,temp60@example.com,​free 
+60,  User_060  ,user60@example.com, free  
+58​,User_058_TEMP,temp58@example.com, free  
+58​,User_058,user58@example.com,  free 
+  123  ,User_123_TEMP​,temp123@example.com,basic
+123 ,User_123,user123@example.com,‌  free 
+‌ 24,  User_024_TEMP , temp24@example.com,basic
+24,User_024, user24@example.com ,premium
+  492  ,  User_492_TEMP  ,temp492@example.com,basic
+492,User_492,‍  user492@example.com ,﻿free
+  313,  User_313_TEMP  , temp313@example.com  ,‌  premium 
+313,User_313,user313@example.com,free
+‌  456  ,User_456_TEMP ,temp456@example.com,free
+456,User_456,user456@example.com,  free  
+ 260  ​, User_260_TEMP ,  temp260@example.com  , basic
+​260, User_260,user260@example.com,free
+246,User_246_TEMP,temp246@example.com  ,premium
+ 246,User_246,  user246@example.com,  premium ‌
+51  ,﻿ User_051_TEMP  ,temp51@example.com,basic
+ 51  ,  User_051  ,user51@example.com​,free
+380,User_380_TEMP,‌temp380@example.com,free
+380‌,​User_380, user380@example.com,free
+9 ‌,User_009_TEMP,temp9@example.com,  premium 
+9,​  User_009  ,user9@example.com ,premium
+202,‌User_202_TEMP,temp202@example.com,basic
+‌202,User_202,‍ user202@example.com ,premium‌
+﻿  87,User_087_TEMP​, temp87@example.com ,  premium 
+87,  User_087,‌  user87@example.com  ,free﻿
+  172 , User_172_TEMP, temp172@example.com ‌,basic  
+172,  User_172 ,user172@example.com,premium
+25,  User_025_TEMP,temp25@example.com,  basic  
+25, User_025,  user25@example.com‌, premium  
+  369  ,  User_369_TEMP,temp369@example.com,  free  
+ 369  ,  User_369  ,user369@example.com,premium‍
+​ 168 ,User_168_TEMP,temp168@example.com ,free‌
+168,User_168,user168@example.com, premium  ﻿
+108,User_108_TEMP,temp108@example.com, premium 
+ 108,User_108,user108@example.com,free
+134,User_134_TEMP ,‌temp134@example.com,free  
+134,User_134,user134@example.com,free
+321,User_321_TEMP,‌ temp321@example.com , basic 
+ 321 ﻿,  User_321 ,user321@example.com,free
+164﻿,‌User_164_TEMP,temp164@example.com‌,  basic
+164,User_164,user164@example.com﻿,premium
+  205,﻿User_205_TEMP  ,temp205@example.com,basic
+205,User_205,user205@example.com ,  free
+  286 ﻿,User_286_TEMP,temp286@example.com , premium  
+286,User_286,user286@example.com,basic
+159,  User_159_TEMP , temp159@example.com ,  premium 
+159,‌ User_159,user159@example.com,free
+ 43,‍User_043_TEMP  ,‌ temp43@example.com  ,basic
+43, User_043,user43@example.com,basic‍
+16, User_016_TEMP ,temp16@example.com﻿,basic
+16,User_016,user16@example.com,  free﻿

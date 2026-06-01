@@ -1,0 +1,23 @@
+{
+  "launch_support": {
+    "coverage_window": "08:00-20:00",
+    "sales_owner": "Jordan Lee",
+    "notes": "Launch week support is covered by support engineering with Jordan Lee from Sales looped in for customer-facing escalations."
+  },
+  "migration_plan": {
+    "chosen_plan": "Plan A",
+    "reason": "Plan A has the shorter timeline and protects the pilot date."
+  },
+  "rules_engine": {
+    "recommended_reply": "Do not promise the full rules engine by Friday.",
+    "safe_scope": "MVP only",
+    "timeline": "six-week delivery window",
+    "stakeholders_to_cc": [
+      "riley.chen@harborworks.example",
+      "taylor.kim@harborworks.example"
+    ]
+  },
+  "board_appendix": {
+    "budget": "$4.2M"
+  }
+}

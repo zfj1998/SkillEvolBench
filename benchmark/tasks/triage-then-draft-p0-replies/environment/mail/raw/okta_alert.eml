@@ -1,0 +1,9 @@
+Message-ID: <okta_alert@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Nora Schmidt <nora.schmidt@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: CRITICAL: Okta admin anomaly
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Admin token revoked; please acknowledge next steps and ETA for access review.

@@ -1,0 +1,9 @@
+Message-ID: <email_005@mail.harborworks.example>
+Date: 2026-04-23T09:00:00-04:00
+From: Nora Schmidt <nora.schmidt@harborworks.example>
+To: alex.morgan@harborworks.example
+Subject: CRITICAL: leaked API token
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Token found in a public gist. Rotation should start immediately.

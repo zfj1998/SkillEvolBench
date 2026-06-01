@@ -1,0 +1,202 @@
+[
+  {
+    "id": "R001",
+    "name": "Alice Chen",
+    "dept": "Engineering",
+    "status": "active",
+    "address": {
+      "street": "100 Main St",
+      "city": "SF",
+      "zip": "94100"
+    },
+    "compensation": {
+      "salary": 90000,
+      "bonus": "10%",
+      "currency": "USD"
+    },
+    "phone": {
+      "mobile": "555-1000",
+      "office": "555-2000"
+    }
+  },
+  {
+    "id": "R002",
+    "name": "Bob Torres",
+    "dept": "HR",
+    "status": "active",
+    "address": {
+      "street": "456 Oak Ave",
+      "city": "SF",
+      "zip": "94107"
+    },
+    "compensation": {
+      "salary": 95000,
+      "bonus": "10%",
+      "currency": "USD"
+    },
+    "phone": {
+      "mobile": "555-1001",
+      "office": "555-2001"
+    }
+  },
+  {
+    "id": "R003",
+    "name": "Carol Park",
+    "dept": "Sales",
+    "status": "active",
+    "address": {
+      "street": "300 Main St",
+      "city": "SF",
+      "zip": "94102"
+    },
+    "compensation": {
+      "salary": 100000,
+      "bonus": "10%",
+      "currency": "USD"
+    },
+    "phone": {
+      "mobile": "555-1002",
+      "office": "555-2002"
+    }
+  },
+  {
+    "id": "R004",
+    "name": "David Kim",
+    "dept": "Finance",
+    "status": "active",
+    "address": {
+      "street": "400 Main St",
+      "city": "SF",
+      "zip": "94103"
+    },
+    "compensation": {
+      "salary": 105000,
+      "bonus": "10%",
+      "currency": "USD"
+    },
+    "phone": {
+      "mobile": "555-1003",
+      "office": "555-2003"
+    }
+  },
+  {
+    "id": "R005",
+    "name": "Emma Wang",
+    "dept": "Engineering",
+    "status": "active",
+    "address": {
+      "street": "500 Main St",
+      "city": "SF",
+      "zip": "94104"
+    },
+    "compensation": {
+      "salary": 115000,
+      "bonus": "22%",
+      "currency": "USD"
+    },
+    "phone": {
+      "mobile": "555-1004",
+      "office": "555-2004"
+    }
+  },
+  {
+    "id": "R006",
+    "name": "Frank Liu",
+    "dept": "Legal",
+    "status": "inactive",
+    "address": {
+      "street": "600 Main St",
+      "city": "SF",
+      "zip": "94105"
+    },
+    "compensation": {
+      "salary": 115000,
+      "bonus": "10%",
+      "currency": "USD"
+    },
+    "phone": {
+      "mobile": "555-1005",
+      "office": "555-2005"
+    }
+  },
+  {
+    "id": "R007",
+    "name": "Grace Lee",
+    "dept": "Sales",
+    "status": "active",
+    "address": {
+      "street": "700 Main St",
+      "city": "SF",
+      "zip": "94106"
+    },
+    "compensation": {
+      "salary": 120000,
+      "bonus": "10%",
+      "currency": "USD"
+    },
+    "phone": {
+      "mobile": "555-7999",
+      "office": "555-8001"
+    }
+  },
+  {
+    "id": "R008",
+    "name": "Henry Zhao",
+    "dept": "Engineering",
+    "status": "active",
+    "address": {
+      "street": "800 Main St",
+      "city": "SF",
+      "zip": "94107"
+    },
+    "compensation": {
+      "salary": 125000,
+      "bonus": "10%",
+      "currency": "USD"
+    },
+    "phone": {
+      "mobile": "555-1007",
+      "office": "555-2007"
+    }
+  },
+  {
+    "id": "R009",
+    "name": "Iris Tan",
+    "dept": "HR",
+    "status": "active",
+    "address": {
+      "street": "88 Wacker Dr",
+      "city": "Chicago",
+      "zip": "60603"
+    },
+    "compensation": {
+      "salary": 98000,
+      "bonus": "14%",
+      "currency": "USD"
+    },
+    "phone": {
+      "mobile": "555-1008",
+      "office": "555-2008"
+    }
+  },
+  {
+    "id": "R010",
+    "name": "James Wu",
+    "dept": "Finance",
+    "status": "inactive",
+    "address": {
+      "street": "1000 Main St",
+      "city": "SF",
+      "zip": "94109"
+    },
+    "compensation": {
+      "salary": 135000,
+      "bonus": "10%",
+      "currency": "USD"
+    },
+    "phone": {
+      "mobile": "555-1009",
+      "office": "555-2009"
+    }
+  }
+]

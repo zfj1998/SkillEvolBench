@@ -1,0 +1,112 @@
+[
+  {
+    "id": "MED_NATURE_SKIN",
+    "title": "Dermatologist-level classification of skin cancer with deep neural networks",
+    "publisher": "Nature",
+    "year": 2017,
+    "url": "https://www.nature.com/articles/nature21056",
+    "source_type": "peer_reviewed_study",
+    "doi": "10.1038/nature21056",
+    "authentic": true
+  },
+  {
+    "id": "MED_JAMA_DR",
+    "title": "Development and Validation of a Deep Learning Algorithm for Detection of Diabetic Retinopathy in Retinal Fundus Photographs",
+    "publisher": "JAMA",
+    "year": 2016,
+    "url": "https://jamanetwork.com/journals/jama/fullarticle/2588763",
+    "source_type": "peer_reviewed_study",
+    "doi": "10.1001/jama.2016.17216",
+    "authentic": true
+  },
+  {
+    "id": "MED_FDA_AI",
+    "title": "Artificial Intelligence-Enabled Medical Devices",
+    "publisher": "U.S. FDA",
+    "year": 2025,
+    "url": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+    "source_type": "regulatory_reference",
+    "doi": null,
+    "authentic": true
+  },
+  {
+    "id": "MED_WHO_ETHICS",
+    "title": "Ethics and governance of artificial intelligence for health",
+    "publisher": "WHO",
+    "year": 2021,
+    "url": "https://www.who.int/publications/i/item/9789240029200",
+    "source_type": "policy_guidance",
+    "doi": null,
+    "authentic": true
+  },
+  {
+    "id": "MED_NASEM_DIAG",
+    "title": "Improving Diagnosis in Health Care",
+    "publisher": "National Academies",
+    "year": 2015,
+    "url": "https://nap.nationalacademies.org/catalog/21794/improving-diagnosis-in-health-care",
+    "source_type": "consensus_report",
+    "doi": "10.17226/21794",
+    "authentic": true
+  },
+  {
+    "id": "REMOTE_NATURE_HYBRID",
+    "title": "Hybrid working from home improves retention without damaging performance",
+    "publisher": "Nature",
+    "year": 2024,
+    "url": "https://www.nature.com/articles/s41586-024-07500-2",
+    "source_type": "randomized_controlled_trial",
+    "doi": "10.1038/s41586-024-07500-2",
+    "authentic": true
+  },
+  {
+    "id": "REMOTE_STANFORD_EVOLUTION",
+    "title": "The Evolution of Working from Home",
+    "publisher": "Stanford SIEPR",
+    "year": 2023,
+    "url": "https://siepr.stanford.edu/publications/working-paper/evolution-working-home",
+    "source_type": "working_paper",
+    "doi": null,
+    "authentic": true
+  },
+  {
+    "id": "ENERGY_IEA_RENEWABLES",
+    "title": "Renewables 2024",
+    "publisher": "IEA",
+    "year": 2024,
+    "url": "https://www.iea.org/reports/renewables-2024",
+    "source_type": "energy_report",
+    "doi": null,
+    "authentic": true
+  },
+  {
+    "id": "ENERGY_IEA_ELECTRICITY",
+    "title": "Electricity chapter from Renewables 2024",
+    "publisher": "IEA",
+    "year": 2024,
+    "url": "https://www.iea.org/reports/renewables-2024/electricity",
+    "source_type": "energy_report",
+    "doi": null,
+    "authentic": true
+  },
+  {
+    "id": "ENERGY_EMBER_GER",
+    "title": "Global Electricity Review 2024",
+    "publisher": "Ember",
+    "year": 2024,
+    "url": "https://ember-energy.org/latest-insights/global-electricity-review-2024",
+    "source_type": "analysis_report",
+    "doi": null,
+    "authentic": true
+  },
+  {
+    "id": "ENERGY_IRENA_CAPACITY",
+    "title": "Renewable capacity statistics 2024",
+    "publisher": "IRENA",
+    "year": 2024,
+    "url": "https://www.irena.org/Publications/2024/Mar/Renewable-capacity-statistics-2024",
+    "source_type": "statistics_report",
+    "doi": null,
+    "authentic": true
+  }
+]

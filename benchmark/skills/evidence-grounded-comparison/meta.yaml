@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E5-LS2
+environment_id: E5
+latent_skill_id: E5-LS2.evidence-grounded-comparison
+slug: evidence-grounded-comparison
+name: evidence-grounded-comparison
+description: Compare 3-5 options using evidence found in provided source documents. Use this skill when the task is to define comparison dimensions, search source material for evidence on each option, build a comparison matrix with source citations, identify which option is strongest on each dimension, and write a summary recommendation based on the completed matrix. Focus on evidence-based comparison tables built from provided documents.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E5-LS2-T1
+- E5-LS2-T2
+- E5-LS2-T3
+- E5-LS2-T4
+- E5-LS2-T5
+- E5-LS2-T6
+gap_1_summary: 'Statistical-misdirection detection: the curated skill quotes numbers verbatim. ''Grew 300%'' could be 1 → 4 — a small-base effect that doesn''t justify the framing. Surface the absolute numbers alongside the percentages, and flag claims where the base is suspiciously small.'
+gap_2_summary: 'Missing dimensions vs zero: the curated skill builds a comparison table and may treat a missing value as zero. If A has data on `cost` but B doesn''t, B''s row should say ''no data'', not ''0'' — otherwise the recommendation can flip on a phantom advantage. Distinguish absent from zero in every cell.'

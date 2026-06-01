@@ -1,0 +1,23 @@
+schema_version: '1.0'
+task_id: E5-LS4-T4
+task_slug: implicit-ceo-constraint
+environment_id: E5
+family_id: E5-LS4
+latent_skill_id: E5-LS4.constrained-summarization
+task_index: 4
+role: context-shift
+phase: evaluation
+within_family_difficulty_rank: 4
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E5-LS4.constrained-summarization
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types: []
+domain_group: research_synthesis
+review_notes: []

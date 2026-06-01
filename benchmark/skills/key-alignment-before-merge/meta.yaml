@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E3-LS3
+environment_id: E3
+latent_skill_id: E3-LS3.key-alignment-before-merge
+slug: key-alignment-before-merge
+name: key-alignment-before-merge
+description: Align join keys across data sources before merging. Use this skill when two tables or DataFrames need to be joined but the key columns may differ in name, dtype, or string casing. Focus on simple key alignment before merge - column name matching, type matching, case normalization, and basic merge-result validation.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E3-LS3-T1
+- E3-LS3-T2
+- E3-LS3-T3
+- E3-LS3-T4
+- E3-LS3-T5
+- E3-LS3-T6
+gap_1_summary: 'Fuzzy key matching: the curated skill only handles exact key matches. Real datasets contain near-duplicates — `New York` / `NY` / `New York City` / `new york` all refer to the same entity. Use a normalization step (canonical-form lookup or fuzzy string matching with a similarity threshold) before joining.'
+gap_2_summary: 'M:N fan-out control: the curated skill doesn''t distinguish 1:1 / 1:N / M:N joins. An accidental M:N merge can silently inflate row counts (1000 → 50000) and skew every downstream aggregation. Verify cardinality before the merge (`df.duplicated(subset=key).sum()`) and assert the expected row-count change after.'

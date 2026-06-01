@@ -1,0 +1,2 @@
+Analyst note: maybe add histogram buckets someday.
+Not part of the current refactor task.

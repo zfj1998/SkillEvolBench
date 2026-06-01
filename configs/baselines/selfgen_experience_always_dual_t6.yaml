@@ -1,0 +1,46 @@
+# Ablation: selfgen_experience_always + dual-T6 retrieval evaluation.
+#
+# Same as selfgen_experience_always for T1-T5 (always-trigger revisions
+# on same-family scope). At every T6 (composition) the trial runs TWICE:
+#
+#   1. PRIMARY  -- normal embedding retrieval (same-env scope under
+#                  phase_aware default); feeds evaluation_sr +
+#                  t6_composition_rate (the headline metrics).
+#   2. SHADOW   -- OracleRetriever (task spec required_skills); feeds
+#                  t6_oracle_pass_rate + t6_oracle_uplift = SHADOW - PRIMARY.
+#
+# Both trials see the same frozen library, so the uplift is a clean
+# retrieval-only paired delta -- a single run produces the comparison
+# that would otherwise need two separate baselines (and inherit
+# library-content noise across reps).
+#
+# Cost: +30 trials per run (5 T6 / env * 6 envs).
+name: selfgen_experience_always_dual_t6
+description: selfgen_experience_always + dual-T6 (primary embedding + shadow oracle).
+track: path-a
+
+skill_init: empty
+allow_self_gen_induction: true
+allow_zero_shot_creation: false
+allow_curated_inject: false
+
+allow_revision: true
+allow_retirement: false
+allow_quarantine: false
+allow_applicability_narrow: false
+allow_rollback: false
+
+use_skill_library: true
+skill_retrieval_k: 8
+
+feedback_level: process
+feedback_to_skill_text: true
+
+default_strategy: chain
+revision_trigger: always
+max_revisions_per_skill: 8
+
+dual_t6_retrieval: true
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5

@@ -1,0 +1,25 @@
+version = "1.0"
+
+[metadata]
+task_id = "E4-LS2-T4"
+environment = "document-parsing-extraction-transformation"
+skill_id = "E4-LS2"
+skill = "cross-format-migration"
+split = "evaluation"
+role = "context-shift"
+difficulty = "medium"
+gap_exposure = "implicit-readability-transformation"
+
+[verifier]
+timeout_sec = 600.0
+env = { PROJECT_ROOT = "/root/task", HARBOR_LOG_DIR = "/logs/verifier" }
+
+[agent]
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 900.0
+cpus = 1
+memory_mb = 4096
+storage_mb = 10240
+allow_internet = true

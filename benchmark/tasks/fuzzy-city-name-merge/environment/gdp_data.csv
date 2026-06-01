@@ -1,0 +1,75 @@
+city,gdp_billion,major_industry,unemployment_rate,is_test,source
+NYC,$51.7,Finance,2.9,,main
+Los Angeles,  63.4  ,Healthcare,3.2%,,main
+Chicago,  75.1  ,Energy,  3.6%  ,,main
+Houston,  86.8  ,Manufacturing,4.0%,,main
+Phoenix,  98.5  ,Logistics,  4.3%  ,,main
+Phoenix,  101.7  ,Logistics,  3.9%  ,,better duplicate
+Philadelphia,$110.2,Tourism,4.7%,,main
+Philadelphia,NA,Tourism,—,,bad duplicate
+San Antonio,121.9,Education,5.1,,main
+San Diego,133.6,Tech,5.5%,,main
+Dallas,145.3,Finance,5.8,,main
+San  Jose,$157.0,Healthcare,  6.2%  ,,main
+San-Jose,$160.2,Healthcare,5.8,,better duplicate
+Austin,  168.7  ,Energy,6.6,,main
+Jacksonville,$180.4,Manufacturing,6.9%,,main
+Jacksonville,,Manufacturing,—,,bad duplicate
+Ft Worth,192.1,Logistics,7.3%,,main
+Columbus,$203.8,Tourism,  7.7%  ,,main
+Charlotte,215.5,Education,2.5,,main
+Charlotte,  218.7  ,Education,2.1%,,better duplicate
+Indianapolis,$227.2,Tech,2.9%,,main
+San Francisco,238.9,Finance,3.3,,main
+Seattle,$250.6,Healthcare,  3.7%  ,,main
+Seattle,—,Healthcare,—,,bad duplicate
+Denver,  262.3  ,Energy,4.0%,,main
+"Washington, D.C.",  274.0  ,Manufacturing,4.4,,main
+Washington,277.2,Manufacturing,4.0,,better duplicate
+Nashville,$285.7,Logistics,4.8%,,main
+Oklahoma City,  297.4  ,Tourism,5.1%,,main
+El-Paso,  309.1  ,Education,5.5%,,main
+Boston,320.8,Tech,5.9,,main
+Boston,—,Tech,null,,bad duplicate
+Portland,$332.5,Finance,  6.2%  ,,main
+Portland,335.7,Finance,  5.8%  ,,better duplicate
+Las-Vegas,$344.2,Healthcare,6.6,,main
+Memphis,  355.9  ,Energy,7.0%,,main
+Louisville,  367.6  ,Manufacturing,  7.4%  ,,main
+Baltimore,  379.3  ,Logistics,7.7%,,main
+Milwaukee,391.0,Tourism,2.6,,main
+Milwaukee,  394.2  ,Tourism,  2.2%  ,,better duplicate
+Milwaukee,N/A,Tourism,—,,bad duplicate
+Albuquerque,$402.7,Education,3.0%,,main
+Tucson,  414.4  ,Tech,3.3%,,main
+Fresno,$426.1,Finance,3.7%,,main
+Mesa,437.8,Healthcare,4.1%,,main
+Sacramento,$449.5,Energy,  4.4%  ,,main
+Sacramento,$452.7,Energy,  4.0%  ,,better duplicate
+Atlanta,$461.2,Manufacturing,4.8,,main
+Atlanta,,Manufacturing,null,,bad duplicate
+Kansas City,  472.9  ,Logistics,5.2,,main
+Colorado Springs,$484.6,Tourism,  5.6%  ,,main
+Miami,496.3,Education,5.9%,,main
+Raleigh,  508.0  ,Tech,6.3,,main
+Raleigh,$511.2,Tech,5.9,,better duplicate
+Omaha,$519.7,Finance,6.7%,,main
+Long Beach,  531.4  ,Healthcare,  7.0%  ,,main
+Long Beach,None,Healthcare,N/A,,bad duplicate
+Virginia Beach,543.1,Energy,  7.4%  ,,main
+Oakland,  554.8  ,Manufacturing,7.8%,,main
+Minneapolis,566.5,Logistics,  2.6%  ,,main
+Minneapolis,$569.7,Logistics,2.2,,better duplicate
+Tulsa,  578.2  ,Tourism,3.0,,main
+Arlington,$589.9,Education,3.4,,main
+Tampa,$601.6,Tech,  3.8%  ,,main
+Tampa,N/A,Tech,null,,bad duplicate
+New’Orleans,  613.3  ,Finance,4.1%,,main
+Wichita,$625.0,Healthcare,  4.5%  ,,main
+Wichita,628.2,Healthcare,  4.1%  ,,better duplicate
+Saint Louis,  636.7  ,Energy,4.9,,main
+Cleveland,  648.4  ,Manufacturing,  5.2%  ,,main
+# comment row,999.9,Fake,1.0%,,ignore
+... scratch,123.4,Fake,2.0%,,ignore
+,55.5,Fake,3.0%,,ignore
+Sandbox City,88.8,Fake,4.0%,1,ignore

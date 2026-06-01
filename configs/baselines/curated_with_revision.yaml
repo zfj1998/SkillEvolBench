@@ -1,0 +1,26 @@
+# Path B core: curated v0 + experience-driven revision on failure.
+# Used to compute "Revision value" = Curated-with-Revision - Curated-with-Feedback-Memory.
+name: curated_with_revision
+description: Curated v0 + experience-driven revision on failure.
+track: path-b
+
+skill_init: curated
+allow_self_gen_induction: false
+allow_zero_shot_creation: false
+allow_curated_inject: true
+
+allow_revision: true
+allow_retirement: false
+
+use_skill_library: true
+skill_retrieval_k: 8
+
+feedback_level: process
+feedback_to_skill_text: true
+
+default_strategy: chain
+revision_trigger: fail_only
+max_revisions_per_skill: 3
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5

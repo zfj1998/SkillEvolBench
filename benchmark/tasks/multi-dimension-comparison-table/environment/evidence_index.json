@@ -1,0 +1,98 @@
+[
+  {
+    "source_id": "C01",
+    "supported_concepts": [],
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "grounding_note": "Official pricing grid for Sales Cloud editions and key feature availability.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "C02",
+    "supported_concepts": [],
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "grounding_note": "Detailed HubSpot pricing guide with per-seat pricing, onboarding fees, and tier limits.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "C03",
+    "supported_concepts": [],
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "grounding_note": "Salesforce trust documentation entrypoint for certifications and product-level compliance materials.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "C04",
+    "supported_concepts": [],
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "grounding_note": "Explicit Salesforce SOC 2 documentation page.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "C05",
+    "supported_concepts": [],
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "grounding_note": "HubSpot FAQ noting reliance on AWS certifications rather than HubSpot itself holding ISO 27001.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "C06",
+    "supported_concepts": [],
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "grounding_note": "Salesforce says AppExchange has more than 7,000 apps and 10M installs.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "C07",
+    "supported_concepts": [],
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "grounding_note": "Salesforce FAQ describing AppExchange as having millions of installs and thousands of reviews.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "C08",
+    "supported_concepts": [],
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "grounding_note": "Official HubSpot marketplace listing page with app inventory and install counts for popular integrations.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "C09",
+    "supported_concepts": [],
+    "source_type": "vendor_community",
+    "evidence_strength": "medium",
+    "grounding_note": "HubSpot employee post reporting 2,000+ apps and 2.5M+ installs.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "C10",
+    "supported_concepts": [],
+    "source_type": "independent_review",
+    "evidence_strength": "medium",
+    "grounding_note": "Independent review describing Salesforce as powerful and customizable but with a learning curve and premium pricing.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "C11",
+    "supported_concepts": [],
+    "source_type": "independent_review",
+    "evidence_strength": "medium",
+    "grounding_note": "Independent review describing HubSpot as intuitive for SMBs with smoother onboarding but scaling costs.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  },
+  {
+    "source_id": "C12",
+    "supported_concepts": [],
+    "source_type": "vendor_doc",
+    "evidence_strength": "medium",
+    "grounding_note": "HubSpot notes marketplace apps are reviewed and certified by HubSpot's team of developers.",
+    "recommended_use": "Use for claims matching the supported concepts; do not treat the title alone as evidence."
+  }
+]

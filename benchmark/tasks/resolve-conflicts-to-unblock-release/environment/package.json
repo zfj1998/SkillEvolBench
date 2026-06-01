@@ -1,0 +1,19 @@
+{
+<<<<<<< HEAD
+    "name": "myapp",
+    "version": "2.0.1",
+    "description": "My Application",
+=======
+    "name": "myapp",
+    "version": "2.1.0-dev",
+    "description": "My Application",
+>>>>>>> develop
+    "main": "index.js",
+    "scripts": {
+        "test": "pytest public_tests/ -v",
+        "lint": "flake8 src/"
+    },
+    "dependencies": {
+        "flask": "2.3.0"
+    }
+}

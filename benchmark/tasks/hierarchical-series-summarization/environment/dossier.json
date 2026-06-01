@@ -1,0 +1,87 @@
+{
+  "title": "Medical AI series dossier",
+  "sources": [
+    "MED_NATURE_SKIN",
+    "MED_JAMA_DR",
+    "MED_FDA_AI",
+    "MED_WHO_ETHICS",
+    "MED_NASEM_DIAG"
+  ],
+  "articles": [
+    {
+      "id": "a1",
+      "theme": "method",
+      "sections": [
+        {
+          "id": "a1_method_validation",
+          "order": 1,
+          "priority": 5,
+          "summary": "Method article 1 emphasizes validated diagnostic tasks and external checks.",
+          "tags": [
+            "method"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a2",
+      "theme": "method",
+      "sections": [
+        {
+          "id": "a2_method_governance",
+          "order": 1,
+          "priority": 5,
+          "summary": "Method article 2 emphasizes governance, accountability, and scoped deployment.",
+          "tags": [
+            "method"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a3",
+      "theme": "method",
+      "sections": [
+        {
+          "id": "a3_method_monitoring",
+          "order": 1,
+          "priority": 5,
+          "summary": "Method article 3 emphasizes monitoring after deployment and limits of generalization.",
+          "tags": [
+            "method"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a4",
+      "theme": "application",
+      "sections": [
+        {
+          "id": "a4_application_retina",
+          "order": 1,
+          "priority": 5,
+          "summary": "Application article 4 describes retinal-image screening use cases.",
+          "tags": [
+            "application"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a5",
+      "theme": "application",
+      "sections": [
+        {
+          "id": "a5_application_skin",
+          "order": 1,
+          "priority": 5,
+          "summary": "Application article 5 describes visual dermatology classification use cases.",
+          "tags": [
+            "application"
+          ]
+        }
+      ]
+    }
+  ]
+}

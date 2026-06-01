@@ -1,0 +1,55 @@
+================================================================================
+Analytics Processing Service — Error Log (excerpt)
+Captured: 2025-06-10 14:00 – 14:35 UTC   (peak traffic window)
+================================================================================
+
+--- entry 1 ----------------------------------------------------------------
+2025-06-10 14:12:03,417 [ERROR] flask.app: Unhandled exception on POST /api/process
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/flask/app.py", line 1478, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "/usr/lib/python3.11/site-packages/flask/app.py", line 1458, in wsgi_app
+    response = self.handle_exception(e)
+  File "/usr/lib/python3.11/site-packages/flask/app.py", line 1455, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/usr/lib/python3.11/site-packages/flask/app.py", line 869, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/usr/lib/python3.11/site-packages/flask/app.py", line 851, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+  File "/app/routes.py", line 79, in handle_process
+    result = process_data(computation_payload)
+  File "/app/utils.py", line 70, in process_data
+    _release_slot(computation_id)
+  File "/app/utils.py", line 109, in _release_slot
+    start_ts = _slot_registry[computation_id]
+KeyError: 'cmp_171819072_a3e1f09b2c4d7810'
+
+--- entry 2 ----------------------------------------------------------------
+2025-06-10 14:27:51,092 [ERROR] flask.app: Unhandled exception on POST /api/process
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/flask/app.py", line 1478, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "/usr/lib/python3.11/site-packages/flask/app.py", line 1458, in wsgi_app
+    response = self.handle_exception(e)
+  File "/usr/lib/python3.11/site-packages/flask/app.py", line 1455, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/usr/lib/python3.11/site-packages/flask/app.py", line 869, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/usr/lib/python3.11/site-packages/flask/app.py", line 851, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+  File "/app/routes.py", line 79, in handle_process
+    result = process_data(computation_payload)
+  File "/app/utils.py", line 70, in process_data
+    _release_slot(computation_id)
+  File "/app/utils.py", line 109, in _release_slot
+    start_ts = _slot_registry[computation_id]
+KeyError: 'cmp_171819095_7bf20e4a9c316d52'
+
+================================================================================
+Summary:  2 errors captured in a 35-minute window during peak traffic
+          (estimated ~2,100 total requests in the same period).
+          No errors observed outside peak hours.
+Ops note: errors mostly appeared when multiple dashboard refreshes hit the
+          same analytics query at nearly the same time after the pricing-window
+          coalescing optimization was enabled last sprint.
+================================================================================

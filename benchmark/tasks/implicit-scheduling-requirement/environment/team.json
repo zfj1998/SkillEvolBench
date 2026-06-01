@@ -1,0 +1,23 @@
+{
+  "team": [
+    {
+      "id": "alice"
+    },
+    {
+      "id": "bob"
+    },
+    {
+      "id": "charlie"
+    },
+    {
+      "id": "diana"
+    },
+    {
+      "id": "eli"
+    },
+    {
+      "id": "fatima"
+    }
+  ],
+  "source": "team.json"
+}

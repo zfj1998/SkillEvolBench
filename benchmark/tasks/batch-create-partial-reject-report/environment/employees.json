@@ -1,0 +1,12 @@
+[
+  {"name": "Alice", "email": "alice@example.com", "username": "alice"},
+  {"name": "Bob", "email": "bob@example.com", "username": "bob"},
+  {"name": "Cara", "email": "cara@example.com", "username": "cara"},
+  {"name": "Dan", "email": "dan@example.com", "username": "dan"},
+  {"email": "missing-name@example.com", "username": "missing_name"},
+  {"name": "NoEmail", "username": "no_email"},
+  {"name": "Dup", "email": "dup@example.com", "username": "alice"},
+  {"name": "BadEmail", "email": "bad-email", "username": "bad_email"},
+  {"name": "", "email": "empty@example.com", "username": "empty_name"},
+  {"name": "BadEmail2", "email": "oops", "username": "bad_email_2"}
+]

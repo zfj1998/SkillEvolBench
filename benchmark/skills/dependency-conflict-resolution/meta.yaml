@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E1-LS2
+environment_id: E1
+latent_skill_id: E1-LS2.dependency-conflict-resolution
+slug: dependency-conflict-resolution
+name: dependency-conflict-resolution
+description: Diagnose and resolve Python package version conflicts in pip-based projects. Use this skill when `pip install` fails with resolver errors, when `pip check` reports incompatible versions, or when a Python project's dependency graph contains conflicting version constraints that must be reconciled in `requirements.txt` or `pyproject.toml`. Focus on single-project pip workflows with explicit version conflicts and shared dependencies.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E1-LS2-T1
+- E1-LS2-T2
+- E1-LS2-T3
+- E1-LS2-T4
+- E1-LS2-T5
+- E1-LS2-T6
+gap_1_summary: 'npm peer dependencies: the curated skill covers pip''s direct conflicts only. npm''s peer-dep model, ERESOLVE errors, and the `--force` trap (which ''fixes'' the install but leaves a runtime time bomb) need a separate playbook. Resolve peer deps by aligning shared frameworks, not by silencing the resolver.'
+gap_2_summary: 'Monorepo cross-package coordination: the curated skill assumes a single `requirements.txt`. In a monorepo workspace, packages share dependencies through the workspace root and a fix in one package can break a sibling. Treat the whole workspace as a single resolution unit.'

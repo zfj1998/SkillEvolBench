@@ -1,0 +1,23 @@
+# Model preset: Claude Sonnet 4.6 via Bedrock Invoke API.
+# Loaded by scripts/run.py via --model-yaml; overrides
+# baseline.harbor_agent_name + baseline.model_name and exports
+# the corresponding env vars to the container.
+
+name: claude-sonnet-4.6
+short_id: sonnet-4-6      # used in run_id
+provider: bedrock
+harbor_agent_name: claude-code
+# Bedrock requires the cross-region inference-profile id; litellm-style
+# ``anthropic/<bare>`` is rejected (see claude-opus-4.5.yaml comment).
+# 4.6 series has no version-suffix (``-v1``) at this time.
+agent_model_name: us.anthropic.claude-sonnet-4-6
+
+agent_env:
+  CLAUDE_CODE_USE_BEDROCK: "1"
+  ANTHROPIC_DEFAULT_SONNET_MODEL: us.anthropic.claude-sonnet-4-6
+
+# Host-side LiteLLMClient routing (for LLMSelfRetriever / SkillAuthor / Judge):
+host_litellm:
+  model: bedrock/us.anthropic.claude-sonnet-4-6
+  # Bedrock auto-reads AWS_BEARER_TOKEN_BEDROCK + AWS_REGION from env;
+  # no api_base / api_key needed.

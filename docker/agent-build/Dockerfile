@@ -1,0 +1,39 @@
+FROM ubuntu:24.04
+
+ARG NODE_VERSION=22
+ARG NVM_VERSION=v0.40.2
+ARG CLAUDE_CODE_VERSION=latest
+ARG GEMINI_CLI_VERSION=latest
+ARG CODEX_CLI_VERSION=latest
+ARG KIMI_CLI_VERSION=latest
+ARG OPENCLAW_VERSION=latest
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    HOME=/root \
+    NVM_DIR=/root/.nvm \
+    NODE_ENV=production \
+    NPM_CONFIG_UPDATE_NOTIFIER=false \
+    NPM_CONFIG_FUND=false \
+    NPM_CONFIG_AUDIT=false \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    OPENCLAW_PLUGIN_STAGE_DIR=/opt/openclaw-plugin-stage \
+    AGENT_RUNTIME=1 \
+    AGENT_RUNTIME_IMAGE=agent-runtime
+
+ENV PATH=/root/.local/bin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+COPY install-agent-runtime.sh /tmp/install-agent-runtime.sh
+
+RUN chmod +x /tmp/install-agent-runtime.sh \
+    && NODE_VERSION="$NODE_VERSION" \
+       NVM_VERSION="$NVM_VERSION" \
+       CLAUDE_CODE_VERSION="$CLAUDE_CODE_VERSION" \
+       GEMINI_CLI_VERSION="$GEMINI_CLI_VERSION" \
+       CODEX_CLI_VERSION="$CODEX_CLI_VERSION" \
+       KIMI_CLI_VERSION="$KIMI_CLI_VERSION" \
+       OPENCLAW_VERSION="$OPENCLAW_VERSION" \
+       /tmp/install-agent-runtime.sh \
+    && rm -f /tmp/install-agent-runtime.sh
+
+WORKDIR /workspace

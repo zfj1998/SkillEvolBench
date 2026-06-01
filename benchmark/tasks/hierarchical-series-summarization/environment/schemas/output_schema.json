@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "summary output",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [],
+  "properties": {
+    "text": {
+      "type": "string"
+    },
+    "selected_sections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "word_count": {
+      "type": "integer"
+    },
+    "summaries": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "article_summaries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "selected_sections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "word_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "text",
+          "selected_sections",
+          "word_count"
+        ]
+      }
+    },
+    "group_summaries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "selected_sections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "word_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "text",
+          "selected_sections",
+          "word_count"
+        ]
+      }
+    },
+    "overall_summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "selected_sections": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "word_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "text",
+        "selected_sections",
+        "word_count"
+      ]
+    }
+  }
+}

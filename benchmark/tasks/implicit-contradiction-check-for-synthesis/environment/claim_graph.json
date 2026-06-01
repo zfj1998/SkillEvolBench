@@ -1,0 +1,115 @@
+{
+  "claims": [
+    {
+      "id": "g1",
+      "doc": "growth_note",
+      "entity": "Revenue",
+      "metric": "growth",
+      "period": "2023",
+      "scope": "global",
+      "value": 20,
+      "polarity": null,
+      "quote": "Revenue grew 20% in 2023."
+    },
+    {
+      "id": "t1",
+      "doc": "trend_note",
+      "entity": "Revenue",
+      "metric": "trend",
+      "period": "2021-2023",
+      "scope": "global",
+      "value": "decline",
+      "polarity": null,
+      "quote": "Revenue declined every year from 2021 through 2023."
+    },
+    {
+      "id": "c1",
+      "doc": "cost_note_a",
+      "entity": "Migration program",
+      "metric": "cost",
+      "period": "post_implementation",
+      "scope": "global",
+      "value": "lower",
+      "polarity": null,
+      "quote": "After implementation, operating costs decreased."
+    },
+    {
+      "id": "c2",
+      "doc": "cost_note_b",
+      "entity": "Migration program",
+      "metric": "budget",
+      "period": "before_after",
+      "scope": "global",
+      "value": "same",
+      "polarity": null,
+      "quote": "The before and after operating budgets were identical."
+    },
+    {
+      "id": "m1",
+      "doc": "positioning_note_a",
+      "entity": "Vendor Z",
+      "metric": "market_position",
+      "period": "2024",
+      "scope": "global",
+      "value": "leader",
+      "polarity": null,
+      "quote": "Vendor Z is the market leader."
+    },
+    {
+      "id": "m2",
+      "doc": "positioning_note_b",
+      "entity": "Vendor Z",
+      "metric": "market_share",
+      "period": "2024",
+      "scope": "global",
+      "value": 8,
+      "polarity": null,
+      "quote": "Vendor Z holds only 8% market share."
+    },
+    {
+      "id": "ok1",
+      "doc": "context_note",
+      "entity": "Hybrid work",
+      "metric": "performance",
+      "period": "2024",
+      "scope": "Trip.com",
+      "value": "neutral",
+      "polarity": null,
+      "quote": "Hybrid work did not damage measured performance."
+    },
+    {
+      "id": "ok2",
+      "doc": "context_note",
+      "entity": "Hybrid work",
+      "metric": "retention",
+      "period": "2024",
+      "scope": "Trip.com",
+      "value": "better",
+      "polarity": null,
+      "quote": "Hybrid work improved retention."
+    }
+  ],
+  "candidate_pairs": [
+    {
+      "id": "p_growth_timeline",
+      "left": "g1",
+      "right": "t1"
+    },
+    {
+      "id": "p_cost_budget",
+      "left": "c1",
+      "right": "c2"
+    },
+    {
+      "id": "p_leader_share",
+      "left": "m1",
+      "right": "m2"
+    },
+    {
+      "id": "p_hybrid_nonconflict",
+      "left": "ok1",
+      "right": "ok2"
+    }
+  ],
+  "task_mode": "synthesis"
+}

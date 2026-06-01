@@ -1,0 +1,80 @@
+[
+  {
+    "source_id": "MED_NATURE_SKIN",
+    "source_type": "peer_reviewed_study",
+    "grounding_note": "Nature paper on deep neural networks for skin-cancer image classification; it does not claim universal diagnosis for all cancers.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  },
+  {
+    "source_id": "MED_JAMA_DR",
+    "source_type": "peer_reviewed_study",
+    "grounding_note": "JAMA validation study for diabetic retinopathy detection in retinal fundus photographs; the scope is image-based screening.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  },
+  {
+    "source_id": "MED_FDA_AI",
+    "source_type": "regulatory_reference",
+    "grounding_note": "FDA list and overview for AI-enabled medical devices authorized for marketing in the United States.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  },
+  {
+    "source_id": "MED_WHO_ETHICS",
+    "source_type": "policy_guidance",
+    "grounding_note": "WHO guidance says AI for health has promise but must put ethics and human rights at the heart of design, deployment, and use.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  },
+  {
+    "source_id": "MED_NASEM_DIAG",
+    "source_type": "consensus_report",
+    "grounding_note": "Consensus report on diagnostic error and improving the diagnostic process across care settings.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  },
+  {
+    "source_id": "REMOTE_NATURE_HYBRID",
+    "source_type": "randomized_controlled_trial",
+    "grounding_note": "Trip.com randomized experiment found hybrid work reduced quit rates by about one-third and did not damage performance grades; it is not evidence of a universal 30% productivity gain.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  },
+  {
+    "source_id": "REMOTE_STANFORD_EVOLUTION",
+    "source_type": "working_paper",
+    "grounding_note": "Research synthesis distinguishing hybrid schedules from fully remote work and emphasizing variation by task and work arrangement.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  },
+  {
+    "source_id": "ENERGY_IEA_RENEWABLES",
+    "source_type": "energy_report",
+    "grounding_note": "IEA flagship report forecasting renewable growth through 2030 and highlighting the policy gap to tripling targets.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  },
+  {
+    "source_id": "ENERGY_IEA_ELECTRICITY",
+    "source_type": "energy_report",
+    "grounding_note": "IEA electricity chapter says solar PV and wind are forecast to account for 95% of renewable capacity additions through 2030.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  },
+  {
+    "source_id": "ENERGY_EMBER_GER",
+    "source_type": "analysis_report",
+    "grounding_note": "Ember reports renewables generated a record 30% of global electricity in 2023, driven by wind and solar.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  },
+  {
+    "source_id": "ENERGY_IRENA_CAPACITY",
+    "source_type": "statistics_report",
+    "grounding_note": "IRENA statistical report on renewable capacity additions and regional distribution.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  },
+  {
+    "source_id": "FAKE_REMOTE_DOI",
+    "source_type": "fake_citation",
+    "grounding_note": "Fabricated citation with plausible DOI-like metadata; no real source supplied in the registry.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  },
+  {
+    "source_id": "FAKE_SKIN_TABLE",
+    "source_type": "fake_citation",
+    "grounding_note": "Fabricated near-match citation; confused with the real Nature skin-cancer paper but asserts a table that is not part of the source.",
+    "recommended_use": "Use this source for the scoped claim described in grounding_note; preserve source limitations."
+  }
+]

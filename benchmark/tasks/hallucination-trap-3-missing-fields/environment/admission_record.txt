@@ -1,0 +1,17 @@
+Admission Record
+
+Patient Name: Martin Hale
+Patient ID: PT-90017
+Date of Birth: 1984-11-23
+Admission Date: 2026-04-02
+Diagnosis: Community-acquired pneumonia
+Attending Physician: Dr. Leena Shah
+Room: 5C-12
+Medications: ceftriaxone; azithromycin
+Insurance Provider: Meridian Health Plan
+
+Notes:
+Patient arrived unaccompanied.
+Prior transfusion history unavailable.
+No emergency contact was provided at intake.
+No allergy list was recorded in this document.

@@ -1,0 +1,42 @@
+[
+  {
+    "citation_id": "F01",
+    "source_id": "ENERGY_IEA_RENEWABLES",
+    "article_claim": "IEA forecasts strong renewable growth through 2030."
+  },
+  {
+    "citation_id": "F02",
+    "source_id": "ENERGY_IEA_ELECTRICITY",
+    "article_claim": "IEA says solar PV and wind account for most renewable capacity additions."
+  },
+  {
+    "citation_id": "F03",
+    "source_id": "ENERGY_EMBER_GER",
+    "article_claim": "Renewables generated about 30% of global electricity in 2023."
+  },
+  {
+    "citation_id": "F04",
+    "source_id": "ENERGY_IRENA_CAPACITY",
+    "article_claim": "IRENA reports renewable capacity statistics by region."
+  },
+  {
+    "citation_id": "F05",
+    "source_id": "MED_FDA_AI",
+    "article_claim": "FDA maintains AI-enabled medical device authorization information."
+  },
+  {
+    "citation_id": "F06",
+    "source_id": "REMOTE_NATURE_HYBRID",
+    "article_claim": "Hybrid work cuts office rent by half in every company."
+  },
+  {
+    "citation_id": "F07",
+    "source_id": "ENERGY_IEA_RENEWABLES",
+    "article_claim": "IEA says renewables already supply 80% of all global final energy."
+  },
+  {
+    "citation_id": "F08",
+    "source_id": "FAKE_REMOTE_DOI",
+    "article_claim": "A 2024 Journal of Workplace Futures study proves universal remote productivity gains."
+  }
+]

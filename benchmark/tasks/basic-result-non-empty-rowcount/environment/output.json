@@ -1,0 +1,3724 @@
+{
+  "category": "Electronics",
+  "row_count": 530,
+  "average_price": 938.15,
+  "total_stock": 65554,
+  "rowcount_audit": {
+    "expected_min": 450,
+    "expected_max": 1200,
+    "rowcount_reasonable": true
+  },
+  "requery_performed": false,
+  "records": [
+    {
+      "id": 88,
+      "name": "Electronics_Item_0088",
+      "category": "electronics",
+      "price": 1127.05,
+      "stock_quantity": 222
+    },
+    {
+      "id": 91,
+      "name": "Electronics_Item_0091",
+      "category": "electronics",
+      "price": 118.76,
+      "stock_quantity": 149
+    },
+    {
+      "id": 94,
+      "name": "Electronics_Item_0094",
+      "category": "electronics",
+      "price": 1548.06,
+      "stock_quantity": 136
+    },
+    {
+      "id": 95,
+      "name": "Electronics_Item_0095",
+      "category": "electronics",
+      "price": 436.91,
+      "stock_quantity": 199
+    },
+    {
+      "id": 96,
+      "name": "Electronics_Item_0096",
+      "category": "electronics",
+      "price": 251.26,
+      "stock_quantity": 58
+    },
+    {
+      "id": 99,
+      "name": "Electronics_Item_0099",
+      "category": "electronics",
+      "price": 1296.89,
+      "stock_quantity": 160
+    },
+    {
+      "id": 100,
+      "name": "Electronics_Item_0100",
+      "category": "electronics",
+      "price": 911.83,
+      "stock_quantity": 183
+    },
+    {
+      "id": 101,
+      "name": "Electronics_Item_0101",
+      "category": "electronics",
+      "price": 461.1,
+      "stock_quantity": 240
+    },
+    {
+      "id": 102,
+      "name": "Electronics_Item_0102",
+      "category": "electronics",
+      "price": 1581.88,
+      "stock_quantity": 220
+    },
+    {
+      "id": 107,
+      "name": "Electronics_Item_0107",
+      "category": "electronics",
+      "price": 420.22,
+      "stock_quantity": 106
+    },
+    {
+      "id": 108,
+      "name": "Electronics_Item_0108",
+      "category": "electronics",
+      "price": 1131.65,
+      "stock_quantity": 121
+    },
+    {
+      "id": 109,
+      "name": "Electronics_Item_0109",
+      "category": "electronics",
+      "price": 599.0,
+      "stock_quantity": 73
+    },
+    {
+      "id": 113,
+      "name": "Electronics_Item_0113",
+      "category": "electronics",
+      "price": 1335.18,
+      "stock_quantity": 22
+    },
+    {
+      "id": 115,
+      "name": "Electronics_Item_0115",
+      "category": "electronics",
+      "price": 597.65,
+      "stock_quantity": 28
+    },
+    {
+      "id": 116,
+      "name": "Electronics_Item_0116",
+      "category": "electronics",
+      "price": 1783.16,
+      "stock_quantity": 81
+    },
+    {
+      "id": 117,
+      "name": "Electronics_Item_0117",
+      "category": "electronics",
+      "price": 1653.21,
+      "stock_quantity": 173
+    },
+    {
+      "id": 118,
+      "name": "Electronics_Item_0118",
+      "category": "electronics",
+      "price": 1126.7,
+      "stock_quantity": 190
+    },
+    {
+      "id": 119,
+      "name": "Electronics_Item_0119",
+      "category": "electronics",
+      "price": 178.19,
+      "stock_quantity": 9
+    },
+    {
+      "id": 122,
+      "name": "Electronics_Item_0122",
+      "category": "electronics",
+      "price": 1493.13,
+      "stock_quantity": 59
+    },
+    {
+      "id": 123,
+      "name": "Electronics_Item_0123",
+      "category": "electronics",
+      "price": 414.71,
+      "stock_quantity": 64
+    },
+    {
+      "id": 125,
+      "name": "Electronics_Item_0125",
+      "category": "electronics",
+      "price": 419.25,
+      "stock_quantity": 63
+    },
+    {
+      "id": 127,
+      "name": "Electronics_Item_0127",
+      "category": "electronics",
+      "price": 899.34,
+      "stock_quantity": 137
+    },
+    {
+      "id": 130,
+      "name": "Electronics_Item_0130",
+      "category": "electronics",
+      "price": 528.82,
+      "stock_quantity": 212
+    },
+    {
+      "id": 133,
+      "name": "Electronics_Item_0133",
+      "category": "electronics",
+      "price": 342.96,
+      "stock_quantity": 177
+    },
+    {
+      "id": 137,
+      "name": "Electronics_Item_0137",
+      "category": "electronics",
+      "price": 1179.67,
+      "stock_quantity": 66
+    },
+    {
+      "id": 138,
+      "name": "Electronics_Item_0138",
+      "category": "electronics",
+      "price": 337.85,
+      "stock_quantity": 224
+    },
+    {
+      "id": 140,
+      "name": "Electronics_Item_0140",
+      "category": "electronics",
+      "price": 1335.15,
+      "stock_quantity": 35
+    },
+    {
+      "id": 142,
+      "name": "Electronics_Item_0142",
+      "category": "electronics",
+      "price": 448.41,
+      "stock_quantity": 232
+    },
+    {
+      "id": 143,
+      "name": "Electronics_Item_0143",
+      "category": "electronics",
+      "price": 1434.23,
+      "stock_quantity": 54
+    },
+    {
+      "id": 146,
+      "name": "Electronics_Item_0146",
+      "category": "electronics",
+      "price": 1791.67,
+      "stock_quantity": 55
+    },
+    {
+      "id": 147,
+      "name": "Electronics_Item_0147",
+      "category": "electronics",
+      "price": 1285.27,
+      "stock_quantity": 113
+    },
+    {
+      "id": 149,
+      "name": "Electronics_Item_0149",
+      "category": "electronics",
+      "price": 348.23,
+      "stock_quantity": 151
+    },
+    {
+      "id": 151,
+      "name": "Electronics_Item_0151",
+      "category": "electronics",
+      "price": 71.51,
+      "stock_quantity": 166
+    },
+    {
+      "id": 152,
+      "name": "Electronics_Item_0152",
+      "category": "electronics",
+      "price": 890.1,
+      "stock_quantity": 159
+    },
+    {
+      "id": 153,
+      "name": "Electronics_Item_0153",
+      "category": "electronics",
+      "price": 271.29,
+      "stock_quantity": 17
+    },
+    {
+      "id": 154,
+      "name": "Electronics_Item_0154",
+      "category": "electronics",
+      "price": 1629.07,
+      "stock_quantity": 84
+    },
+    {
+      "id": 155,
+      "name": "Electronics_Item_0155",
+      "category": "electronics",
+      "price": 1399.82,
+      "stock_quantity": 3
+    },
+    {
+      "id": 156,
+      "name": "Electronics_Item_0156",
+      "category": "electronics",
+      "price": 650.83,
+      "stock_quantity": 57
+    },
+    {
+      "id": 157,
+      "name": "Electronics_Item_0157",
+      "category": "electronics",
+      "price": 288.8,
+      "stock_quantity": 175
+    },
+    {
+      "id": 158,
+      "name": "Electronics_Item_0158",
+      "category": "electronics",
+      "price": 116.75,
+      "stock_quantity": 49
+    },
+    {
+      "id": 159,
+      "name": "Electronics_Item_0159",
+      "category": "electronics",
+      "price": 935.08,
+      "stock_quantity": 99
+    },
+    {
+      "id": 160,
+      "name": "Electronics_Item_0160",
+      "category": "electronics",
+      "price": 649.31,
+      "stock_quantity": 55
+    },
+    {
+      "id": 161,
+      "name": "Electronics_Item_0161",
+      "category": "electronics",
+      "price": 993.12,
+      "stock_quantity": 134
+    },
+    {
+      "id": 162,
+      "name": "Electronics_Item_0162",
+      "category": "electronics",
+      "price": 1014.22,
+      "stock_quantity": 215
+    },
+    {
+      "id": 164,
+      "name": "Electronics_Item_0164",
+      "category": "electronics",
+      "price": 665.0,
+      "stock_quantity": 70
+    },
+    {
+      "id": 165,
+      "name": "Electronics_Item_0165",
+      "category": "electronics",
+      "price": 202.56,
+      "stock_quantity": 51
+    },
+    {
+      "id": 166,
+      "name": "Electronics_Item_0166",
+      "category": "electronics",
+      "price": 1002.55,
+      "stock_quantity": 190
+    },
+    {
+      "id": 168,
+      "name": "Electronics_Item_0168",
+      "category": "electronics",
+      "price": 882.21,
+      "stock_quantity": 229
+    },
+    {
+      "id": 169,
+      "name": "Electronics_Item_0169",
+      "category": "electronics",
+      "price": 102.05,
+      "stock_quantity": 127
+    },
+    {
+      "id": 170,
+      "name": "Electronics_Item_0170",
+      "category": "electronics",
+      "price": 271.01,
+      "stock_quantity": 27
+    },
+    {
+      "id": 171,
+      "name": "Electronics_Item_0171",
+      "category": "electronics",
+      "price": 183.83,
+      "stock_quantity": 58
+    },
+    {
+      "id": 176,
+      "name": "Electronics_Item_0176",
+      "category": "electronics",
+      "price": 1535.18,
+      "stock_quantity": 212
+    },
+    {
+      "id": 177,
+      "name": "Electronics_Item_0177",
+      "category": "electronics",
+      "price": 1415.21,
+      "stock_quantity": 250
+    },
+    {
+      "id": 179,
+      "name": "Electronics_Item_0179",
+      "category": "electronics",
+      "price": 253.03,
+      "stock_quantity": 16
+    },
+    {
+      "id": 180,
+      "name": "Electronics_Item_0180",
+      "category": "electronics",
+      "price": 488.96,
+      "stock_quantity": 164
+    },
+    {
+      "id": 181,
+      "name": "Electronics_Item_0181",
+      "category": "electronics",
+      "price": 1029.51,
+      "stock_quantity": 10
+    },
+    {
+      "id": 182,
+      "name": "Electronics_Item_0182",
+      "category": "electronics",
+      "price": 1136.83,
+      "stock_quantity": 28
+    },
+    {
+      "id": 183,
+      "name": "Electronics_Item_0183",
+      "category": "electronics",
+      "price": 1715.04,
+      "stock_quantity": 136
+    },
+    {
+      "id": 184,
+      "name": "Electronics_Item_0184",
+      "category": "electronics",
+      "price": 1681.43,
+      "stock_quantity": 181
+    },
+    {
+      "id": 186,
+      "name": "Electronics_Item_0186",
+      "category": "electronics",
+      "price": 1428.34,
+      "stock_quantity": 90
+    },
+    {
+      "id": 188,
+      "name": "Electronics_Item_0188",
+      "category": "electronics",
+      "price": 1078.6,
+      "stock_quantity": 238
+    },
+    {
+      "id": 189,
+      "name": "Electronics_Item_0189",
+      "category": "electronics",
+      "price": 1574.25,
+      "stock_quantity": 239
+    },
+    {
+      "id": 191,
+      "name": "Electronics_Item_0191",
+      "category": "electronics",
+      "price": 1112.02,
+      "stock_quantity": 181
+    },
+    {
+      "id": 192,
+      "name": "Electronics_Item_0192",
+      "category": "electronics",
+      "price": 1427.29,
+      "stock_quantity": 81
+    },
+    {
+      "id": 194,
+      "name": "Electronics_Item_0194",
+      "category": "electronics",
+      "price": 1247.74,
+      "stock_quantity": 206
+    },
+    {
+      "id": 198,
+      "name": "Electronics_Item_0198",
+      "category": "electronics",
+      "price": 1252.66,
+      "stock_quantity": 96
+    },
+    {
+      "id": 200,
+      "name": "Electronics_Item_0200",
+      "category": "electronics",
+      "price": 235.08,
+      "stock_quantity": 8
+    },
+    {
+      "id": 201,
+      "name": "Electronics_Item_0201",
+      "category": "electronics",
+      "price": 191.17,
+      "stock_quantity": 130
+    },
+    {
+      "id": 202,
+      "name": "Electronics_Item_0202",
+      "category": "electronics",
+      "price": 186.3,
+      "stock_quantity": 48
+    },
+    {
+      "id": 204,
+      "name": "Electronics_Item_0204",
+      "category": "electronics",
+      "price": 1728.89,
+      "stock_quantity": 205
+    },
+    {
+      "id": 206,
+      "name": "Electronics_Item_0206",
+      "category": "electronics",
+      "price": 1184.17,
+      "stock_quantity": 139
+    },
+    {
+      "id": 208,
+      "name": "Electronics_Item_0208",
+      "category": "electronics",
+      "price": 1169.97,
+      "stock_quantity": 215
+    },
+    {
+      "id": 211,
+      "name": "Electronics_Item_0211",
+      "category": "electronics",
+      "price": 993.58,
+      "stock_quantity": 19
+    },
+    {
+      "id": 213,
+      "name": "Electronics_Item_0213",
+      "category": "electronics",
+      "price": 1705.96,
+      "stock_quantity": 179
+    },
+    {
+      "id": 214,
+      "name": "Electronics_Item_0214",
+      "category": "electronics",
+      "price": 262.4,
+      "stock_quantity": 20
+    },
+    {
+      "id": 215,
+      "name": "Electronics_Item_0215",
+      "category": "electronics",
+      "price": 864.2,
+      "stock_quantity": 179
+    },
+    {
+      "id": 217,
+      "name": "Electronics_Item_0217",
+      "category": "electronics",
+      "price": 1256.23,
+      "stock_quantity": 64
+    },
+    {
+      "id": 219,
+      "name": "Electronics_Item_0219",
+      "category": "electronics",
+      "price": 119.57,
+      "stock_quantity": 37
+    },
+    {
+      "id": 220,
+      "name": "Electronics_Item_0220",
+      "category": "electronics",
+      "price": 1450.51,
+      "stock_quantity": 206
+    },
+    {
+      "id": 221,
+      "name": "Electronics_Item_0221",
+      "category": "electronics",
+      "price": 841.13,
+      "stock_quantity": 159
+    },
+    {
+      "id": 224,
+      "name": "Electronics_Item_0224",
+      "category": "electronics",
+      "price": 949.46,
+      "stock_quantity": 34
+    },
+    {
+      "id": 225,
+      "name": "Electronics_Item_0225",
+      "category": "electronics",
+      "price": 882.35,
+      "stock_quantity": 114
+    },
+    {
+      "id": 227,
+      "name": "Electronics_Item_0227",
+      "category": "electronics",
+      "price": 438.43,
+      "stock_quantity": 11
+    },
+    {
+      "id": 229,
+      "name": "Electronics_Item_0229",
+      "category": "electronics",
+      "price": 942.93,
+      "stock_quantity": 12
+    },
+    {
+      "id": 230,
+      "name": "Electronics_Item_0230",
+      "category": "electronics",
+      "price": 1657.46,
+      "stock_quantity": 87
+    },
+    {
+      "id": 231,
+      "name": "Electronics_Item_0231",
+      "category": "electronics",
+      "price": 354.24,
+      "stock_quantity": 60
+    },
+    {
+      "id": 233,
+      "name": "Electronics_Item_0233",
+      "category": "electronics",
+      "price": 786.68,
+      "stock_quantity": 192
+    },
+    {
+      "id": 234,
+      "name": "Electronics_Item_0234",
+      "category": "electronics",
+      "price": 1097.07,
+      "stock_quantity": 98
+    },
+    {
+      "id": 235,
+      "name": "Electronics_Item_0235",
+      "category": "electronics",
+      "price": 36.82,
+      "stock_quantity": 53
+    },
+    {
+      "id": 236,
+      "name": "Electronics_Item_0236",
+      "category": "electronics",
+      "price": 294.19,
+      "stock_quantity": 215
+    },
+    {
+      "id": 237,
+      "name": "Electronics_Item_0237",
+      "category": "electronics",
+      "price": 1675.7,
+      "stock_quantity": 247
+    },
+    {
+      "id": 240,
+      "name": "Electronics_Item_0240",
+      "category": "electronics",
+      "price": 197.56,
+      "stock_quantity": 123
+    },
+    {
+      "id": 242,
+      "name": "Electronics_Item_0242",
+      "category": "electronics",
+      "price": 673.3,
+      "stock_quantity": 145
+    },
+    {
+      "id": 245,
+      "name": "Electronics_Item_0245",
+      "category": "electronics",
+      "price": 1046.12,
+      "stock_quantity": 110
+    },
+    {
+      "id": 246,
+      "name": "Electronics_Item_0246",
+      "category": "electronics",
+      "price": 710.29,
+      "stock_quantity": 87
+    },
+    {
+      "id": 250,
+      "name": "Electronics_Item_0250",
+      "category": "electronics",
+      "price": 1511.49,
+      "stock_quantity": 33
+    },
+    {
+      "id": 252,
+      "name": "Electronics_Item_0252",
+      "category": "electronics",
+      "price": 505.48,
+      "stock_quantity": 2
+    },
+    {
+      "id": 253,
+      "name": "Electronics_Item_0253",
+      "category": "electronics",
+      "price": 1428.54,
+      "stock_quantity": 247
+    },
+    {
+      "id": 254,
+      "name": "Electronics_Item_0254",
+      "category": "electronics",
+      "price": 766.95,
+      "stock_quantity": 227
+    },
+    {
+      "id": 256,
+      "name": "Electronics_Item_0256",
+      "category": "electronics",
+      "price": 1599.11,
+      "stock_quantity": 61
+    },
+    {
+      "id": 257,
+      "name": "Electronics_Item_0257",
+      "category": "electronics",
+      "price": 1080.61,
+      "stock_quantity": 109
+    },
+    {
+      "id": 258,
+      "name": "Electronics_Item_0258",
+      "category": "electronics",
+      "price": 1023.91,
+      "stock_quantity": 217
+    },
+    {
+      "id": 259,
+      "name": "Electronics_Item_0259",
+      "category": "electronics",
+      "price": 67.18,
+      "stock_quantity": 153
+    },
+    {
+      "id": 260,
+      "name": "Electronics_Item_0260",
+      "category": "electronics",
+      "price": 996.66,
+      "stock_quantity": 80
+    },
+    {
+      "id": 261,
+      "name": "Electronics_Item_0261",
+      "category": "electronics",
+      "price": 84.61,
+      "stock_quantity": 245
+    },
+    {
+      "id": 263,
+      "name": "Electronics_Item_0263",
+      "category": "electronics",
+      "price": 833.69,
+      "stock_quantity": 180
+    },
+    {
+      "id": 264,
+      "name": "Electronics_Item_0264",
+      "category": "electronics",
+      "price": 1445.47,
+      "stock_quantity": 179
+    },
+    {
+      "id": 265,
+      "name": "Electronics_Item_0265",
+      "category": "electronics",
+      "price": 958.05,
+      "stock_quantity": 23
+    },
+    {
+      "id": 266,
+      "name": "Electronics_Item_0266",
+      "category": "electronics",
+      "price": 1056.99,
+      "stock_quantity": 218
+    },
+    {
+      "id": 267,
+      "name": "Electronics_Item_0267",
+      "category": "electronics",
+      "price": 150.86,
+      "stock_quantity": 226
+    },
+    {
+      "id": 269,
+      "name": "Electronics_Item_0269",
+      "category": "electronics",
+      "price": 1378.4,
+      "stock_quantity": 43
+    },
+    {
+      "id": 270,
+      "name": "Electronics_Item_0270",
+      "category": "electronics",
+      "price": 238.74,
+      "stock_quantity": 215
+    },
+    {
+      "id": 271,
+      "name": "Electronics_Item_0271",
+      "category": "electronics",
+      "price": 1263.04,
+      "stock_quantity": 64
+    },
+    {
+      "id": 272,
+      "name": "Electronics_Item_0272",
+      "category": "electronics",
+      "price": 1590.28,
+      "stock_quantity": 75
+    },
+    {
+      "id": 273,
+      "name": "Electronics_Item_0273",
+      "category": "electronics",
+      "price": 152.0,
+      "stock_quantity": 30
+    },
+    {
+      "id": 274,
+      "name": "Electronics_Item_0274",
+      "category": "electronics",
+      "price": 1123.81,
+      "stock_quantity": 20
+    },
+    {
+      "id": 275,
+      "name": "Electronics_Item_0275",
+      "category": "electronics",
+      "price": 215.51,
+      "stock_quantity": 72
+    },
+    {
+      "id": 276,
+      "name": "Electronics_Item_0276",
+      "category": "electronics",
+      "price": 921.69,
+      "stock_quantity": 56
+    },
+    {
+      "id": 278,
+      "name": "Electronics_Item_0278",
+      "category": "electronics",
+      "price": 361.23,
+      "stock_quantity": 235
+    },
+    {
+      "id": 279,
+      "name": "Electronics_Item_0279",
+      "category": "electronics",
+      "price": 63.35,
+      "stock_quantity": 100
+    },
+    {
+      "id": 282,
+      "name": "Electronics_Item_0282",
+      "category": "electronics",
+      "price": 1470.92,
+      "stock_quantity": 97
+    },
+    {
+      "id": 283,
+      "name": "Electronics_Item_0283",
+      "category": "electronics",
+      "price": 1078.55,
+      "stock_quantity": 15
+    },
+    {
+      "id": 284,
+      "name": "Electronics_Item_0284",
+      "category": "electronics",
+      "price": 1012.56,
+      "stock_quantity": 160
+    },
+    {
+      "id": 287,
+      "name": "Electronics_Item_0287",
+      "category": "electronics",
+      "price": 995.78,
+      "stock_quantity": 9
+    },
+    {
+      "id": 288,
+      "name": "Electronics_Item_0288",
+      "category": "electronics",
+      "price": 1069.0,
+      "stock_quantity": 209
+    },
+    {
+      "id": 290,
+      "name": "Electronics_Item_0290",
+      "category": "electronics",
+      "price": 1580.99,
+      "stock_quantity": 38
+    },
+    {
+      "id": 291,
+      "name": "Electronics_Item_0291",
+      "category": "electronics",
+      "price": 1698.94,
+      "stock_quantity": 71
+    },
+    {
+      "id": 293,
+      "name": "Electronics_Item_0293",
+      "category": "electronics",
+      "price": 1339.37,
+      "stock_quantity": 168
+    },
+    {
+      "id": 294,
+      "name": "Electronics_Item_0294",
+      "category": "electronics",
+      "price": 668.85,
+      "stock_quantity": 180
+    },
+    {
+      "id": 295,
+      "name": "Electronics_Item_0295",
+      "category": "electronics",
+      "price": 502.33,
+      "stock_quantity": 112
+    },
+    {
+      "id": 297,
+      "name": "Electronics_Item_0297",
+      "category": "electronics",
+      "price": 196.05,
+      "stock_quantity": 81
+    },
+    {
+      "id": 299,
+      "name": "Electronics_Item_0299",
+      "category": "electronics",
+      "price": 636.73,
+      "stock_quantity": 60
+    },
+    {
+      "id": 303,
+      "name": "Electronics_Item_0303",
+      "category": "electronics",
+      "price": 1165.52,
+      "stock_quantity": 64
+    },
+    {
+      "id": 304,
+      "name": "Electronics_Item_0304",
+      "category": "electronics",
+      "price": 1078.86,
+      "stock_quantity": 184
+    },
+    {
+      "id": 305,
+      "name": "Electronics_Item_0305",
+      "category": "electronics",
+      "price": 99.73,
+      "stock_quantity": 208
+    },
+    {
+      "id": 308,
+      "name": "Electronics_Item_0308",
+      "category": "electronics",
+      "price": 616.11,
+      "stock_quantity": 131
+    },
+    {
+      "id": 312,
+      "name": "Electronics_Item_0312",
+      "category": "electronics",
+      "price": 1796.12,
+      "stock_quantity": 68
+    },
+    {
+      "id": 313,
+      "name": "Electronics_Item_0313",
+      "category": "electronics",
+      "price": 1201.47,
+      "stock_quantity": 105
+    },
+    {
+      "id": 315,
+      "name": "Electronics_Item_0315",
+      "category": "electronics",
+      "price": 874.52,
+      "stock_quantity": 162
+    },
+    {
+      "id": 317,
+      "name": "Electronics_Item_0317",
+      "category": "electronics",
+      "price": 1039.16,
+      "stock_quantity": 61
+    },
+    {
+      "id": 318,
+      "name": "Electronics_Item_0318",
+      "category": "electronics",
+      "price": 617.99,
+      "stock_quantity": 117
+    },
+    {
+      "id": 319,
+      "name": "Electronics_Item_0319",
+      "category": "electronics",
+      "price": 300.24,
+      "stock_quantity": 165
+    },
+    {
+      "id": 320,
+      "name": "Electronics_Item_0320",
+      "category": "electronics",
+      "price": 192.24,
+      "stock_quantity": 225
+    },
+    {
+      "id": 322,
+      "name": "Electronics_Item_0322",
+      "category": "electronics",
+      "price": 1604.04,
+      "stock_quantity": 141
+    },
+    {
+      "id": 324,
+      "name": "Electronics_Item_0324",
+      "category": "electronics",
+      "price": 1050.65,
+      "stock_quantity": 63
+    },
+    {
+      "id": 325,
+      "name": "Electronics_Item_0325",
+      "category": "electronics",
+      "price": 1686.8,
+      "stock_quantity": 216
+    },
+    {
+      "id": 327,
+      "name": "Electronics_Item_0327",
+      "category": "electronics",
+      "price": 1282.69,
+      "stock_quantity": 157
+    },
+    {
+      "id": 329,
+      "name": "Electronics_Item_0329",
+      "category": "electronics",
+      "price": 682.46,
+      "stock_quantity": 145
+    },
+    {
+      "id": 331,
+      "name": "Electronics_Item_0331",
+      "category": "electronics",
+      "price": 806.33,
+      "stock_quantity": 109
+    },
+    {
+      "id": 332,
+      "name": "Electronics_Item_0332",
+      "category": "electronics",
+      "price": 939.79,
+      "stock_quantity": 123
+    },
+    {
+      "id": 334,
+      "name": "Electronics_Item_0334",
+      "category": "electronics",
+      "price": 318.21,
+      "stock_quantity": 106
+    },
+    {
+      "id": 335,
+      "name": "Electronics_Item_0335",
+      "category": "electronics",
+      "price": 1255.97,
+      "stock_quantity": 182
+    },
+    {
+      "id": 336,
+      "name": "Electronics_Item_0336",
+      "category": "electronics",
+      "price": 1760.35,
+      "stock_quantity": 53
+    },
+    {
+      "id": 338,
+      "name": "Electronics_Item_0338",
+      "category": "electronics",
+      "price": 753.2,
+      "stock_quantity": 15
+    },
+    {
+      "id": 339,
+      "name": "Electronics_Item_0339",
+      "category": "electronics",
+      "price": 393.7,
+      "stock_quantity": 122
+    },
+    {
+      "id": 340,
+      "name": "Electronics_Item_0340",
+      "category": "electronics",
+      "price": 1280.08,
+      "stock_quantity": 109
+    },
+    {
+      "id": 342,
+      "name": "Electronics_Item_0342",
+      "category": "electronics",
+      "price": 843.26,
+      "stock_quantity": 242
+    },
+    {
+      "id": 343,
+      "name": "Electronics_Item_0343",
+      "category": "electronics",
+      "price": 1228.3,
+      "stock_quantity": 84
+    },
+    {
+      "id": 344,
+      "name": "Electronics_Item_0344",
+      "category": "electronics",
+      "price": 684.2,
+      "stock_quantity": 196
+    },
+    {
+      "id": 345,
+      "name": "Electronics_Item_0345",
+      "category": "electronics",
+      "price": 1559.49,
+      "stock_quantity": 197
+    },
+    {
+      "id": 346,
+      "name": "Electronics_Item_0346",
+      "category": "electronics",
+      "price": 982.09,
+      "stock_quantity": 183
+    },
+    {
+      "id": 349,
+      "name": "Electronics_Item_0349",
+      "category": "electronics",
+      "price": 419.51,
+      "stock_quantity": 166
+    },
+    {
+      "id": 350,
+      "name": "Electronics_Item_0350",
+      "category": "electronics",
+      "price": 1730.28,
+      "stock_quantity": 234
+    },
+    {
+      "id": 355,
+      "name": "Electronics_Item_0355",
+      "category": "electronics",
+      "price": 1179.96,
+      "stock_quantity": 35
+    },
+    {
+      "id": 356,
+      "name": "Electronics_Item_0356",
+      "category": "electronics",
+      "price": 775.07,
+      "stock_quantity": 198
+    },
+    {
+      "id": 358,
+      "name": "Electronics_Item_0358",
+      "category": "electronics",
+      "price": 1610.56,
+      "stock_quantity": 30
+    },
+    {
+      "id": 360,
+      "name": "Electronics_Item_0360",
+      "category": "electronics",
+      "price": 139.23,
+      "stock_quantity": 155
+    },
+    {
+      "id": 361,
+      "name": "Electronics_Item_0361",
+      "category": "electronics",
+      "price": 811.92,
+      "stock_quantity": 45
+    },
+    {
+      "id": 362,
+      "name": "Electronics_Item_0362",
+      "category": "electronics",
+      "price": 829.75,
+      "stock_quantity": 68
+    },
+    {
+      "id": 363,
+      "name": "Electronics_Item_0363",
+      "category": "electronics",
+      "price": 447.82,
+      "stock_quantity": 217
+    },
+    {
+      "id": 365,
+      "name": "Electronics_Item_0365",
+      "category": "electronics",
+      "price": 714.3,
+      "stock_quantity": 209
+    },
+    {
+      "id": 367,
+      "name": "Electronics_Item_0367",
+      "category": "electronics",
+      "price": 253.36,
+      "stock_quantity": 19
+    },
+    {
+      "id": 368,
+      "name": "Electronics_Item_0368",
+      "category": "electronics",
+      "price": 919.02,
+      "stock_quantity": 207
+    },
+    {
+      "id": 369,
+      "name": "Electronics_Item_0369",
+      "category": "electronics",
+      "price": 1275.37,
+      "stock_quantity": 28
+    },
+    {
+      "id": 372,
+      "name": "Electronics_Item_0372",
+      "category": "electronics",
+      "price": 1606.92,
+      "stock_quantity": 184
+    },
+    {
+      "id": 373,
+      "name": "Electronics_Item_0373",
+      "category": "electronics",
+      "price": 1070.88,
+      "stock_quantity": 85
+    },
+    {
+      "id": 374,
+      "name": "Electronics_Item_0374",
+      "category": "electronics",
+      "price": 577.6,
+      "stock_quantity": 70
+    },
+    {
+      "id": 375,
+      "name": "Electronics_Item_0375",
+      "category": "electronics",
+      "price": 1776.03,
+      "stock_quantity": 154
+    },
+    {
+      "id": 376,
+      "name": "Electronics_Item_0376",
+      "category": "electronics",
+      "price": 1547.44,
+      "stock_quantity": 1
+    },
+    {
+      "id": 378,
+      "name": "Electronics_Item_0378",
+      "category": "electronics",
+      "price": 254.41,
+      "stock_quantity": 10
+    },
+    {
+      "id": 379,
+      "name": "Electronics_Item_0379",
+      "category": "electronics",
+      "price": 874.66,
+      "stock_quantity": 238
+    },
+    {
+      "id": 380,
+      "name": "Electronics_Item_0380",
+      "category": "electronics",
+      "price": 72.62,
+      "stock_quantity": 0
+    },
+    {
+      "id": 381,
+      "name": "Electronics_Item_0381",
+      "category": "electronics",
+      "price": 425.8,
+      "stock_quantity": 230
+    },
+    {
+      "id": 384,
+      "name": "Electronics_Item_0384",
+      "category": "electronics",
+      "price": 859.02,
+      "stock_quantity": 73
+    },
+    {
+      "id": 386,
+      "name": "Electronics_Item_0386",
+      "category": "electronics",
+      "price": 1776.72,
+      "stock_quantity": 204
+    },
+    {
+      "id": 392,
+      "name": "Electronics_Item_0392",
+      "category": "electronics",
+      "price": 1246.49,
+      "stock_quantity": 182
+    },
+    {
+      "id": 393,
+      "name": "Electronics_Item_0393",
+      "category": "electronics",
+      "price": 495.48,
+      "stock_quantity": 157
+    },
+    {
+      "id": 394,
+      "name": "Electronics_Item_0394",
+      "category": "electronics",
+      "price": 798.97,
+      "stock_quantity": 174
+    },
+    {
+      "id": 395,
+      "name": "Electronics_Item_0395",
+      "category": "electronics",
+      "price": 1423.69,
+      "stock_quantity": 222
+    },
+    {
+      "id": 399,
+      "name": "Electronics_Item_0399",
+      "category": "electronics",
+      "price": 1462.48,
+      "stock_quantity": 39
+    },
+    {
+      "id": 400,
+      "name": "Electronics_Item_0400",
+      "category": "electronics",
+      "price": 1507.15,
+      "stock_quantity": 208
+    },
+    {
+      "id": 401,
+      "name": "Electronics_Item_0401",
+      "category": "electronics",
+      "price": 1742.37,
+      "stock_quantity": 190
+    },
+    {
+      "id": 402,
+      "name": "Electronics_Item_0402",
+      "category": "electronics",
+      "price": 1763.05,
+      "stock_quantity": 218
+    },
+    {
+      "id": 403,
+      "name": "Electronics_Item_0403",
+      "category": "electronics",
+      "price": 166.71,
+      "stock_quantity": 10
+    },
+    {
+      "id": 405,
+      "name": "Electronics_Item_0405",
+      "category": "electronics",
+      "price": 501.54,
+      "stock_quantity": 106
+    },
+    {
+      "id": 408,
+      "name": "Electronics_Item_0408",
+      "category": "electronics",
+      "price": 466.45,
+      "stock_quantity": 239
+    },
+    {
+      "id": 409,
+      "name": "Electronics_Item_0409",
+      "category": "electronics",
+      "price": 168.47,
+      "stock_quantity": 72
+    },
+    {
+      "id": 411,
+      "name": "Electronics_Item_0411",
+      "category": "electronics",
+      "price": 123.54,
+      "stock_quantity": 121
+    },
+    {
+      "id": 417,
+      "name": "Electronics_Item_0417",
+      "category": "electronics",
+      "price": 874.34,
+      "stock_quantity": 245
+    },
+    {
+      "id": 418,
+      "name": "Electronics_Item_0418",
+      "category": "electronics",
+      "price": 1550.53,
+      "stock_quantity": 108
+    },
+    {
+      "id": 419,
+      "name": "Electronics_Item_0419",
+      "category": "electronics",
+      "price": 1135.62,
+      "stock_quantity": 234
+    },
+    {
+      "id": 421,
+      "name": "Electronics_Item_0421",
+      "category": "electronics",
+      "price": 1548.43,
+      "stock_quantity": 122
+    },
+    {
+      "id": 422,
+      "name": "Electronics_Item_0422",
+      "category": "electronics",
+      "price": 1690.25,
+      "stock_quantity": 97
+    },
+    {
+      "id": 424,
+      "name": "Electronics_Item_0424",
+      "category": "electronics",
+      "price": 1333.81,
+      "stock_quantity": 60
+    },
+    {
+      "id": 425,
+      "name": "Electronics_Item_0425",
+      "category": "electronics",
+      "price": 1274.24,
+      "stock_quantity": 94
+    },
+    {
+      "id": 426,
+      "name": "Electronics_Item_0426",
+      "category": "electronics",
+      "price": 1278.31,
+      "stock_quantity": 159
+    },
+    {
+      "id": 427,
+      "name": "Electronics_Item_0427",
+      "category": "electronics",
+      "price": 1085.29,
+      "stock_quantity": 193
+    },
+    {
+      "id": 428,
+      "name": "Electronics_Item_0428",
+      "category": "electronics",
+      "price": 109.14,
+      "stock_quantity": 63
+    },
+    {
+      "id": 429,
+      "name": "Electronics_Item_0429",
+      "category": "electronics",
+      "price": 118.56,
+      "stock_quantity": 122
+    },
+    {
+      "id": 430,
+      "name": "Electronics_Item_0430",
+      "category": "electronics",
+      "price": 1219.94,
+      "stock_quantity": 38
+    },
+    {
+      "id": 431,
+      "name": "Electronics_Item_0431",
+      "category": "electronics",
+      "price": 671.31,
+      "stock_quantity": 157
+    },
+    {
+      "id": 432,
+      "name": "Electronics_Item_0432",
+      "category": "electronics",
+      "price": 1336.7,
+      "stock_quantity": 205
+    },
+    {
+      "id": 433,
+      "name": "Electronics_Item_0433",
+      "category": "electronics",
+      "price": 1606.11,
+      "stock_quantity": 205
+    },
+    {
+      "id": 434,
+      "name": "Electronics_Item_0434",
+      "category": "electronics",
+      "price": 1693.05,
+      "stock_quantity": 142
+    },
+    {
+      "id": 438,
+      "name": "Electronics_Item_0438",
+      "category": "electronics",
+      "price": 1758.14,
+      "stock_quantity": 19
+    },
+    {
+      "id": 444,
+      "name": "Electronics_Item_0444",
+      "category": "electronics",
+      "price": 1740.02,
+      "stock_quantity": 41
+    },
+    {
+      "id": 445,
+      "name": "Electronics_Item_0445",
+      "category": "electronics",
+      "price": 1541.59,
+      "stock_quantity": 224
+    },
+    {
+      "id": 446,
+      "name": "Electronics_Item_0446",
+      "category": "electronics",
+      "price": 1783.01,
+      "stock_quantity": 211
+    },
+    {
+      "id": 449,
+      "name": "Electronics_Item_0449",
+      "category": "electronics",
+      "price": 1544.77,
+      "stock_quantity": 108
+    },
+    {
+      "id": 450,
+      "name": "Electronics_Item_0450",
+      "category": "electronics",
+      "price": 1151.17,
+      "stock_quantity": 243
+    },
+    {
+      "id": 451,
+      "name": "Electronics_Item_0451",
+      "category": "electronics",
+      "price": 1377.94,
+      "stock_quantity": 59
+    },
+    {
+      "id": 453,
+      "name": "Electronics_Item_0453",
+      "category": "electronics",
+      "price": 1095.62,
+      "stock_quantity": 223
+    },
+    {
+      "id": 455,
+      "name": "Electronics_Item_0455",
+      "category": "electronics",
+      "price": 842.68,
+      "stock_quantity": 11
+    },
+    {
+      "id": 456,
+      "name": "Electronics_Item_0456",
+      "category": "electronics",
+      "price": 1037.37,
+      "stock_quantity": 219
+    },
+    {
+      "id": 459,
+      "name": "Electronics_Item_0459",
+      "category": "electronics",
+      "price": 1024.48,
+      "stock_quantity": 37
+    },
+    {
+      "id": 460,
+      "name": "Electronics_Item_0460",
+      "category": "electronics",
+      "price": 1105.3,
+      "stock_quantity": 4
+    },
+    {
+      "id": 466,
+      "name": "Electronics_Item_0466",
+      "category": "electronics",
+      "price": 485.83,
+      "stock_quantity": 237
+    },
+    {
+      "id": 467,
+      "name": "Electronics_Item_0467",
+      "category": "electronics",
+      "price": 1642.06,
+      "stock_quantity": 96
+    },
+    {
+      "id": 470,
+      "name": "Electronics_Item_0470",
+      "category": "electronics",
+      "price": 1397.6,
+      "stock_quantity": 214
+    },
+    {
+      "id": 471,
+      "name": "Electronics_Item_0471",
+      "category": "electronics",
+      "price": 371.32,
+      "stock_quantity": 119
+    },
+    {
+      "id": 472,
+      "name": "Electronics_Item_0472",
+      "category": "electronics",
+      "price": 1194.34,
+      "stock_quantity": 19
+    },
+    {
+      "id": 474,
+      "name": "Electronics_Item_0474",
+      "category": "electronics",
+      "price": 1465.04,
+      "stock_quantity": 42
+    },
+    {
+      "id": 476,
+      "name": "Electronics_Item_0476",
+      "category": "electronics",
+      "price": 1687.99,
+      "stock_quantity": 77
+    },
+    {
+      "id": 479,
+      "name": "Electronics_Item_0479",
+      "category": "electronics",
+      "price": 1770.62,
+      "stock_quantity": 248
+    },
+    {
+      "id": 480,
+      "name": "Electronics_Item_0480",
+      "category": "electronics",
+      "price": 1089.11,
+      "stock_quantity": 199
+    },
+    {
+      "id": 481,
+      "name": "Electronics_Item_0481",
+      "category": "electronics",
+      "price": 1206.32,
+      "stock_quantity": 240
+    },
+    {
+      "id": 482,
+      "name": "Electronics_Item_0482",
+      "category": "electronics",
+      "price": 1232.8,
+      "stock_quantity": 11
+    },
+    {
+      "id": 483,
+      "name": "Electronics_Item_0483",
+      "category": "electronics",
+      "price": 1186.51,
+      "stock_quantity": 83
+    },
+    {
+      "id": 484,
+      "name": "Electronics_Item_0484",
+      "category": "electronics",
+      "price": 678.79,
+      "stock_quantity": 39
+    },
+    {
+      "id": 485,
+      "name": "Electronics_Item_0485",
+      "category": "electronics",
+      "price": 918.85,
+      "stock_quantity": 227
+    },
+    {
+      "id": 486,
+      "name": "Electronics_Item_0486",
+      "category": "electronics",
+      "price": 864.29,
+      "stock_quantity": 87
+    },
+    {
+      "id": 487,
+      "name": "Electronics_Item_0487",
+      "category": "electronics",
+      "price": 948.79,
+      "stock_quantity": 229
+    },
+    {
+      "id": 488,
+      "name": "Electronics_Item_0488",
+      "category": "electronics",
+      "price": 606.13,
+      "stock_quantity": 50
+    },
+    {
+      "id": 489,
+      "name": "Electronics_Item_0489",
+      "category": "electronics",
+      "price": 714.57,
+      "stock_quantity": 10
+    },
+    {
+      "id": 492,
+      "name": "Electronics_Item_0492",
+      "category": "electronics",
+      "price": 1008.88,
+      "stock_quantity": 195
+    },
+    {
+      "id": 493,
+      "name": "Electronics_Item_0493",
+      "category": "electronics",
+      "price": 563.89,
+      "stock_quantity": 24
+    },
+    {
+      "id": 495,
+      "name": "Electronics_Item_0495",
+      "category": "electronics",
+      "price": 1266.48,
+      "stock_quantity": 114
+    },
+    {
+      "id": 496,
+      "name": "Electronics_Item_0496",
+      "category": "electronics",
+      "price": 261.12,
+      "stock_quantity": 79
+    },
+    {
+      "id": 498,
+      "name": "Electronics_Item_0498",
+      "category": "electronics",
+      "price": 1660.03,
+      "stock_quantity": 33
+    },
+    {
+      "id": 499,
+      "name": "Electronics_Item_0499",
+      "category": "electronics",
+      "price": 377.77,
+      "stock_quantity": 151
+    },
+    {
+      "id": 501,
+      "name": "Electronics_Item_0501",
+      "category": "electronics",
+      "price": 904.91,
+      "stock_quantity": 163
+    },
+    {
+      "id": 503,
+      "name": "Electronics_Item_0503",
+      "category": "electronics",
+      "price": 1406.51,
+      "stock_quantity": 129
+    },
+    {
+      "id": 509,
+      "name": "Electronics_Item_0509",
+      "category": "electronics",
+      "price": 579.42,
+      "stock_quantity": 33
+    },
+    {
+      "id": 513,
+      "name": "Electronics_Item_0513",
+      "category": "electronics",
+      "price": 547.52,
+      "stock_quantity": 215
+    },
+    {
+      "id": 514,
+      "name": "Electronics_Item_0514",
+      "category": "electronics",
+      "price": 263.56,
+      "stock_quantity": 196
+    },
+    {
+      "id": 515,
+      "name": "Electronics_Item_0515",
+      "category": "electronics",
+      "price": 1652.53,
+      "stock_quantity": 219
+    },
+    {
+      "id": 516,
+      "name": "Electronics_Item_0516",
+      "category": "electronics",
+      "price": 1614.3,
+      "stock_quantity": 169
+    },
+    {
+      "id": 518,
+      "name": "Electronics_Item_0518",
+      "category": "electronics",
+      "price": 715.42,
+      "stock_quantity": 57
+    },
+    {
+      "id": 519,
+      "name": "Electronics_Item_0519",
+      "category": "electronics",
+      "price": 1741.87,
+      "stock_quantity": 186
+    },
+    {
+      "id": 522,
+      "name": "Electronics_Item_0522",
+      "category": "electronics",
+      "price": 1369.95,
+      "stock_quantity": 124
+    },
+    {
+      "id": 525,
+      "name": "Electronics_Item_0525",
+      "category": "electronics",
+      "price": 1337.97,
+      "stock_quantity": 112
+    },
+    {
+      "id": 526,
+      "name": "Electronics_Item_0526",
+      "category": "electronics",
+      "price": 52.03,
+      "stock_quantity": 22
+    },
+    {
+      "id": 529,
+      "name": "Electronics_Item_0529",
+      "category": "electronics",
+      "price": 1302.93,
+      "stock_quantity": 164
+    },
+    {
+      "id": 530,
+      "name": "Electronics_Item_0530",
+      "category": "electronics",
+      "price": 428.06,
+      "stock_quantity": 177
+    },
+    {
+      "id": 532,
+      "name": "Electronics_Item_0532",
+      "category": "electronics",
+      "price": 1117.59,
+      "stock_quantity": 40
+    },
+    {
+      "id": 534,
+      "name": "Electronics_Item_0534",
+      "category": "electronics",
+      "price": 1123.77,
+      "stock_quantity": 193
+    },
+    {
+      "id": 535,
+      "name": "Electronics_Item_0535",
+      "category": "electronics",
+      "price": 1731.06,
+      "stock_quantity": 6
+    },
+    {
+      "id": 539,
+      "name": "Electronics_Item_0539",
+      "category": "electronics",
+      "price": 634.07,
+      "stock_quantity": 44
+    },
+    {
+      "id": 540,
+      "name": "Electronics_Item_0540",
+      "category": "electronics",
+      "price": 507.43,
+      "stock_quantity": 26
+    },
+    {
+      "id": 541,
+      "name": "Electronics_Item_0541",
+      "category": "electronics",
+      "price": 80.33,
+      "stock_quantity": 83
+    },
+    {
+      "id": 543,
+      "name": "Electronics_Item_0543",
+      "category": "electronics",
+      "price": 806.28,
+      "stock_quantity": 105
+    },
+    {
+      "id": 544,
+      "name": "Electronics_Item_0544",
+      "category": "electronics",
+      "price": 1343.15,
+      "stock_quantity": 51
+    },
+    {
+      "id": 546,
+      "name": "Electronics_Item_0546",
+      "category": "electronics",
+      "price": 1769.87,
+      "stock_quantity": 147
+    },
+    {
+      "id": 547,
+      "name": "Electronics_Item_0547",
+      "category": "electronics",
+      "price": 912.04,
+      "stock_quantity": 18
+    },
+    {
+      "id": 552,
+      "name": "Electronics_Item_0552",
+      "category": "electronics",
+      "price": 435.35,
+      "stock_quantity": 149
+    },
+    {
+      "id": 553,
+      "name": "Electronics_Item_0553",
+      "category": "electronics",
+      "price": 567.68,
+      "stock_quantity": 215
+    },
+    {
+      "id": 555,
+      "name": "Electronics_Item_0555",
+      "category": "electronics",
+      "price": 1297.68,
+      "stock_quantity": 196
+    },
+    {
+      "id": 556,
+      "name": "Electronics_Item_0556",
+      "category": "electronics",
+      "price": 817.38,
+      "stock_quantity": 23
+    },
+    {
+      "id": 557,
+      "name": "Electronics_Item_0557",
+      "category": "electronics",
+      "price": 64.59,
+      "stock_quantity": 115
+    },
+    {
+      "id": 560,
+      "name": "Electronics_Item_0560",
+      "category": "electronics",
+      "price": 510.54,
+      "stock_quantity": 235
+    },
+    {
+      "id": 561,
+      "name": "Electronics_Item_0561",
+      "category": "electronics",
+      "price": 1185.28,
+      "stock_quantity": 189
+    },
+    {
+      "id": 562,
+      "name": "Electronics_Item_0562",
+      "category": "electronics",
+      "price": 218.98,
+      "stock_quantity": 87
+    },
+    {
+      "id": 563,
+      "name": "Electronics_Item_0563",
+      "category": "electronics",
+      "price": 631.53,
+      "stock_quantity": 148
+    },
+    {
+      "id": 565,
+      "name": "Electronics_Item_0565",
+      "category": "electronics",
+      "price": 885.51,
+      "stock_quantity": 70
+    },
+    {
+      "id": 566,
+      "name": "Electronics_Item_0566",
+      "category": "electronics",
+      "price": 1543.39,
+      "stock_quantity": 108
+    },
+    {
+      "id": 567,
+      "name": "Electronics_Item_0567",
+      "category": "electronics",
+      "price": 502.26,
+      "stock_quantity": 154
+    },
+    {
+      "id": 569,
+      "name": "Electronics_Item_0569",
+      "category": "electronics",
+      "price": 1128.49,
+      "stock_quantity": 74
+    },
+    {
+      "id": 570,
+      "name": "Electronics_Item_0570",
+      "category": "electronics",
+      "price": 378.9,
+      "stock_quantity": 227
+    },
+    {
+      "id": 573,
+      "name": "Electronics_Item_0573",
+      "category": "electronics",
+      "price": 792.2,
+      "stock_quantity": 25
+    },
+    {
+      "id": 574,
+      "name": "Electronics_Item_0574",
+      "category": "electronics",
+      "price": 1203.12,
+      "stock_quantity": 10
+    },
+    {
+      "id": 578,
+      "name": "Electronics_Item_0578",
+      "category": "electronics",
+      "price": 195.43,
+      "stock_quantity": 109
+    },
+    {
+      "id": 579,
+      "name": "Electronics_Item_0579",
+      "category": "electronics",
+      "price": 271.1,
+      "stock_quantity": 226
+    },
+    {
+      "id": 580,
+      "name": "Electronics_Item_0580",
+      "category": "electronics",
+      "price": 1788.54,
+      "stock_quantity": 244
+    },
+    {
+      "id": 581,
+      "name": "Electronics_Item_0581",
+      "category": "electronics",
+      "price": 1751.85,
+      "stock_quantity": 62
+    },
+    {
+      "id": 582,
+      "name": "Electronics_Item_0582",
+      "category": "electronics",
+      "price": 1755.42,
+      "stock_quantity": 125
+    },
+    {
+      "id": 583,
+      "name": "Electronics_Item_0583",
+      "category": "electronics",
+      "price": 811.37,
+      "stock_quantity": 89
+    },
+    {
+      "id": 584,
+      "name": "Electronics_Item_0584",
+      "category": "electronics",
+      "price": 930.53,
+      "stock_quantity": 239
+    },
+    {
+      "id": 585,
+      "name": "Electronics_Item_0585",
+      "category": "electronics",
+      "price": 291.55,
+      "stock_quantity": 74
+    },
+    {
+      "id": 588,
+      "name": "Electronics_Item_0588",
+      "category": "electronics",
+      "price": 396.1,
+      "stock_quantity": 187
+    },
+    {
+      "id": 589,
+      "name": "Electronics_Item_0589",
+      "category": "electronics",
+      "price": 945.14,
+      "stock_quantity": 39
+    },
+    {
+      "id": 591,
+      "name": "Electronics_Item_0591",
+      "category": "electronics",
+      "price": 378.98,
+      "stock_quantity": 240
+    },
+    {
+      "id": 592,
+      "name": "Electronics_Item_0592",
+      "category": "electronics",
+      "price": 1167.88,
+      "stock_quantity": 74
+    },
+    {
+      "id": 593,
+      "name": "Electronics_Item_0593",
+      "category": "electronics",
+      "price": 360.51,
+      "stock_quantity": 178
+    },
+    {
+      "id": 595,
+      "name": "Electronics_Item_0595",
+      "category": "electronics",
+      "price": 1124.35,
+      "stock_quantity": 153
+    },
+    {
+      "id": 596,
+      "name": "Electronics_Item_0596",
+      "category": "electronics",
+      "price": 1577.03,
+      "stock_quantity": 30
+    },
+    {
+      "id": 599,
+      "name": "Electronics_Item_0599",
+      "category": "electronics",
+      "price": 1112.07,
+      "stock_quantity": 192
+    },
+    {
+      "id": 601,
+      "name": "Electronics_Item_0601",
+      "category": "electronics",
+      "price": 1060.07,
+      "stock_quantity": 4
+    },
+    {
+      "id": 602,
+      "name": "Electronics_Item_0602",
+      "category": "electronics",
+      "price": 406.38,
+      "stock_quantity": 165
+    },
+    {
+      "id": 606,
+      "name": "Electronics_Item_0606",
+      "category": "electronics",
+      "price": 1617.94,
+      "stock_quantity": 185
+    },
+    {
+      "id": 607,
+      "name": "Electronics_Item_0607",
+      "category": "electronics",
+      "price": 993.06,
+      "stock_quantity": 51
+    },
+    {
+      "id": 608,
+      "name": "Electronics_Item_0608",
+      "category": "electronics",
+      "price": 599.44,
+      "stock_quantity": 189
+    },
+    {
+      "id": 609,
+      "name": "Electronics_Item_0609",
+      "category": "electronics",
+      "price": 1134.88,
+      "stock_quantity": 34
+    },
+    {
+      "id": 610,
+      "name": "Electronics_Item_0610",
+      "category": "electronics",
+      "price": 543.66,
+      "stock_quantity": 64
+    },
+    {
+      "id": 615,
+      "name": "Electronics_Item_0615",
+      "category": "electronics",
+      "price": 1355.93,
+      "stock_quantity": 28
+    },
+    {
+      "id": 617,
+      "name": "Electronics_Item_0617",
+      "category": "electronics",
+      "price": 652.56,
+      "stock_quantity": 112
+    },
+    {
+      "id": 619,
+      "name": "Electronics_Item_0619",
+      "category": "electronics",
+      "price": 647.63,
+      "stock_quantity": 177
+    },
+    {
+      "id": 621,
+      "name": "Electronics_Item_0621",
+      "category": "electronics",
+      "price": 1487.09,
+      "stock_quantity": 164
+    },
+    {
+      "id": 622,
+      "name": "Electronics_Item_0622",
+      "category": "electronics",
+      "price": 1546.13,
+      "stock_quantity": 163
+    },
+    {
+      "id": 623,
+      "name": "Electronics_Item_0623",
+      "category": "electronics",
+      "price": 1158.27,
+      "stock_quantity": 125
+    },
+    {
+      "id": 624,
+      "name": "Electronics_Item_0624",
+      "category": "electronics",
+      "price": 959.5,
+      "stock_quantity": 9
+    },
+    {
+      "id": 626,
+      "name": "Electronics_Item_0626",
+      "category": "electronics",
+      "price": 918.95,
+      "stock_quantity": 214
+    },
+    {
+      "id": 627,
+      "name": "Electronics_Item_0627",
+      "category": "electronics",
+      "price": 1450.26,
+      "stock_quantity": 72
+    },
+    {
+      "id": 628,
+      "name": "Electronics_Item_0628",
+      "category": "electronics",
+      "price": 1572.06,
+      "stock_quantity": 27
+    },
+    {
+      "id": 630,
+      "name": "Electronics_Item_0630",
+      "category": "electronics",
+      "price": 1036.8,
+      "stock_quantity": 217
+    },
+    {
+      "id": 631,
+      "name": "Electronics_Item_0631",
+      "category": "electronics",
+      "price": 1393.51,
+      "stock_quantity": 109
+    },
+    {
+      "id": 632,
+      "name": "Electronics_Item_0632",
+      "category": "electronics",
+      "price": 1160.62,
+      "stock_quantity": 82
+    },
+    {
+      "id": 633,
+      "name": "Electronics_Item_0633",
+      "category": "electronics",
+      "price": 491.53,
+      "stock_quantity": 205
+    },
+    {
+      "id": 634,
+      "name": "Electronics_Item_0634",
+      "category": "electronics",
+      "price": 1668.32,
+      "stock_quantity": 232
+    },
+    {
+      "id": 636,
+      "name": "Electronics_Item_0636",
+      "category": "electronics",
+      "price": 904.59,
+      "stock_quantity": 115
+    },
+    {
+      "id": 638,
+      "name": "Electronics_Item_0638",
+      "category": "electronics",
+      "price": 456.34,
+      "stock_quantity": 94
+    },
+    {
+      "id": 639,
+      "name": "Electronics_Item_0639",
+      "category": "electronics",
+      "price": 677.65,
+      "stock_quantity": 146
+    },
+    {
+      "id": 642,
+      "name": "Electronics_Item_0642",
+      "category": "electronics",
+      "price": 1285.82,
+      "stock_quantity": 243
+    },
+    {
+      "id": 643,
+      "name": "Electronics_Item_0643",
+      "category": "electronics",
+      "price": 477.76,
+      "stock_quantity": 85
+    },
+    {
+      "id": 645,
+      "name": "Electronics_Item_0645",
+      "category": "electronics",
+      "price": 1107.54,
+      "stock_quantity": 215
+    },
+    {
+      "id": 648,
+      "name": "Electronics_Item_0648",
+      "category": "electronics",
+      "price": 142.3,
+      "stock_quantity": 46
+    },
+    {
+      "id": 651,
+      "name": "Electronics_Item_0651",
+      "category": "electronics",
+      "price": 1146.49,
+      "stock_quantity": 182
+    },
+    {
+      "id": 656,
+      "name": "Electronics_Item_0656",
+      "category": "electronics",
+      "price": 1444.77,
+      "stock_quantity": 249
+    },
+    {
+      "id": 657,
+      "name": "Electronics_Item_0657",
+      "category": "electronics",
+      "price": 686.12,
+      "stock_quantity": 71
+    },
+    {
+      "id": 658,
+      "name": "Electronics_Item_0658",
+      "category": "electronics",
+      "price": 1076.03,
+      "stock_quantity": 219
+    },
+    {
+      "id": 660,
+      "name": "Electronics_Item_0660",
+      "category": "electronics",
+      "price": 1725.71,
+      "stock_quantity": 215
+    },
+    {
+      "id": 667,
+      "name": "Electronics_Item_0667",
+      "category": "electronics",
+      "price": 542.55,
+      "stock_quantity": 0
+    },
+    {
+      "id": 668,
+      "name": "Electronics_Item_0668",
+      "category": "electronics",
+      "price": 1768.99,
+      "stock_quantity": 221
+    },
+    {
+      "id": 669,
+      "name": "Electronics_Item_0669",
+      "category": "electronics",
+      "price": 237.96,
+      "stock_quantity": 9
+    },
+    {
+      "id": 670,
+      "name": "Electronics_Item_0670",
+      "category": "electronics",
+      "price": 475.22,
+      "stock_quantity": 126
+    },
+    {
+      "id": 671,
+      "name": "Electronics_Item_0671",
+      "category": "electronics",
+      "price": 98.6,
+      "stock_quantity": 34
+    },
+    {
+      "id": 673,
+      "name": "Electronics_Item_0673",
+      "category": "electronics",
+      "price": 1119.2,
+      "stock_quantity": 231
+    },
+    {
+      "id": 674,
+      "name": "Electronics_Item_0674",
+      "category": "electronics",
+      "price": 1046.93,
+      "stock_quantity": 13
+    },
+    {
+      "id": 675,
+      "name": "Electronics_Item_0675",
+      "category": "electronics",
+      "price": 96.75,
+      "stock_quantity": 13
+    },
+    {
+      "id": 676,
+      "name": "Electronics_Item_0676",
+      "category": "electronics",
+      "price": 828.44,
+      "stock_quantity": 128
+    },
+    {
+      "id": 678,
+      "name": "Electronics_Item_0678",
+      "category": "electronics",
+      "price": 1543.9,
+      "stock_quantity": 145
+    },
+    {
+      "id": 679,
+      "name": "Electronics_Item_0679",
+      "category": "electronics",
+      "price": 162.76,
+      "stock_quantity": 244
+    },
+    {
+      "id": 680,
+      "name": "Electronics_Item_0680",
+      "category": "electronics",
+      "price": 1647.29,
+      "stock_quantity": 139
+    },
+    {
+      "id": 683,
+      "name": "Electronics_Item_0683",
+      "category": "electronics",
+      "price": 621.29,
+      "stock_quantity": 185
+    },
+    {
+      "id": 684,
+      "name": "Electronics_Item_0684",
+      "category": "electronics",
+      "price": 916.92,
+      "stock_quantity": 64
+    },
+    {
+      "id": 685,
+      "name": "Electronics_Item_0685",
+      "category": "electronics",
+      "price": 551.32,
+      "stock_quantity": 42
+    },
+    {
+      "id": 688,
+      "name": "Electronics_Item_0688",
+      "category": "electronics",
+      "price": 501.06,
+      "stock_quantity": 227
+    },
+    {
+      "id": 689,
+      "name": "Electronics_Item_0689",
+      "category": "electronics",
+      "price": 1695.67,
+      "stock_quantity": 1
+    },
+    {
+      "id": 690,
+      "name": "Electronics_Item_0690",
+      "category": "electronics",
+      "price": 363.35,
+      "stock_quantity": 76
+    },
+    {
+      "id": 691,
+      "name": "Electronics_Item_0691",
+      "category": "electronics",
+      "price": 777.27,
+      "stock_quantity": 23
+    },
+    {
+      "id": 692,
+      "name": "Electronics_Item_0692",
+      "category": "electronics",
+      "price": 1435.19,
+      "stock_quantity": 243
+    },
+    {
+      "id": 695,
+      "name": "Electronics_Item_0695",
+      "category": "electronics",
+      "price": 284.45,
+      "stock_quantity": 85
+    },
+    {
+      "id": 699,
+      "name": "Electronics_Item_0699",
+      "category": "electronics",
+      "price": 605.82,
+      "stock_quantity": 175
+    },
+    {
+      "id": 703,
+      "name": "Electronics_Item_0703",
+      "category": "electronics",
+      "price": 795.15,
+      "stock_quantity": 197
+    },
+    {
+      "id": 704,
+      "name": "Electronics_Item_0704",
+      "category": "electronics",
+      "price": 1562.47,
+      "stock_quantity": 62
+    },
+    {
+      "id": 707,
+      "name": "Electronics_Item_0707",
+      "category": "electronics",
+      "price": 1309.79,
+      "stock_quantity": 108
+    },
+    {
+      "id": 709,
+      "name": "Electronics_Item_0709",
+      "category": "electronics",
+      "price": 1643.56,
+      "stock_quantity": 205
+    },
+    {
+      "id": 711,
+      "name": "Electronics_Item_0711",
+      "category": "electronics",
+      "price": 1721.59,
+      "stock_quantity": 151
+    },
+    {
+      "id": 712,
+      "name": "Electronics_Item_0712",
+      "category": "electronics",
+      "price": 1694.11,
+      "stock_quantity": 186
+    },
+    {
+      "id": 713,
+      "name": "Electronics_Item_0713",
+      "category": "electronics",
+      "price": 303.63,
+      "stock_quantity": 132
+    },
+    {
+      "id": 714,
+      "name": "Electronics_Item_0714",
+      "category": "electronics",
+      "price": 529.72,
+      "stock_quantity": 1
+    },
+    {
+      "id": 715,
+      "name": "Electronics_Item_0715",
+      "category": "electronics",
+      "price": 1793.96,
+      "stock_quantity": 176
+    },
+    {
+      "id": 718,
+      "name": "Electronics_Item_0718",
+      "category": "electronics",
+      "price": 30.29,
+      "stock_quantity": 247
+    },
+    {
+      "id": 721,
+      "name": "Electronics_Item_0721",
+      "category": "electronics",
+      "price": 953.47,
+      "stock_quantity": 119
+    },
+    {
+      "id": 723,
+      "name": "Electronics_Item_0723",
+      "category": "electronics",
+      "price": 1301.75,
+      "stock_quantity": 76
+    },
+    {
+      "id": 725,
+      "name": "Electronics_Item_0725",
+      "category": "electronics",
+      "price": 1074.83,
+      "stock_quantity": 153
+    },
+    {
+      "id": 727,
+      "name": "Electronics_Item_0727",
+      "category": "electronics",
+      "price": 964.56,
+      "stock_quantity": 104
+    },
+    {
+      "id": 730,
+      "name": "Electronics_Item_0730",
+      "category": "electronics",
+      "price": 1255.26,
+      "stock_quantity": 140
+    },
+    {
+      "id": 731,
+      "name": "Electronics_Item_0731",
+      "category": "electronics",
+      "price": 122.35,
+      "stock_quantity": 168
+    },
+    {
+      "id": 734,
+      "name": "Electronics_Item_0734",
+      "category": "electronics",
+      "price": 1025.99,
+      "stock_quantity": 172
+    },
+    {
+      "id": 735,
+      "name": "Electronics_Item_0735",
+      "category": "electronics",
+      "price": 1228.46,
+      "stock_quantity": 105
+    },
+    {
+      "id": 737,
+      "name": "Electronics_Item_0737",
+      "category": "electronics",
+      "price": 1206.98,
+      "stock_quantity": 123
+    },
+    {
+      "id": 739,
+      "name": "Electronics_Item_0739",
+      "category": "electronics",
+      "price": 1160.56,
+      "stock_quantity": 9
+    },
+    {
+      "id": 740,
+      "name": "Electronics_Item_0740",
+      "category": "electronics",
+      "price": 1174.74,
+      "stock_quantity": 91
+    },
+    {
+      "id": 741,
+      "name": "Electronics_Item_0741",
+      "category": "electronics",
+      "price": 1135.29,
+      "stock_quantity": 4
+    },
+    {
+      "id": 742,
+      "name": "Electronics_Item_0742",
+      "category": "electronics",
+      "price": 426.44,
+      "stock_quantity": 9
+    },
+    {
+      "id": 745,
+      "name": "Electronics_Item_0745",
+      "category": "electronics",
+      "price": 332.18,
+      "stock_quantity": 51
+    },
+    {
+      "id": 746,
+      "name": "Electronics_Item_0746",
+      "category": "electronics",
+      "price": 1737.02,
+      "stock_quantity": 215
+    },
+    {
+      "id": 747,
+      "name": "Electronics_Item_0747",
+      "category": "electronics",
+      "price": 380.12,
+      "stock_quantity": 111
+    },
+    {
+      "id": 753,
+      "name": "Electronics_Item_0753",
+      "category": "electronics",
+      "price": 104.29,
+      "stock_quantity": 25
+    },
+    {
+      "id": 754,
+      "name": "Electronics_Item_0754",
+      "category": "electronics",
+      "price": 1574.11,
+      "stock_quantity": 3
+    },
+    {
+      "id": 755,
+      "name": "Electronics_Item_0755",
+      "category": "electronics",
+      "price": 886.09,
+      "stock_quantity": 108
+    },
+    {
+      "id": 756,
+      "name": "Electronics_Item_0756",
+      "category": "electronics",
+      "price": 704.21,
+      "stock_quantity": 7
+    },
+    {
+      "id": 758,
+      "name": "Electronics_Item_0758",
+      "category": "electronics",
+      "price": 367.34,
+      "stock_quantity": 82
+    },
+    {
+      "id": 759,
+      "name": "Electronics_Item_0759",
+      "category": "electronics",
+      "price": 139.35,
+      "stock_quantity": 76
+    },
+    {
+      "id": 760,
+      "name": "Electronics_Item_0760",
+      "category": "electronics",
+      "price": 636.8,
+      "stock_quantity": 161
+    },
+    {
+      "id": 761,
+      "name": "Electronics_Item_0761",
+      "category": "electronics",
+      "price": 560.21,
+      "stock_quantity": 27
+    },
+    {
+      "id": 764,
+      "name": "Electronics_Item_0764",
+      "category": "electronics",
+      "price": 795.02,
+      "stock_quantity": 207
+    },
+    {
+      "id": 765,
+      "name": "Electronics_Item_0765",
+      "category": "electronics",
+      "price": 755.57,
+      "stock_quantity": 133
+    },
+    {
+      "id": 766,
+      "name": "Electronics_Item_0766",
+      "category": "electronics",
+      "price": 559.73,
+      "stock_quantity": 152
+    },
+    {
+      "id": 767,
+      "name": "Electronics_Item_0767",
+      "category": "electronics",
+      "price": 527.7,
+      "stock_quantity": 58
+    },
+    {
+      "id": 768,
+      "name": "Electronics_Item_0768",
+      "category": "electronics",
+      "price": 1662.64,
+      "stock_quantity": 37
+    },
+    {
+      "id": 769,
+      "name": "Electronics_Item_0769",
+      "category": "electronics",
+      "price": 1793.69,
+      "stock_quantity": 44
+    },
+    {
+      "id": 770,
+      "name": "Electronics_Item_0770",
+      "category": "electronics",
+      "price": 1042.88,
+      "stock_quantity": 91
+    },
+    {
+      "id": 771,
+      "name": "Electronics_Item_0771",
+      "category": "electronics",
+      "price": 910.01,
+      "stock_quantity": 204
+    },
+    {
+      "id": 772,
+      "name": "Electronics_Item_0772",
+      "category": "electronics",
+      "price": 1060.51,
+      "stock_quantity": 17
+    },
+    {
+      "id": 773,
+      "name": "Electronics_Item_0773",
+      "category": "electronics",
+      "price": 1767.07,
+      "stock_quantity": 142
+    },
+    {
+      "id": 774,
+      "name": "Electronics_Item_0774",
+      "category": "electronics",
+      "price": 855.43,
+      "stock_quantity": 70
+    },
+    {
+      "id": 776,
+      "name": "Electronics_Item_0776",
+      "category": "electronics",
+      "price": 1497.31,
+      "stock_quantity": 105
+    },
+    {
+      "id": 778,
+      "name": "Electronics_Item_0778",
+      "category": "electronics",
+      "price": 284.07,
+      "stock_quantity": 214
+    },
+    {
+      "id": 779,
+      "name": "Electronics_Item_0779",
+      "category": "electronics",
+      "price": 989.89,
+      "stock_quantity": 168
+    },
+    {
+      "id": 780,
+      "name": "Electronics_Item_0780",
+      "category": "electronics",
+      "price": 1665.16,
+      "stock_quantity": 24
+    },
+    {
+      "id": 782,
+      "name": "Electronics_Item_0782",
+      "category": "electronics",
+      "price": 1098.66,
+      "stock_quantity": 66
+    },
+    {
+      "id": 783,
+      "name": "Electronics_Item_0783",
+      "category": "electronics",
+      "price": 305.58,
+      "stock_quantity": 145
+    },
+    {
+      "id": 785,
+      "name": "Electronics_Item_0785",
+      "category": "electronics",
+      "price": 961.42,
+      "stock_quantity": 94
+    },
+    {
+      "id": 786,
+      "name": "Electronics_Item_0786",
+      "category": "electronics",
+      "price": 245.73,
+      "stock_quantity": 117
+    },
+    {
+      "id": 788,
+      "name": "Electronics_Item_0788",
+      "category": "electronics",
+      "price": 214.19,
+      "stock_quantity": 46
+    },
+    {
+      "id": 790,
+      "name": "Electronics_Item_0790",
+      "category": "electronics",
+      "price": 1624.2,
+      "stock_quantity": 227
+    },
+    {
+      "id": 791,
+      "name": "Electronics_Item_0791",
+      "category": "electronics",
+      "price": 1320.78,
+      "stock_quantity": 79
+    },
+    {
+      "id": 793,
+      "name": "Electronics_Item_0793",
+      "category": "electronics",
+      "price": 1007.54,
+      "stock_quantity": 132
+    },
+    {
+      "id": 794,
+      "name": "Electronics_Item_0794",
+      "category": "electronics",
+      "price": 1489.33,
+      "stock_quantity": 194
+    },
+    {
+      "id": 797,
+      "name": "Electronics_Item_0797",
+      "category": "electronics",
+      "price": 836.6,
+      "stock_quantity": 39
+    },
+    {
+      "id": 798,
+      "name": "Electronics_Item_0798",
+      "category": "electronics",
+      "price": 1747.96,
+      "stock_quantity": 117
+    },
+    {
+      "id": 799,
+      "name": "Electronics_Item_0799",
+      "category": "electronics",
+      "price": 1244.43,
+      "stock_quantity": 231
+    },
+    {
+      "id": 800,
+      "name": "Electronics_Item_0800",
+      "category": "electronics",
+      "price": 770.29,
+      "stock_quantity": 106
+    },
+    {
+      "id": 801,
+      "name": "Electronics_Item_0801",
+      "category": "electronics",
+      "price": 1435.06,
+      "stock_quantity": 24
+    },
+    {
+      "id": 805,
+      "name": "Electronics_Item_0805",
+      "category": "electronics",
+      "price": 259.67,
+      "stock_quantity": 151
+    },
+    {
+      "id": 807,
+      "name": "Electronics_Item_0807",
+      "category": "electronics",
+      "price": 1563.6,
+      "stock_quantity": 194
+    },
+    {
+      "id": 808,
+      "name": "Electronics_Item_0808",
+      "category": "electronics",
+      "price": 1794.26,
+      "stock_quantity": 52
+    },
+    {
+      "id": 814,
+      "name": "Electronics_Item_0814",
+      "category": "electronics",
+      "price": 1164.86,
+      "stock_quantity": 214
+    },
+    {
+      "id": 816,
+      "name": "Electronics_Item_0816",
+      "category": "electronics",
+      "price": 1219.27,
+      "stock_quantity": 136
+    },
+    {
+      "id": 817,
+      "name": "Electronics_Item_0817",
+      "category": "electronics",
+      "price": 1507.78,
+      "stock_quantity": 172
+    },
+    {
+      "id": 818,
+      "name": "Electronics_Item_0818",
+      "category": "electronics",
+      "price": 1236.0,
+      "stock_quantity": 44
+    },
+    {
+      "id": 819,
+      "name": "Electronics_Item_0819",
+      "category": "electronics",
+      "price": 1769.68,
+      "stock_quantity": 209
+    },
+    {
+      "id": 822,
+      "name": "Electronics_Item_0822",
+      "category": "electronics",
+      "price": 1587.92,
+      "stock_quantity": 167
+    },
+    {
+      "id": 825,
+      "name": "Electronics_Item_0825",
+      "category": "electronics",
+      "price": 557.48,
+      "stock_quantity": 231
+    },
+    {
+      "id": 826,
+      "name": "Electronics_Item_0826",
+      "category": "electronics",
+      "price": 296.63,
+      "stock_quantity": 209
+    },
+    {
+      "id": 827,
+      "name": "Electronics_Item_0827",
+      "category": "electronics",
+      "price": 1505.87,
+      "stock_quantity": 250
+    },
+    {
+      "id": 828,
+      "name": "Electronics_Item_0828",
+      "category": "electronics",
+      "price": 1465.57,
+      "stock_quantity": 185
+    },
+    {
+      "id": 829,
+      "name": "Electronics_Item_0829",
+      "category": "electronics",
+      "price": 375.06,
+      "stock_quantity": 35
+    },
+    {
+      "id": 832,
+      "name": "Electronics_Item_0832",
+      "category": "electronics",
+      "price": 884.49,
+      "stock_quantity": 187
+    },
+    {
+      "id": 834,
+      "name": "Electronics_Item_0834",
+      "category": "electronics",
+      "price": 1296.73,
+      "stock_quantity": 94
+    },
+    {
+      "id": 836,
+      "name": "Electronics_Item_0836",
+      "category": "electronics",
+      "price": 1112.32,
+      "stock_quantity": 55
+    },
+    {
+      "id": 839,
+      "name": "Electronics_Item_0839",
+      "category": "electronics",
+      "price": 111.51,
+      "stock_quantity": 241
+    },
+    {
+      "id": 840,
+      "name": "Electronics_Item_0840",
+      "category": "electronics",
+      "price": 1424.06,
+      "stock_quantity": 198
+    },
+    {
+      "id": 842,
+      "name": "Electronics_Item_0842",
+      "category": "electronics",
+      "price": 1698.45,
+      "stock_quantity": 45
+    },
+    {
+      "id": 843,
+      "name": "Electronics_Item_0843",
+      "category": "electronics",
+      "price": 1783.77,
+      "stock_quantity": 153
+    },
+    {
+      "id": 844,
+      "name": "Electronics_Item_0844",
+      "category": "electronics",
+      "price": 710.44,
+      "stock_quantity": 69
+    },
+    {
+      "id": 845,
+      "name": "Electronics_Item_0845",
+      "category": "electronics",
+      "price": 844.23,
+      "stock_quantity": 38
+    },
+    {
+      "id": 849,
+      "name": "Electronics_Item_0849",
+      "category": "electronics",
+      "price": 149.24,
+      "stock_quantity": 191
+    },
+    {
+      "id": 850,
+      "name": "Electronics_Item_0850",
+      "category": "electronics",
+      "price": 66.07,
+      "stock_quantity": 104
+    },
+    {
+      "id": 851,
+      "name": "Electronics_Item_0851",
+      "category": "electronics",
+      "price": 1501.15,
+      "stock_quantity": 220
+    },
+    {
+      "id": 853,
+      "name": "Electronics_Item_0853",
+      "category": "electronics",
+      "price": 543.08,
+      "stock_quantity": 95
+    },
+    {
+      "id": 856,
+      "name": "Electronics_Item_0856",
+      "category": "electronics",
+      "price": 287.84,
+      "stock_quantity": 57
+    },
+    {
+      "id": 857,
+      "name": "Electronics_Item_0857",
+      "category": "electronics",
+      "price": 416.87,
+      "stock_quantity": 187
+    },
+    {
+      "id": 858,
+      "name": "Electronics_Item_0858",
+      "category": "electronics",
+      "price": 254.69,
+      "stock_quantity": 224
+    },
+    {
+      "id": 860,
+      "name": "Electronics_Item_0860",
+      "category": "electronics",
+      "price": 102.24,
+      "stock_quantity": 42
+    },
+    {
+      "id": 864,
+      "name": "Electronics_Item_0864",
+      "category": "electronics",
+      "price": 713.2,
+      "stock_quantity": 199
+    },
+    {
+      "id": 865,
+      "name": "Electronics_Item_0865",
+      "category": "electronics",
+      "price": 60.73,
+      "stock_quantity": 42
+    },
+    {
+      "id": 866,
+      "name": "Electronics_Item_0866",
+      "category": "electronics",
+      "price": 937.77,
+      "stock_quantity": 205
+    },
+    {
+      "id": 868,
+      "name": "Electronics_Item_0868",
+      "category": "electronics",
+      "price": 1360.79,
+      "stock_quantity": 224
+    },
+    {
+      "id": 869,
+      "name": "Electronics_Item_0869",
+      "category": "electronics",
+      "price": 901.71,
+      "stock_quantity": 202
+    },
+    {
+      "id": 870,
+      "name": "Electronics_Item_0870",
+      "category": "electronics",
+      "price": 448.09,
+      "stock_quantity": 15
+    },
+    {
+      "id": 872,
+      "name": "Electronics_Item_0872",
+      "category": "electronics",
+      "price": 1633.7,
+      "stock_quantity": 243
+    },
+    {
+      "id": 873,
+      "name": "Electronics_Item_0873",
+      "category": "electronics",
+      "price": 1235.05,
+      "stock_quantity": 233
+    },
+    {
+      "id": 875,
+      "name": "Electronics_Item_0875",
+      "category": "electronics",
+      "price": 1011.93,
+      "stock_quantity": 26
+    },
+    {
+      "id": 877,
+      "name": "Electronics_Item_0877",
+      "category": "electronics",
+      "price": 140.12,
+      "stock_quantity": 206
+    },
+    {
+      "id": 878,
+      "name": "Electronics_Item_0878",
+      "category": "electronics",
+      "price": 857.91,
+      "stock_quantity": 83
+    },
+    {
+      "id": 880,
+      "name": "Electronics_Item_0880",
+      "category": "electronics",
+      "price": 1321.75,
+      "stock_quantity": 218
+    },
+    {
+      "id": 882,
+      "name": "Electronics_Item_0882",
+      "category": "electronics",
+      "price": 604.59,
+      "stock_quantity": 108
+    },
+    {
+      "id": 883,
+      "name": "Electronics_Item_0883",
+      "category": "electronics",
+      "price": 362.27,
+      "stock_quantity": 74
+    },
+    {
+      "id": 884,
+      "name": "Electronics_Item_0884",
+      "category": "electronics",
+      "price": 1448.55,
+      "stock_quantity": 56
+    },
+    {
+      "id": 886,
+      "name": "Electronics_Item_0886",
+      "category": "electronics",
+      "price": 308.43,
+      "stock_quantity": 201
+    },
+    {
+      "id": 887,
+      "name": "Electronics_Item_0887",
+      "category": "electronics",
+      "price": 1779.56,
+      "stock_quantity": 155
+    },
+    {
+      "id": 888,
+      "name": "Electronics_Item_0888",
+      "category": "electronics",
+      "price": 41.47,
+      "stock_quantity": 66
+    },
+    {
+      "id": 890,
+      "name": "Electronics_Item_0890",
+      "category": "electronics",
+      "price": 1643.9,
+      "stock_quantity": 21
+    },
+    {
+      "id": 892,
+      "name": "Electronics_Item_0892",
+      "category": "electronics",
+      "price": 1142.14,
+      "stock_quantity": 77
+    },
+    {
+      "id": 893,
+      "name": "Electronics_Item_0893",
+      "category": "electronics",
+      "price": 626.84,
+      "stock_quantity": 88
+    },
+    {
+      "id": 896,
+      "name": "Electronics_Item_0896",
+      "category": "electronics",
+      "price": 849.56,
+      "stock_quantity": 113
+    },
+    {
+      "id": 897,
+      "name": "Electronics_Item_0897",
+      "category": "electronics",
+      "price": 1111.09,
+      "stock_quantity": 5
+    },
+    {
+      "id": 900,
+      "name": "Electronics_Item_0900",
+      "category": "electronics",
+      "price": 403.58,
+      "stock_quantity": 150
+    },
+    {
+      "id": 902,
+      "name": "Electronics_Item_0902",
+      "category": "electronics",
+      "price": 462.01,
+      "stock_quantity": 170
+    },
+    {
+      "id": 904,
+      "name": "Electronics_Item_0904",
+      "category": "electronics",
+      "price": 235.5,
+      "stock_quantity": 92
+    },
+    {
+      "id": 906,
+      "name": "Electronics_Item_0906",
+      "category": "electronics",
+      "price": 425.4,
+      "stock_quantity": 213
+    },
+    {
+      "id": 909,
+      "name": "Electronics_Item_0909",
+      "category": "electronics",
+      "price": 986.85,
+      "stock_quantity": 92
+    },
+    {
+      "id": 913,
+      "name": "Electronics_Item_0913",
+      "category": "electronics",
+      "price": 451.17,
+      "stock_quantity": 111
+    },
+    {
+      "id": 914,
+      "name": "Electronics_Item_0914",
+      "category": "electronics",
+      "price": 142.9,
+      "stock_quantity": 159
+    },
+    {
+      "id": 917,
+      "name": "Electronics_Item_0917",
+      "category": "electronics",
+      "price": 1546.67,
+      "stock_quantity": 183
+    },
+    {
+      "id": 918,
+      "name": "Electronics_Item_0918",
+      "category": "electronics",
+      "price": 1120.43,
+      "stock_quantity": 5
+    },
+    {
+      "id": 919,
+      "name": "Electronics_Item_0919",
+      "category": "electronics",
+      "price": 370.02,
+      "stock_quantity": 197
+    },
+    {
+      "id": 922,
+      "name": "Electronics_Item_0922",
+      "category": "electronics",
+      "price": 1175.52,
+      "stock_quantity": 5
+    },
+    {
+      "id": 923,
+      "name": "Electronics_Item_0923",
+      "category": "electronics",
+      "price": 155.46,
+      "stock_quantity": 227
+    },
+    {
+      "id": 926,
+      "name": "Electronics_Item_0926",
+      "category": "electronics",
+      "price": 850.71,
+      "stock_quantity": 164
+    },
+    {
+      "id": 928,
+      "name": "Electronics_Item_0928",
+      "category": "electronics",
+      "price": 353.02,
+      "stock_quantity": 124
+    },
+    {
+      "id": 931,
+      "name": "Electronics_Item_0931",
+      "category": "electronics",
+      "price": 1665.85,
+      "stock_quantity": 21
+    },
+    {
+      "id": 934,
+      "name": "Electronics_Item_0934",
+      "category": "electronics",
+      "price": 899.38,
+      "stock_quantity": 107
+    },
+    {
+      "id": 935,
+      "name": "Electronics_Item_0935",
+      "category": "electronics",
+      "price": 289.72,
+      "stock_quantity": 218
+    },
+    {
+      "id": 938,
+      "name": "Electronics_Item_0938",
+      "category": "electronics",
+      "price": 291.97,
+      "stock_quantity": 106
+    },
+    {
+      "id": 940,
+      "name": "Electronics_Item_0940",
+      "category": "electronics",
+      "price": 1286.35,
+      "stock_quantity": 160
+    },
+    {
+      "id": 946,
+      "name": "Electronics_Item_0946",
+      "category": "electronics",
+      "price": 896.8,
+      "stock_quantity": 133
+    },
+    {
+      "id": 947,
+      "name": "Electronics_Item_0947",
+      "category": "electronics",
+      "price": 1516.49,
+      "stock_quantity": 95
+    },
+    {
+      "id": 948,
+      "name": "Electronics_Item_0948",
+      "category": "electronics",
+      "price": 694.71,
+      "stock_quantity": 30
+    },
+    {
+      "id": 949,
+      "name": "Electronics_Item_0949",
+      "category": "electronics",
+      "price": 516.47,
+      "stock_quantity": 212
+    },
+    {
+      "id": 952,
+      "name": "Electronics_Item_0952",
+      "category": "electronics",
+      "price": 223.07,
+      "stock_quantity": 176
+    },
+    {
+      "id": 953,
+      "name": "Electronics_Item_0953",
+      "category": "electronics",
+      "price": 972.8,
+      "stock_quantity": 63
+    },
+    {
+      "id": 955,
+      "name": "Electronics_Item_0955",
+      "category": "electronics",
+      "price": 1191.6,
+      "stock_quantity": 178
+    },
+    {
+      "id": 957,
+      "name": "Electronics_Item_0957",
+      "category": "electronics",
+      "price": 515.37,
+      "stock_quantity": 85
+    },
+    {
+      "id": 958,
+      "name": "Electronics_Item_0958",
+      "category": "electronics",
+      "price": 1508.58,
+      "stock_quantity": 82
+    },
+    {
+      "id": 961,
+      "name": "Electronics_Item_0961",
+      "category": "electronics",
+      "price": 747.91,
+      "stock_quantity": 87
+    },
+    {
+      "id": 962,
+      "name": "Electronics_Item_0962",
+      "category": "electronics",
+      "price": 374.11,
+      "stock_quantity": 153
+    },
+    {
+      "id": 963,
+      "name": "Electronics_Item_0963",
+      "category": "electronics",
+      "price": 1374.78,
+      "stock_quantity": 241
+    },
+    {
+      "id": 964,
+      "name": "Electronics_Item_0964",
+      "category": "electronics",
+      "price": 666.83,
+      "stock_quantity": 228
+    },
+    {
+      "id": 968,
+      "name": "Electronics_Item_0968",
+      "category": "electronics",
+      "price": 488.73,
+      "stock_quantity": 105
+    },
+    {
+      "id": 970,
+      "name": "Electronics_Item_0970",
+      "category": "electronics",
+      "price": 1192.0,
+      "stock_quantity": 178
+    },
+    {
+      "id": 972,
+      "name": "Electronics_Item_0972",
+      "category": "electronics",
+      "price": 1405.64,
+      "stock_quantity": 228
+    },
+    {
+      "id": 973,
+      "name": "Electronics_Item_0973",
+      "category": "electronics",
+      "price": 255.25,
+      "stock_quantity": 5
+    },
+    {
+      "id": 974,
+      "name": "Electronics_Item_0974",
+      "category": "electronics",
+      "price": 1494.39,
+      "stock_quantity": 87
+    },
+    {
+      "id": 975,
+      "name": "Electronics_Item_0975",
+      "category": "electronics",
+      "price": 863.83,
+      "stock_quantity": 71
+    },
+    {
+      "id": 978,
+      "name": "Electronics_Item_0978",
+      "category": "electronics",
+      "price": 1446.6,
+      "stock_quantity": 202
+    },
+    {
+      "id": 981,
+      "name": "Electronics_Item_0981",
+      "category": "electronics",
+      "price": 965.94,
+      "stock_quantity": 66
+    },
+    {
+      "id": 982,
+      "name": "Electronics_Item_0982",
+      "category": "electronics",
+      "price": 778.0,
+      "stock_quantity": 81
+    },
+    {
+      "id": 983,
+      "name": "Electronics_Item_0983",
+      "category": "electronics",
+      "price": 699.42,
+      "stock_quantity": 67
+    },
+    {
+      "id": 984,
+      "name": "Electronics_Item_0984",
+      "category": "electronics",
+      "price": 1150.42,
+      "stock_quantity": 149
+    },
+    {
+      "id": 986,
+      "name": "Electronics_Item_0986",
+      "category": "electronics",
+      "price": 1569.63,
+      "stock_quantity": 4
+    },
+    {
+      "id": 988,
+      "name": "Electronics_Item_0988",
+      "category": "electronics",
+      "price": 202.56,
+      "stock_quantity": 94
+    },
+    {
+      "id": 989,
+      "name": "Electronics_Item_0989",
+      "category": "electronics",
+      "price": 1245.26,
+      "stock_quantity": 146
+    },
+    {
+      "id": 991,
+      "name": "Electronics_Item_0991",
+      "category": "electronics",
+      "price": 1161.0,
+      "stock_quantity": 247
+    },
+    {
+      "id": 993,
+      "name": "Electronics_Item_0993",
+      "category": "electronics",
+      "price": 1035.21,
+      "stock_quantity": 28
+    },
+    {
+      "id": 994,
+      "name": "Electronics_Item_0994",
+      "category": "electronics",
+      "price": 1646.98,
+      "stock_quantity": 212
+    },
+    {
+      "id": 995,
+      "name": "Electronics_Item_0995",
+      "category": "electronics",
+      "price": 1493.38,
+      "stock_quantity": 175
+    },
+    {
+      "id": 997,
+      "name": "Electronics_Item_0997",
+      "category": "electronics",
+      "price": 757.62,
+      "stock_quantity": 241
+    }
+  ]
+}

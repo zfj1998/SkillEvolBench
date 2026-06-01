@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E1-LS3
+environment_id: E1
+latent_skill_id: E1-LS3.safe-refactoring
+slug: safe-refactoring
+name: safe-refactoring
+description: Safely restructure Python code to improve clarity, reduce duplication, and increase maintainability without changing external behavior. Use this skill when the user asks to refactor, clean up, simplify, rename, extract functions or classes, remove dead code, or reorganize Python code while keeping the existing behavior intact. Focus on Python projects with an existing test suite and structural changes only.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E1-LS3-T1
+- E1-LS3-T2
+- E1-LS3-T3
+- E1-LS3-T4
+- E1-LS3-T5
+- E1-LS3-T6
+gap_1_summary: 'Boundary-behavior preservation: the curated skill doesn''t stress that every function''s behavior on edge inputs (None, empty collections, zero, very large values) must be byte-identical after the refactor. The most common refactoring regression is a ''cleaner'' implementation that handles the happy path beautifully and silently changes one edge case.'
+gap_2_summary: 'Type-system constraints: the curated skill is Python-only and assumes dynamic typing. TypeScript or typed-Python refactors carry compile-time constraints that drive the refactor — `super()` chain ordering, generics that propagate through method signatures, and discriminated unions that stop type-checking when a class moves.'

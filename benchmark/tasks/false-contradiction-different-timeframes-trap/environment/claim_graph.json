@@ -1,0 +1,141 @@
+{
+  "claims": [
+    {
+      "id": "a1",
+      "doc": "pairs",
+      "entity": "Market",
+      "metric": "size",
+      "period": "2023",
+      "scope": "global",
+      "value": 500,
+      "polarity": null,
+      "quote": "2023 global market size was $500M."
+    },
+    {
+      "id": "b1",
+      "doc": "pairs",
+      "entity": "Market",
+      "metric": "size",
+      "period": "2023",
+      "scope": "global",
+      "value": 200,
+      "polarity": null,
+      "quote": "2023 global market size was $200M."
+    },
+    {
+      "id": "a2",
+      "doc": "pairs",
+      "entity": "CEO",
+      "metric": "expansion",
+      "period": "2025",
+      "scope": "US",
+      "value": true,
+      "polarity": "affirm",
+      "quote": "The CEO confirmed expansion."
+    },
+    {
+      "id": "b2",
+      "doc": "pairs",
+      "entity": "CEO",
+      "metric": "expansion",
+      "period": "2025",
+      "scope": "US",
+      "value": false,
+      "polarity": "deny",
+      "quote": "The CEO denied expansion."
+    },
+    {
+      "id": "a3",
+      "doc": "pairs",
+      "entity": "Revenue",
+      "metric": "growth",
+      "period": "2022",
+      "scope": "global",
+      "value": -10,
+      "polarity": null,
+      "quote": "Revenue declined 10% in 2022."
+    },
+    {
+      "id": "b3",
+      "doc": "pairs",
+      "entity": "Revenue",
+      "metric": "growth",
+      "period": "2023",
+      "scope": "global",
+      "value": 20,
+      "polarity": null,
+      "quote": "Revenue grew 20% in 2023."
+    },
+    {
+      "id": "a4",
+      "doc": "pairs",
+      "entity": "Sales",
+      "metric": "growth",
+      "period": "2024",
+      "scope": "US",
+      "value": -5,
+      "polarity": null,
+      "quote": "US sales shrank in 2024."
+    },
+    {
+      "id": "b4",
+      "doc": "pairs",
+      "entity": "Sales",
+      "metric": "growth",
+      "period": "2024",
+      "scope": "global",
+      "value": 8,
+      "polarity": null,
+      "quote": "Global sales grew in 2024."
+    },
+    {
+      "id": "a5",
+      "doc": "pairs",
+      "entity": "Migration",
+      "metric": "cost",
+      "period": "short_term",
+      "scope": "global",
+      "value": "up",
+      "polarity": null,
+      "quote": "Short-term migration costs rose."
+    },
+    {
+      "id": "b5",
+      "doc": "pairs",
+      "entity": "Migration",
+      "metric": "cost",
+      "period": "long_term",
+      "scope": "global",
+      "value": "down",
+      "polarity": null,
+      "quote": "Long-term migration costs are expected to fall."
+    }
+  ],
+  "candidate_pairs": [
+    {
+      "id": "p_true_market",
+      "left": "a1",
+      "right": "b1"
+    },
+    {
+      "id": "p_true_ceo",
+      "left": "a2",
+      "right": "b2"
+    },
+    {
+      "id": "p_false_year",
+      "left": "a3",
+      "right": "b3"
+    },
+    {
+      "id": "p_false_scope",
+      "left": "a4",
+      "right": "b4"
+    },
+    {
+      "id": "p_false_time_scale",
+      "left": "a5",
+      "right": "b5"
+    }
+  ]
+}

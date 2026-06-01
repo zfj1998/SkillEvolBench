@@ -1,0 +1,23 @@
+schema_version: '1.0'
+task_id: E6-LS1-T1
+task_slug: sort-20-explicit-priority
+environment_id: E6
+family_id: E6-LS1
+latent_skill_id: E6-LS1.inbox-triage-prioritization
+task_index: 1
+role: canonical
+phase: learning
+within_family_difficulty_rank: 1
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E6-LS1.inbox-triage-prioritization
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types: []
+domain_group: communication_scheduling
+review_notes: []

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "AI_INDEX_2025",
+    "title": "The 2025 AI Index Report",
+    "publisher": "Stanford HAI",
+    "year": 2025,
+    "url": "https://hai.stanford.edu/ai-index/2025-ai-index-report",
+    "source_type": "research_report",
+    "notes": "Grounding source for AI investment and AI adoption context; used to anchor market-size examples."
+  },
+  {
+    "id": "GARTNER_AI_CHIPS_2024",
+    "title": "Gartner Forecasts Worldwide AI Chips Revenue to Grow 33% in 2024",
+    "publisher": "Gartner",
+    "year": 2024,
+    "url": "https://www.gartner.com/en/newsroom/press-releases/2024-05-29-gartner-forecasts-worldwide-artificial-intelligence-chips-revenue-to-grow-33-percent-in-2024",
+    "source_type": "market_forecast",
+    "notes": "Grounding source for AI semiconductor market estimates and timeframe-sensitive comparisons."
+  },
+  {
+    "id": "IEA_RENEWABLES_2024",
+    "title": "Renewables 2024",
+    "publisher": "IEA",
+    "year": 2024,
+    "url": "https://www.iea.org/reports/renewables-2024",
+    "source_type": "energy_report",
+    "notes": "Grounding source for renewable electricity growth, solar and wind capacity additions, and policy gaps."
+  },
+  {
+    "id": "EMBER_GER_2024",
+    "title": "Global Electricity Review 2024",
+    "publisher": "Ember",
+    "year": 2024,
+    "url": "https://ember-energy.org/latest-insights/global-electricity-review-2024",
+    "source_type": "energy_report",
+    "notes": "Grounding source for the claim that renewables generated around 30% of global electricity in 2023."
+  },
+  {
+    "id": "NATURE_HYBRID_2024",
+    "title": "Hybrid working from home improves retention without damaging performance",
+    "publisher": "Nature",
+    "year": 2024,
+    "url": "https://www.nature.com/articles/s41586-024-07500-2",
+    "source_type": "randomized_controlled_trial",
+    "notes": "Grounding source for distinguishing retention and performance claims in hybrid-work evidence."
+  }
+]

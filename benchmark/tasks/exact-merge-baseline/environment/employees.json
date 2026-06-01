@@ -1,0 +1,702 @@
+[
+  {
+    "employee_id": "E001",
+    "name": "Bob Jones",
+    "dept": "Sales",
+    "manager": "MGR007",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E002",
+    "name": "Carol Brown",
+    "dept": "Engineering",
+    "manager": "MGR004",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E003",
+    "name": "Dave Davis",
+    "dept": "Engineering",
+    "manager": "MGR007",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E004",
+    "name": "Eve Miller",
+    "dept": "Legal",
+    "manager": "MGR001",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E005",
+    "name": "Frank Wilson",
+    "dept": "Finance",
+    "manager": "MGR005",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E006",
+    "name": "Grace Moore",
+    "dept": "Finance",
+    "manager": "MGR003",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E007",
+    "name": "Hank Taylor",
+    "dept": "Finance",
+    "manager": "MGR002",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E008",
+    "name": "Iris Anderson",
+    "dept": "Finance",
+    "manager": "MGR013",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E009",
+    "name": "Jack Thomas",
+    "dept": "HR",
+    "manager": "MGR012",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E010",
+    "name": "Kate Jackson",
+    "dept": "Sales",
+    "manager": "MGR008",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E011",
+    "name": "Leo White",
+    "dept": "HR",
+    "manager": "MGR003",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E012",
+    "name": "Mona Harris",
+    "dept": "Marketing",
+    "manager": "MGR006",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E013",
+    "name": "Ned Martin",
+    "dept": "Engineering",
+    "manager": "MGR008",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E014",
+    "name": "Olga Thompson",
+    "dept": "Legal",
+    "manager": "MGR005",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E015",
+    "name": "Pete Garcia",
+    "dept": "Sales",
+    "manager": "MGR010",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E016",
+    "name": "Quinn Martinez",
+    "dept": "Legal",
+    "manager": "MGR007",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E017",
+    "name": "Rosa Robinson",
+    "dept": "Operations",
+    "manager": "MGR005",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E018",
+    "name": "Sam Clark",
+    "dept": "Operations",
+    "manager": "MGR011",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E019",
+    "name": "Tess Rodriguez",
+    "dept": "HR",
+    "manager": "MGR004",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E020",
+    "name": "Uma Lewis",
+    "dept": "Engineering",
+    "manager": "MGR007",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E021",
+    "name": "Vic Lee",
+    "dept": "Marketing",
+    "manager": "MGR009",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E022",
+    "name": "Wendy Walker",
+    "dept": "Marketing",
+    "manager": "MGR014",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E023",
+    "name": "Xena Hall",
+    "dept": "Operations",
+    "manager": "MGR011",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E024",
+    "name": "Yuri Allen",
+    "dept": "HR",
+    "manager": "MGR002",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E025",
+    "name": "Zara Young",
+    "dept": "HR",
+    "manager": "MGR009",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E026",
+    "name": "Adam Hernandez",
+    "dept": "HR",
+    "manager": "MGR010",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E027",
+    "name": "Beth King",
+    "dept": "Sales",
+    "manager": "MGR008",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E028",
+    "name": "Craig Wright",
+    "dept": "Sales",
+    "manager": "MGR002",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E029",
+    "name": "Diana Lopez",
+    "dept": "Operations",
+    "manager": "MGR014",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E030",
+    "name": "Alice Smith",
+    "dept": "HR",
+    "manager": "MGR012",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E031",
+    "name": "Bob Jones",
+    "dept": "Marketing",
+    "manager": "MGR002",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E032",
+    "name": "Carol Brown",
+    "dept": "HR",
+    "manager": "MGR009",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E033",
+    "name": "Dave Davis",
+    "dept": "Finance",
+    "manager": "MGR013",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E034",
+    "name": "Eve Miller",
+    "dept": "HR",
+    "manager": "MGR004",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E035",
+    "name": "Frank Wilson",
+    "dept": "Sales",
+    "manager": "MGR008",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E036",
+    "name": "Grace Moore",
+    "dept": "Legal",
+    "manager": "MGR006",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E037",
+    "name": "Hank Taylor",
+    "dept": "HR",
+    "manager": "MGR006",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E038",
+    "name": "Iris Anderson",
+    "dept": "Sales",
+    "manager": "MGR013",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E039",
+    "name": "Jack Thomas",
+    "dept": "Legal",
+    "manager": "MGR013",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E040",
+    "name": "Kate Jackson",
+    "dept": "Engineering",
+    "manager": "MGR013",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E041",
+    "name": "Leo White",
+    "dept": "HR",
+    "manager": "MGR003",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E042",
+    "name": "Mona Harris",
+    "dept": "Finance",
+    "manager": "MGR014",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E043",
+    "name": "Ned Martin",
+    "dept": "Finance",
+    "manager": "MGR003",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E044",
+    "name": "Olga Thompson",
+    "dept": "HR",
+    "manager": "MGR007",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E045",
+    "name": "Pete Garcia",
+    "dept": "Sales",
+    "manager": "MGR009",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E046",
+    "name": "Quinn Martinez",
+    "dept": "Operations",
+    "manager": "MGR014",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E047",
+    "name": "Rosa Robinson",
+    "dept": "Finance",
+    "manager": "MGR014",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E048",
+    "name": "Sam Clark",
+    "dept": "Finance",
+    "manager": "MGR009",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E049",
+    "name": "Tess Rodriguez",
+    "dept": "Marketing",
+    "manager": "MGR013",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E050",
+    "name": "Uma Lewis",
+    "dept": "Engineering",
+    "manager": "MGR009",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E051",
+    "name": "Vic Lee",
+    "dept": "Operations",
+    "manager": "MGR013",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E052",
+    "name": "Wendy Walker",
+    "dept": "Sales",
+    "manager": "MGR001",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E053",
+    "name": "Xena Hall",
+    "dept": "Engineering",
+    "manager": "MGR008",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E054",
+    "name": "Yuri Allen",
+    "dept": "Sales",
+    "manager": "MGR008",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E055",
+    "name": "Zara Young",
+    "dept": "Finance",
+    "manager": "MGR015",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E056",
+    "name": "Adam Hernandez",
+    "dept": "Engineering",
+    "manager": "MGR007",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E057",
+    "name": "Beth King",
+    "dept": "HR",
+    "manager": "MGR011",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E058",
+    "name": "Craig Wright",
+    "dept": "Legal",
+    "manager": "MGR006",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E059",
+    "name": "Diana Lopez",
+    "dept": "Engineering",
+    "manager": "MGR007",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E060",
+    "name": "Alice Smith",
+    "dept": "Operations",
+    "manager": "MGR009",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E061",
+    "name": "Bob Jones",
+    "dept": "Engineering",
+    "manager": "MGR012",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E062",
+    "name": "Carol Brown",
+    "dept": "Legal",
+    "manager": "MGR001",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E063",
+    "name": "Dave Davis",
+    "dept": "Engineering",
+    "manager": "MGR015",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E064",
+    "name": "Eve Miller",
+    "dept": "Engineering",
+    "manager": "MGR015",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E065",
+    "name": "Frank Wilson",
+    "dept": "Sales",
+    "manager": "MGR007",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E066",
+    "name": "Grace Moore",
+    "dept": "Engineering",
+    "manager": "MGR005",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E067",
+    "name": "Hank Taylor",
+    "dept": "Sales",
+    "manager": "MGR001",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E068",
+    "name": "Iris Anderson",
+    "dept": "HR",
+    "manager": "MGR002",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E069",
+    "name": "Jack Thomas",
+    "dept": "Finance",
+    "manager": "MGR007",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E070",
+    "name": "Kate Jackson",
+    "dept": "HR",
+    "manager": "MGR002",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E071",
+    "name": "Leo White",
+    "dept": "Legal",
+    "manager": "MGR005",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E072",
+    "name": "Mona Harris",
+    "dept": "Legal",
+    "manager": "MGR003",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E073",
+    "name": "Ned Martin",
+    "dept": "Engineering",
+    "manager": "MGR012",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E074",
+    "name": "Olga Thompson",
+    "dept": "Operations",
+    "manager": "MGR002",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E075",
+    "name": "Pete Garcia",
+    "dept": "Sales",
+    "manager": "MGR012",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E076",
+    "name": "Quinn Martinez",
+    "dept": "Legal",
+    "manager": "MGR003",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E077",
+    "name": "Rosa Robinson",
+    "dept": "Legal",
+    "manager": "MGR012",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E078",
+    "name": "Sam Clark",
+    "dept": "Marketing",
+    "manager": "MGR007",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E079",
+    "name": "Tess Rodriguez",
+    "dept": "Engineering",
+    "manager": "MGR008",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E080",
+    "name": "Uma Lewis",
+    "dept": "Sales",
+    "manager": "MGR006",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E081",
+    "name": "Vic Lee",
+    "dept": "Sales",
+    "manager": "MGR003",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E082",
+    "name": "Wendy Walker",
+    "dept": "Finance",
+    "manager": "MGR011",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E083",
+    "name": "Xena Hall",
+    "dept": "Marketing",
+    "manager": "MGR002",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E084",
+    "name": "Yuri Allen",
+    "dept": "Sales",
+    "manager": "MGR005",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E085",
+    "name": "Zara Young",
+    "dept": "Legal",
+    "manager": "MGR013",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E086",
+    "name": "Adam Hernandez",
+    "dept": "Legal",
+    "manager": "MGR010",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E087",
+    "name": "Beth King",
+    "dept": "Legal",
+    "manager": "MGR012",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E088",
+    "name": "Craig Wright",
+    "dept": "Marketing",
+    "manager": "MGR013",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E089",
+    "name": "Diana Lopez",
+    "dept": "Engineering",
+    "manager": "MGR003",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E090",
+    "name": "Alice Smith",
+    "dept": "Legal",
+    "manager": "MGR001",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E091",
+    "name": "Bob Jones",
+    "dept": "Operations",
+    "manager": "MGR013",
+    "location": "New York"
+  },
+  {
+    "employee_id": "E092",
+    "name": "Carol Brown",
+    "dept": "Finance",
+    "manager": "MGR002",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E093",
+    "name": "Dave Davis",
+    "dept": "Marketing",
+    "manager": "MGR004",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E094",
+    "name": "Eve Miller",
+    "dept": "Operations",
+    "manager": "MGR002",
+    "location": "Austin"
+  },
+  {
+    "employee_id": "E095",
+    "name": "Frank Wilson",
+    "dept": "Legal",
+    "manager": "MGR011",
+    "location": "San Francisco"
+  },
+  {
+    "employee_id": "E096",
+    "name": "Grace Moore",
+    "dept": "Legal",
+    "manager": "MGR012",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E097",
+    "name": "Hank Taylor",
+    "dept": "Engineering",
+    "manager": "MGR008",
+    "location": "Chicago"
+  },
+  {
+    "employee_id": "E098",
+    "name": "Iris Anderson",
+    "dept": "Sales",
+    "manager": "MGR012",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E099",
+    "name": "Jack Thomas",
+    "dept": "Engineering",
+    "manager": "MGR015",
+    "location": "Seattle"
+  },
+  {
+    "employee_id": "E100",
+    "name": "Kate Jackson",
+    "dept": "Sales",
+    "manager": "MGR008",
+    "location": "New York"
+  }
+]

@@ -1,0 +1,35 @@
+# Lower-bound baseline: bare model, no memory, no skills, no history.
+# Provides the No-Skill row in the Main Performance Table.
+name: no_skill
+description: Bare model, no memory, no skills, no history.
+track: none
+
+skill_init: empty
+allow_self_gen_induction: false
+allow_zero_shot_creation: false
+allow_curated_inject: false
+
+allow_revision: false
+allow_retirement: false
+allow_quarantine: false
+allow_applicability_narrow: false
+allow_rollback: false
+
+use_skill_library: false
+use_trajectory_rag: false
+use_history_context: false
+use_feedback_memory: false
+
+feedback_level: none
+feedback_to_skill_text: false
+feedback_to_memory: false
+
+allow_post_eval_maintenance: false
+default_strategy: none
+revision_trigger: never
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5
+
+# Library is fixed entire run -- replay would just measure LLM variance.
+within_env_replay: false

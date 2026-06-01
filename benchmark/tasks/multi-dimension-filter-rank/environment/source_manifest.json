@@ -1,0 +1,198 @@
+[
+  {
+    "id": "M01",
+    "title": "Dermatologist-level classification of skin cancer with deep neural networks",
+    "publisher": "Nature",
+    "year": 2017,
+    "url": "https://www.nature.com/articles/nature21056",
+    "source_type": "peer_reviewed_study",
+    "evidence_strength": "high",
+    "tags": [
+      "ai",
+      "medical diagnosis",
+      "skin cancer",
+      "clinical validation"
+    ],
+    "notes": "Clinical image classification study directly about diagnostic performance for skin cancer.",
+    "tier": "high"
+  },
+  {
+    "id": "M02",
+    "title": "Development and Validation of a Deep Learning Algorithm for Detection of Diabetic Retinopathy in Retinal Fundus Photographs",
+    "publisher": "JAMA",
+    "year": 2016,
+    "url": "https://jamanetwork.com/journals/jama/fullarticle/2588763",
+    "source_type": "peer_reviewed_study",
+    "evidence_strength": "high",
+    "tags": [
+      "ai",
+      "medical diagnosis",
+      "diabetic retinopathy",
+      "validation"
+    ],
+    "notes": "Large validation study for AI-based diabetic retinopathy detection with clinical datasets.",
+    "tier": "high"
+  },
+  {
+    "id": "M03",
+    "title": "Artificial Intelligence With Deep Learning Technology Looks Into Diabetic Retinopathy Screening",
+    "publisher": "JAMA",
+    "year": 2016,
+    "url": "https://jamanetwork.com/journals/jama/fullarticle/2588762",
+    "source_type": "editorial",
+    "evidence_strength": "medium",
+    "tags": [
+      "ai",
+      "medical diagnosis",
+      "screening",
+      "diabetic retinopathy"
+    ],
+    "notes": "Diagnosis-focused editorial discussing why AI screening for diabetic retinopathy matters clinically.",
+    "tier": "high"
+  },
+  {
+    "id": "M04",
+    "title": "AI-enabled medical devices",
+    "publisher": "U.S. FDA",
+    "year": 2025,
+    "url": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-enabled-medical-devices",
+    "source_type": "regulatory_reference",
+    "evidence_strength": "medium",
+    "tags": [
+      "ai",
+      "medical diagnosis",
+      "regulation",
+      "devices"
+    ],
+    "notes": "Regulatory overview tracking FDA-authorized AI-enabled medical devices, many in diagnostic workflows.",
+    "tier": "high"
+  },
+  {
+    "id": "M05",
+    "title": "Science and Medicine chapter highlights from the 2025 AI Index Report",
+    "publisher": "Stanford HAI",
+    "year": 2025,
+    "url": "https://hai.stanford.edu/ai-index/2025-ai-index-report",
+    "source_type": "research_report",
+    "evidence_strength": "medium",
+    "tags": [
+      "ai",
+      "medicine",
+      "healthcare",
+      "medical devices"
+    ],
+    "notes": "Broad but current summary of AI use in science and medicine, including FDA-authorized AI-enabled devices.",
+    "tier": "medium"
+  },
+  {
+    "id": "M06",
+    "title": "Ethics and governance of artificial intelligence for health",
+    "publisher": "WHO",
+    "year": 2021,
+    "url": "https://www.who.int/publications/i/item/9789240029200",
+    "source_type": "policy_report",
+    "evidence_strength": "medium",
+    "tags": [
+      "ai",
+      "healthcare",
+      "ethics",
+      "governance"
+    ],
+    "notes": "Healthcare-wide AI governance guidance; relevant to clinical AI but not tightly focused on diagnosis.",
+    "tier": "medium"
+  },
+  {
+    "id": "M07",
+    "title": "The state of AI in early 2024",
+    "publisher": "McKinsey",
+    "year": 2024,
+    "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai-2024",
+    "source_type": "industry_survey",
+    "evidence_strength": "medium",
+    "tags": [
+      "ai",
+      "business adoption",
+      "healthcare"
+    ],
+    "notes": "Cross-industry survey about AI adoption and value creation; relevant to healthcare strategy but not diagnostic practice.",
+    "tier": "medium"
+  },
+  {
+    "id": "M08",
+    "title": "Translating Artificial Intelligence Into Clinical Care",
+    "publisher": "JAMA",
+    "year": 2016,
+    "url": "https://jamanetwork.com/journals/jama/fullarticle/2588762",
+    "source_type": "editorial",
+    "evidence_strength": "medium",
+    "tags": [
+      "ai",
+      "clinical care",
+      "implementation"
+    ],
+    "notes": "Broader clinical translation discussion; closer to implementation than to specific diagnosis tasks.",
+    "tier": "medium"
+  },
+  {
+    "id": "M09",
+    "title": "Improving Diagnosis in Health Care",
+    "publisher": "National Academies",
+    "year": 2015,
+    "url": "https://nap.nationalacademies.org/catalog/21794/improving-diagnosis-in-health-care",
+    "source_type": "consensus_report",
+    "evidence_strength": "medium",
+    "tags": [
+      "medical diagnosis",
+      "patient safety"
+    ],
+    "notes": "Foundational report on diagnosis quality and diagnostic error, but not about AI methods.",
+    "tier": "low"
+  },
+  {
+    "id": "M10",
+    "title": "Future Promise of and Potential Pitfalls for Automated Detection of Diabetic Retinopathy",
+    "publisher": "JAMA Ophthalmology",
+    "year": 2016,
+    "url": "https://jamanetwork.com/journals/jamaophthalmology/fullarticle/2478173",
+    "source_type": "editorial",
+    "evidence_strength": "medium",
+    "tags": [
+      "medical diagnosis",
+      "automation",
+      "diabetic retinopathy"
+    ],
+    "notes": "Close to diagnosis, but more a commentary on automation trade-offs than a primary validation study.",
+    "tier": "low"
+  },
+  {
+    "id": "M11",
+    "title": "Renewables 2024",
+    "publisher": "IEA",
+    "year": 2024,
+    "url": "https://www.iea.org/reports/renewables-2024",
+    "source_type": "energy_report",
+    "evidence_strength": "high",
+    "tags": [
+      "renewables",
+      "energy"
+    ],
+    "notes": "Authoritative but unrelated to medical diagnosis; included as an irrelevant source.",
+    "tier": "irrelevant"
+  },
+  {
+    "id": "M12",
+    "title": "The 2025 AI Index Report",
+    "publisher": "Stanford HAI",
+    "year": 2025,
+    "url": "https://hai.stanford.edu/ai-index/2025-ai-index-report",
+    "source_type": "research_report",
+    "evidence_strength": "high",
+    "tags": [
+      "ai",
+      "economy",
+      "investment"
+    ],
+    "notes": "Current AI macro trends and investment data, but not a medical diagnosis source.",
+    "tier": "irrelevant"
+  }
+]

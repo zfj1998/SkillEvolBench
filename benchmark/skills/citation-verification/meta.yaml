@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E5-LS3
+environment_id: E5
+latent_skill_id: E5-LS3.citation-verification
+slug: citation-verification
+name: citation-verification
+description: Verify that citations in a document accurately represent their sources. Use this skill when a paper, review article, report, or essay makes claims about external sources and the task is to check whether those cited sources actually support the attributed statements. Focus on verifying that claims, quotes, and numerical assertions are supported by the cited source content.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E5-LS3-T1
+- E5-LS3-T2
+- E5-LS3-T3
+- E5-LS3-T4
+- E5-LS3-T5
+- E5-LS3-T6
+gap_1_summary: 'Citation content mismatch, not just citation existence: the curated skill verifies the cited source is real. The interesting failure is a real source whose claim doesn''t match what the citing paper says it does — the source exists, the URL works, but the cited statement is paraphrased into something the source never claimed. Read the cited passage and check it against the citing claim.'
+gap_2_summary: 'Selective quoting that omits caveats: the curated skill verifies a quoted passage exists in the source. A quote can be technically present but stripped of its original caveats — ''X works'' was originally ''X works, but only when Y holds''. Read the surrounding context for limitations the citing paper dropped.'

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "relevance ranking output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["query", "selected", "screened"],
+  "properties": {
+    "query": {"type": "string"},
+    "screened": {"type": "integer", "minimum": 20},
+    "selected": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["source_id", "reason"],
+        "properties": {
+          "rank": {"type": "integer", "minimum": 1},
+          "source_id": {"type": "string"},
+          "title": {"type": "string"},
+          "score": {"type": "number"},
+          "reason": {"type": "string"}
+        }
+      }
+    }
+  }
+}

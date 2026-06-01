@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E3-LS4
+environment_id: E3
+latent_skill_id: E3-LS4.null-safe-filtering-aggregation
+slug: null-safe-filtering-aggregation
+name: null-safe-filtering-aggregation
+description: Handle missing values correctly during data filtering and aggregation in pandas. Use this skill when a DataFrame contains NaN values and the task involves filtering rows, filling missing values, or computing aggregates such as mean, sum, or count. Focus on pandas NaN handling with isna(), dropna(), fillna(), and built-in aggregate functions before drawing conclusions from filtered or aggregated data.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E3-LS4-T1
+- E3-LS4-T2
+- E3-LS4-T3
+- E3-LS4-T4
+- E3-LS4-T5
+- E3-LS4-T6
+gap_1_summary: 'groupby silently drops NaN keys: the curated skill teaches `dropna()` and `fillna(0)`. The trap is `df.groupby(''region'').sum()` — pandas drops rows where `region` is NaN by default, so an entire group of records vanishes from the report. Pass `dropna=False` or check `df[''region''].isna().sum()` before grouping.'
+gap_2_summary: 'Sentinel values that aren''t NaN: the curated skill only handles NaN / None. Datasets often encode missingness with `-1`, `0`, `9999`, or string sentinels like `''N/A''` / `''unknown''`. These are valid values to pandas but logically missing — you have to know the schema''s convention and replace them explicitly before computing means or sums.'

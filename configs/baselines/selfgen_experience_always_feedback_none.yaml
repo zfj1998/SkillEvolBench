@@ -1,0 +1,35 @@
+# Ablation: selfgen_experience + always trigger + feedback=NONE.
+# Pair with selfgen_experience_always (process feedback) to measure the
+# value of failure feedback being passed to SkillAuthor at all.
+#
+# none = the propose() prompt does NOT see verifier_passed / failed_tests
+# / rubric scores. The LLM only sees the trajectory text. This is the
+# weakest feedback channel -- if the always-revise behaviour still helps
+# under no feedback, the trajectory itself is sufficient signal.
+name: selfgen_experience_always_feedback_none
+description: selfgen_experience + always trigger + no failure feedback.
+track: path-a
+
+skill_init: empty
+allow_self_gen_induction: true
+allow_zero_shot_creation: false
+allow_curated_inject: false
+
+allow_revision: true
+allow_retirement: false
+allow_quarantine: false
+allow_applicability_narrow: false
+allow_rollback: false
+
+use_skill_library: true
+skill_retrieval_k: 8
+
+feedback_level: none
+feedback_to_skill_text: true
+
+default_strategy: chain
+revision_trigger: always
+max_revisions_per_skill: 8
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5

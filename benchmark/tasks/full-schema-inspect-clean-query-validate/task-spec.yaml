@@ -1,0 +1,28 @@
+schema_version: '1.0'
+task_id: E3-LS1-T6
+task_slug: full-schema-inspect-clean-query-validate
+environment_id: E3
+family_id: E3-LS1
+latent_skill_id: E3-LS1.schema-inspection-before-query
+task_index: 6
+role: composition
+phase: evaluation
+within_family_difficulty_rank: 6
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E3-LS1.schema-inspection-before-query
+required_skills:
+- E3-LS1.schema-inspection-before-query
+- E3-LS5.result-sanity-reconciliation
+required_skill_compose_order:
+- E3-LS1.schema-inspection-before-query
+- E3-LS5.result-sanity-reconciliation
+composition_type: cross_family
+trap_types: []
+domain_group: data_processing
+review_notes:
+- 'composition_note: schema-aware cleaning + sanity check pipeline'

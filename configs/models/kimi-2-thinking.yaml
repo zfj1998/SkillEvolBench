@@ -1,0 +1,18 @@
+# Model preset: Kimi K2-Thinking via Kimi CLI through Bedrock-Mantle.
+# CONFIRM AVAILABILITY: this model may not be granted on your Mantle
+# endpoint. If you see a 403 / 400, contact your AWS account team.
+name: kimi-2-thinking
+short_id: kimi-k2-thinking
+provider: bedrock_mantle
+harbor_agent_name: kimi-cli
+agent_model_name: openai/moonshotai.kimi-k2-thinking
+
+agent_env:
+  KIMI_BEDROCK_BASE_URL: "${KIMI_BEDROCK_BASE_URL}"
+  KIMI_BEDROCK_API_KEY: "${KIMI_BEDROCK_API_KEY}"
+
+# Host-side LiteLLMClient routing (Mantle OpenAI-compatible endpoint):
+host_litellm:
+  model: openai/moonshotai.kimi-k2-thinking
+  api_base_env: KIMI_BEDROCK_BASE_URL
+  api_key_env: KIMI_BEDROCK_API_KEY

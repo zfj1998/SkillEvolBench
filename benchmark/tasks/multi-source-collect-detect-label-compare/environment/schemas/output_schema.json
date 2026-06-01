@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "board report output",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "labels",
+    "decision"
+  ],
+  "properties": {
+    "labels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "source_id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "label"
+        ]
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "basis": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "basis"
+      ]
+    }
+  }
+}

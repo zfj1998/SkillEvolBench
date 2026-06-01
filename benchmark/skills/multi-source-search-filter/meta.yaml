@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E5-LS1
+environment_id: E5
+latent_skill_id: E5-LS1.multi-source-search-filter
+slug: multi-source-search-filter
+name: multi-source-search-filter
+description: Search and filter the most relevant documents from a collection of 10-20 sources on a given topic. Use this skill when the task is to quickly scan a set of articles, papers, reports, or similar documents, score them for topical relevance, select the top 5 candidates, and rank those selected sources from most to least relevant. Focus on relevance-based selection using keyword matching, topic fit, specific data/examples, and source credibility.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E5-LS1-T1
+- E5-LS1-T2
+- E5-LS1-T3
+- E5-LS1-T4
+- E5-LS1-T5
+- E5-LS1-T6
+gap_1_summary: 'Evidence vs opinion weighting: the curated skill treats all sources as equivalent. ''I believe X'' from a blog post and ''an RCT of 5000 patients showed X'' deserve very different weights. Capture the type of source (peer-reviewed, primary, secondary, opinion, marketing) and weight relevance scores accordingly.'
+gap_2_summary: 'Source recency in fast-moving fields: the curated skill ranks by citation count or institutional authority. In rapidly evolving areas (LLMs, ML benchmarks), a 2024 preprint with 10 citations may be more relevant than a 2018 paper with 1000. Combine recency and citation in a single score, with field-specific decay rates.'

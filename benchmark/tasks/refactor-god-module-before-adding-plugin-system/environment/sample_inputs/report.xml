@@ -1,0 +1,4 @@
+<rows>
+  <row><name>alice</name><amount>5</amount></row>
+  <row><name>bob</name><amount>-1</amount></row>
+</rows>

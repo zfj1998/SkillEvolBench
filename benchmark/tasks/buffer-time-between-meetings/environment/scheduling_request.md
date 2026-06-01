@@ -1,0 +1,1 @@
+Find a 1-hour slot with 15-minute buffer before and after for each participant. Surface-level free time is not enough if buffer is violated.

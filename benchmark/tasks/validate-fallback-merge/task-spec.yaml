@@ -1,0 +1,28 @@
+schema_version: '1.0'
+task_id: E2-LS5-T6
+task_slug: validate-fallback-merge
+environment_id: E2
+family_id: E2-LS5
+latent_skill_id: E2-LS5.response-validation-fallback
+task_index: 6
+role: composition
+phase: evaluation
+within_family_difficulty_rank: 6
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E2-LS5.response-validation-fallback
+required_skills:
+- E2-LS1.pre-call-parameter-validation
+- E2-LS5.response-validation-fallback
+required_skill_compose_order:
+- E2-LS5.response-validation-fallback
+- E2-LS1.pre-call-parameter-validation
+composition_type: cross_family
+trap_types: []
+domain_group: tool_api_orchestration
+review_notes:
+- 'composition_note: validate-fallback-merge'

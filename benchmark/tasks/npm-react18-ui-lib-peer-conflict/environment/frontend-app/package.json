@@ -1,0 +1,16 @@
+{
+  "name": "frontend-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Internal dashboard with UI components and forms",
+  "main": "src/App.js",
+  "scripts": {
+    "test": "node tests/test.js"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@acme/ui-components": "^3.2.0",
+    "@acme/forms": "^2.0.0"
+  }
+}

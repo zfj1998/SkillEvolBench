@@ -1,0 +1,16 @@
+{
+  "participant": {
+    "id": "alice",
+    "name": "Alice Chen",
+    "email": "alice@harborworks.example",
+    "timezone": "America/New_York",
+    "work_hours": {
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "preferences": {
+      "prefer_morning": true
+    }
+  },
+  "events": []
+}

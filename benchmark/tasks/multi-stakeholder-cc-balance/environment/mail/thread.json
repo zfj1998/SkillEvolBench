@@ -1,0 +1,40 @@
+{
+  "exported_at": "2026-04-23T12:00:00-04:00",
+  "messages": [
+    {
+      "id": "reply_cc",
+      "thread_id": "reply-thread",
+      "timestamp": "2026-04-23T09:00:00-04:00",
+      "from": {
+        "name": "Jordan Lee",
+        "email": "jordan.lee@harborworks.example",
+        "role": "VP Sales",
+        "team": "Sales"
+      },
+      "to": [
+        {
+          "name": "Alex Morgan",
+          "email": "alex.morgan@harborworks.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Riley Chen",
+          "email": "riley.chen@harborworks.example"
+        },
+        {
+          "name": "Taylor Kim",
+          "email": "taylor.kim@harborworks.example"
+        }
+      ],
+      "subject": "Customer asks for advanced rules in 2 weeks",
+      "body": "Northstar wants the advanced rules engine live in two weeks. Can we commit to that in this thread?",
+      "labels": [],
+      "attachments": [],
+      "headers": {
+        "Message-ID": "<reply_cc@mail.harborworks.example>",
+        "X-Mailer": "HarborWorks Mail Export 4.8"
+      }
+    }
+  ]
+}

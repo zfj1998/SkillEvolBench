@@ -1,0 +1,3 @@
+-r requirements/base.txt
+-r requirements/analytics.txt
+-c constraints-ci.txt

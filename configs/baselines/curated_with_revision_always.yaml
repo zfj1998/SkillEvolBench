@@ -1,0 +1,34 @@
+# Main table baseline (path-B dynamic): curated v0 + revision on EVERY
+# learning trial (T1-T3), success or failure. Pair with curated_static
+# (no revision) and selfgen_experience_always (path-A dynamic) to
+# decompose "human prior" vs "self-improvement" value.
+#
+# revision_trigger=always means even passed trials trigger SkillAuthor.
+# The propose() prompt is PASS-aware (see _render_revision_prompt) so
+# the LLM gets a "distill the successful trajectory" framing on passes
+# and a "diagnose the failure" framing on fails -- both produce useful
+# patches.
+name: curated_with_revision_always
+description: Curated v0 + revision on every learning trial (always trigger).
+track: path-b
+
+skill_init: curated
+allow_self_gen_induction: false
+allow_zero_shot_creation: false
+allow_curated_inject: true
+
+allow_revision: true
+allow_retirement: false
+
+use_skill_library: true
+skill_retrieval_k: 8
+
+feedback_level: process
+feedback_to_skill_text: true
+
+default_strategy: chain
+revision_trigger: always
+max_revisions_per_skill: 8       # higher cap since revision fires on every trial
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5

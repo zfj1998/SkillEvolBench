@@ -1,0 +1,29 @@
+# Path A core: T1 induce skill from execution trace; T2/T3 revise on failure.
+# Library frozen during T4-T6 evaluation block.
+name: selfgen_experience
+description: T1 induce skill from execution; T2/T3 revise on failure.
+track: path-a
+
+skill_init: empty
+allow_self_gen_induction: true
+allow_zero_shot_creation: false
+allow_curated_inject: false
+
+allow_revision: true
+allow_retirement: false
+allow_quarantine: false
+allow_applicability_narrow: false
+allow_rollback: false
+
+use_skill_library: true
+skill_retrieval_k: 8
+
+feedback_level: process
+feedback_to_skill_text: true
+
+default_strategy: chain
+revision_trigger: fail_only
+max_revisions_per_skill: 3
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5

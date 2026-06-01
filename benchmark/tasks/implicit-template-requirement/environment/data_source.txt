@@ -1,0 +1,8 @@
+Region: EMEA
+Client: BlueRiver Retail
+Launch Date: 2025-05-01
+Primary Contact: Theo Kim
+Deployment Model: Hybrid
+Risk Level: Medium
+Next Milestone: Security review
+Escalation Lead: Carla Gomez

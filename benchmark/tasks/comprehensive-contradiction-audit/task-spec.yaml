@@ -1,0 +1,28 @@
+schema_version: '1.0'
+task_id: E5-LS5-T6
+task_slug: comprehensive-contradiction-audit
+environment_id: E5
+family_id: E5-LS5
+latent_skill_id: E5-LS5.contradiction-detection
+task_index: 6
+role: composition
+phase: evaluation
+within_family_difficulty_rank: 6
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E5-LS5.contradiction-detection
+required_skills:
+- E5-LS3.citation-verification
+- E5-LS5.contradiction-detection
+required_skill_compose_order:
+- E5-LS5.contradiction-detection
+- E5-LS3.citation-verification
+composition_type: cross_family
+trap_types: []
+domain_group: research_synthesis
+review_notes:
+- 'composition_note: comprehensive-contradiction-audit'

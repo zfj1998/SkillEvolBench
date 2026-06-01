@@ -1,0 +1,28 @@
+schema_version: '1.0'
+task_id: E5-LS2-T6
+task_slug: multi-source-collect-detect-label-compare
+environment_id: E5
+family_id: E5-LS2
+latent_skill_id: E5-LS2.evidence-grounded-comparison
+task_index: 6
+role: composition
+phase: evaluation
+within_family_difficulty_rank: 6
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E5-LS2.evidence-grounded-comparison
+required_skills:
+- E5-LS2.evidence-grounded-comparison
+- E5-LS5.contradiction-detection
+required_skill_compose_order:
+- E5-LS2.evidence-grounded-comparison
+- E5-LS5.contradiction-detection
+composition_type: cross_family
+trap_types: []
+domain_group: research_synthesis
+review_notes:
+- 'composition_note: collect-detect-label-compare (evidence-grounded comparison)'

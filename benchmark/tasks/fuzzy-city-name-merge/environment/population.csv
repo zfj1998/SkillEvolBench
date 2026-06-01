@@ -1,0 +1,77 @@
+city,country,population,area_sqkm,is_test,note
+New York,US,"  337,531  ",129,,
+Los Angeles,US,"  475,062  ",158,,
+Chicago,US,"  612,593  ",187,,
+Houston,US,"750,124",216,,
+Houston,US,"  750,709  ",221,,dup alias
+Phoenix,US,887655,245,,
+Philadelphia,US,"1,025,186",274,,
+San Antonio,US,"1,162,717",303,,
+San​ Antonio,US,—,304,,bad population duplicate
+San Diego,US,"1,300,248",332,,
+San Diego,US,"1,301,192",335,,dup alias
+Dallas,US,"  1,437,779  ",361,,
+San Jose,US,1575310,390,,
+Austin,US,"  1,712,841  ",419,,
+Jacksonville,US,"1,850,372",448,,
+Jacksonville,US,"1,850,484",453,,dup alias
+Fort Worth,US,"1,987,903",477,,
+Columbus,US,2125434,506,,
+Columbus,US,,507,,bad population duplicate
+Charlotte,US,"  2,262,965  ",535,,
+Indianapolis,US,"  2,400,496  ",564,,
+Indianapolis,US,"2,400,853",567,,dup alias
+San Francisco,US,"  2,538,027  ",593,,
+Seattle,US,"2,675,558",622,,
+Denver,US,"  2,813,089  ",651,,
+Washington,US,2950620,680,,
+"Washington, D.C.",US,"2,951,473",684,,dup alias
+Nashville,US,3088151,709,,
+Nashville,US,None,710,,bad population duplicate
+Oklahoma City,US,3225682,738,,
+El Paso,US,3363213,767,,
+Boston,US,"3,500,744",796,,
+Boston,US,"  3,501,440  ",800,,dup alias
+Portland,US,"3,638,275",825,,
+Las Vegas,US,"  3,775,806  ",854,,
+Memphis,US,"3,913,337",883,,
+Louisville,US,4050868,912,,
+Louisville,US,4051429,917,,dup alias
+Louisville,US,,913,,bad population duplicate
+Baltimore,US,"  4,188,399  ",941,,
+Milwaukee,US,"  4,325,930  ",970,,
+Albuquerque,US,4463461,999,,
+Tucson,US,4600992,1028,,
+Tucson,US,"  4,601,410  ",1032,,dup alias
+Fresno,US,4738523,1057,,
+Mesa,US,"  4,876,054  ",1086,,
+Sacramento,US,5013585,1115,,
+Sacramento,US,—,1116,,bad population duplicate
+Atlanta,US,5151116,1144,,
+Atlanta,US,5151318,1146,,dup alias
+Kansas City,US,5288647,1173,,
+Colorado Springs,US,"5,426,178",1202,,
+Miami,US,"  5,563,709  ",1231,,
+Raleigh,US,"  5,701,240  ",1260,,
+Raleigh,US,5701562,1264,,dup alias
+Omaha,US,"5,838,771",1289,,
+Long Beach,US,"5,976,302",1318,,
+Long Beach,US,,1319,,bad population duplicate
+Virginia Beach,US,6113833,1347,,
+Oakland,US,"  6,251,364  ",1376,,
+Oakland,US,"  6,251,411  ",1381,,dup alias
+Minneapolis,US,"  6,388,895  ",1405,,
+Tulsa,US,"6,526,426",1434,,
+Arlington,US,6663957,1463,,
+Tampa,US,"  6,801,488  ",1492,,
+Tampa,US,6802486,1496,,dup alias
+New Orleans,US,"  6,939,019  ",121,,
+New’Orleans,US,,122,,bad population duplicate
+Wichita,US,7076550,150,,
+St Louis,US,"  7,214,081  ",179,,
+Cleveland,US,7351612,208,,
+Cleveland,US,"7,352,377",213,,dup alias
+# training row,US,999999,1,,ignore
+... subtotal,US,123,1,,ignore
+,US,456,1,,ignore
+Testopolis,US,777777,77,Yes,ignore

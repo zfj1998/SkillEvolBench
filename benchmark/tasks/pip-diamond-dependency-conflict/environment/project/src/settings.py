@@ -1,0 +1,2 @@
+RUNTIME_PROFILE = "batch-analysis"
+ENABLE_DEPENDENCY_PROBE = True

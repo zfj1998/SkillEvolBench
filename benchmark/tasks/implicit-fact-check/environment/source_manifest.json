@@ -1,0 +1,145 @@
+[
+  {
+    "id": "MED_NATURE_SKIN",
+    "title": "Dermatologist-level classification of skin cancer with deep neural networks",
+    "publisher": "Nature",
+    "year": 2017,
+    "url": "https://www.nature.com/articles/nature21056",
+    "source_type": "peer_reviewed_study",
+    "notes": "Nature paper on deep neural networks for skin-cancer image classification; it does not claim universal diagnosis for all cancers.",
+    "authentic": true,
+    "doi": "10.1038/nature21056"
+  },
+  {
+    "id": "MED_JAMA_DR",
+    "title": "Development and Validation of a Deep Learning Algorithm for Detection of Diabetic Retinopathy in Retinal Fundus Photographs",
+    "publisher": "JAMA",
+    "year": 2016,
+    "url": "https://jamanetwork.com/journals/jama/fullarticle/2588763",
+    "source_type": "peer_reviewed_study",
+    "notes": "JAMA validation study for diabetic retinopathy detection in retinal fundus photographs; the scope is image-based screening.",
+    "authentic": true,
+    "doi": "10.1001/jama.2016.17216"
+  },
+  {
+    "id": "MED_FDA_AI",
+    "title": "Artificial Intelligence-Enabled Medical Devices",
+    "publisher": "U.S. FDA",
+    "year": 2025,
+    "url": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+    "source_type": "regulatory_reference",
+    "notes": "FDA list and overview for AI-enabled medical devices authorized for marketing in the United States.",
+    "authentic": true,
+    "doi": null
+  },
+  {
+    "id": "MED_WHO_ETHICS",
+    "title": "Ethics and governance of artificial intelligence for health",
+    "publisher": "WHO",
+    "year": 2021,
+    "url": "https://www.who.int/publications/i/item/9789240029200",
+    "source_type": "policy_guidance",
+    "notes": "WHO guidance says AI for health has promise but must put ethics and human rights at the heart of design, deployment, and use.",
+    "authentic": true,
+    "doi": null
+  },
+  {
+    "id": "MED_NASEM_DIAG",
+    "title": "Improving Diagnosis in Health Care",
+    "publisher": "National Academies",
+    "year": 2015,
+    "url": "https://nap.nationalacademies.org/catalog/21794/improving-diagnosis-in-health-care",
+    "source_type": "consensus_report",
+    "notes": "Consensus report on diagnostic error and improving the diagnostic process across care settings.",
+    "authentic": true,
+    "doi": "10.17226/21794"
+  },
+  {
+    "id": "REMOTE_NATURE_HYBRID",
+    "title": "Hybrid working from home improves retention without damaging performance",
+    "publisher": "Nature",
+    "year": 2024,
+    "url": "https://www.nature.com/articles/s41586-024-07500-2",
+    "source_type": "randomized_controlled_trial",
+    "notes": "Trip.com randomized experiment found hybrid work reduced quit rates by about one-third and did not damage performance grades; it is not evidence of a universal 30% productivity gain.",
+    "authentic": true,
+    "doi": "10.1038/s41586-024-07500-2"
+  },
+  {
+    "id": "REMOTE_STANFORD_EVOLUTION",
+    "title": "The Evolution of Working from Home",
+    "publisher": "Stanford SIEPR",
+    "year": 2023,
+    "url": "https://siepr.stanford.edu/publications/working-paper/evolution-working-home",
+    "source_type": "working_paper",
+    "notes": "Research synthesis distinguishing hybrid schedules from fully remote work and emphasizing variation by task and work arrangement.",
+    "authentic": true,
+    "doi": null
+  },
+  {
+    "id": "ENERGY_IEA_RENEWABLES",
+    "title": "Renewables 2024",
+    "publisher": "IEA",
+    "year": 2024,
+    "url": "https://www.iea.org/reports/renewables-2024",
+    "source_type": "energy_report",
+    "notes": "IEA flagship report forecasting renewable growth through 2030 and highlighting the policy gap to tripling targets.",
+    "authentic": true,
+    "doi": null
+  },
+  {
+    "id": "ENERGY_IEA_ELECTRICITY",
+    "title": "Electricity chapter from Renewables 2024",
+    "publisher": "IEA",
+    "year": 2024,
+    "url": "https://www.iea.org/reports/renewables-2024/electricity",
+    "source_type": "energy_report",
+    "notes": "IEA electricity chapter says solar PV and wind are forecast to account for 95% of renewable capacity additions through 2030.",
+    "authentic": true,
+    "doi": null
+  },
+  {
+    "id": "ENERGY_EMBER_GER",
+    "title": "Global Electricity Review 2024",
+    "publisher": "Ember",
+    "year": 2024,
+    "url": "https://ember-energy.org/latest-insights/global-electricity-review-2024",
+    "source_type": "analysis_report",
+    "notes": "Ember reports renewables generated a record 30% of global electricity in 2023, driven by wind and solar.",
+    "authentic": true,
+    "doi": null
+  },
+  {
+    "id": "ENERGY_IRENA_CAPACITY",
+    "title": "Renewable capacity statistics 2024",
+    "publisher": "IRENA",
+    "year": 2024,
+    "url": "https://www.irena.org/Publications/2024/Mar/Renewable-capacity-statistics-2024",
+    "source_type": "statistics_report",
+    "notes": "IRENA statistical report on renewable capacity additions and regional distribution.",
+    "authentic": true,
+    "doi": null
+  },
+  {
+    "id": "FAKE_REMOTE_DOI",
+    "title": "Universal Productivity Gains from Remote Work",
+    "publisher": "Journal of Workplace Futures",
+    "year": 2024,
+    "url": "https://example.invalid/fake-remote-productivity",
+    "source_type": "fake_citation",
+    "notes": "Fabricated citation with plausible DOI-like metadata; no real source supplied in the registry.",
+    "authentic": false,
+    "doi": "10.9999/jwf.2024.12345"
+  },
+  {
+    "id": "FAKE_SKIN_TABLE",
+    "title": "Table 3 external deployment data for dermatologist-level skin cancer classifiers",
+    "publisher": "Nature Medicine Review",
+    "year": 2019,
+    "url": "https://example.invalid/fake-skin-table",
+    "source_type": "fake_citation",
+    "notes": "Fabricated near-match citation; confused with the real Nature skin-cancer paper but asserts a table that is not part of the source.",
+    "authentic": false,
+    "doi": "10.1038/nm.fake2019"
+  }
+]

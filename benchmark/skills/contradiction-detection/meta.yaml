@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E5-LS5
+environment_id: E5
+latent_skill_id: E5-LS5.contradiction-detection
+slug: contradiction-detection
+name: contradiction-detection
+description: Find direct factual contradictions between multiple information sources. Use this skill when two or more documents make claims about the same facts and the task is to extract those claims, group them by topic, compare the stated values, and report any contradictions with their sources. Focus on direct factual contradictions such as different numbers, dates, names, or statistics for the same fact.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E5-LS5-T1
+- E5-LS5-T2
+- E5-LS5-T3
+- E5-LS5-T4
+- E5-LS5-T5
+- E5-LS5-T6
+gap_1_summary: 'Implicit contradictions across timelines: the curated skill only detects ''A is X'' vs ''A is not X''. Timeline contradictions are subtler — Document 1 says event happened in 2020, Document 2 says it followed a 2021 event, and the only contradiction is the implied ordering. Build a fact-and-time graph and check for cycles or impossible orderings.'
+gap_2_summary: 'Internal contradictions within one document: the curated skill only compares across sources. A single document''s abstract may state one number and the methods section another, or a paper''s conclusion may contradict its own data. Run the contradiction check within each document, not just between.'

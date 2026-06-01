@@ -1,0 +1,24 @@
+schema_version: '1.0'
+task_id: E1-LS4-T5
+task_slug: fix-ui-hides-api-error
+environment_id: E1
+family_id: E1-LS4
+latent_skill_id: E1-LS4.multi-file-bug-fix
+task_index: 5
+role: adversarial
+phase: evaluation
+within_family_difficulty_rank: 5
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E1-LS4.multi-file-bug-fix
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types:
+- generic_trap
+domain_group: code_debugging
+review_notes: []

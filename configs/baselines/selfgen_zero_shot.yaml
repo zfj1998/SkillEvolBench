@@ -1,0 +1,28 @@
+# Path A: zero-shot self-generation -- agent writes skill from family label
+# alone, before any execution. Skill persists globally; no revision or retirement.
+name: selfgen_zero_shot
+description: Self-generate skill from family label (no experience). Skill persists globally.
+track: path-a
+
+skill_init: zero_shot
+allow_self_gen_induction: false
+allow_zero_shot_creation: true
+allow_curated_inject: false
+
+allow_revision: false
+allow_retirement: false
+
+use_skill_library: true
+skill_retrieval_k: 8
+
+feedback_level: none
+feedback_to_skill_text: false
+
+default_strategy: none
+revision_trigger: never
+
+harbor_agent_name: claude-code
+model_name: anthropic/claude-opus-4-5
+
+# Library is fixed entire run -- replay would just measure LLM variance.
+within_env_replay: false

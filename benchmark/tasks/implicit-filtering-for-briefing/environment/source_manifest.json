@@ -1,0 +1,153 @@
+[
+  {
+    "id": "E01",
+    "title": "Renewables 2024",
+    "publisher": "IEA",
+    "year": 2024,
+    "url": "https://www.iea.org/reports/renewables-2024",
+    "source_type": "energy_report",
+    "evidence_strength": "high",
+    "tags": [
+      "renewables",
+      "overview",
+      "policy"
+    ],
+    "notes": "Flagship renewables report with forecasts to 2030."
+  },
+  {
+    "id": "E02",
+    "title": "Electricity chapter from Renewables 2024",
+    "publisher": "IEA",
+    "year": 2024,
+    "url": "https://www.iea.org/reports/renewables-2024/electricity",
+    "source_type": "energy_report",
+    "evidence_strength": "high",
+    "tags": [
+      "renewables",
+      "solar",
+      "wind",
+      "capacity"
+    ],
+    "notes": "Explains solar PV and wind as the main drivers of renewable capacity additions."
+  },
+  {
+    "id": "E03",
+    "title": "Renewable fuels chapter from Renewables 2024",
+    "publisher": "IEA",
+    "year": 2024,
+    "url": "https://www.iea.org/reports/renewables-2024/renewable-fuels",
+    "source_type": "energy_report",
+    "evidence_strength": "high",
+    "tags": [
+      "renewables",
+      "hydrogen",
+      "biofuels",
+      "e-fuels"
+    ],
+    "notes": "Specific source for hydrogen and other renewable fuels."
+  },
+  {
+    "id": "E04",
+    "title": "Renewable capacity statistics 2024",
+    "publisher": "IRENA",
+    "year": 2024,
+    "url": "https://www.irena.org/Publications/2024/Mar/Renewable-capacity-statistics-2024",
+    "source_type": "statistics_report",
+    "evidence_strength": "high",
+    "tags": [
+      "renewables",
+      "capacity",
+      "statistics"
+    ],
+    "notes": "Trilingual capacity dataset for 2013-2023, useful for baseline statistics."
+  },
+  {
+    "id": "E05",
+    "title": "Renewable energy statistics 2024",
+    "publisher": "IRENA",
+    "year": 2024,
+    "url": "https://www.irena.org/publications/2024/jul/renewable-energy-statistics-2024",
+    "source_type": "statistics_report",
+    "evidence_strength": "high",
+    "tags": [
+      "renewables",
+      "generation",
+      "statistics"
+    ],
+    "notes": "Complements capacity data with generation and balances."
+  },
+  {
+    "id": "E06",
+    "title": "Global Electricity Review 2024",
+    "publisher": "Ember",
+    "year": 2024,
+    "url": "https://ember-energy.org/latest-insights/global-electricity-review-2024",
+    "source_type": "analysis_report",
+    "evidence_strength": "high",
+    "tags": [
+      "renewables",
+      "solar",
+      "wind",
+      "electricity share"
+    ],
+    "notes": "Ember reports renewables generated a record 30% of global electricity in 2023."
+  },
+  {
+    "id": "E07",
+    "title": "Global overview chapter from Renewables 2024",
+    "publisher": "IEA",
+    "year": 2024,
+    "url": "https://www.iea.org/reports/renewables-2024/global-overview",
+    "source_type": "energy_report",
+    "evidence_strength": "high",
+    "tags": [
+      "renewables",
+      "global overview",
+      "demand"
+    ],
+    "notes": "Summarizes growth across electricity, heat, and transport."
+  },
+  {
+    "id": "E08",
+    "title": "Executive summary from Renewables 2024",
+    "publisher": "IEA",
+    "year": 2024,
+    "url": "https://www.iea.org/reports/renewables-2024/executive-summary",
+    "source_type": "energy_report",
+    "evidence_strength": "high",
+    "tags": [
+      "renewables",
+      "tripling pledge",
+      "policy"
+    ],
+    "notes": "Highlights growth and the remaining gap to the tripling target."
+  },
+  {
+    "id": "E09",
+    "title": "Semiconductor revenue grew 18% in 2024",
+    "publisher": "Gartner",
+    "year": 2025,
+    "url": "https://www.gartner.com/en/newsroom/press-releases/2025-02-03-gartner-says-worldwide-semiconductor-revenue-grew-18-percent-in-2024",
+    "source_type": "market_report",
+    "evidence_strength": "medium",
+    "tags": [
+      "semiconductors",
+      "ai chips"
+    ],
+    "notes": "Energy-adjacent but not renewable energy; included as a noise source."
+  },
+  {
+    "id": "E10",
+    "title": "The 2025 AI Index Report",
+    "publisher": "Stanford HAI",
+    "year": 2025,
+    "url": "https://hai.stanford.edu/ai-index/2025-ai-index-report",
+    "source_type": "research_report",
+    "evidence_strength": "high",
+    "tags": [
+      "ai",
+      "investment"
+    ],
+    "notes": "Completely off-topic for a renewable energy briefing; useful noise source."
+  }
+]

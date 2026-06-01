@@ -1,0 +1,1 @@
+Find available 1-hour meeting slots for all 4 participants within their working hours (9am-5pm local unless otherwise specified). Use the JSON and ICS calendar exports.

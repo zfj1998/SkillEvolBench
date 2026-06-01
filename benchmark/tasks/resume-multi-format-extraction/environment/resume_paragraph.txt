@@ -1,0 +1,7 @@
+John Patel
+Email: john.patel@example.com
+Phone: 555-0102
+
+John worked at Google from 2018 to 2022 as a Product Analyst and then joined Stripe in 2022 as a Senior Product Manager.
+He graduated from MIT with a Master's in Computer Science in 2019, having completed his Bachelor's in Statistics at Stanford in 2017.
+Skills include product strategy, SQL, experimentation, and stakeholder leadership.

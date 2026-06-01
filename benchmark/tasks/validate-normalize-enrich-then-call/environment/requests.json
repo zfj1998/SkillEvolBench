@@ -1,0 +1,6 @@
+[
+  {"user_id": "u1", "amount": 10, "currency": "USD"},
+  {"user_id": "u2", "amount": 10, "currency": "EUR"},
+  {"user_id": "u3", "amount": 10, "currency": "EUR"},
+  {"user_id": "u4", "amount": 10}
+]

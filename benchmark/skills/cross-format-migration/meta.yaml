@@ -1,0 +1,19 @@
+schema_version: '1.0'
+family_id: E4-LS2
+environment_id: E4
+latent_skill_id: E4-LS2.cross-format-migration
+slug: cross-format-migration
+name: cross-format-migration
+description: Convert flat documents from one format to another while preserving source content. Use this skill when the task is to migrate content such as Markdown, CSV, or simple key-value text into JSON, and the goal is to keep all body content represented in the target format. Focus on flat-format migration with explicit source-to-target mapping, parser-based conversion, and a final source-versus-target verification step.
+curated_skill_path: SKILL.md
+curated_skill_version: '1.0'
+curated_skill_author: skillevolbench-team
+task_ids:
+- E4-LS2-T1
+- E4-LS2-T2
+- E4-LS2-T3
+- E4-LS2-T4
+- E4-LS2-T5
+- E4-LS2-T6
+gap_1_summary: 'Information-loss detection: the curated skill converts without reporting what it threw away. Going DOCX → Markdown loses merged-cell tables, footnote anchors, and embedded images. Build a ''lossy fields'' report alongside the converted output so the user knows what to verify manually.'
+gap_2_summary: 'Round-trip consistency: the curated skill doesn''t verify A → B → A round-trips losslessly. The only way to know your converter preserves content is to convert back and diff. Run a round-trip test on the result before declaring the migration done.'

@@ -1,0 +1,52 @@
+[
+  {
+    "citation_id": "C01",
+    "source_id": "MED_NATURE_SKIN",
+    "article_claim": "The Nature paper concerns deep learning for visual skin-cancer classification."
+  },
+  {
+    "citation_id": "C02",
+    "source_id": "MED_JAMA_DR",
+    "article_claim": "The JAMA paper validates diabetic-retinopathy detection from retinal fundus photographs."
+  },
+  {
+    "citation_id": "C03",
+    "source_id": "MED_FDA_AI",
+    "article_claim": "The FDA maintains a public list of AI-enabled medical devices authorized for marketing."
+  },
+  {
+    "citation_id": "C04",
+    "source_id": "MED_WHO_ETHICS",
+    "article_claim": "WHO frames AI for health around ethics, rights, governance, and accountability."
+  },
+  {
+    "citation_id": "C05",
+    "source_id": "MED_NASEM_DIAG",
+    "article_claim": "The National Academies report treats diagnostic error as a quality and safety challenge."
+  },
+  {
+    "citation_id": "C06",
+    "source_id": "ENERGY_IEA_ELECTRICITY",
+    "article_claim": "IEA says solar PV and wind dominate forecast renewable capacity additions."
+  },
+  {
+    "citation_id": "C07",
+    "source_id": "ENERGY_EMBER_GER",
+    "article_claim": "Ember reports renewables generated about 30% of global electricity in 2023."
+  },
+  {
+    "citation_id": "C08",
+    "source_id": "REMOTE_NATURE_HYBRID",
+    "article_claim": "The Nature hybrid-work trial found improved retention without performance damage."
+  },
+  {
+    "citation_id": "C09",
+    "source_id": "MED_NATURE_SKIN",
+    "article_claim": "Table 3 reports an external hospital deployment of the skin-cancer system."
+  },
+  {
+    "citation_id": "C10",
+    "source_id": "ENERGY_IEA_RENEWABLES",
+    "article_claim": "Appendix Figure 12 gives country-level nuclear buildout forecasts."
+  }
+]

@@ -1,0 +1,24 @@
+schema_version: '1.0'
+task_id: E1-LS3-T5
+task_slug: refactor-breaks-none-handling-chain
+environment_id: E1
+family_id: E1-LS3
+latent_skill_id: E1-LS3.safe-refactoring
+task_index: 5
+role: adversarial
+phase: evaluation
+within_family_difficulty_rank: 5
+harbor:
+  task_toml: task.toml
+  instruction: instruction.md
+  tests: tests/
+  environment: environment/
+  solution: solution/
+primary_skill: E1-LS3.safe-refactoring
+required_skills: []
+required_skill_compose_order: []
+composition_type: none
+trap_types:
+- gap1-boundary-behavior-preservation
+domain_group: code_debugging
+review_notes: []
