@@ -1,0 +1,33 @@
+task_id: E3-LS1-T1
+task_name: trailing-space-column-name
+role: canonical
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - output_exists
+      - summary_present
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: correctness
+    weight: 0.30
+    tests:
+      - no_crash                         # H1
+      - grand_total_correct              # H2
+      - row_count_correct                # H3
+      - all_names_present                # H4
+      - id_schema_repaired               # H5
+    max_score: 5
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.60
+    tests:
+      - normalizes_headers               # P1
+      - checks_schema_before_aggregation # P2
+      - does_not_use_positional_columns  # P3
+      - id_cast_present                  # P4
+    max_score: 4
+    scoring_method: proportional

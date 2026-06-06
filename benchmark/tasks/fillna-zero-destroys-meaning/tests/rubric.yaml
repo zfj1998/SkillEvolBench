@@ -1,0 +1,29 @@
+task_id: E3-LS4-T5
+task_name: fillna-zero-destroys-meaning
+role: adversarial
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+    max_score: 1
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.45
+    tests:
+      - test_no_crash
+      - test_avg_correct
+      - test_real_zeros_included
+      - test_offline_excluded
+      - test_valid_count
+    max_score: 5
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.45
+    tests:
+      - test_no_fillna_zero
+      - test_uses_dropna_or_mean
+      - test_reads_dictionary
+    max_score: 3
+    scoring_method: proportional

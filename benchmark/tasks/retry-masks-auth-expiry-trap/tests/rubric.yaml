@@ -1,0 +1,12 @@
+{
+  "task_id": "E2-LS2-T5",
+  "judge_mode": "deterministic",
+  "trap_type": "adversarial-4xx-vs-5xx",
+  "dimensions": [
+    {"name": "public_checks", "weight": 10},
+    {"name": "refresh_logic", "weight": 30},
+    {"name": "no_blind_401_retries", "weight": 15},
+    {"name": "retain_5xx_retry_behavior", "weight": 15},
+    {"name": "process_checks", "weight": 30}
+  ]
+}

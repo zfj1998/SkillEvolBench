@@ -1,0 +1,37 @@
+{
+  "task_id": "E6-LS4-T6",
+  "min_participant_count": 4,
+  "expected_ranked_slot_ids": [],
+  "expected_meeting_ids": [
+    "team_sync",
+    "client_demo",
+    "one_on_one"
+  ],
+  "required_start_utc": [
+    "2026-04-28T15:00:00Z",
+    "2026-04-29T14:00:00Z",
+    "2026-04-30T19:00:00Z"
+  ],
+  "forbidden_start_utc": [],
+  "expected_local_times": [],
+  "requires_scores": true,
+  "expected_scores": {
+    "team_sync": 2,
+    "client_demo": 3,
+    "one_on_one": 2
+  },
+  "expected_soft_preferences_met": {
+    "team_sync": 1,
+    "client_demo": 1,
+    "one_on_one": 1
+  },
+  "expected_reason_terms": {},
+  "expected_preference_breakdown": {},
+  "process_markers": [
+    "global",
+    "soft",
+    "fragmentation",
+    "preferences"
+  ],
+  "min_soft_preferences_met": 2
+}

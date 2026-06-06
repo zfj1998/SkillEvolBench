@@ -1,0 +1,11 @@
+{
+  "task_id": "E2-LS2-T1",
+  "judge_mode": "deterministic",
+  "trap_type": "none",
+  "dimensions": [
+    {"name": "public_checks", "weight": 15},
+    {"name": "retry_after_dynamic_wait", "weight": 30},
+    {"name": "correctness_and_bounds", "weight": 15},
+    {"name": "process_checks", "weight": 40}
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "q01": {
+    "assignee": "unspecified",
+    "description": "schedule review session",
+    "description_terms": [
+      "schedule",
+      "review",
+      "session"
+    ],
+    "deadline": null,
+    "action_type": "question_action",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.83
+  },
+  "q03": {
+    "assignee": "unspecified",
+    "description": "update wiki escalation",
+    "description_terms": [
+      "update",
+      "wiki",
+      "escalation"
+    ],
+    "deadline": null,
+    "action_type": "question_action",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.84
+  },
+  "q05": {
+    "assignee": "maya",
+    "description": "send invite mobile review",
+    "description_terms": [
+      "send",
+      "invite",
+      "mobile",
+      "review"
+    ],
+    "deadline": null,
+    "action_type": "question_action",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.81
+  },
+  "q07": {
+    "assignee": "unspecified",
+    "description": "move deadline Friday",
+    "description_terms": [
+      "move",
+      "deadline",
+      "Friday"
+    ],
+    "deadline": "Friday",
+    "action_type": "question_action",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.8
+  },
+  "q09": {
+    "assignee": "unspecified",
+    "description": "test Northstar account",
+    "description_terms": [
+      "test",
+      "Northstar",
+      "account"
+    ],
+    "deadline": null,
+    "action_type": "question_action",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.86
+  }
+}

@@ -1,0 +1,30 @@
+task_id: E3-LS4-T3
+task_name: sentinel-vs-null-confusion
+role: variant
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+    max_score: 1
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.45
+    tests:
+      - test_no_crash
+      - test_salary_includes_zero
+      - test_age_excludes_minus1
+      - test_temp_excludes_minus999
+      - test_zero_salary_count
+      - test_age_excluded_count
+    max_score: 6
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.45
+    tests:
+      - test_reads_dictionary
+      - test_salary_zero_preserved
+      - test_selective_replacement
+    max_score: 3
+    scoring_method: proportional

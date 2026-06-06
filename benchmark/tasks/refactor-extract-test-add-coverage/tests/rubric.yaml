@@ -1,0 +1,33 @@
+{
+  "task_id": "E1-LS3-T6",
+  "judge_mode": "deterministic",
+  "trap_type": "coverage_gap_ignored",
+  "feedback_fields": [
+    "error_type",
+    "expected",
+    "actual",
+    "hint"
+  ],
+  "dimensions": [
+    {
+      "name": "legacy_tests",
+      "weight": 10
+    },
+    {
+      "name": "coverage_threshold",
+      "weight": 25
+    },
+    {
+      "name": "hidden_edge_cases",
+      "weight": 20
+    },
+    {
+      "name": "refactor_split",
+      "weight": 15
+    },
+    {
+      "name": "tooling_and_test_quality",
+      "weight": 30
+    }
+  ]
+}

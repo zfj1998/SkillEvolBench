@@ -1,0 +1,75 @@
+{
+  "labels": {
+    "R01": "valid",
+    "R02": "valid",
+    "R03": "valid",
+    "R04": "valid",
+    "R05": "valid",
+    "R06": "valid",
+    "R07": "valid",
+    "R08": "fake",
+    "R09": "fake",
+    "R10": "fake",
+    "R11": "misrepresented",
+    "R12": "selective",
+    "R13": "invalid"
+  },
+  "problem_ids": [
+    "R08",
+    "R09",
+    "R10",
+    "R11",
+    "R12",
+    "R13"
+  ],
+  "required_problem_labels": [
+    "fake",
+    "misrepresented",
+    "selective",
+    "invalid"
+  ],
+  "reason_terms": {
+    "R08": [
+      "fake",
+      "fabricated",
+      "doi",
+      "journal",
+      "authenticity"
+    ],
+    "R09": [
+      "fake",
+      "fabricated",
+      "doi",
+      "journal",
+      "authenticity"
+    ],
+    "R10": [
+      "fake",
+      "fabricated",
+      "doi",
+      "journal",
+      "authenticity"
+    ],
+    "R11": [
+      "misrepresented",
+      "scope",
+      "universal",
+      "caveat",
+      "limitation"
+    ],
+    "R12": [
+      "selective",
+      "caveat",
+      "universal",
+      "productivity",
+      "limitation"
+    ],
+    "R13": [
+      "invalid",
+      "missing",
+      "not found",
+      "table",
+      "registry"
+    ]
+  }
+}

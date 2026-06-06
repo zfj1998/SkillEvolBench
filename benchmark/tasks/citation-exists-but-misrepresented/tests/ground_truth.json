@@ -1,0 +1,40 @@
+{
+  "labels": {
+    "M01": "misrepresented",
+    "M02": "misrepresented",
+    "M03": "misrepresented",
+    "M04": "valid",
+    "M05": "valid"
+  },
+  "problem_ids": [
+    "M01",
+    "M02",
+    "M03"
+  ],
+  "required_problem_labels": [
+    "misrepresented"
+  ],
+  "reason_terms": {
+    "M01": [
+      "misrepresented",
+      "not",
+      "self-reported",
+      "significant",
+      "attribution"
+    ],
+    "M02": [
+      "misrepresented",
+      "not",
+      "self-reported",
+      "significant",
+      "attribution"
+    ],
+    "M03": [
+      "misrepresented",
+      "not",
+      "self-reported",
+      "significant",
+      "attribution"
+    ]
+  }
+}

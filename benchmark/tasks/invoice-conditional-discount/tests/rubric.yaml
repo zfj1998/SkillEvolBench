@@ -1,0 +1,24 @@
+task_id: E4-LS1-T1
+weights:
+  public: 0.15
+  hidden_cross_page: 0.15
+  hidden_discount: 0.20
+  hidden_tax_base: 0.10
+  hidden_other: 0.25
+  process: 0.15
+public_tests:
+  - test_public_line_items_len_20
+  - test_public_subtotal_1250
+  - test_public_schema_basic
+hidden_tests:
+  - test_hidden_page2_items_15_to_20_present
+  - test_hidden_discount_applied_amount
+  - test_hidden_boundary_invoice_discount_false
+  - test_hidden_tax_base_post_discount
+  - test_hidden_currency_present_for_each_item
+  - test_hidden_no_header_footer_pollution
+  - test_hidden_total_consistency
+process_tests:
+  - test_process_currency_field_preserved
+  - test_process_discount_condition_field_present
+  - test_process_cross_page_continuity_logic

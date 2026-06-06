@@ -1,0 +1,42 @@
+task_id: E2-LS5-T1
+task_name: 200-but-missing-data-field
+role: canonical
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_format
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: robustness
+    weight: 0.15
+    tests:
+      - test_no_crash                    # H1
+      - test_collected_enough_products   # H2
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: auditability_and_correctness
+    weight: 0.25
+    tests:
+      - test_logged_anomalies            # H3
+      - test_normal_data_correct         # H4
+      - test_no_duplicates               # H5
+      - test_no_garbage_records          # H6
+      - test_no_wrong_schema_items       # H7
+    max_score: 5
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.50
+    tests:
+      - test_checks_data_field_existence   # P1
+      - test_checks_data_field_type        # P2
+      - test_validates_item_schema         # P3
+      - test_has_fallback_logic            # P4
+      - test_no_unprotected_data_access    # P5
+    max_score: 5
+    scoring_method: proportional

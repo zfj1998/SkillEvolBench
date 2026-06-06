@@ -1,0 +1,33 @@
+{
+  "task_id": "E1-LS3-T1",
+  "judge_mode": "deterministic",
+  "trap_type": "none",
+  "feedback_fields": [
+    "error_type",
+    "expected",
+    "actual",
+    "hint"
+  ],
+  "dimensions": [
+    {
+      "name": "public_tests",
+      "weight": 10
+    },
+    {
+      "name": "hidden_boundary_tests",
+      "weight": 40
+    },
+    {
+      "name": "decorator_and_dry",
+      "weight": 25
+    },
+    {
+      "name": "parameterization",
+      "weight": 15
+    },
+    {
+      "name": "response_consistency",
+      "weight": 10
+    }
+  ]
+}

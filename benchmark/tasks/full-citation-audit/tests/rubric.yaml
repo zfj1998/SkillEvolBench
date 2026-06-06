@@ -1,0 +1,26 @@
+version: 1
+scoring_note: >
+  The executable verifier computes reward from test_outcome.py and test_process.py.
+  This rubric documents the intended grading dimensions; it is not parsed directly by test.sh.
+criteria:
+  - name: outcome_correctness
+    weight: 0.45
+    description: >
+      Final output satisfies the task-specific citation, caveat, summary,
+      audience, word-budget, or hierarchy expectations.
+  - name: process_alignment
+    weight: 0.25
+    description: >
+      Fixes the intended policy/pipeline modules instead of bypassing the
+      task with a canned final artifact.
+  - name: source_grounding
+    weight: 0.20
+    description: >
+      Uses source_manifest.json, source_cards.md, source_url_index.json, and
+      evidence_index.json to keep claims tied to real public sources.
+  - name: output_contract
+    weight: 0.10
+    description: >
+      Writes the expected output files under /root/task/output and preserves
+      source scope, limitations, and constraints.
+family_focus: "verify citation existence, source authenticity, claim support, caveats, and fake/real mixed citation traps."

@@ -1,0 +1,32 @@
+version: 1
+scoring_note: >
+  The executable verifier computes reward from test_outcome.py and test_process.py.
+  This rubric documents the intended grading dimensions; it is not parsed directly by test.sh.
+criteria:
+  - name: contradiction_detection
+    weight: 0.40
+    description: >
+      Correctly identifies all true contradiction pairs and does not over-flag
+      compatible pairs with different years, scopes, metrics, or time scales.
+  - name: contradiction_type_classification
+    weight: 0.20
+    description: >
+      Distinguishes explicit, implicit timeline/causal/definition, internal,
+      and false-positive cases as required by the task.
+  - name: evidence_and_reasoning
+    weight: 0.20
+    description: >
+      Provides pair-specific evidence quotes and reasons that explain the
+      incompatible metric, period, scope, or internal inconsistency.
+  - name: process_alignment
+    weight: 0.10
+    description: >
+      Fixes scope_normalizer.py and contradiction_policy.py rather than
+      writing a canned audit report.
+  - name: source_grounding
+    weight: 0.10
+    description: >
+      Uses source_manifest.json, source_cards.md, source_url_index.json, and
+      evidence_index.json as grounding context without claiming task claims
+      are verbatim public-source quotes.
+family_focus: contradiction-detection

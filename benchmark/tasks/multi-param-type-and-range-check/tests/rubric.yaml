@@ -1,0 +1,33 @@
+{
+  "task_id": "E2-LS1-T1",
+  "judge_mode": "deterministic",
+  "trap_type": "none",
+  "feedback_fields": [
+    "error_type",
+    "expected",
+    "actual",
+    "hint"
+  ],
+  "dimensions": [
+    {
+      "name": "public_checks",
+      "weight": 20
+    },
+    {
+      "name": "error_report_quality",
+      "weight": 25
+    },
+    {
+      "name": "local_intercept",
+      "weight": 15
+    },
+    {
+      "name": "boundary_acceptance",
+      "weight": 10
+    },
+    {
+      "name": "process_checks",
+      "weight": 30
+    }
+  ]
+}

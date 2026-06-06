@@ -1,0 +1,22 @@
+{
+  "Q1": {
+    "revenue": 125000,
+    "expenses": 83000,
+    "profit": 42000
+  },
+  "Q2": {
+    "revenue": 143500,
+    "expenses": 90500,
+    "profit": 53000
+  },
+  "Q3": {
+    "revenue": 151250,
+    "expenses": 97650,
+    "profit": 53600
+  },
+  "Q4": {
+    "revenue": 168900,
+    "expenses": 101400,
+    "profit": 67500
+  }
+}

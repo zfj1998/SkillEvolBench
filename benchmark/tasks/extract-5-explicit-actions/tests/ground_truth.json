@@ -1,0 +1,77 @@
+{
+  "task_id": "E6-LS3-T1",
+  "expected_action_ids": [
+    "act_report",
+    "act_pricing_faq",
+    "act_emea_demo",
+    "act_customer_summary",
+    "act_smoke_tests"
+  ],
+  "expected_fields": {
+    "act_report": {
+      "assignee": "alice",
+      "deadline": "2026-04-27",
+      "status": "open",
+      "description_terms": [
+        "migration",
+        "report"
+      ]
+    },
+    "act_pricing_faq": {
+      "assignee": "bob",
+      "deadline": "2026-04-28",
+      "status": "open",
+      "description_terms": [
+        "pricing",
+        "FAQ"
+      ]
+    },
+    "act_emea_demo": {
+      "assignee": "charlie",
+      "deadline": "2026-04-29",
+      "status": "open",
+      "description_terms": [
+        "EMEA",
+        "demo"
+      ]
+    },
+    "act_customer_summary": {
+      "assignee": "diana",
+      "deadline": "2026-04-24",
+      "status": "open",
+      "description_terms": [
+        "customer",
+        "summary"
+      ]
+    },
+    "act_smoke_tests": {
+      "assignee": "eli",
+      "deadline": "2026-04-24",
+      "status": "open",
+      "description_terms": [
+        "smoke",
+        "tests"
+      ]
+    }
+  },
+  "implicit_action_ids": [],
+  "confidence_less_than": [],
+  "expected_status_counts": {
+    "open": 5
+  },
+  "non_action_message_ids": [
+    "m07",
+    "m08",
+    "m09",
+    "m10"
+  ],
+  "expected_followups": {},
+  "min_message_count": 10,
+  "process_markers": [
+    "explicit",
+    "deadline",
+    "source_message"
+  ],
+  "allowed_missing_actions": 0,
+  "requires_current_date": false
+}

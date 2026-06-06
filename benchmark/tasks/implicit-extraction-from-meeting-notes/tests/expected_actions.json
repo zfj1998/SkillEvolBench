@@ -1,0 +1,89 @@
+{
+  "p04": {
+    "assignee": "alice",
+    "description": "follow vendor quote",
+    "description_terms": [
+      "follow",
+      "vendor",
+      "quote"
+    ],
+    "deadline": null,
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.78
+  },
+  "p09": {
+    "assignee": "backend",
+    "description": "validate webhook contract staging",
+    "description_terms": [
+      "validate",
+      "webhook",
+      "contract",
+      "staging"
+    ],
+    "deadline": null,
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.82
+  },
+  "p14": {
+    "assignee": "team",
+    "description": "defer migration Q2 risk note",
+    "description_terms": [
+      "defer",
+      "migration",
+      "Q2",
+      "risk",
+      "note"
+    ],
+    "deadline": "Q2",
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.8
+  },
+  "p18": {
+    "assignee": "diana",
+    "description": "circulate onboarding checklist",
+    "description_terms": [
+      "circulate",
+      "onboarding",
+      "checklist"
+    ],
+    "deadline": null,
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.79
+  },
+  "p23": {
+    "assignee": "qa",
+    "description": "rerun regression pack",
+    "description_terms": [
+      "rerun",
+      "regression",
+      "pack"
+    ],
+    "deadline": null,
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.81
+  },
+  "p28": {
+    "assignee": "product",
+    "description": "collect beta feedback",
+    "description_terms": [
+      "collect",
+      "beta",
+      "feedback"
+    ],
+    "deadline": null,
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.8
+  }
+}

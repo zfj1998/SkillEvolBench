@@ -1,0 +1,34 @@
+task_id: E4-LS5-T6
+name: full-reconciliation-pipeline
+role: composition
+combines: [T1-fuzzy, T3-nested, T5-shallow-trap]
+pass_threshold: 0.70
+
+dimensions:
+  - id: test_master_exists
+    weight: 0.05
+    public: true
+  - id: test_conflict_log_exists
+    weight: 0.05
+    public: true
+  - id: test_correct_unique_count
+    weight: 0.15
+    public: false
+  - id: test_no_duplicate_emails
+    weight: 0.20
+    public: false
+  - id: test_nested_conflicts_in_log
+    weight: 0.20
+    public: false
+  - id: test_conflict_log_has_resolution
+    weight: 0.15
+    public: false
+  - id: test_matching_method_uses_email
+    weight: 0.075
+    public: false
+  - id: test_resolution_strategy_documented
+    weight: 0.075
+    public: false
+  - id: test_master_has_sources_field
+    weight: 0.05
+    public: false

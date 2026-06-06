@@ -1,0 +1,29 @@
+task_id: E3-LS4-T2
+task_name: null-in-groupby-disappears
+role: enriched
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+    max_score: 1
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.45
+    tests:
+      - test_no_crash
+      - test_five_regions
+      - test_sum_matches_grand
+      - test_unknown_region_exists
+      - test_grand_total_correct
+    max_score: 5
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.45
+    tests:
+      - test_preserves_nan_group
+      - test_labels_nan_region
+      - test_sum_verification
+    max_score: 3
+    scoring_method: proportional

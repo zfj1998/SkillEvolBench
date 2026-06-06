@@ -1,0 +1,37 @@
+task_id: E3-LS1-T6
+task_name: full-schema-inspect-clean-query-validate
+role: composition
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_format
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: correctness
+    weight: 0.30
+    tests:
+      - test_no_crash                    # H1
+      - test_row_count_correct           # H2
+      - test_all_regions_match           # H3
+      - test_grand_total_correct         # H4
+      - test_valid_count_reasonable      # H5
+      - test_cleaning_report_present     # H6
+      - test_region_totals_correct       # H7
+    max_score: 7
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.60
+    tests:
+      - test_handles_bom                 # P1
+      - test_strips_columns              # P2
+      - test_removes_invisible_chars     # P3
+      - test_handles_mixed_formats       # P4
+      - test_validates_against_expected  # P5
+      - test_reports_cleaning            # P6
+    max_score: 6
+    scoring_method: proportional

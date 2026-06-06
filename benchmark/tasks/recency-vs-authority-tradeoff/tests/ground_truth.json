@@ -1,0 +1,9 @@
+{
+  "acceptable_ids": [
+    "AIM05",
+    "AIM06"
+  ],
+  "stale_ids": [
+    "AIM07"
+  ]
+}

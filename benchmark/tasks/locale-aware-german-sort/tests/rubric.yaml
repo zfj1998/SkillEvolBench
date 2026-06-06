@@ -1,0 +1,40 @@
+task_id: E3-LS2-T2
+task_name: locale-aware-german-sort
+role: enriched-gap1
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_has_correct_columns
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: robustness
+    weight: 0.15
+    tests:
+      - test_no_crash                     # H1
+      - test_row_count_preserved          # H2
+      - test_no_data_loss                 # H3
+    max_score: 3
+    scoring_method: proportional
+
+  - dimension: correctness
+    weight: 0.25
+    tests:
+      - test_umlaut_names_correctly_placed  # H4
+      - test_overall_german_order           # H5
+      - test_secondary_sort_by_first_name   # H6
+    max_score: 3
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.50
+    tests:
+      - test_handles_umlauts_for_sort              # P1/P2
+      - test_case_insensitive_or_locale            # P3
+      - test_multi_key_sort                        # P4
+      - test_uses_sort_function                    # P4b
+    max_score: 4
+    scoring_method: proportional

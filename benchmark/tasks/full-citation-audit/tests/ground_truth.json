@@ -1,0 +1,100 @@
+{
+  "labels": {
+    "C01": "valid",
+    "C02": "valid",
+    "C03": "valid",
+    "C04": "valid",
+    "C05": "valid",
+    "M01": "misrepresented",
+    "M02": "misrepresented",
+    "M03": "misrepresented",
+    "S01": "selective",
+    "S02": "selective",
+    "S03": "selective",
+    "R08": "fake",
+    "R09": "fake",
+    "R10": "fake",
+    "F01": "valid"
+  },
+  "problem_ids": [
+    "M01",
+    "M02",
+    "M03",
+    "S01",
+    "S02",
+    "S03",
+    "R08",
+    "R09",
+    "R10"
+  ],
+  "required_problem_labels": [
+    "fake",
+    "misrepresented",
+    "selective"
+  ],
+  "reason_terms": {
+    "M01": [
+      "misrepresented",
+      "not",
+      "self-reported",
+      "significant",
+      "attribution"
+    ],
+    "M02": [
+      "misrepresented",
+      "not",
+      "self-reported",
+      "significant",
+      "attribution"
+    ],
+    "M03": [
+      "misrepresented",
+      "not",
+      "self-reported",
+      "significant",
+      "attribution"
+    ],
+    "S01": [
+      "caveat",
+      "limitation",
+      "scope",
+      "generalize",
+      "external"
+    ],
+    "S02": [
+      "caveat",
+      "limitation",
+      "scope",
+      "generalize",
+      "external"
+    ],
+    "S03": [
+      "caveat",
+      "limitation",
+      "scope",
+      "generalize",
+      "external"
+    ],
+    "R08": [
+      "fake",
+      "fabricated",
+      "doi",
+      "journal",
+      "authenticity"
+    ],
+    "R09": [
+      "fake",
+      "fabricated",
+      "doi",
+      "journal",
+      "authenticity"
+    ],
+    "R10": [
+      "fake",
+      "fabricated",
+      "doi",
+      "journal",
+      "authenticity"
+    ]
+  }
+}

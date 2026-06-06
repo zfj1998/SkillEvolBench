@@ -1,0 +1,16 @@
+version: 1
+scoring_note: >
+  `tests/test.sh` computes reward from deterministic outcome and process tests.
+criteria:
+  - name: action_recall
+    weight: 0.30
+    description: Expected explicit, implicit, and question-form actions are extracted with source IDs.
+  - name: precision
+    weight: 0.20
+    description: Discussion, chatter, and rhetorical questions are not promoted to actions.
+  - name: structure
+    weight: 0.20
+    description: Output includes actions, non_actions, status_summary, summary, reasons, and confidence where applicable.
+  - name: process
+    weight: 0.30
+    description: The project processes all source messages and includes dedicated policy/parser/summarizer modules.

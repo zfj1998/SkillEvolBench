@@ -1,0 +1,29 @@
+task_id: E3-LS3-T6
+task_name: fuzzy-match-dedup-aggregate-pipeline
+role: composition
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+    max_score: 1
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.45
+    tests:
+      - test_no_crash
+      - test_company_count
+      - test_acme_matched
+      - test_no_duplicates
+      - test_order_aggregation
+    max_score: 5
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.45
+    tests:
+      - test_fuzzy_or_mapping
+      - test_dedup
+      - test_aggregation
+    max_score: 3
+    scoring_method: proportional

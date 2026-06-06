@@ -1,0 +1,12 @@
+{
+  "task_id": "E2-LS2-T6",
+  "judge_mode": "deterministic",
+  "trap_type": "composition",
+  "dimensions": [
+    {"name": "public_checks", "weight": 10},
+    {"name": "open_state_protection", "weight": 25},
+    {"name": "half_open_recovery", "weight": 20},
+    {"name": "failure_bound", "weight": 10},
+    {"name": "process_checks", "weight": 35}
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "task_id": "E6-LS1-T3",
+  "expected_priorities": {
+    "ceo_strategy": "P1",
+    "intern_printer": "P3",
+    "vp_budget": "P1",
+    "manager_eod": "P1",
+    "security_patch": "P0",
+    "hier_06": "P2",
+    "hier_07": "P2",
+    "hier_08": "P2",
+    "hier_09": "P2",
+    "hier_10": "P2",
+    "hier_11": "P3",
+    "hier_12": "P3",
+    "hier_13": "P3",
+    "hier_14": "P3",
+    "hier_15": "P3"
+  },
+  "key_priority_checks": {
+    "ceo_strategy": "P1",
+    "intern_printer": "P3",
+    "vp_budget": "P1"
+  },
+  "expected_p0": [
+    "security_patch"
+  ],
+  "expected_p3": [
+    "intern_printer",
+    "hier_11",
+    "hier_12",
+    "hier_13",
+    "hier_14",
+    "hier_15"
+  ],
+  "expected_response_ids": [],
+  "rank_before": [
+    [
+      "ceo_strategy",
+      "intern_printer"
+    ],
+    [
+      "vp_budget",
+      "intern_printer"
+    ]
+  ],
+  "reason_keywords": {
+    "ceo_strategy": [
+      "CEO",
+      "board"
+    ],
+    "intern_printer": [
+      "Low business impact"
+    ]
+  },
+  "expected_drafts": {},
+  "min_message_count": 15,
+  "process_markers": [
+    "sender hierarchy",
+    "org_chart",
+    "business impact"
+  ]
+}

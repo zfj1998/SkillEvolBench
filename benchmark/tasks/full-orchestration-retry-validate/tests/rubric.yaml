@@ -1,0 +1,16 @@
+weights:
+  hidden_h1_complete: 20
+  hidden_h2_h4_capabilities: 30
+  hidden_h5_result: 20
+  process_p1_p3: 30
+checks:
+  hidden:
+    - all_six_steps
+    - correct_branch
+    - status_503_retried
+    - polls_until_completed
+    - validated_saved_result
+  process:
+    - ordered_steps
+    - token_propagation
+    - retry_and_wait_present

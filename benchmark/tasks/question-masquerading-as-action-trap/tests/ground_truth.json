@@ -1,0 +1,55 @@
+{
+  "task_id": "E6-LS3-T5",
+  "expected_action_ids": [
+    "act_revisit_targets",
+    "act_northstar_call",
+    "act_notes_cleanup"
+  ],
+  "expected_fields": {
+    "act_revisit_targets": {
+      "assignee": "bob",
+      "deadline": null,
+      "status": "open",
+      "description_terms": [
+        "Q4",
+        "targets"
+      ]
+    },
+    "act_northstar_call": {
+      "assignee": "diana",
+      "deadline": null,
+      "status": "open",
+      "description_terms": [
+        "call",
+        "Northstar"
+      ]
+    },
+    "act_notes_cleanup": {
+      "assignee": "fatima",
+      "deadline": "2026-04-24",
+      "status": "open",
+      "description_terms": [
+        "notes"
+      ]
+    }
+  },
+  "implicit_action_ids": [],
+  "confidence_less_than": [],
+  "expected_status_counts": {
+    "open": 3
+  },
+  "non_action_message_ids": [
+    "q01",
+    "q03",
+    "q05"
+  ],
+  "expected_followups": {},
+  "min_message_count": 6,
+  "process_markers": [
+    "rhetorical",
+    "question",
+    "request"
+  ],
+  "allowed_missing_actions": 0,
+  "requires_current_date": false
+}

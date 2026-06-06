@@ -1,0 +1,32 @@
+task_id: E3-LS5-T2
+task_name: statistical-anomaly-10x-spike
+role: enriched
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - output_exists
+      - returns_quarters
+    max_score: 2
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.50
+    tests:
+      - script_succeeds
+      - raw_quarterly_revenue_matches_input
+      - detects_q3_anomaly
+      - identifies_duplicate_import_batches
+      - corrected_quarters_match_deduped_view
+      - baseline_and_summary_are_grounded
+    max_score: 6
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.40
+    tests:
+      - has_baseline_module
+      - anomaly_threshold_is_not_too_permissive
+      - duplicate_detection_uses_content_fingerprint
+      - script_applies_corrected_view
+    max_score: 4
+    scoring_method: proportional

@@ -1,0 +1,29 @@
+{
+  "task_id": "E2-LS1-T6",
+  "judge_mode": "deterministic",
+  "trap_type": "pipeline_fallback_and_normalization",
+  "feedback_fields": [
+    "error_type",
+    "expected",
+    "actual",
+    "hint"
+  ],
+  "dimensions": [
+    {
+      "name": "public_checks",
+      "weight": 10
+    },
+    {
+      "name": "enrichment_and_fallback",
+      "weight": 30
+    },
+    {
+      "name": "normalization",
+      "weight": 20
+    },
+    {
+      "name": "process_checks",
+      "weight": 40
+    }
+  ]
+}

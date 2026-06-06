@@ -1,0 +1,7 @@
+task_id: E4-LS3-T4
+weights:
+  outcome_placeholder_coverage: 0.35
+  outcome_correct_fill_and_preservation: 0.25
+  process_pattern_recognition_and_generalization: 0.40
+notes:
+  - Full credit requires recognizing all placeholder variants, not only one literal token.

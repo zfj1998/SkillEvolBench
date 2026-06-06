@@ -1,0 +1,33 @@
+{
+  "task_id": "E2-LS1-T3",
+  "judge_mode": "deterministic",
+  "trap_type": "all_or_nothing_batch",
+  "feedback_fields": [
+    "error_type",
+    "expected",
+    "actual",
+    "hint"
+  ],
+  "dimensions": [
+    {
+      "name": "public_checks",
+      "weight": 10
+    },
+    {
+      "name": "success_path_accuracy",
+      "weight": 20
+    },
+    {
+      "name": "failure_report_quality",
+      "weight": 30
+    },
+    {
+      "name": "summary_counts",
+      "weight": 10
+    },
+    {
+      "name": "process_checks",
+      "weight": 30
+    }
+  ]
+}

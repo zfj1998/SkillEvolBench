@@ -1,0 +1,42 @@
+task_id: E3-LS2-T1
+task_name: date-string-sort-pitfall
+role: canonical
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_has_correct_columns
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: robustness
+    weight: 0.15
+    tests:
+      - test_no_crash                    # H1
+      - test_row_count_preserved         # H2
+      - test_dates_in_iso_format         # H3
+    max_score: 3
+    scoring_method: proportional
+
+  - dimension: correctness
+    weight: 0.25
+    tests:
+      - test_chronological_order         # H4
+      - test_no_data_loss                # H5
+      - test_same_date_time_order        # H6
+      - test_not_string_sorted           # H7
+    max_score: 4
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.50
+    tests:
+      - test_parses_dates_to_datetime              # P1
+      - test_no_raw_string_sort_without_conversion  # P2
+      - test_outputs_iso_date_format               # P3
+      - test_uses_sort_function                    # P4
+      - test_has_error_handling                    # P5
+    max_score: 5
+    scoring_method: proportional

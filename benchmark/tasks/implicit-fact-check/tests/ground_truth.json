@@ -1,0 +1,44 @@
+{
+  "labels": {
+    "F01": "valid",
+    "F02": "valid",
+    "F03": "valid",
+    "F04": "valid",
+    "F05": "valid",
+    "F06": "misrepresented",
+    "F07": "misrepresented",
+    "F08": "fake"
+  },
+  "problem_ids": [
+    "F06",
+    "F07",
+    "F08"
+  ],
+  "required_problem_labels": [
+    "fake",
+    "misrepresented"
+  ],
+  "reason_terms": {
+    "F06": [
+      "misrepresented",
+      "not",
+      "self-reported",
+      "significant",
+      "attribution"
+    ],
+    "F07": [
+      "misrepresented",
+      "not",
+      "self-reported",
+      "significant",
+      "attribution"
+    ],
+    "F08": [
+      "fake",
+      "fabricated",
+      "doi",
+      "journal",
+      "authenticity"
+    ]
+  }
+}

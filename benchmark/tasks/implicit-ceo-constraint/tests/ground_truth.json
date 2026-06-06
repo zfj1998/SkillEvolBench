@@ -1,0 +1,26 @@
+{
+  "required_terms": [
+    "ceo",
+    "roi",
+    "risk",
+    "next steps",
+    "pilot"
+  ],
+  "must_select": [
+    "management_roi",
+    "management_risk",
+    "client_launch"
+  ],
+  "forbidden_terms": [
+    "appendix tables",
+    "background history"
+  ],
+  "shape": "single",
+  "limits": {
+    "single": 500,
+    "audience": 300,
+    "article": 200,
+    "group": 300,
+    "overall": 500
+  }
+}

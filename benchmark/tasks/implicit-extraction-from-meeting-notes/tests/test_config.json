@@ -1,0 +1,48 @@
+{
+  "public_min_actions": 1,
+  "allowed_missing_actions": 1,
+  "max_false_positives": 2,
+  "required_non_action_ids": [
+    "p11",
+    "p20",
+    "p22"
+  ],
+  "required_status_keys": [
+    "open"
+  ],
+  "min_follow_up_needed": 0,
+  "summary_keywords": [
+    "migration",
+    "API freeze"
+  ],
+  "min_source_items": 30,
+  "exact_action_count": true,
+  "exact_non_action_count": true,
+  "min_implicit_actions": 5,
+  "non_action_source_ids": [
+    "p01",
+    "p02",
+    "p03",
+    "p05",
+    "p06",
+    "p07",
+    "p08",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p15",
+    "p16",
+    "p17",
+    "p19",
+    "p20",
+    "p21",
+    "p22",
+    "p24",
+    "p25",
+    "p26",
+    "p27",
+    "p29",
+    "p30"
+  ]
+}

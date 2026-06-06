@@ -1,0 +1,38 @@
+task_id: E4-LS4-T5
+task_name: page-number-reference-error-trap
+role: adversarial
+
+dimensions:
+  - id: H1
+    name: correct-data-source
+    description: FY2023 revenue correctly identified as $118.3M (p.47), not $91.8M (p.23)
+    weight: 0.35
+    scoring: binary         # pass/fail — wrong data = completely wrong answer
+    max_score: 1
+
+  - id: H2
+    name: no-year-misattribution
+    description: $91.8M (FY2022) is not labelled as "this year" or FY2023 revenue
+    weight: 0.25
+    scoring: binary
+    max_score: 1
+
+  - id: H3-bonus
+    name: page-reference-flagged
+    description: Agent explicitly notes that the p.23 reference in the Executive Summary points to FY2022 data
+    weight: 0.05
+    scoring: binary
+    max_score: 1
+    note: bonus dimension — adds 5% if passed, no penalty if failed
+
+  - id: P1-P2
+    name: process-quality
+    description: >
+      P1: Agent verified section year labels before extracting data.
+      P2: Figures cited from the FY2023 Revenue Summary table (p.47).
+    weight: 0.35
+    scoring: proportional
+    max_score: 2
+
+total_weight: 1.0   # bonus is additive beyond 1.0
+pass_threshold: 0.60

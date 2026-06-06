@@ -1,0 +1,36 @@
+task_id: E3-LS1-T3
+task_name: mixed-type-column-chaos
+role: variant
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_format
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: correctness
+    weight: 0.30
+    tests:
+      - test_no_crash                    # H1
+      - test_row_count_correct           # H2
+      - test_total_revenue_correct       # H3
+      - test_valid_count_correct         # H4
+      - test_missing_count_correct       # H5
+      - test_category_totals_correct     # H6
+      - test_total_not_naive             # H7
+    max_score: 7
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.60
+    tests:
+      - test_handles_commas              # P1
+      - test_handles_dollar              # P2
+      - test_handles_accounting_negatives  # P3
+      - test_handles_nulls               # P4
+      - test_inspects_dtypes             # P5
+    max_score: 5
+    scoring_method: proportional

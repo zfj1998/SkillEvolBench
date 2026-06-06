@@ -1,0 +1,12 @@
+{
+  "task_id": "E2-LS2-T2",
+  "judge_mode": "deterministic",
+  "trap_type": "gap-1",
+  "dimensions": [
+    {"name": "public_checks", "weight": 10},
+    {"name": "exponential_backoff", "weight": 25},
+    {"name": "jitter", "weight": 25},
+    {"name": "correctness_and_bounds", "weight": 10},
+    {"name": "process_checks", "weight": 30}
+  ]
+}

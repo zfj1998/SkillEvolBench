@@ -1,0 +1,83 @@
+{
+  "task_id": "E6-LS1-T2",
+  "expected_priorities": {
+    "email_001": "P0",
+    "email_002": "P1",
+    "email_003": "P2",
+    "email_004": "P3",
+    "email_005": "P0",
+    "email_006": "P2",
+    "email_007": "P1",
+    "email_008": "P3",
+    "email_009": "P1",
+    "email_010": "P2",
+    "email_011": "P0",
+    "email_012": "P3",
+    "email_013": "P2",
+    "email_014": "P0",
+    "email_015": "P1",
+    "email_016": "P3",
+    "email_017": "P2",
+    "email_018": "P2",
+    "email_019": "P3",
+    "email_020": "P1",
+    "email_021": "P2",
+    "email_022": "P1",
+    "email_23": "P2",
+    "email_24": "P2",
+    "email_25": "P2",
+    "email_26": "P2",
+    "email_27": "P3",
+    "email_28": "P3",
+    "email_29": "P3",
+    "email_30": "P3"
+  },
+  "key_priority_checks": {
+    "email_007": "P1",
+    "email_014": "P0",
+    "email_022": "P1",
+    "email_001": "P0",
+    "email_005": "P0"
+  },
+  "expected_p0": [
+    "email_001",
+    "email_005",
+    "email_011",
+    "email_014"
+  ],
+  "expected_p3": [
+    "email_004",
+    "email_008",
+    "email_012",
+    "email_016",
+    "email_019",
+    "email_27",
+    "email_28",
+    "email_29",
+    "email_30"
+  ],
+  "expected_response_ids": [],
+  "rank_before": [],
+  "reason_keywords": {
+    "email_007": [
+      "client",
+      "Thursday"
+    ],
+    "email_014": [
+      "certificate",
+      "tomorrow"
+    ],
+    "email_022": [
+      "follow",
+      "API"
+    ]
+  },
+  "expected_drafts": {},
+  "min_message_count": 30,
+  "process_markers": [
+    "implicit urgency",
+    "follow",
+    "certificate",
+    "client"
+  ]
+}

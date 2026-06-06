@@ -1,0 +1,28 @@
+{
+  "labels": {
+    "R01": "evidence",
+    "R02": "evidence",
+    "R03": "evidence",
+    "R04": "evidence",
+    "R05": "evidence",
+    "R06": "evidence",
+    "R07": "evidence",
+    "R08": "opinion",
+    "R09": "opinion",
+    "R10": "opinion",
+    "R11": "opinion",
+    "R12": "opinion"
+  },
+  "pseudo_evidence": [
+    "R12"
+  ],
+  "priority_ids": [
+    "R01",
+    "R02",
+    "R03",
+    "R04",
+    "R05",
+    "R06",
+    "R07"
+  ]
+}

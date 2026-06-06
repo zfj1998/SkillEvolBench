@@ -1,0 +1,6 @@
+task_id: E4-LS1-T4
+weights:
+  extraction_h1: 20
+  total_cost_h2_h3: 30
+  shipping_factor_h4: 15
+  process_p1_p2: 35

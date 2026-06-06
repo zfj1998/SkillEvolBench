@@ -1,0 +1,27 @@
+task_id: E4-LS5-T4
+name: implicit-merge-requirement
+role: context-shift
+pass_threshold: 0.70
+
+dimensions:
+  - id: test_output_exists
+    weight: 0.05
+    public: true
+  - id: test_count_at_least_700
+    weight: 0.25
+    public: false
+  - id: test_no_duplicate_emails
+    weight: 0.20
+    public: false
+  - id: test_coverage_of_all_sources
+    weight: 0.20
+    public: false
+  - id: test_records_have_name_and_email
+    weight: 0.10
+    public: false
+  - id: test_all_three_source_files_referenced
+    weight: 0.10
+    public: false
+  - id: test_deduplication_evidence
+    weight: 0.10
+    public: false

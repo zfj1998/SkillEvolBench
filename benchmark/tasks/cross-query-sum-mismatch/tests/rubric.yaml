@@ -1,0 +1,31 @@
+task_id: E3-LS5-T3
+task_name: cross-query-sum-mismatch
+role: variant
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - output_exists
+      - totals_present
+    max_score: 2
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.50
+    tests:
+      - script_succeeds
+      - overall_total_is_correct
+      - product_line_breakdown_is_correct
+      - cross_query_totals_reconcile
+      - mismatch_reason_cleared_after_fix
+    max_score: 5
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.40
+    tests:
+      - has_two_report_views
+      - uses_item_amount_for_product_lines
+      - consistency_guard_requires_exact_match
+      - script_reports_cleared_difference
+    max_score: 4
+    scoring_method: proportional

@@ -1,0 +1,39 @@
+task_id: E2-LS5-T4
+task_name: implicit-validation-requirement
+role: context-shift
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_format
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: html_detection
+    weight: 0.30
+    tests:
+      - test_html_not_in_output        # H1
+      - test_no_crash                  # H4
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: data_quality
+    weight: 0.20
+    tests:
+      - test_no_empty_batch_ids        # H2
+      - test_all_products_valid_schema # H3
+      - test_normal_data_fully_correct # H5
+      - test_exact_count               # H6
+      - test_total_consistency         # H7
+    max_score: 5
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.40
+    tests:
+      - test_validates_response_format     # P1
+      - test_handles_empty_data            # P2
+    max_score: 2
+    scoring_method: proportional

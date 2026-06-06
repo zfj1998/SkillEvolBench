@@ -1,0 +1,39 @@
+{
+  "labels": {
+    "explicit_p_market_size": "contradiction",
+    "explicit_p_launch_date": "contradiction",
+    "explicit_p_ceo_expansion": "contradiction",
+    "implicit_p_growth_timeline": "contradiction",
+    "implicit_p_cost_budget": "contradiction",
+    "implicit_p_leader_share": "contradiction",
+    "internal_p_internal_revenue": "contradiction",
+    "internal_p_internal_date": "contradiction",
+    "internal_p_internal_kpi": "contradiction",
+    "trap_p_false_year": "not_contradiction",
+    "trap_p_false_scope": "not_contradiction",
+    "trap_p_false_time_scale": "not_contradiction"
+  },
+  "true_ids": [
+    "explicit_p_market_size",
+    "explicit_p_launch_date",
+    "explicit_p_ceo_expansion",
+    "implicit_p_growth_timeline",
+    "implicit_p_cost_budget",
+    "implicit_p_leader_share",
+    "internal_p_internal_revenue",
+    "internal_p_internal_date",
+    "internal_p_internal_kpi"
+  ],
+  "false_ids": [
+    "trap_p_false_year",
+    "trap_p_false_scope",
+    "trap_p_false_time_scale"
+  ],
+  "required_types": [
+    "explicit",
+    "implicit_causal",
+    "implicit_definition",
+    "implicit_timeline",
+    "internal"
+  ]
+}

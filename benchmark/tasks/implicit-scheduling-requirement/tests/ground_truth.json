@@ -1,0 +1,30 @@
+{
+  "task_id": "E6-LS4-T4",
+  "min_participant_count": 6,
+  "expected_ranked_slot_ids": [
+    "team_sync_tue"
+  ],
+  "expected_meeting_ids": [],
+  "required_start_utc": [
+    "2026-04-28T15:00:00Z"
+  ],
+  "forbidden_start_utc": [],
+  "expected_local_times": [
+    "Fatima",
+    "BST"
+  ],
+  "requires_scores": true,
+  "expected_scores": {
+    "team_sync_tue": 6
+  },
+  "expected_soft_preferences_met": {
+    "team_sync_tue": 0
+  },
+  "expected_reason_terms": {},
+  "expected_preference_breakdown": {},
+  "process_markers": [
+    "team.json",
+    "infer",
+    "timezone"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "task_id": "E2-LS1-T5",
+  "judge_mode": "deterministic",
+  "trap_type": "remote_validation_dependency",
+  "feedback_fields": [
+    "error_type",
+    "expected",
+    "actual",
+    "hint"
+  ],
+  "dimensions": [
+    {
+      "name": "public_checks",
+      "weight": 10
+    },
+    {
+      "name": "zero_remote_400s",
+      "weight": 30
+    },
+    {
+      "name": "hidden_robustness",
+      "weight": 20
+    },
+    {
+      "name": "process_checks",
+      "weight": 40
+    }
+  ]
+}

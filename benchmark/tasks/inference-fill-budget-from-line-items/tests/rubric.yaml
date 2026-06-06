@@ -1,0 +1,9 @@
+task_id: E4-LS3-T2
+weights:
+  outcome_total_budget: 0.30
+  outcome_coverage_of_distributed_items: 0.25
+  outcome_direct_fields: 0.15
+  process_traceability_and_generalization: 0.30
+notes:
+  - Full credit requires summing all 8 distributed line items.
+  - Missing footnote or appendix amounts should fail hidden tests.

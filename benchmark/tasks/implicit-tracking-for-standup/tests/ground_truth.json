@@ -1,0 +1,109 @@
+{
+  "task_id": "E6-LS3-T4",
+  "expected_action_ids": [
+    "act_webhook_patch",
+    "act_pricing_page",
+    "act_emea_sandbox",
+    "act_customer_faq",
+    "act_regression_runs",
+    "act_docs_update",
+    "act_migration_notes",
+    "act_partner_call"
+  ],
+  "expected_fields": {
+    "act_webhook_patch": {
+      "assignee": "alice",
+      "deadline": "2026-04-22",
+      "status": "completed",
+      "description_terms": [
+        "webhook",
+        "patch"
+      ]
+    },
+    "act_pricing_page": {
+      "assignee": "bob",
+      "deadline": "2026-04-18",
+      "status": "delayed",
+      "description_terms": [
+        "pricing",
+        "page"
+      ]
+    },
+    "act_emea_sandbox": {
+      "assignee": "charlie",
+      "deadline": null,
+      "status": "completed",
+      "description_terms": [
+        "EMEA",
+        "sandbox"
+      ]
+    },
+    "act_customer_faq": {
+      "assignee": "diana",
+      "deadline": "2026-04-17",
+      "status": "delayed",
+      "description_terms": [
+        "customer",
+        "FAQ"
+      ]
+    },
+    "act_regression_runs": {
+      "assignee": "eli",
+      "deadline": "2026-04-18",
+      "status": "completed",
+      "description_terms": [
+        "regression"
+      ]
+    },
+    "act_docs_update": {
+      "assignee": "team",
+      "deadline": "2026-04-30",
+      "status": "no_update",
+      "description_terms": [
+        "update",
+        "docs"
+      ]
+    },
+    "act_migration_notes": {
+      "assignee": "alice",
+      "deadline": null,
+      "status": "no_update",
+      "description_terms": [
+        "migration",
+        "notes"
+      ]
+    },
+    "act_partner_call": {
+      "assignee": "bob",
+      "deadline": "2026-04-18",
+      "status": "no_update",
+      "description_terms": [
+        "partner",
+        "call"
+      ]
+    }
+  },
+  "implicit_action_ids": [
+    "act_emea_sandbox",
+    "act_docs_update",
+    "act_migration_notes"
+  ],
+  "confidence_less_than": [],
+  "expected_status_counts": {
+    "completed": 3,
+    "delayed": 2,
+    "no_update": 3
+  },
+  "non_action_message_ids": [],
+  "expected_followups": {},
+  "min_message_count": 13,
+  "process_markers": [
+    "last-week",
+    "this-week",
+    "completed",
+    "delayed",
+    "no_update"
+  ],
+  "allowed_missing_actions": 0,
+  "requires_current_date": false
+}

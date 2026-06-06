@@ -1,0 +1,28 @@
+task_id: E3-LS3-T5
+task_name: wrong-join-key-plausible-result-trap
+role: adversarial
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+    max_score: 1
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.50
+    tests:
+      - test_no_crash
+      - test_avg_txn_not_one
+      - test_avg_txn_accurate
+      - test_total_spending
+      - test_top_spenders_count
+    max_score: 5
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.40
+    tests:
+      - test_joins_on_user_id
+      - test_not_joining_on_txn_id
+    max_score: 2
+    scoring_method: proportional

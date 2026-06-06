@@ -1,0 +1,23 @@
+{
+  "task_id": "E2-LS3-T2",
+  "judge_mode": "deterministic",
+  "trap_type": "cursor_pagination_with_variable_page_size",
+  "dimensions": [
+    {
+      "name": "public_tests",
+      "weight": 10
+    },
+    {
+      "name": "complete_retrieval",
+      "weight": 25
+    },
+    {
+      "name": "cursor_chain_and_stop_condition",
+      "weight": 25
+    },
+    {
+      "name": "process_checks",
+      "weight": 40
+    }
+  ]
+}

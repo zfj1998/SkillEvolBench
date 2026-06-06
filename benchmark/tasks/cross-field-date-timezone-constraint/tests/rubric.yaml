@@ -1,0 +1,33 @@
+{
+  "task_id": "E2-LS1-T2",
+  "judge_mode": "deterministic",
+  "trap_type": "cross_field_timezone_compare",
+  "feedback_fields": [
+    "error_type",
+    "expected",
+    "actual",
+    "hint"
+  ],
+  "dimensions": [
+    {
+      "name": "public_checks",
+      "weight": 10
+    },
+    {
+      "name": "cross_timezone_trap",
+      "weight": 25
+    },
+    {
+      "name": "other_hidden_checks",
+      "weight": 25
+    },
+    {
+      "name": "timezone_library_usage",
+      "weight": 20
+    },
+    {
+      "name": "other_process_checks",
+      "weight": 20
+    }
+  ]
+}

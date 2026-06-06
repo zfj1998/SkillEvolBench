@@ -1,0 +1,30 @@
+task_id: E3-LS4-T4
+task_name: implicit-null-causes-division-by-zero
+role: context-shift
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - output_exists
+      - channels_list_present
+    max_score: 2
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.50
+    tests:
+      - script_does_not_crash
+      - no_inf_or_nan_rates
+      - channel_reports_match_ground_truth
+      - summary_matches_ground_truth
+    max_score: 4
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.40
+    tests:
+      - normalizes_channels
+      - does_not_fill_missing_denominator_with_zero
+      - checks_impressions_before_division
+      - uses_missing_impression_audit
+    max_score: 4
+    scoring_method: proportional

@@ -1,0 +1,21 @@
+{
+  "labels": {
+    "p_true_market": "contradiction",
+    "p_true_ceo": "contradiction",
+    "p_false_year": "not_contradiction",
+    "p_false_scope": "not_contradiction",
+    "p_false_time_scale": "not_contradiction"
+  },
+  "true_ids": [
+    "p_true_market",
+    "p_true_ceo"
+  ],
+  "false_ids": [
+    "p_false_year",
+    "p_false_scope",
+    "p_false_time_scale"
+  ],
+  "required_types": [
+    "explicit"
+  ]
+}

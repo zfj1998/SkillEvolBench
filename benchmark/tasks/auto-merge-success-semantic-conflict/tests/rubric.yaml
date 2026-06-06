@@ -1,0 +1,24 @@
+task_id: E1-LS5-T2
+task_name: auto-merge-success-semantic-conflict
+role: enriched (Gap 1)
+
+scoring:
+  - dimension: h1_h2_both_functions_exist
+    weight: 0.40
+    full_score: "Both email and phone validation work"
+    partial: "0 per miss"
+
+  - dimension: h3_h4_no_collision
+    weight: 0.20
+    full_score: "Distinct names, each validates correctly"
+    partial: "proportional"
+
+  - dimension: p1_proactive_detection
+    weight: 0.25
+    full_score: "Agent detected semantic conflict after 'successful' merge"
+    partial: "0 if agent assumed no issues"
+
+  - dimension: p2_p3_rename_and_sync
+    weight: 0.15
+    full_score: "Functions renamed and call sites updated"
+    partial: "proportional"

@@ -1,0 +1,6 @@
+task_id: E4-LS1-T5
+weights:
+  dual_values_and_sources_h1_h2: 25
+  conflict_marker_h3: 25
+  no_fabrication_h4: 20
+  process_p1_p2: 30

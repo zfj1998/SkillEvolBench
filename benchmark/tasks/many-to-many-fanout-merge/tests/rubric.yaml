@@ -1,0 +1,30 @@
+task_id: E3-LS3-T3
+task_name: many-to-many-fanout-merge
+role: variant
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+    max_score: 1
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.50
+    tests:
+      - test_no_crash
+      - test_avg_reasonable
+      - test_avg_accurate
+      - test_no_fanout
+      - test_top10_count
+      - test_no_student_has_200_courses
+    max_score: 6
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.40
+    tests:
+      - test_uses_enrollments
+      - test_checks_row_count
+      - test_no_cross_join
+    max_score: 3
+    scoring_method: proportional

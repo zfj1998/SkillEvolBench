@@ -1,0 +1,119 @@
+{
+  "task_id": "E6-LS1-T6",
+  "expected_priorities": {
+    "checkout_incident": "P0",
+    "okta_alert": "P0",
+    "renewal_escalation": "P0",
+    "launch_copy": "P1",
+    "budget_model": "P1",
+    "combo_06": "P2",
+    "combo_07": "P2",
+    "combo_08": "P2",
+    "combo_09": "P2",
+    "combo_10": "P2",
+    "combo_11": "P2",
+    "combo_12": "P2",
+    "combo_13": "P2",
+    "combo_14": "P3",
+    "combo_15": "P3",
+    "combo_16": "P3",
+    "combo_17": "P3",
+    "combo_18": "P3",
+    "combo_19": "P3",
+    "combo_20": "P3"
+  },
+  "key_priority_checks": {
+    "checkout_incident": "P0",
+    "okta_alert": "P0",
+    "renewal_escalation": "P0",
+    "launch_copy": "P1"
+  },
+  "expected_p0": [
+    "checkout_incident",
+    "okta_alert",
+    "renewal_escalation"
+  ],
+  "expected_p3": [
+    "combo_14",
+    "combo_15",
+    "combo_16",
+    "combo_17",
+    "combo_18",
+    "combo_19",
+    "combo_20"
+  ],
+  "expected_response_ids": [
+    "checkout_incident",
+    "okta_alert",
+    "renewal_escalation"
+  ],
+  "rank_before": [],
+  "reason_keywords": {
+    "checkout_incident": [
+      "Immediate"
+    ],
+    "okta_alert": [
+      "Immediate"
+    ],
+    "renewal_escalation": [
+      "client"
+    ]
+  },
+  "expected_drafts": {
+    "checkout_incident": {
+      "to": [
+        "sam.rivera@harborworks.example"
+      ],
+      "cc": [
+        "riley.chen@harborworks.example"
+      ],
+      "body": "Thanks for flagging checkout incident inc-7421. I am joining the bridge now, Riley will own queue mitigation, and I will send the first customer-facing update by 10:30 ET with a follow-up ETA after queue saturation is confirmed.",
+      "rationale": "Acknowledges incident, cites bridge context, names action owner, and gives ETA.",
+      "must_include": [
+        "inc-7421",
+        "queue",
+        "10:30",
+        "ETA"
+      ]
+    },
+    "okta_alert": {
+      "to": [
+        "nora.schmidt@harborworks.example"
+      ],
+      "cc": [
+        "riley.chen@harborworks.example"
+      ],
+      "body": "Acknowledged on the Okta admin anomaly. Please proceed with the access review; I see the token was already revoked, and I will confirm executive sign-off by 11:00 ET.",
+      "rationale": "References revoked token context and next action.",
+      "must_include": [
+        "Okta",
+        "revoked",
+        "11:00",
+        "access review"
+      ]
+    },
+    "renewal_escalation": {
+      "to": [
+        "ari.gomez@northstar-retail.example"
+      ],
+      "cc": [
+        "casey.holt@harborworks.example",
+        "jordan.lee@harborworks.example"
+      ],
+      "body": "Ari, thank you for the clear deadline. Casey owns the data-retention redline, Jordan and I are aligning now, and we will send the written plan before 14:00 ET so signature does not pause.",
+      "rationale": "Acknowledges client deadline, owner, action, and ETA.",
+      "must_include": [
+        "14:00",
+        "Casey",
+        "signature",
+        "written plan"
+      ]
+    }
+  },
+  "min_message_count": 20,
+  "process_markers": [
+    "thread context",
+    "ETA",
+    "P0 reply"
+  ]
+}

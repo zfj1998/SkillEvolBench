@@ -1,0 +1,39 @@
+task_id: E4-LS4-T6
+task_name: multi-version-change-chain
+role: composition
+
+dimensions:
+  - id: H1-H2
+    name: per-round-diff-accuracy
+    description: >
+      H1: >=4/5 v1->v2 changes identified.
+      H2: >=2/3 key v2->v3 changes identified.
+    weight: 0.25
+    scoring: proportional
+    max_score: 2
+
+  - id: H3
+    name: rollback-identification
+    description: Both rollbacks correctly identified (eligibility 90-day and quarterly briefings)
+    weight: 0.30
+    scoring: binary
+    max_score: 1
+
+  - id: H4
+    name: net-change-summary
+    description: Net v1->v3 changes correctly summarised (>=3 genuine changes listed)
+    weight: 0.15
+    scoring: binary
+    max_score: 1
+
+  - id: P1-P2
+    name: process-quality
+    description: >
+      P1: Both diff rounds (v1->v2 and v2->v3) explicitly performed.
+      P2: Net/cumulative change analysis or rollback section present.
+    weight: 0.30
+    scoring: proportional
+    max_score: 2
+
+total_weight: 1.0
+pass_threshold: 0.60

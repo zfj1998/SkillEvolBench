@@ -1,0 +1,28 @@
+{
+  "required_terms": [
+    "nature",
+    "jama",
+    "fda",
+    "who",
+    "monitoring"
+  ],
+  "must_select": [
+    "finding_skin",
+    "finding_retina",
+    "governance_fda",
+    "ethics_who",
+    "recommendation"
+  ],
+  "forbidden_terms": [
+    "appendix tables",
+    "background history"
+  ],
+  "shape": "single",
+  "limits": {
+    "single": 500,
+    "audience": 300,
+    "article": 200,
+    "group": 300,
+    "overall": 500
+  }
+}

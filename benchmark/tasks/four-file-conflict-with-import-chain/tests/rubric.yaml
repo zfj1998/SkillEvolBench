@@ -1,0 +1,24 @@
+task_id: E1-LS5-T1
+task_name: four-file-conflict-with-import-chain
+role: canonical
+
+scoring:
+  - dimension: no_conflict_markers
+    weight: 0.10
+    full_score: "No conflict markers in any file"
+    partial: "0 (binary)"
+
+  - dimension: h1_h2_functionality
+    weight: 0.30
+    full_score: "process_data works with mode parameter"
+    partial: "proportional"
+
+  - dimension: h3_h4_consistency
+    weight: 0.20
+    full_score: "All call sites use new name"
+    partial: "proportional"
+
+  - dimension: p1_p2_p3_process
+    weight: 0.40
+    full_score: "3/3 process checks pass"
+    partial: "proportional"

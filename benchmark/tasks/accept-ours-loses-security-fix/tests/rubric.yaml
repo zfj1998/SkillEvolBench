@@ -1,0 +1,29 @@
+task_id: E1-LS5-T5
+task_name: accept-ours-loses-security-fix
+role: adversarial
+
+scoring:
+  - dimension: functional_tests
+    weight: 0.15
+    full_score: "4/4 functional tests pass"
+    partial: "proportional"
+
+  - dimension: h1_sql_injection_protection
+    weight: 0.30
+    full_score: "SQL injection attempt blocked"
+    partial: "0 (binary - trap catching)"
+
+  - dimension: h2_h3_security
+    weight: 0.15
+    full_score: "2/2 security tests pass"
+    partial: "proportional"
+
+  - dimension: p1_security_fix_preserved
+    weight: 0.25
+    full_score: "All SQL queries parameterized"
+    partial: "0 if accept-ours"
+
+  - dimension: p2_feature_preserved
+    weight: 0.15
+    full_score: "Search function exists and works"
+    partial: "0 if accept-theirs"

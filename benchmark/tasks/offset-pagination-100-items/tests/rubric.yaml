@@ -1,0 +1,27 @@
+{
+  "task_id": "E2-LS3-T1",
+  "judge_mode": "deterministic",
+  "trap_type": "duplicate_record_in_offset_page",
+  "dimensions": [
+    {
+      "name": "public_tests",
+      "weight": 10
+    },
+    {
+      "name": "complete_unique_retrieval",
+      "weight": 25
+    },
+    {
+      "name": "pagination_efficiency",
+      "weight": 20
+    },
+    {
+      "name": "dedup_and_order",
+      "weight": 15
+    },
+    {
+      "name": "process_checks",
+      "weight": 30
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+task_id: E3-LS2-T4
+task_name: implicit-sort-for-ranking-report
+role: context-shift
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_format
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: robustness
+    weight: 0.10
+    tests:
+      - test_no_crash                      # H1
+      - test_q3_filter_correct             # H2
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: correctness
+    weight: 0.30
+    tests:
+      - test_top_ranks_correct             # H3
+      - test_handles_tie_at_boundary       # H4
+      - test_total_sales_accurate          # H5
+      - test_transaction_counts_accurate   # H6
+      - test_sorted_descending             # H7
+    max_score: 5
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.50
+    tests:
+      - test_filters_to_q3                 # P1
+      - test_uses_aggregation              # P2
+      - test_sorts_descending              # P3
+      - test_handles_ties                  # P4
+      - test_computes_transaction_count    # P5
+    max_score: 5
+    scoring_method: proportional

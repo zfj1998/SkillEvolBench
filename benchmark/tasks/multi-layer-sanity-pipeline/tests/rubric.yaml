@@ -1,0 +1,33 @@
+task_id: E3-LS5-T6
+task_name: multi-layer-sanity-pipeline
+role: composition
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - output_exists
+      - confidence_present
+    max_score: 2
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.50
+    tests:
+      - script_succeeds
+      - row_counts_match_sources
+      - multiple_quality_issues_detected
+      - cross_query_reconciliation_is_strict
+      - office_status_issue_detected
+      - confidence_and_corrected_total_use_cleaned_view
+    max_score: 6
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.40
+    tests:
+      - revenue_anomaly_groups_by_region_month
+      - revenue_anomaly_flags_duplicate_batches
+      - consistency_guard_uses_cent_level_tolerance
+      - office_registry_validates_status_values
+      - confidence_policy_supports_low_confidence
+    max_score: 5
+    scoring_method: proportional

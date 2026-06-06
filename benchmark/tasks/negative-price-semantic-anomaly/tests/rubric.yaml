@@ -1,0 +1,42 @@
+task_id: E2-LS5-T3
+task_name: negative-price-semantic-anomaly
+role: variant
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_format
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: semantic_filtering
+    weight: 0.25
+    tests:
+      - test_no_negative_prices        # H1
+      - test_negative_ids_excluded     # H1b
+      - test_valid_products_present    # H2
+      - test_free_sample_kept          # H3
+    max_score: 4
+    scoring_method: proportional
+
+  - dimension: auditability
+    weight: 0.20
+    tests:
+      - test_logged_anomalies          # H4
+      - test_no_crash                  # H5
+      - test_exact_count               # H6
+      - test_total_consistency         # H7
+      - test_product_schema            # H8
+    max_score: 5
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.45
+    tests:
+      - test_has_price_validation      # P1
+      - test_price_anomaly_filtered    # P2
+      - test_normal_data_collected     # P3
+    max_score: 3
+    scoring_method: proportional

@@ -1,0 +1,131 @@
+{
+  "task_id": "E6-LS3-T6",
+  "expected_action_ids": [
+    "act_runbook",
+    "act_pricing_faq",
+    "act_emea_dns",
+    "act_customer_comms",
+    "act_regression",
+    "act_docs",
+    "act_migration_mapping",
+    "act_partner_qa"
+  ],
+  "expected_fields": {
+    "act_runbook": {
+      "assignee": "alice",
+      "deadline": "2026-04-13",
+      "status": "overdue",
+      "description_terms": [
+        "webhook",
+        "runbook"
+      ]
+    },
+    "act_pricing_faq": {
+      "assignee": "bob",
+      "deadline": "2026-04-15",
+      "status": "overdue",
+      "description_terms": [
+        "pricing",
+        "FAQ"
+      ]
+    },
+    "act_emea_dns": {
+      "assignee": "charlie",
+      "deadline": null,
+      "status": "delayed",
+      "description_terms": [
+        "EMEA",
+        "DNS"
+      ]
+    },
+    "act_customer_comms": {
+      "assignee": "diana",
+      "deadline": "2026-04-24",
+      "status": "completed",
+      "description_terms": [
+        "customer",
+        "comms"
+      ]
+    },
+    "act_regression": {
+      "assignee": "eli",
+      "deadline": "2026-04-27",
+      "status": "open",
+      "description_terms": [
+        "regression"
+      ]
+    },
+    "act_docs": {
+      "assignee": "team",
+      "deadline": "2026-04-30",
+      "status": "no_update",
+      "description_terms": [
+        "docs"
+      ]
+    },
+    "act_migration_mapping": {
+      "assignee": "alice",
+      "deadline": null,
+      "status": "no_update",
+      "description_terms": [
+        "migration",
+        "mapping"
+      ]
+    },
+    "act_partner_qa": {
+      "assignee": "bob",
+      "deadline": "2026-04-24",
+      "status": "open",
+      "description_terms": [
+        "partner",
+        "QA"
+      ]
+    }
+  },
+  "implicit_action_ids": [
+    "act_emea_dns",
+    "act_docs",
+    "act_migration_mapping"
+  ],
+  "confidence_less_than": [],
+  "expected_status_counts": {
+    "completed": 1,
+    "delayed": 1,
+    "no_update": 2,
+    "open": 2,
+    "overdue": 2
+  },
+  "non_action_message_ids": [],
+  "expected_followups": {
+    "act_runbook": {
+      "action_id": "act_runbook",
+      "to": "alice",
+      "body": "Hi Alice, quick follow-up on the webhook runbook that was targeted for last Monday. Could you share the latest status or a revised ETA when you have a moment?",
+      "must_include": [
+        "webhook",
+        "runbook",
+        "revised ETA"
+      ]
+    },
+    "act_pricing_faq": {
+      "action_id": "act_pricing_faq",
+      "to": "bob",
+      "body": "Hi Bob, checking in on the pricing FAQ that was due last Wednesday. Could you send the current status and any blocker so we can update the launch tracker?",
+      "must_include": [
+        "pricing FAQ",
+        "status",
+        "blocker"
+      ]
+    }
+  },
+  "min_message_count": 20,
+  "process_markers": [
+    "extract",
+    "track",
+    "follow-up",
+    "overdue",
+    "polite"
+  ],
+  "allowed_missing_actions": 0,
+  "requires_current_date": true
+}

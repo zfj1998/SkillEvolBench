@@ -1,0 +1,64 @@
+{
+  "task_id": "E6-LS2-T4",
+  "expected_reply_ids": [
+    "sel_01",
+    "sel_02",
+    "sel_03",
+    "sel_04"
+  ],
+  "expected_ack_ids": [
+    "sel_05",
+    "sel_06",
+    "sel_07"
+  ],
+  "expected_ignore_ids": [
+    "sel_08",
+    "sel_09",
+    "sel_10"
+  ],
+  "required_terms": {
+    "sel_01": [
+      [
+        "approved"
+      ]
+    ],
+    "sel_02": [
+      [
+        "$4.2m",
+        "4.2"
+      ]
+    ],
+    "sel_03": [
+      [
+        "08:00",
+        "20:00"
+      ]
+    ],
+    "sel_04": [
+      [
+        "freeze"
+      ]
+    ]
+  },
+  "min_required_groups": {
+    "sel_01": 1,
+    "sel_02": 1,
+    "sel_03": 1,
+    "sel_04": 1
+  },
+  "specificity_terms": {},
+  "forbidden_phrases": [
+    "thanks for the note. this sounds good",
+    "sounds good to me",
+    "check on the details",
+    "follow up soon"
+  ],
+  "expected_cc": {},
+  "rationale_keywords": {},
+  "process_markers": [
+    "select_actions",
+    "acknowledge",
+    "ignore"
+  ],
+  "min_message_count": 10
+}

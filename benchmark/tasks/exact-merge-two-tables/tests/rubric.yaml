@@ -1,0 +1,31 @@
+task_id: E3-LS3-T1
+task_name: exact-merge-two-tables
+role: canonical
+
+scoring:
+  - dimension: public
+    weight: 0.15
+    tests:
+      - test_output_exists
+      - test_required_keys
+    max_score: 2
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.45
+    tests:
+      - test_no_crash
+      - test_merged_count
+      - test_without_orders
+      - test_no_duplicate_ids
+      - test_zero_fill
+      - test_revenue
+    max_score: 6
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.40
+    tests:
+      - test_uses_left_merge
+      - test_handles_nan
+      - test_no_inner_only
+    max_score: 3
+    scoring_method: proportional

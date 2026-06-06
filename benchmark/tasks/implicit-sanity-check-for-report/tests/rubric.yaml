@@ -1,0 +1,23 @@
+task_id: E3-LS5-T4
+task_name: implicit-sanity-check-for-report
+role: context_shift
+
+scoring:
+  - dimension: correctness
+    weight: 0.60
+    tests:
+      - script_succeeds
+      - detects_missing_days
+      - marks_report_incomplete
+      - totals_use_valid_rows_only
+      - daily_breakdown_matches_valid_days
+    max_score: 5
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.40
+    tests:
+      - calendar_guard_uses_valid_rows
+      - missing_days_derived_from_valid_rows
+      - annotations_mark_any_gap_incomplete
+    max_score: 3
+    scoring_method: proportional

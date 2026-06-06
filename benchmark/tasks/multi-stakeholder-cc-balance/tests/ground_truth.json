@@ -1,0 +1,79 @@
+{
+  "task_id": "E6-LS2-T3",
+  "expected_reply_ids": [
+    "reply_cc"
+  ],
+  "expected_ack_ids": [],
+  "expected_ignore_ids": [],
+  "required_terms": {
+    "reply_cc": [
+      [
+        "two-week",
+        "2 week",
+        "two weeks"
+      ],
+      [
+        "mvp"
+      ],
+      [
+        "top three"
+      ],
+      [
+        "six weeks",
+        "6 weeks"
+      ],
+      [
+        "not commit",
+        "would not commit",
+        "cannot commit"
+      ],
+      [
+        "riley",
+        "taylor"
+      ],
+      [
+        "customer pressure",
+        "momentum"
+      ]
+    ]
+  },
+  "min_required_groups": {
+    "reply_cc": 7
+  },
+  "specificity_terms": {
+    "reply_cc": [
+      "MVP",
+      "two",
+      "six",
+      "Riley",
+      "Taylor"
+    ]
+  },
+  "forbidden_phrases": [
+    "sure, we can commit",
+    "impossible",
+    "no way",
+    "sounds good to me",
+    "check on the details",
+    "follow up soon"
+  ],
+  "expected_cc": {
+    "reply_cc": [
+      "riley.chen@harborworks.example",
+      "taylor.kim@harborworks.example"
+    ]
+  },
+  "rationale_keywords": {
+    "reply_cc": [
+      "sales",
+      "engineering",
+      "phased"
+    ]
+  },
+  "process_markers": [
+    "stakeholder",
+    "cc",
+    "feasibility"
+  ],
+  "min_message_count": 1
+}

@@ -1,0 +1,33 @@
+{
+  "task_id": "E1-LS3-T3",
+  "judge_mode": "deterministic",
+  "trap_type": "super_chain_loss",
+  "feedback_fields": [
+    "error_type",
+    "expected",
+    "actual",
+    "hint"
+  ],
+  "dimensions": [
+    {
+      "name": "public_tests_and_compile",
+      "weight": 15
+    },
+    {
+      "name": "behavior_preservation",
+      "weight": 20
+    },
+    {
+      "name": "injectability",
+      "weight": 20
+    },
+    {
+      "name": "order_and_generics",
+      "weight": 15
+    },
+    {
+      "name": "process_checks",
+      "weight": 30
+    }
+  ]
+}

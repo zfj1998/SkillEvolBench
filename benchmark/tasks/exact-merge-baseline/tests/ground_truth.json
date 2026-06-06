@@ -1,0 +1,127 @@
+{
+  "total": 100,
+  "merge_key": "employee_id",
+  "conflict_count": 20,
+  "conflicts": [
+    {
+      "id": "E001",
+      "field": "dept",
+      "employees_val": "Sales",
+      "salaries_val": "HR"
+    },
+    {
+      "id": "E002",
+      "field": "dept",
+      "employees_val": "Engineering",
+      "salaries_val": "Legal"
+    },
+    {
+      "id": "E003",
+      "field": "dept",
+      "employees_val": "Engineering",
+      "salaries_val": "Legal"
+    },
+    {
+      "id": "E004",
+      "field": "dept",
+      "employees_val": "Legal",
+      "salaries_val": "Finance"
+    },
+    {
+      "id": "E005",
+      "field": "dept",
+      "employees_val": "Finance",
+      "salaries_val": "HR"
+    },
+    {
+      "id": "E006",
+      "field": "dept",
+      "employees_val": "Finance",
+      "salaries_val": "Marketing"
+    },
+    {
+      "id": "E007",
+      "field": "dept",
+      "employees_val": "Finance",
+      "salaries_val": "Marketing"
+    },
+    {
+      "id": "E008",
+      "field": "dept",
+      "employees_val": "Finance",
+      "salaries_val": "Operations"
+    },
+    {
+      "id": "E009",
+      "field": "dept",
+      "employees_val": "HR",
+      "salaries_val": "Sales"
+    },
+    {
+      "id": "E010",
+      "field": "dept",
+      "employees_val": "Sales",
+      "salaries_val": "Marketing"
+    },
+    {
+      "id": "E011",
+      "field": "dept",
+      "employees_val": "HR",
+      "salaries_val": "Operations"
+    },
+    {
+      "id": "E012",
+      "field": "dept",
+      "employees_val": "Marketing",
+      "salaries_val": "Sales"
+    },
+    {
+      "id": "E013",
+      "field": "dept",
+      "employees_val": "Engineering",
+      "salaries_val": "Operations"
+    },
+    {
+      "id": "E014",
+      "field": "dept",
+      "employees_val": "Legal",
+      "salaries_val": "Operations"
+    },
+    {
+      "id": "E015",
+      "field": "dept",
+      "employees_val": "Sales",
+      "salaries_val": "HR"
+    },
+    {
+      "id": "E016",
+      "field": "dept",
+      "employees_val": "Legal",
+      "salaries_val": "HR"
+    },
+    {
+      "id": "E017",
+      "field": "dept",
+      "employees_val": "Operations",
+      "salaries_val": "Legal"
+    },
+    {
+      "id": "E018",
+      "field": "dept",
+      "employees_val": "Operations",
+      "salaries_val": "Sales"
+    },
+    {
+      "id": "E019",
+      "field": "dept",
+      "employees_val": "HR",
+      "salaries_val": "Marketing"
+    },
+    {
+      "id": "E020",
+      "field": "dept",
+      "employees_val": "Engineering",
+      "salaries_val": "Sales"
+    }
+  ]
+}

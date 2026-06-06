@@ -1,0 +1,35 @@
+task_id: E4-LS4-T3
+task_name: structure-reorg-not-content-change
+role: variant
+gap: Gap-2 (structural reorg diff — line diff conflates reordering with content change)
+
+dimensions:
+  - id: H1-H2
+    name: correct-identification
+    description: >
+      H1: Uses structural-change vocabulary (reorder/reorganize/move).
+      H2: Explicitly confirms no content changes.
+    weight: 0.35
+    scoring: proportional
+    max_score: 2
+
+  - id: H3-H4
+    name: precision-and-mapping
+    description: >
+      H3: Does not falsely report sections as deleted/removed.
+      H4: Provides old-to-new section order mapping.
+    weight: 0.25
+    scoring: proportional
+    max_score: 2
+
+  - id: P1-P2
+    name: process-quality
+    description: >
+      P1: Evidence of paragraph/section-level analysis (not raw line diff).
+      P2: Both v1 and v2 explicitly referenced and compared.
+    weight: 0.40
+    scoring: proportional
+    max_score: 2
+
+total_weight: 1.0
+pass_threshold: 0.60

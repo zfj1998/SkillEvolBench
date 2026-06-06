@@ -1,0 +1,16 @@
+weights:
+  public: 10
+  hidden_h1_2024_data: 30
+  hidden_h2_h3: 20
+  process_p1_p2: 40
+checks:
+  public:
+    - data_saved
+    - format_valid
+  hidden:
+    - latest_year_data
+    - uses_v2_endpoint
+    - no_v1_after_config
+  process:
+    - extracts_endpoint_from_config
+    - no_hardcoded_v1

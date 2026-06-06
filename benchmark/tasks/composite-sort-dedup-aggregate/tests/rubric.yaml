@@ -1,0 +1,44 @@
+task_id: E3-LS2-T6
+task_name: composite-sort-dedup-aggregate
+role: composition
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_has_correct_columns
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: robustness
+    weight: 0.10
+    tests:
+      - test_no_crash                        # H1
+      - test_dates_in_iso_format             # H3
+      - test_no_raw_amount_strings           # H8
+    max_score: 3
+    scoring_method: proportional
+
+  - dimension: correctness
+    weight: 0.30
+    tests:
+      - test_duplicates_removed              # H2
+      - test_product_id_numeric_order        # H4
+      - test_date_chronological_within_product  # H5
+      - test_amounts_cleaned_and_summed      # H6
+      - test_aggregation_correct             # H7
+    max_score: 5
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.50
+    tests:
+      - test_parses_dates                    # P1
+      - test_cleans_amounts                  # P2
+      - test_numeric_product_sort            # P3
+      - test_deduplicates                    # P4
+      - test_aggregates                      # P5
+      - test_sorts_result                    # P6
+    max_score: 6
+    scoring_method: proportional

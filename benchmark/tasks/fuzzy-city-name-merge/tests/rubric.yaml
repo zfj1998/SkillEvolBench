@@ -1,0 +1,31 @@
+task_id: E3-LS3-T2
+task_name: fuzzy-city-name-merge
+role: enriched
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+    max_score: 1
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.45
+    tests:
+      - test_no_crash
+      - test_ny_matched
+      - test_la_matched
+      - test_sf_matched
+      - test_coverage_high
+      - test_records_have_both_sources
+      - test_unmatched_reported
+    max_score: 7
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.45
+    tests:
+      - test_uses_fuzzy_or_mapping
+      - test_case_normalization
+      - test_reports_unmatched
+    max_score: 3
+    scoring_method: proportional

@@ -1,0 +1,19 @@
+{
+  "labels": {
+    "p_market_size": "contradiction",
+    "p_launch_date": "contradiction",
+    "p_ceo_expansion": "contradiction",
+    "p_renewables_agree": "not_contradiction"
+  },
+  "true_ids": [
+    "p_market_size",
+    "p_launch_date",
+    "p_ceo_expansion"
+  ],
+  "false_ids": [
+    "p_renewables_agree"
+  ],
+  "required_types": [
+    "explicit"
+  ]
+}

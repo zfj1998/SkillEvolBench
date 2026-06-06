@@ -1,0 +1,35 @@
+task_id: E3-LS1-T4
+task_name: implicit-schema-check-before-join
+role: context-shift
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_format
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: correctness
+    weight: 0.30
+    tests:
+      - test_no_crash                    # H1
+      - test_merge_success_rate_high     # H2
+      - test_total_orders_correct        # H3
+      - test_grand_total_correct         # H4
+      - test_all_regions_present         # H5
+      - test_region_totals_correct       # H6
+      - test_not_empty_merge             # H7
+    max_score: 7
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.60
+    tests:
+      - test_checks_join_dtypes          # P1
+      - test_converts_key_types          # P2
+      - test_verifies_merge_result       # P3
+      - test_has_error_handling          # P4
+    max_score: 4
+    scoring_method: proportional

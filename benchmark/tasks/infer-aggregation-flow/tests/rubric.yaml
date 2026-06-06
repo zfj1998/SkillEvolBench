@@ -1,0 +1,15 @@
+weights:
+  hidden_h1_three_apis: 25
+  hidden_h2_currency: 25
+  hidden_h3_h4_aggregation: 20
+  process_p1_p3: 30
+checks:
+  hidden:
+    - all_region_apis_called
+    - currency_normalized
+    - grouped_by_product_line
+    - grand_total_correct
+  process:
+    - reads_regions_json
+    - hits_all_regions
+    - has_currency_conversion

@@ -1,0 +1,40 @@
+task_id: E3-LS2-T3
+task_name: multi-key-stable-sort
+role: variant-gap2
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_has_correct_columns
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: robustness
+    weight: 0.15
+    tests:
+      - test_no_crash                          # H1
+      - test_row_count_preserved               # H2
+      - test_no_data_loss                      # H6
+    max_score: 3
+    scoring_method: proportional
+
+  - dimension: correctness
+    weight: 0.25
+    tests:
+      - test_department_ascending              # H3
+      - test_salary_descending_within_department  # H4
+      - test_stable_order_for_ties             # H5
+    max_score: 3
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.50
+    tests:
+      - test_multi_key_sort                    # P1
+      - test_mixed_ascending_descending        # P2
+      - test_stable_sort_awareness             # P3
+      - test_salary_numeric_handling           # P4
+    max_score: 4
+    scoring_method: proportional

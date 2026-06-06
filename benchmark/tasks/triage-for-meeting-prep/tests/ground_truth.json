@@ -1,0 +1,88 @@
+{
+  "task_id": "E6-LS1-T4",
+  "expected_priorities": {
+    "meet_001": "P1",
+    "meet_002": "P1",
+    "meet_003": "P1",
+    "meet_004": "P1",
+    "meet_005": "P0",
+    "meet_006": "P1",
+    "meet_007": "P2",
+    "meet_008": "P1",
+    "meet_09": "P2",
+    "meet_10": "P2",
+    "meet_11": "P2",
+    "meet_12": "P2",
+    "meet_13": "P2",
+    "meet_14": "P2",
+    "meet_15": "P2",
+    "meet_16": "P2",
+    "meet_17": "P2",
+    "meet_18": "P2",
+    "meet_19": "P2",
+    "meet_20": "P2",
+    "meet_21": "P3",
+    "meet_22": "P3",
+    "meet_23": "P3",
+    "meet_24": "P3",
+    "meet_25": "P3",
+    "meet_26": "P3",
+    "meet_27": "P3",
+    "meet_28": "P3",
+    "meet_29": "P3",
+    "meet_30": "P3"
+  },
+  "key_priority_checks": {
+    "meet_001": "P1",
+    "meet_002": "P1",
+    "meet_003": "P1",
+    "meet_004": "P1",
+    "meet_005": "P0",
+    "meet_006": "P1",
+    "meet_007": "P2",
+    "meet_008": "P1"
+  },
+  "expected_p0": [
+    "meet_005"
+  ],
+  "expected_p3": [
+    "meet_21",
+    "meet_22",
+    "meet_23",
+    "meet_24",
+    "meet_25",
+    "meet_26",
+    "meet_27",
+    "meet_28",
+    "meet_29",
+    "meet_30"
+  ],
+  "expected_response_ids": [
+    "meet_001",
+    "meet_002",
+    "meet_003",
+    "meet_004",
+    "meet_005",
+    "meet_006",
+    "meet_007",
+    "meet_008"
+  ],
+  "rank_before": [],
+  "reason_keywords": {
+    "meet_005": [
+      "certificate",
+      "tomorrow"
+    ],
+    "meet_008": [
+      "CEO",
+      "board"
+    ]
+  },
+  "expected_drafts": {},
+  "min_message_count": 30,
+  "process_markers": [
+    "meeting_agenda",
+    "agenda",
+    "board prep"
+  ]
+}

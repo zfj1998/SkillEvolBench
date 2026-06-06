@@ -1,0 +1,35 @@
+{
+  "labels": {
+    "C01": "valid",
+    "C02": "valid",
+    "C03": "valid",
+    "C04": "valid",
+    "C05": "valid",
+    "C06": "valid",
+    "C07": "valid",
+    "C08": "valid",
+    "C09": "invalid",
+    "C10": "invalid"
+  },
+  "problem_ids": [
+    "C09",
+    "C10"
+  ],
+  "required_problem_labels": [
+    "invalid"
+  ],
+  "reason_terms": {
+    "C09": [
+      "missing",
+      "table",
+      "not found",
+      "unsupported"
+    ],
+    "C10": [
+      "missing",
+      "table",
+      "not found",
+      "unsupported"
+    ]
+  }
+}

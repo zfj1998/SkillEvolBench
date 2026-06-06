@@ -1,0 +1,31 @@
+{
+  "r02": {
+    "assignee": "unspecified",
+    "description": "revisit Q4 targets",
+    "description_terms": [
+      "revisit",
+      "Q4",
+      "targets"
+    ],
+    "deadline": null,
+    "action_type": "question_action",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.84
+  },
+  "r04": {
+    "assignee": "unspecified",
+    "description": "set call redesign handoff",
+    "description_terms": [
+      "set",
+      "call",
+      "redesign",
+      "handoff"
+    ],
+    "deadline": null,
+    "action_type": "question_action",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.85
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "task_id": "E2-LS2-T3",
+  "judge_mode": "deterministic",
+  "trap_type": "gap-2",
+  "dimensions": [
+    {"name": "public_checks", "weight": 10},
+    {"name": "idempotency_core", "weight": 30},
+    {"name": "key_quality_and_payload_consistency", "weight": 20},
+    {"name": "process_checks", "weight": 40}
+  ]
+}

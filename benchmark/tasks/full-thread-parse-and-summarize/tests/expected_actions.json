@@ -1,0 +1,271 @@
+{
+  "f03": {
+    "assignee": "alice",
+    "description": "finalize rollout checklist",
+    "description_terms": [
+      "finalize",
+      "rollout",
+      "checklist"
+    ],
+    "deadline": "Friday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "completed",
+    "confidence": 0.9
+  },
+  "f05": {
+    "assignee": "fatima",
+    "description": "update docs import limit",
+    "description_terms": [
+      "update",
+      "docs",
+      "import",
+      "limit"
+    ],
+    "deadline": "Thursday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "blocked",
+    "confidence": 0.9
+  },
+  "f07": {
+    "assignee": "eli",
+    "description": "run smoke tests",
+    "description_terms": [
+      "run",
+      "smoke",
+      "tests"
+    ],
+    "deadline": "Friday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "follow_up_needed",
+    "confidence": 0.9
+  },
+  "f09": {
+    "assignee": "george",
+    "description": "confirm client attendees",
+    "description_terms": [
+      "confirm",
+      "client",
+      "attendees"
+    ],
+    "deadline": "Wednesday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "follow_up_needed",
+    "confidence": 0.9
+  },
+  "f11": {
+    "assignee": "nora",
+    "description": "verify webhook retries",
+    "description_terms": [
+      "verify",
+      "webhook",
+      "retries"
+    ],
+    "deadline": "Monday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "completed",
+    "confidence": 0.9
+  },
+  "f13": {
+    "assignee": "maya",
+    "description": "upload mobile mockups",
+    "description_terms": [
+      "upload",
+      "mobile",
+      "mockups"
+    ],
+    "deadline": "Friday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "completed",
+    "confidence": 0.9
+  },
+  "f15": {
+    "assignee": "omar",
+    "description": "publish p95 summary",
+    "description_terms": [
+      "publish",
+      "p95",
+      "summary"
+    ],
+    "deadline": "Tuesday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "completed",
+    "confidence": 0.9
+  },
+  "f17": {
+    "assignee": "charlie",
+    "description": "send Northstar recap",
+    "description_terms": [
+      "send",
+      "Northstar",
+      "recap"
+    ],
+    "deadline": "EOD",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.9
+  },
+  "f19": {
+    "assignee": "diana",
+    "description": "verify invoice export",
+    "description_terms": [
+      "verify",
+      "invoice",
+      "export"
+    ],
+    "deadline": "Monday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "completed",
+    "confidence": 0.9
+  },
+  "f21": {
+    "assignee": "alice",
+    "description": "upload design assets",
+    "description_terms": [
+      "upload",
+      "design",
+      "assets"
+    ],
+    "deadline": "Friday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.9
+  },
+  "f23": {
+    "assignee": "backend",
+    "description": "check API contracts",
+    "description_terms": [
+      "check",
+      "API",
+      "contracts"
+    ],
+    "deadline": null,
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.82
+  },
+  "f25": {
+    "assignee": "unspecified",
+    "description": "update onboarding docs",
+    "description_terms": [
+      "update",
+      "onboarding",
+      "docs"
+    ],
+    "deadline": null,
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.76
+  },
+  "f27": {
+    "assignee": "design",
+    "description": "review checkout mockups",
+    "description_terms": [
+      "review",
+      "checkout",
+      "mockups"
+    ],
+    "deadline": null,
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.8
+  },
+  "f29": {
+    "assignee": "unspecified",
+    "description": "look performance metrics",
+    "description_terms": [
+      "look",
+      "performance",
+      "metrics"
+    ],
+    "deadline": null,
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.72
+  },
+  "f31": {
+    "assignee": "product",
+    "description": "weigh pricing copy",
+    "description_terms": [
+      "weigh",
+      "pricing",
+      "copy"
+    ],
+    "deadline": "Friday",
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "blocked",
+    "confidence": 0.78
+  },
+  "f33": {
+    "assignee": "unspecified",
+    "description": "schedule review migration risk",
+    "description_terms": [
+      "schedule",
+      "review",
+      "migration",
+      "risk"
+    ],
+    "deadline": null,
+    "action_type": "question_action",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.84
+  },
+  "f35": {
+    "assignee": "unspecified",
+    "description": "update wiki escalation",
+    "description_terms": [
+      "update",
+      "wiki",
+      "escalation"
+    ],
+    "deadline": null,
+    "action_type": "question_action",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.84
+  },
+  "f37": {
+    "assignee": "maya",
+    "description": "send invite mobile review",
+    "description_terms": [
+      "send",
+      "invite",
+      "mobile",
+      "review"
+    ],
+    "deadline": null,
+    "action_type": "question_action",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.82
+  },
+  "f39": {
+    "assignee": "unspecified",
+    "description": "test Northstar account",
+    "description_terms": [
+      "test",
+      "Northstar",
+      "account"
+    ],
+    "deadline": null,
+    "action_type": "question_action",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.85
+  }
+}

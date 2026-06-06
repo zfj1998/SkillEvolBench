@@ -1,0 +1,62 @@
+{
+  "public_min_actions": 1,
+  "allowed_missing_actions": 3,
+  "max_false_positives": 5,
+  "required_non_action_ids": [
+    "f22",
+    "f32",
+    "f34",
+    "f36",
+    "f38",
+    "f40"
+  ],
+  "required_status_keys": [
+    "open",
+    "completed",
+    "blocked",
+    "follow_up_needed"
+  ],
+  "min_follow_up_needed": 2,
+  "summary_keywords": [
+    "API freeze",
+    "Northstar pilot",
+    "docs pricing"
+  ],
+  "min_source_items": 50,
+  "exact_action_count": false,
+  "exact_non_action_count": false,
+  "min_implicit_actions": 4,
+  "non_action_source_ids": [
+    "f01",
+    "f02",
+    "f04",
+    "f06",
+    "f08",
+    "f10",
+    "f12",
+    "f14",
+    "f16",
+    "f18",
+    "f20",
+    "f22",
+    "f24",
+    "f26",
+    "f28",
+    "f30",
+    "f32",
+    "f34",
+    "f36",
+    "f38",
+    "f40",
+    "f41",
+    "f42",
+    "f43",
+    "f44",
+    "f45",
+    "f46",
+    "f47",
+    "f48",
+    "f49",
+    "f50"
+  ]
+}

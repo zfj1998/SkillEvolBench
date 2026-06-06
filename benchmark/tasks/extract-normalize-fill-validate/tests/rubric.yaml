@@ -1,0 +1,6 @@
+task_id: E4-LS1-T6
+weights:
+  completion_h1_h2: 20
+  end_to_end_consistency_h3: 25
+  normalization_and_template_h4_h5: 20
+  process_p1_p2: 35

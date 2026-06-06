@@ -1,0 +1,18 @@
+weights:
+  public: 10
+  hidden_h1: 25
+  hidden_h2_h4: 25
+  process_p1_p3: 40
+checks:
+  public:
+    - report_saved
+    - report_format
+  hidden:
+    - post_status_result_flow
+    - poll_interval_respected
+    - result_after_completed
+    - report_data_correct
+  process:
+    - polling_loop_present
+    - sleep_present
+    - status_before_result

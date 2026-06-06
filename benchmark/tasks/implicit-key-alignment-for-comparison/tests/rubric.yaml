@@ -1,0 +1,27 @@
+task_id: E3-LS3-T4
+task_name: implicit-key-alignment-for-comparison
+role: context_shift
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+    max_score: 1
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.50
+    tests:
+      - test_no_crash
+      - test_high_coverage
+      - test_no_false_new_products
+      - test_growth_decline_present
+    max_score: 4
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.40
+    tests:
+      - test_alignment_step
+      - test_percentage_calculation
+    max_score: 2
+    scoring_method: proportional

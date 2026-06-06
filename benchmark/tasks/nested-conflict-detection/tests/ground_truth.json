@@ -1,0 +1,78 @@
+{
+  "nested_conflict_count": 12,
+  "conflicts": [
+    {
+      "employee_id": "E001",
+      "field_path": "address.street",
+      "hr_value": "123 Main St",
+      "finance_value": "456 Oak Ave"
+    },
+    {
+      "employee_id": "E001",
+      "field_path": "address.zip",
+      "hr_value": "94105",
+      "finance_value": "94107"
+    },
+    {
+      "employee_id": "E002",
+      "field_path": "compensation.bonus",
+      "hr_value": "15%",
+      "finance_value": "20%"
+    },
+    {
+      "employee_id": "E003",
+      "field_path": "address.street",
+      "hr_value": "789 Pine Rd",
+      "finance_value": "321 Elm Blvd"
+    },
+    {
+      "employee_id": "E003",
+      "field_path": "address.zip",
+      "hr_value": "10001",
+      "finance_value": "10002"
+    },
+    {
+      "employee_id": "E004",
+      "field_path": "compensation.bonus",
+      "hr_value": "12%",
+      "finance_value": "18%"
+    },
+    {
+      "employee_id": "E005",
+      "field_path": "address.street",
+      "hr_value": "55 Market St",
+      "finance_value": "77 Broadway"
+    },
+    {
+      "employee_id": "E005",
+      "field_path": "address.zip",
+      "hr_value": "60601",
+      "finance_value": "60603"
+    },
+    {
+      "employee_id": "E006",
+      "field_path": "compensation.bonus",
+      "hr_value": "10%",
+      "finance_value": "25%"
+    },
+    {
+      "employee_id": "E007",
+      "field_path": "address.street",
+      "hr_value": "8 Harbor Dr",
+      "finance_value": "99 Lake Rd"
+    },
+    {
+      "employee_id": "E007",
+      "field_path": "address.zip",
+      "hr_value": "98101",
+      "finance_value": "98104"
+    },
+    {
+      "employee_id": "E009",
+      "field_path": "compensation.bonus",
+      "hr_value": "8%",
+      "finance_value": "22%"
+    }
+  ],
+  "note": "ALL top-level fields identical \u2014 only nested fields differ"
+}

@@ -1,0 +1,103 @@
+{
+  "task_id": "E6-LS2-T6",
+  "expected_reply_ids": [
+    "combo_01",
+    "combo_02",
+    "combo_03",
+    "combo_04"
+  ],
+  "expected_ack_ids": [
+    "combo_05",
+    "combo_06",
+    "combo_07"
+  ],
+  "expected_ignore_ids": [
+    "combo_08",
+    "combo_09",
+    "combo_10",
+    "combo_11",
+    "combo_12",
+    "combo_13",
+    "combo_14",
+    "combo_15"
+  ],
+  "required_terms": {
+    "combo_01": [
+      [
+        "08:00",
+        "20:00"
+      ],
+      [
+        "Jordan",
+        "sales"
+      ]
+    ],
+    "combo_02": [
+      [
+        "Plan A"
+      ],
+      [
+        "shorter timeline"
+      ]
+    ],
+    "combo_03": [
+      [
+        "MVP"
+      ],
+      [
+        "six-week",
+        "six week"
+      ],
+      [
+        "not promise",
+        "would not promise"
+      ]
+    ],
+    "combo_04": [
+      [
+        "$4.2M",
+        "4.2"
+      ]
+    ]
+  },
+  "min_required_groups": {
+    "combo_01": 2,
+    "combo_02": 2,
+    "combo_03": 3,
+    "combo_04": 1
+  },
+  "specificity_terms": {},
+  "forbidden_phrases": [
+    "sure, we can",
+    "i will check",
+    "sounds good to me",
+    "check on the details",
+    "follow up soon"
+  ],
+  "expected_cc": {
+    "combo_01": [
+      "jordan.lee@harborworks.example"
+    ],
+    "combo_03": [
+      "riley.chen@harborworks.example",
+      "taylor.kim@harborworks.example"
+    ]
+  },
+  "rationale_keywords": {
+    "combo_02": [
+      "thread context"
+    ],
+    "combo_03": [
+      "Sales",
+      "Engineering",
+      "Product"
+    ]
+  },
+  "process_markers": [
+    "triage",
+    "thread_history",
+    "stakeholder",
+    "cc"
+  ],
+  "min_message_count": 15
+}

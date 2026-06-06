@@ -20,7 +20,7 @@ build/
 dist/
 .venv/
 
-tests/
+/tests/
 analysis/
 analysis-results/
 analysis/output/

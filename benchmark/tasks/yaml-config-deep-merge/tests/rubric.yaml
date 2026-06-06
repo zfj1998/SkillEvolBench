@@ -1,0 +1,24 @@
+task_id: E1-LS5-T3
+task_name: yaml-config-deep-merge
+role: variant (Gap 2)
+
+scoring:
+  - dimension: h1_yaml_valid
+    weight: 0.20
+    full_score: "YAML parses without error"
+    partial: "0 (binary)"
+
+  - dimension: h2_both_changes
+    weight: 0.40
+    full_score: "pool_size=10 AND ssl.enabled=True under database"
+    partial: "0 (binary)"
+
+  - dimension: h3_schema_valid
+    weight: 0.20
+    full_score: "Passes JSON Schema validation"
+    partial: "0 (binary)"
+
+  - dimension: p1_p2_process
+    weight: 0.20
+    full_score: "2/2 process checks pass"
+    partial: "proportional"

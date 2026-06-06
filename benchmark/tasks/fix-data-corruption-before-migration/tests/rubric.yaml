@@ -1,0 +1,24 @@
+task_id: E1-LS4-T4
+task_name: fix-data-corruption-before-migration
+role: context-shift
+
+scoring:
+  - dimension: migration_success
+    weight: 0.15
+    full_score: "Migration executes successfully"
+    partial: "0 (binary)"
+
+  - dimension: h1_h2_timezone_correct
+    weight: 0.35
+    full_score: "2/2 timezone correctness tests pass"
+    partial: "proportional"
+
+  - dimension: h3_h4_consistency
+    weight: 0.20
+    full_score: "2/2 consistency tests pass"
+    partial: "proportional"
+
+  - dimension: p1_p2_process
+    weight: 0.30
+    full_score: "2/2 process checks pass"
+    partial: "proportional"

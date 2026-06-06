@@ -1,0 +1,29 @@
+task_id: E1-LS4-T1
+task_name: five-file-data-pipeline-type-cascade
+role: canonical
+
+scoring:
+  - dimension: public_tests
+    weight: 0.15
+    full_score: "3/3 public tests pass"
+    partial: "proportional"
+
+  - dimension: h1_batch_no_false_positives
+    weight: 0.20
+    full_score: "0 false positives in 500 unchanged records"
+    partial: "proportional"
+
+  - dimension: h2_precision_test
+    weight: 0.20
+    full_score: "0.1+0.2 precision test passes"
+    partial: "0 (binary)"
+
+  - dimension: h3_h4_h5_auxiliary
+    weight: 0.15
+    full_score: "3/3 hidden auxiliary tests pass"
+    partial: "proportional"
+
+  - dimension: p1_p2_p3_process
+    weight: 0.30
+    full_score: "3/3 process checks pass"
+    partial: "proportional"

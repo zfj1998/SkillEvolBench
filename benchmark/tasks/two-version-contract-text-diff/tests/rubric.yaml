@@ -1,0 +1,40 @@
+task_id: E4-LS4-T1
+task_name: two-version-contract-text-diff
+role: canonical
+
+dimensions:
+  - id: H1
+    name: completeness
+    description: All 8 logical change groups are identified
+    weight: 0.25
+    scoring: proportional   # partial credit: (found/8) * weight
+    max_score: 8
+
+  - id: H2
+    name: classification-accuracy
+    description: Each change correctly labeled added/deleted/modified
+    weight: 0.25
+    scoring: proportional
+    max_score: 8            # one point per correctly classified change
+
+  - id: H3-H4
+    name: change-detail-and-precision
+    description: >
+      H3: monetary/numeric changes show old AND new values.
+      H4: no false positives on unchanged sections.
+    weight: 0.15
+    scoring: proportional   # 0, 0.5, or 1.0 of weight
+    max_score: 2
+
+  - id: P1-P2
+    name: process-quality
+    description: >
+      P1: systematic diff method used (not eyeball).
+      P2: every change has a location identifier.
+    weight: 0.35
+    scoring: proportional
+    max_score: 2
+
+total_weight: 1.0
+
+pass_threshold: 0.60   # ≥60% of total weighted score to pass

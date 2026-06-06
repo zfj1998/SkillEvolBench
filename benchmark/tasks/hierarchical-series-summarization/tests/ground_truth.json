@@ -1,0 +1,26 @@
+{
+  "required_terms": [
+    "method",
+    "application",
+    "validation",
+    "governance",
+    "retinal",
+    "skin"
+  ],
+  "must_select": [
+    "a1_method_validation",
+    "a4_application_retina"
+  ],
+  "forbidden_terms": [
+    "appendix tables",
+    "background history"
+  ],
+  "shape": "hierarchical",
+  "limits": {
+    "single": 500,
+    "audience": 300,
+    "article": 200,
+    "group": 300,
+    "overall": 500
+  }
+}

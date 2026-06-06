@@ -1,0 +1,47 @@
+version: 1
+public_tests:
+  weight: 0.20
+  tests:
+    - name: test_public_table_and_list_names_correct
+      points: 1
+    - name: test_public_has_five_resume_objects
+      points: 1
+hidden_tests:
+  paragraph_layout:
+    weight: 0.25
+    tests:
+      - name: test_hidden_paragraph_work_experience_correct
+        points: 1
+      - name: test_hidden_paragraph_work_experience_count_exact
+        points: 1
+      - name: test_hidden_paragraph_education_has_two_entries
+        points: 1
+      - name: test_hidden_paragraph_education_count_exact
+        points: 1
+  mixed_layout:
+    weight: 0.25
+    tests:
+      - name: test_hidden_mixed_resume_table_and_narrative_both_captured
+        points: 1
+      - name: test_hidden_mixed_resume_work_history_count_exact
+        points: 1
+  schema_and_noise:
+    weight: 0.15
+    tests:
+      - name: test_hidden_all_names_are_correct
+        points: 1
+      - name: test_hidden_email_shapes_are_valid
+        points: 1
+      - name: test_hidden_skills_nonempty_and_without_noise
+        points: 1
+process_tests:
+  weight: 0.15
+  tests:
+    - name: test_process_outputs_five_resume_objects
+      points: 1
+    - name: test_process_paragraph_resume_support_exists
+      points: 1
+    - name: test_process_mixed_resume_support_exists
+      points: 1
+    - name: test_process_no_hardcoded_resume_names
+      points: 1

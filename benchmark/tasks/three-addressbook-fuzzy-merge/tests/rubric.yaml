@@ -1,0 +1,36 @@
+task_id: E4-LS5-T1
+name: three-addressbook-fuzzy-merge
+role: canonical
+pass_threshold: 0.70
+
+dimensions:
+  - id: test_master_file_exists
+    weight: 0.05
+    public: true
+  - id: test_report_file_exists
+    weight: 0.05
+    public: true
+  - id: test_unique_count_approx
+    weight: 0.15
+    public: false
+  - id: test_no_duplicate_emails
+    weight: 0.20
+    public: false
+  - id: test_false_merge_protection
+    weight: 0.20
+    public: false
+  - id: test_records_have_email_and_name
+    weight: 0.10
+    public: false
+  - id: test_deduplication_happened
+    weight: 0.10
+    public: false
+  - id: test_report_mentions_email_as_key
+    weight: 0.075
+    public: false
+  - id: test_report_mentions_false_merge_protection
+    weight: 0.075
+    public: false
+  - id: test_report_lists_all_three_sources
+    weight: 0.05
+    public: false

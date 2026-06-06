@@ -1,0 +1,98 @@
+{
+  "task_id": "E6-LS3-T2",
+  "expected_action_ids": [
+    "act_webhook_retries",
+    "act_pricing_copy",
+    "act_probably_migration",
+    "act_customer_quote",
+    "act_docs_update",
+    "act_report"
+  ],
+  "expected_fields": {
+    "act_webhook_retries": {
+      "assignee": "alice",
+      "deadline": null,
+      "status": "open",
+      "description_terms": [
+        "webhook",
+        "retries"
+      ]
+    },
+    "act_pricing_copy": {
+      "assignee": "team",
+      "deadline": "2026-04-30",
+      "status": "open",
+      "description_terms": [
+        "pricing",
+        "copy"
+      ]
+    },
+    "act_probably_migration": {
+      "assignee": "charlie",
+      "deadline": null,
+      "status": "open",
+      "description_terms": [
+        "migration",
+        "mapping"
+      ]
+    },
+    "act_customer_quote": {
+      "assignee": "diana",
+      "deadline": null,
+      "status": "open",
+      "description_terms": [
+        "customer",
+        "quote"
+      ]
+    },
+    "act_docs_update": {
+      "assignee": "team",
+      "deadline": "2026-04-30",
+      "status": "open",
+      "description_terms": [
+        "update",
+        "docs"
+      ]
+    },
+    "act_report": {
+      "assignee": "eli",
+      "deadline": "2026-04-24",
+      "status": "open",
+      "description_terms": [
+        "load",
+        "test"
+      ]
+    }
+  },
+  "implicit_action_ids": [
+    "act_webhook_retries",
+    "act_pricing_copy",
+    "act_probably_migration",
+    "act_customer_quote",
+    "act_docs_update"
+  ],
+  "confidence_less_than": [
+    [
+      "act_probably_migration",
+      "act_report"
+    ]
+  ],
+  "expected_status_counts": {
+    "open": 6
+  },
+  "non_action_message_ids": [
+    "im08",
+    "im09",
+    "im10"
+  ],
+  "expected_followups": {},
+  "min_message_count": 30,
+  "process_markers": [
+    "implicit",
+    "confidence",
+    "probably",
+    "team"
+  ],
+  "allowed_missing_actions": 1,
+  "requires_current_date": false
+}

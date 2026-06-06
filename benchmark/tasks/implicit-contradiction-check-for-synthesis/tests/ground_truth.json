@@ -1,0 +1,20 @@
+{
+  "labels": {
+    "p_growth_timeline": "contradiction",
+    "p_cost_budget": "contradiction",
+    "p_leader_share": "contradiction",
+    "p_hybrid_nonconflict": "not_contradiction"
+  },
+  "true_ids": [
+    "p_growth_timeline",
+    "p_cost_budget",
+    "p_leader_share"
+  ],
+  "false_ids": [
+    "p_hybrid_nonconflict"
+  ],
+  "required_types": [
+    "implicit_timeline",
+    "implicit_causal"
+  ]
+}

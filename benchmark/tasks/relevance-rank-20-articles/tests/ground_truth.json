@@ -1,0 +1,19 @@
+{
+  "expected_top5": [
+    "M01",
+    "M02",
+    "M03",
+    "M04",
+    "M05"
+  ],
+  "irrelevant_ids": [
+    "M11",
+    "M12",
+    "M19",
+    "M20"
+  ],
+  "admin_like_ids": [
+    "M07",
+    "M08"
+  ]
+}

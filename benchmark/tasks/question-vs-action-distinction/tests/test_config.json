@@ -1,0 +1,28 @@
+{
+  "public_min_actions": 5,
+  "allowed_missing_actions": 0,
+  "max_false_positives": 0,
+  "required_non_action_ids": [
+    "q02",
+    "q04",
+    "q06",
+    "q08",
+    "q10"
+  ],
+  "required_status_keys": [
+    "open"
+  ],
+  "min_follow_up_needed": 0,
+  "summary_keywords": [],
+  "min_source_items": 10,
+  "exact_action_count": true,
+  "exact_non_action_count": true,
+  "min_implicit_actions": 0,
+  "non_action_source_ids": [
+    "q02",
+    "q04",
+    "q06",
+    "q08",
+    "q10"
+  ]
+}

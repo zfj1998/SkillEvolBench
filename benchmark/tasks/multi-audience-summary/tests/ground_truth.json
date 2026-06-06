@@ -1,0 +1,25 @@
+{
+  "required_terms": [
+    "kubernetes",
+    "roi",
+    "user",
+    "migration"
+  ],
+  "must_select": [
+    "technical_arch",
+    "management_roi",
+    "client_value"
+  ],
+  "forbidden_terms": [
+    "appendix tables",
+    "background history"
+  ],
+  "shape": "multi_audience",
+  "limits": {
+    "single": 500,
+    "audience": 300,
+    "article": 200,
+    "group": 300,
+    "overall": 500
+  }
+}

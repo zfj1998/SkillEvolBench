@@ -1,0 +1,52 @@
+{
+  "task_id": "E6-LS2-T2",
+  "expected_reply_ids": [
+    "reply_latest"
+  ],
+  "expected_ack_ids": [],
+  "expected_ignore_ids": [
+    "r1",
+    "r2",
+    "r3",
+    "r4"
+  ],
+  "required_terms": {
+    "reply_latest": [
+      [
+        "Plan A",
+        "option A"
+      ],
+      [
+        "shorter timeline"
+      ],
+      [
+        "pilot"
+      ]
+    ]
+  },
+  "min_required_groups": {
+    "reply_latest": 3
+  },
+  "specificity_terms": {},
+  "forbidden_phrases": [
+    "I'll check",
+    "I will check",
+    "not sure",
+    "sounds good to me",
+    "check on the details",
+    "follow up soon"
+  ],
+  "expected_cc": {},
+  "rationale_keywords": {
+    "reply_latest": [
+      "third round",
+      "decision"
+    ]
+  },
+  "process_markers": [
+    "thread_history",
+    "third round",
+    "decision"
+  ],
+  "min_message_count": 5
+}

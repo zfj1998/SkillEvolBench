@@ -1,0 +1,29 @@
+task_id: E1-LS5-T6
+task_name: three-way-merge-plus-integration-validation
+role: composition
+
+scoring:
+  - dimension: h1_merge_complete
+    weight: 0.15
+    full_score: "No conflict markers"
+    partial: "0 (binary)"
+
+  - dimension: h2_features_work
+    weight: 0.25
+    full_score: "All 3 features work independently"
+    partial: "proportional per feature"
+
+  - dimension: h3_integration
+    weight: 0.25
+    full_score: "Integration test passes"
+    partial: "0 (binary)"
+
+  - dimension: h4_column_unified
+    weight: 0.15
+    full_score: "Column names consistent"
+    partial: "0 (binary)"
+
+  - dimension: p1_p2_p3_process
+    weight: 0.20
+    full_score: "3/3 process checks pass"
+    partial: "proportional"

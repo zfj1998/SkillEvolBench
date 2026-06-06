@@ -1,0 +1,24 @@
+task_id: E1-LS4-T6
+task_name: cross-layer-fix-plus-integration-test-plus-docs
+role: composition
+
+scoring:
+  - dimension: h4_precision_fix
+    weight: 0.25
+    full_score: "Cent-level precision maintained"
+    partial: "0 (binary)"
+
+  - dimension: h1_tests_exist
+    weight: 0.20
+    full_score: "New integration tests exist and pass"
+    partial: "0 (binary)"
+
+  - dimension: h2_h3_docs_correct
+    weight: 0.20
+    full_score: "OpenAPI spec valid and consistent with code"
+    partial: "proportional"
+
+  - dimension: p1_p4_process
+    weight: 0.35
+    full_score: "4/4 process checks pass"
+    partial: "proportional"

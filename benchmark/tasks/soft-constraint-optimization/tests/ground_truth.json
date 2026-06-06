@@ -1,0 +1,63 @@
+{
+  "task_id": "E6-LS4-T2",
+  "min_participant_count": 3,
+  "expected_ranked_slot_ids": [
+    "slot_a",
+    "slot_c",
+    "slot_b"
+  ],
+  "expected_meeting_ids": [],
+  "required_start_utc": [
+    "2026-04-28T14:00:00Z"
+  ],
+  "forbidden_start_utc": [],
+  "expected_local_times": [],
+  "requires_scores": true,
+  "expected_scores": {
+    "slot_a": 3,
+    "slot_c": 2,
+    "slot_b": 1
+  },
+  "expected_soft_preferences_met": {
+    "slot_a": 3,
+    "slot_c": 2,
+    "slot_b": 1
+  },
+  "expected_reason_terms": {
+    "slot_a": [
+      "Alice",
+      "Bob",
+      "Charlie"
+    ],
+    "slot_c": [
+      "Alice",
+      "Charlie",
+      "Friday"
+    ],
+    "slot_b": [
+      "Bob"
+    ]
+  },
+  "expected_preference_breakdown": {
+    "slot_a": {
+      "alice": true,
+      "bob": true,
+      "charlie": true
+    },
+    "slot_c": {
+      "alice": true,
+      "bob": false,
+      "charlie": true
+    },
+    "slot_b": {
+      "alice": false,
+      "bob": true,
+      "charlie": false
+    }
+  },
+  "process_markers": [
+    "preferences",
+    "soft",
+    "score"
+  ]
+}

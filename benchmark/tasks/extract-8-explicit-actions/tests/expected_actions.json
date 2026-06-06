@@ -1,0 +1,115 @@
+{
+  "m03": {
+    "assignee": "alice",
+    "description": "finalize launch checklist",
+    "description_terms": [
+      "finalize",
+      "launch",
+      "checklist"
+    ],
+    "deadline": "Friday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.9
+  },
+  "m04": {
+    "assignee": "fatima",
+    "description": "update api docs rate-limit",
+    "description_terms": [
+      "update",
+      "api",
+      "docs",
+      "rate-limit"
+    ],
+    "deadline": "Thursday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.9
+  },
+  "m07": {
+    "assignee": "charlie",
+    "description": "send northstar recap",
+    "description_terms": [
+      "send",
+      "northstar",
+      "recap"
+    ],
+    "deadline": "EOD",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.9
+  },
+  "m09": {
+    "assignee": "diana",
+    "description": "verify invoice export",
+    "description_terms": [
+      "verify",
+      "invoice",
+      "export"
+    ],
+    "deadline": "Monday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.9
+  },
+  "m11": {
+    "assignee": "eli",
+    "description": "run smoke tests",
+    "description_terms": [
+      "run",
+      "smoke",
+      "tests"
+    ],
+    "deadline": "Friday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.9
+  },
+  "m13": {
+    "assignee": "fatima",
+    "description": "publish release notes",
+    "description_terms": [
+      "publish",
+      "release",
+      "notes"
+    ],
+    "deadline": "Tuesday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.9
+  },
+  "m15": {
+    "assignee": "george",
+    "description": "confirm client attendees",
+    "description_terms": [
+      "confirm",
+      "client",
+      "attendees"
+    ],
+    "deadline": "Wednesday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.9
+  },
+  "m17": {
+    "assignee": "alice",
+    "description": "upload design assets",
+    "description_terms": [
+      "upload",
+      "design",
+      "assets"
+    ],
+    "deadline": "Friday",
+    "action_type": "explicit",
+    "implicit": false,
+    "status": "open",
+    "confidence": 0.9
+  }
+}

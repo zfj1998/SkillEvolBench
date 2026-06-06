@@ -1,0 +1,25 @@
+{
+  "required_terms": [
+    "trip.com",
+    "one-third",
+    "stanford",
+    "hybrid",
+    "productivity"
+  ],
+  "must_select": [
+    "finding_retention",
+    "finding_generalization",
+    "recommendation"
+  ],
+  "forbidden_terms": [
+    "appendix survey tables"
+  ],
+  "shape": "single",
+  "limits": {
+    "single": 500,
+    "audience": 300,
+    "article": 200,
+    "group": 300,
+    "overall": 500
+  }
+}

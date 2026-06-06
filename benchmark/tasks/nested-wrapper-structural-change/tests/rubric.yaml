@@ -1,0 +1,40 @@
+task_id: E2-LS5-T2
+task_name: nested-wrapper-structural-change
+role: enriched
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_format
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: dual_format_parsing
+    weight: 0.25
+    tests:
+      - test_v1_products_correct       # H1
+      - test_v2_products_correct       # H2
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: data_integrity
+    weight: 0.25
+    tests:
+      - test_total_product_count       # H3
+      - test_uniform_schema            # H4
+      - test_no_stale_prices           # H5
+      - test_no_discontinued_products  # H6
+      - test_no_duplicates             # H7
+    max_score: 5
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.40
+    tests:
+      - test_detects_response_format       # P1
+      - test_dual_extraction_paths         # P2
+      - test_no_hardcoded_single_format    # P3
+    max_score: 3
+    scoring_method: proportional

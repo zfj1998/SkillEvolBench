@@ -1,0 +1,73 @@
+{
+  "d04": {
+    "assignee": "design",
+    "description": "review checkout mockups",
+    "description_terms": [
+      "review",
+      "checkout",
+      "mockups"
+    ],
+    "deadline": "tomorrow",
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.82
+  },
+  "d07": {
+    "assignee": "unspecified",
+    "description": "update onboarding docs",
+    "description_terms": [
+      "update",
+      "onboarding",
+      "docs"
+    ],
+    "deadline": "GA",
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.76
+  },
+  "d10": {
+    "assignee": "backend",
+    "description": "check api contracts staging",
+    "description_terms": [
+      "check",
+      "api",
+      "contracts",
+      "staging"
+    ],
+    "deadline": null,
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.8
+  },
+  "d13": {
+    "assignee": "unspecified",
+    "description": "look performance metrics",
+    "description_terms": [
+      "look",
+      "performance",
+      "metrics"
+    ],
+    "deadline": null,
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.72
+  },
+  "d17": {
+    "assignee": "product",
+    "description": "weigh pricing copy",
+    "description_terms": [
+      "weigh",
+      "pricing",
+      "copy"
+    ],
+    "deadline": "Friday",
+    "action_type": "implicit",
+    "implicit": true,
+    "status": "open",
+    "confidence": 0.78
+  }
+}

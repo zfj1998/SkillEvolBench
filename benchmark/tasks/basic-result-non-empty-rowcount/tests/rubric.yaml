@@ -1,0 +1,31 @@
+task_id: E3-LS5-T1
+task_name: basic-result-non-empty-rowcount
+role: canonical
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - output_exists
+      - returns_some_rows
+    max_score: 2
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.50
+    tests:
+      - script_succeeds
+      - row_count_matches_expected_band
+      - rows_are_complete_and_ordered
+      - aggregate_metrics_match
+      - sanity_metadata_present
+    max_score: 5
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.40
+    tests:
+      - has_normalizer_module
+      - normalizer_strips_zero_width
+      - rowcount_guard_uses_realistic_band
+      - script_filters_with_normalizer
+    max_score: 4
+    scoring_method: proportional

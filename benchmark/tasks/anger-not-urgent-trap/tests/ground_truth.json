@@ -1,0 +1,67 @@
+{
+  "task_id": "E6-LS1-T5",
+  "expected_priorities": {
+    "trap_vending": "P3",
+    "trap_db_cert": "P0",
+    "trap_lunch": "P3",
+    "trap_client": "P0",
+    "trap_ops": "P0",
+    "trap_06": "P2",
+    "trap_07": "P2",
+    "trap_08": "P2",
+    "trap_09": "P2",
+    "trap_10": "P2",
+    "trap_11": "P3",
+    "trap_12": "P3",
+    "trap_13": "P3",
+    "trap_14": "P3",
+    "trap_15": "P3"
+  },
+  "key_priority_checks": {
+    "trap_vending": "P3",
+    "trap_lunch": "P3",
+    "trap_db_cert": "P0",
+    "trap_client": "P0"
+  },
+  "expected_p0": [
+    "trap_db_cert",
+    "trap_client",
+    "trap_ops"
+  ],
+  "expected_p3": [
+    "trap_vending",
+    "trap_lunch",
+    "trap_11",
+    "trap_12",
+    "trap_13",
+    "trap_14",
+    "trap_15"
+  ],
+  "expected_response_ids": [],
+  "rank_before": [
+    [
+      "trap_db_cert",
+      "trap_vending"
+    ],
+    [
+      "trap_client",
+      "trap_lunch"
+    ]
+  ],
+  "reason_keywords": {
+    "trap_vending": [
+      "Low business impact"
+    ],
+    "trap_db_cert": [
+      "certificate",
+      "tomorrow"
+    ]
+  },
+  "expected_drafts": {},
+  "min_message_count": 15,
+  "process_markers": [
+    "business impact",
+    "emotional",
+    "certificate"
+  ]
+}

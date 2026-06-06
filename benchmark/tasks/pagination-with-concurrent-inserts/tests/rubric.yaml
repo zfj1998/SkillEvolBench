@@ -1,0 +1,23 @@
+{
+  "task_id": "E2-LS3-T3",
+  "judge_mode": "deterministic",
+  "trap_type": "concurrent_inserts_during_pagination",
+  "dimensions": [
+    {
+      "name": "public_tests",
+      "weight": 10
+    },
+    {
+      "name": "complete_retrieval_without_loss_or_duplicates",
+      "weight": 40
+    },
+    {
+      "name": "adaptation_strategy",
+      "weight": 20
+    },
+    {
+      "name": "process_checks",
+      "weight": 30
+    }
+  ]
+}

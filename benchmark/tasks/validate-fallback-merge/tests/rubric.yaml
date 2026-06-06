@@ -1,0 +1,49 @@
+task_id: E2-LS5-T6
+task_name: validate-fallback-merge
+role: composition
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_format
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: anomaly_replacement
+    weight: 0.25
+    tests:
+      - test_no_negative_prices        # H1
+      - test_all_fields_present        # H2
+      - test_correct_prices_overall    # H7
+    max_score: 3
+    scoring_method: proportional
+
+  - dimension: source_accuracy
+    weight: 0.25
+    tests:
+      - test_normal_records_from_primary    # H3
+      - test_anomalous_records_from_backup  # H4
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: completeness
+    weight: 0.10
+    tests:
+      - test_exact_count               # H5
+      - test_all_ids_present           # H6
+      - test_total_consistency         # H8
+      - test_no_crash                  # H9
+      - test_api_call_provenance       # H10
+    max_score: 5
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.30
+    tests:
+      - test_validates_primary         # P1
+      - test_calls_backup              # P2
+      - test_merge_logic               # P3
+    max_score: 3
+    scoring_method: proportional

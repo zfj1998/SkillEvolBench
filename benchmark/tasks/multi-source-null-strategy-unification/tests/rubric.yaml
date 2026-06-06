@@ -1,0 +1,31 @@
+task_id: E3-LS4-T6
+task_name: multi-source-null-strategy-unification
+role: composition
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - output_exists
+      - record_count_present
+    max_score: 2
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.50
+    tests:
+      - script_does_not_crash
+      - summary_matches_ground_truth
+      - source_null_summary_matches
+      - category_totals_match
+    max_score: 4
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.40
+    tests:
+      - uses_keep_default_na_false
+      - source_aware_null_policy
+      - does_not_globally_treat_zero_as_missing
+      - keeps_zero_stock_valid
+      - supplier_c_price_zero_invalid
+    max_score: 5
+    scoring_method: proportional

@@ -1,0 +1,75 @@
+{
+  "task_id": "E6-LS1-T1",
+  "expected_priorities": {
+    "email_001": "P0",
+    "email_002": "P0",
+    "email_003": "P0",
+    "email_004": "P1",
+    "email_005": "P1",
+    "email_006": "P1",
+    "email_007": "P1",
+    "email_008": "P1",
+    "email_09": "P2",
+    "email_10": "P2",
+    "email_11": "P2",
+    "email_12": "P2",
+    "email_13": "P2",
+    "email_14": "P2",
+    "email_15": "P2",
+    "email_16": "P3",
+    "email_17": "P3",
+    "email_18": "P3",
+    "email_19": "P3",
+    "email_20": "P3"
+  },
+  "key_priority_checks": {
+    "email_001": "P0",
+    "email_002": "P0",
+    "email_003": "P0",
+    "email_004": "P1",
+    "email_005": "P1",
+    "email_006": "P1",
+    "email_007": "P1",
+    "email_008": "P1",
+    "email_09": "P2",
+    "email_10": "P2",
+    "email_11": "P2",
+    "email_12": "P2",
+    "email_13": "P2",
+    "email_14": "P2",
+    "email_15": "P2",
+    "email_16": "P3",
+    "email_17": "P3",
+    "email_18": "P3",
+    "email_19": "P3",
+    "email_20": "P3"
+  },
+  "expected_p0": [
+    "email_001",
+    "email_002",
+    "email_003"
+  ],
+  "expected_p3": [
+    "email_16",
+    "email_17",
+    "email_18",
+    "email_19",
+    "email_20"
+  ],
+  "expected_response_ids": [],
+  "rank_before": [],
+  "reason_keywords": {
+    "email_004": [
+      "historical"
+    ],
+    "email_09": [
+      "FYI"
+    ],
+    "email_16": [
+      "Newsletter"
+    ]
+  },
+  "expected_drafts": {},
+  "min_message_count": 20,
+  "process_markers": []
+}

@@ -1,0 +1,66 @@
+{
+  "task_id": "E6-LS2-T1",
+  "expected_reply_ids": [
+    "reply_001"
+  ],
+  "expected_ack_ids": [],
+  "expected_ignore_ids": [],
+  "required_terms": {
+    "reply_001": [
+      [
+        "68%"
+      ],
+      [
+        "budget",
+        "approved"
+      ],
+      [
+        "$42k",
+        "42k"
+      ],
+      [
+        "two",
+        "backend"
+      ],
+      [
+        "Tuesday",
+        "Thursday"
+      ],
+      [
+        "integration testing"
+      ],
+      [
+        "next",
+        "meeting"
+      ]
+    ]
+  },
+  "min_required_groups": {
+    "reply_001": 7
+  },
+  "specificity_terms": {
+    "reply_001": [
+      "68%",
+      "$42k",
+      "Tuesday",
+      "Thursday"
+    ]
+  },
+  "forbidden_phrases": [
+    "sounds good to me",
+    "check on the details",
+    "follow up soon"
+  ],
+  "expected_cc": {},
+  "rationale_keywords": {
+    "reply_001": [
+      "three questions",
+      "project_state"
+    ]
+  },
+  "process_markers": [
+    "context_json",
+    "project_state"
+  ],
+  "min_message_count": 1
+}

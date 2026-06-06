@@ -1,0 +1,12 @@
+{
+  "task_id": "E2-LS2-T4",
+  "judge_mode": "deterministic",
+  "trap_type": "context-shift",
+  "dimensions": [
+    {"name": "public_checks", "weight": 10},
+    {"name": "avoid_rerunning_steps_1_2", "weight": 25},
+    {"name": "step3_precision_retry", "weight": 25},
+    {"name": "downstream_correctness", "weight": 15},
+    {"name": "process_checks", "weight": 25}
+  ]
+}

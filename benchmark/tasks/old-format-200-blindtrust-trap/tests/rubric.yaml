@@ -1,0 +1,39 @@
+task_id: E2-LS5-T5
+task_name: old-format-200-blindtrust-trap
+role: adversarial
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_format
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: correct_field_values
+    weight: 0.40
+    tests:
+      - test_exact_schema              # H1
+      - test_correct_usernames         # H2
+      - test_correct_phones            # H3
+      - test_correct_emails            # H4
+      - test_correct_created_at        # H5
+    max_score: 5
+    scoring_method: proportional
+
+  - dimension: completeness
+    weight: 0.15
+    tests:
+      - test_all_users_present         # H6
+      - test_total_consistency         # H7
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.35
+    tests:
+      - test_uses_new_field_names      # P1
+      - test_reads_api_docs            # P2
+    max_score: 2
+    scoring_method: proportional

@@ -1,0 +1,33 @@
+{
+  "task_id": "E1-LS3-T5",
+  "judge_mode": "deterministic",
+  "trap_type": "shortcut_none_handling",
+  "feedback_fields": [
+    "error_type",
+    "expected",
+    "actual",
+    "hint"
+  ],
+  "dimensions": [
+    {
+      "name": "public_tests",
+      "weight": 10
+    },
+    {
+      "name": "trap_catching",
+      "weight": 25
+    },
+    {
+      "name": "other_hidden_tests",
+      "weight": 25
+    },
+    {
+      "name": "no_shortcut",
+      "weight": 25
+    },
+    {
+      "name": "structure_and_semantics",
+      "weight": 15
+    }
+  ]
+}

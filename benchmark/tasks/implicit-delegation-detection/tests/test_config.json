@@ -1,0 +1,38 @@
+{
+  "public_min_actions": 1,
+  "allowed_missing_actions": 1,
+  "max_false_positives": 1,
+  "required_non_action_ids": [
+    "d15",
+    "d19"
+  ],
+  "required_status_keys": [
+    "open"
+  ],
+  "min_follow_up_needed": 0,
+  "summary_keywords": [],
+  "min_source_items": 20,
+  "exact_action_count": true,
+  "exact_non_action_count": true,
+  "min_implicit_actions": 4,
+  "non_action_source_ids": [
+    "d01",
+    "d02",
+    "d03",
+    "d05",
+    "d06",
+    "d08",
+    "d09",
+    "d11",
+    "d12",
+    "d14",
+    "d15",
+    "d16",
+    "d18",
+    "d19",
+    "d20",
+    "d21",
+    "d22",
+    "d23"
+  ]
+}

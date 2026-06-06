@@ -1,0 +1,5 @@
+version: 1
+evaluation:
+  public_tests_weight: 0
+  hidden_tests_weight: 65
+  process_tests_weight: 35

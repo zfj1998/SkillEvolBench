@@ -1,0 +1,33 @@
+task_id: E4-LS5-T2
+name: exact-merge-baseline
+role: enriched
+pass_threshold: 0.70
+
+dimensions:
+  - id: test_master_file_exists
+    weight: 0.05
+    public: true
+  - id: test_master_has_100_rows
+    weight: 0.10
+    public: true
+  - id: test_all_employee_ids_present
+    weight: 0.20
+    public: false
+  - id: test_no_duplicate_ids
+    weight: 0.15
+    public: false
+  - id: test_has_fields_from_both_sources
+    weight: 0.15
+    public: false
+  - id: test_conflict_log_exists
+    weight: 0.05
+    public: false
+  - id: test_conflict_log_captures_known_conflicts
+    weight: 0.15
+    public: false
+  - id: test_conflict_log_references_merge_key
+    weight: 0.075
+    public: false
+  - id: test_conflict_log_mentions_priority
+    weight: 0.075
+    public: false

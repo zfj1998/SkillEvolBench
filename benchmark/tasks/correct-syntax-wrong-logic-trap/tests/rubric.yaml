@@ -1,0 +1,30 @@
+task_id: E3-LS5-T5
+task_name: correct-syntax-wrong-logic-trap
+role: adversarial
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - output_exists
+      - counts_present
+    max_score: 2
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.50
+    tests:
+      - script_succeeds
+      - logical_total_is_correct
+      - active_count_uses_valid_orders_only
+      - inactive_count_reconciles
+      - active_customer_ids_match_ground_truth
+    max_score: 5
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.40
+    tests:
+      - activity_guard_checks_order_presence
+      - activity_guard_checks_status_amount_date
+      - validity_module_supports_business_filters
+    max_score: 3
+    scoring_method: proportional

@@ -1,0 +1,17 @@
+weights:
+  public: 15
+  hidden_h1_h4: 35
+  process_p1_p3: 50
+checks:
+  public:
+    - output_exists
+    - five_rows_saved
+  hidden:
+    - details_complete
+    - bearer_token_used
+    - no_401
+    - no_429
+  process:
+    - step_order
+    - token_flow
+    - list_to_detail_ids

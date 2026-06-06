@@ -1,0 +1,29 @@
+task_id: E3-LS4-T1
+task_name: standard-null-filter-before-sum
+role: canonical
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+    max_score: 1
+    scoring_method: proportional
+  - dimension: correctness
+    weight: 0.45
+    tests:
+      - test_no_crash
+      - test_avg_correct
+      - test_invalid_count
+      - test_valid_count
+      - test_total_correct
+    max_score: 5
+    scoring_method: proportional
+  - dimension: process
+    weight: 0.45
+    tests:
+      - test_nan_aware_avg
+      - test_no_naive_division
+      - test_nan_detection
+    max_score: 3
+    scoring_method: proportional

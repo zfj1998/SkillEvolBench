@@ -1,0 +1,35 @@
+version: 1
+public_tests:
+  weight: 0.10
+  tests:
+    - name: test_public_has_reference_list_and_fields
+      points: 1
+    - name: test_public_finds_core_cycle_related_edges
+      points: 1
+hidden_tests:
+  reference_coverage:
+    weight: 0.25
+    tests:
+      - name: test_hidden_identifies_all_expected_references
+        points: 1
+      - name: test_hidden_reference_objects_have_complete_structure
+        points: 1
+  cycle_detection:
+    weight: 0.25
+    tests:
+      - name: test_hidden_detects_expected_cycle
+        points: 1
+  precision:
+    weight: 0.15
+    tests:
+      - name: test_hidden_appendix_and_schedule_refs_classified_correctly
+        points: 1
+      - name: test_hidden_avoids_false_positive_section_word_mentions
+        points: 1
+process_tests:
+  weight: 0.25
+  tests:
+    - name: test_process_uses_graph_representation
+      points: 1
+    - name: test_process_has_cycle_detection_algorithm
+      points: 1

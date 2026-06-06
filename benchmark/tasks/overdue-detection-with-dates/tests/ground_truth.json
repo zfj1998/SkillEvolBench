@@ -1,0 +1,72 @@
+{
+  "task_id": "E6-LS3-T3",
+  "expected_action_ids": [
+    "act_report",
+    "act_vendor_terms",
+    "act_api_spec",
+    "act_testing",
+    "act_quarter_launch"
+  ],
+  "expected_fields": {
+    "act_report": {
+      "assignee": "alice",
+      "deadline": "2026-04-13",
+      "status": "overdue",
+      "description_terms": [
+        "send",
+        "report"
+      ]
+    },
+    "act_vendor_terms": {
+      "assignee": "bob",
+      "deadline": "2026-04-15",
+      "status": "overdue",
+      "description_terms": [
+        "vendor",
+        "terms"
+      ]
+    },
+    "act_api_spec": {
+      "assignee": "charlie",
+      "deadline": "2026-04-24",
+      "status": "open",
+      "description_terms": [
+        "API",
+        "spec"
+      ]
+    },
+    "act_testing": {
+      "assignee": "eli",
+      "deadline": "2026-04-27",
+      "status": "open",
+      "description_terms": [
+        "testing"
+      ]
+    },
+    "act_quarter_launch": {
+      "assignee": "diana",
+      "deadline": "2026-06-30",
+      "status": "open",
+      "description_terms": [
+        "launch",
+        "quarter"
+      ]
+    }
+  },
+  "implicit_action_ids": [],
+  "confidence_less_than": [],
+  "expected_status_counts": {
+    "open": 3,
+    "overdue": 2
+  },
+  "non_action_message_ids": [],
+  "expected_followups": {},
+  "min_message_count": 6,
+  "process_markers": [
+    "current_date",
+    "relative date",
+    "overdue"
+  ],
+  "allowed_missing_actions": 0,
+  "requires_current_date": true
+}

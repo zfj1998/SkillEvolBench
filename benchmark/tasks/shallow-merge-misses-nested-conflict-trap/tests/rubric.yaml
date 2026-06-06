@@ -1,0 +1,26 @@
+task_id: E4-LS5-T5
+name: shallow-merge-trap
+role: adversarial
+gap: Gap-2 (nested conflict false-negative)
+pass_threshold: 0.70
+
+dimensions:
+  - id: test_report_exists
+    weight: 0.05
+    public: true
+  - id: test_report_is_not_zero_differences
+    weight: 0.30
+    public: false
+    note: TRAP-catching — shallow agent reports 0 conflicts (all top-level fields identical)
+  - id: test_minimum_three_nested_conflicts
+    weight: 0.25
+    public: false
+  - id: test_nested_paths_in_output
+    weight: 0.15
+    public: false
+  - id: test_output_contains_dotted_paths
+    weight: 0.125
+    public: false
+  - id: test_record_ids_appear_in_output
+    weight: 0.125
+    public: false

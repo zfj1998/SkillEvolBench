@@ -1,0 +1,33 @@
+{
+  "task_id": "E1-LS3-T4",
+  "judge_mode": "deterministic",
+  "trap_type": "feature_on_unrestructured_module",
+  "feedback_fields": [
+    "error_type",
+    "expected",
+    "actual",
+    "hint"
+  ],
+  "dimensions": [
+    {
+      "name": "legacy_tests",
+      "weight": 20
+    },
+    {
+      "name": "plugin_functionality",
+      "weight": 30
+    },
+    {
+      "name": "module_split",
+      "weight": 15
+    },
+    {
+      "name": "state_cleanup_and_decoupling",
+      "weight": 20
+    },
+    {
+      "name": "plugin_design_quality",
+      "weight": 15
+    }
+  ]
+}

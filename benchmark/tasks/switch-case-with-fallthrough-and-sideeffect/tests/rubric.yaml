@@ -1,0 +1,37 @@
+{
+  "task_id": "E1-LS3-T2",
+  "judge_mode": "deterministic",
+  "trap_type": "fallthrough_side_effect_loss",
+  "feedback_fields": [
+    "error_type",
+    "expected",
+    "actual",
+    "hint"
+  ],
+  "dimensions": [
+    {
+      "name": "public_tests",
+      "weight": 10
+    },
+    {
+      "name": "fallthrough_behavior",
+      "weight": 30
+    },
+    {
+      "name": "other_behavior",
+      "weight": 25
+    },
+    {
+      "name": "process_fallthrough",
+      "weight": 15
+    },
+    {
+      "name": "side_effects",
+      "weight": 15
+    },
+    {
+      "name": "refactor_completion",
+      "weight": 5
+    }
+  ]
+}

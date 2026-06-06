@@ -1,0 +1,31 @@
+{
+  "task_id": "E6-LS4-T5",
+  "min_participant_count": 2,
+  "expected_ranked_slot_ids": [
+    "dst_safe"
+  ],
+  "expected_meeting_ids": [],
+  "required_start_utc": [
+    "2023-03-15T14:00:00Z"
+  ],
+  "forbidden_start_utc": [],
+  "expected_local_times": [
+    "EDT",
+    "GMT",
+    "4 hours"
+  ],
+  "requires_scores": true,
+  "expected_scores": {
+    "dst_safe": 2
+  },
+  "expected_soft_preferences_met": {
+    "dst_safe": 0
+  },
+  "expected_reason_terms": {},
+  "expected_preference_breakdown": {},
+  "process_markers": [
+    "ZoneInfo",
+    "DST",
+    "not fixed offset"
+  ]
+}

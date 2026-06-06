@@ -1,0 +1,19 @@
+{
+  "labels": {
+    "p_internal_revenue": "contradiction",
+    "p_internal_date": "contradiction",
+    "p_internal_kpi": "contradiction",
+    "p_internal_attrition_ok": "not_contradiction"
+  },
+  "true_ids": [
+    "p_internal_revenue",
+    "p_internal_date",
+    "p_internal_kpi"
+  ],
+  "false_ids": [
+    "p_internal_attrition_ok"
+  ],
+  "required_types": [
+    "internal"
+  ]
+}

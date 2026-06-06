@@ -1,0 +1,8 @@
+task_id: E4-LS3-T1
+weights:
+  outcome_exact_match: 0.40
+  outcome_format_and_schema: 0.20
+  process_extraction_and_generalization: 0.40
+notes:
+  - Full credit requires all 7 fields to be correctly extracted from the source document.
+  - Partial credit may be awarded proportionally by field.

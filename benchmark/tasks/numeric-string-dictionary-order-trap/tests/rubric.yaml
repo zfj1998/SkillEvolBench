@@ -1,0 +1,38 @@
+task_id: E3-LS2-T5
+task_name: numeric-string-dictionary-order-trap
+role: adversarial
+
+scoring:
+  - dimension: public
+    weight: 0.10
+    tests:
+      - test_output_exists
+      - test_output_has_correct_columns
+    max_score: 2
+    scoring_method: proportional
+
+  - dimension: robustness
+    weight: 0.15
+    tests:
+      - test_no_crash                      # H1
+      - test_row_count_preserved           # H2
+      - test_no_data_loss                  # H4
+    max_score: 3
+    scoring_method: proportional
+
+  - dimension: correctness
+    weight: 0.25
+    tests:
+      - test_numeric_ascending_order       # H3
+      - test_preserves_original_id_format  # H5
+      - test_not_string_sorted             # H6
+    max_score: 3
+    scoring_method: proportional
+
+  - dimension: process
+    weight: 0.50
+    tests:
+      - test_numeric_conversion_for_sort   # P1
+      - test_uses_sort_function            # P3
+    max_score: 2
+    scoring_method: proportional

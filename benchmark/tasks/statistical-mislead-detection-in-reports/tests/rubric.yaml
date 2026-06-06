@@ -1,0 +1,47 @@
+task_id: E4-LS4-T2
+task_name: statistical-mislead-detection-in-reports
+role: enriched
+gap: Gap-1 (semantic diff — text diff detects wording change but cannot judge mislead)
+
+dimensions:
+  - id: H1
+    name: change-identification
+    description: All 5 modified claims are identified
+    weight: 0.15
+    scoring: proportional   # (found/5) * weight
+    max_score: 5
+
+  - id: H2
+    name: mislead-detection
+    description: At least 3 of the 5 changes correctly flagged as misleading
+    weight: 0.25
+    scoring: proportional
+    max_score: 5            # partial: (correctly_misleading/5) * weight
+
+  - id: H3-H4
+    name: specific-analysis-quality
+    description: >
+      H3: Claim-1 analysis references absolute base (100→400 users).
+      H4: Claim-2 analysis references sample size (20 customers).
+    weight: 0.20
+    scoring: proportional
+    max_score: 2
+
+  - id: H5
+    name: no-false-positives
+    description: Section 6 (accurate cost reduction) is NOT flagged as misleading
+    weight: 0.10
+    scoring: binary         # pass/fail
+    max_score: 1
+
+  - id: P1-P2
+    name: process-quality
+    description: >
+      P1: structured original+modified+analysis blocks for each claim.
+      P2: analysis cites original data numbers.
+    weight: 0.30
+    scoring: proportional
+    max_score: 2
+
+total_weight: 1.0
+pass_threshold: 0.60

@@ -1,0 +1,27 @@
+{
+  "required_terms": [
+    "30%",
+    "95%",
+    "tripling",
+    "grid",
+    "finance"
+  ],
+  "must_select": [
+    "finding_30",
+    "finding_solar_wind",
+    "finding_gap",
+    "recommendation_grid"
+  ],
+  "forbidden_terms": [
+    "appendix tables",
+    "historical electricity statistics"
+  ],
+  "shape": "single",
+  "limits": {
+    "single": 500,
+    "audience": 300,
+    "article": 200,
+    "group": 300,
+    "overall": 500
+  }
+}

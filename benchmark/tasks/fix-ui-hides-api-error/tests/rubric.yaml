@@ -1,0 +1,34 @@
+task_id: E1-LS4-T5
+task_name: fix-ui-hides-api-error
+role: adversarial
+
+scoring:
+  - dimension: ui_tests
+    weight: 0.15
+    full_score: "3/3 UI tests pass"
+    partial: "proportional"
+
+  - dimension: h1_backend_returns_500
+    weight: 0.25
+    full_score: "Backend returns 500 on DB error"
+    partial: "0 (binary - trap catching)"
+
+  - dimension: h2_h3_h4_auxiliary
+    weight: 0.15
+    full_score: "3/3 auxiliary tests pass"
+    partial: "proportional"
+
+  - dimension: p1_p2_dual_layer_fix
+    weight: 0.25
+    full_score: "Both backend and frontend modified"
+    partial: "partial if only one layer"
+
+  - dimension: p3_not_frontend_workaround
+    weight: 0.15
+    full_score: "Backend was fixed (not frontend-only)"
+    partial: "0 if frontend-only fix"
+
+  - dimension: p4_fix_quality
+    weight: 0.05
+    full_score: "Specific exception handling"
+    partial: "0 (binary)"

@@ -1,0 +1,16 @@
+weights:
+  public: 10
+  hidden_h1_h4_branching: 50
+  process_p1_p2: 40
+checks:
+  public:
+    - three_results
+    - result_format
+  hidden:
+    - premium_branch_user_1
+    - standard_branch_user_2
+    - no_wrong_premium_for_user_2
+    - branch_outputs_differ
+  process:
+    - has_condition
+    - endpoint_matches_status

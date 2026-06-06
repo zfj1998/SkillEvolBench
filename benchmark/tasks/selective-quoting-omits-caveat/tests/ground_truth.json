@@ -1,0 +1,39 @@
+{
+  "labels": {
+    "S01": "selective",
+    "S02": "selective",
+    "S03": "selective",
+    "S04": "valid"
+  },
+  "problem_ids": [
+    "S01",
+    "S02",
+    "S03"
+  ],
+  "required_problem_labels": [
+    "selective"
+  ],
+  "reason_terms": {
+    "S01": [
+      "caveat",
+      "limitation",
+      "scope",
+      "generalize",
+      "external"
+    ],
+    "S02": [
+      "caveat",
+      "limitation",
+      "scope",
+      "generalize",
+      "external"
+    ],
+    "S03": [
+      "caveat",
+      "limitation",
+      "scope",
+      "generalize",
+      "external"
+    ]
+  }
+}

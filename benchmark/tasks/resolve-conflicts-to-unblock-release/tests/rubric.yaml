@@ -1,0 +1,19 @@
+task_id: E1-LS5-T4
+task_name: resolve-conflicts-to-unblock-release
+role: context-shift
+
+scoring:
+  - dimension: h1_h2_merge_and_tests
+    weight: 0.40
+    full_score: "No conflict markers + all tests pass"
+    partial: "proportional"
+
+  - dimension: h3_h4_version_and_docs
+    weight: 0.30
+    full_score: "Version 2.1.0 + CHANGELOG updated"
+    partial: "proportional"
+
+  - dimension: p1_p2_process
+    weight: 0.30
+    full_score: "Both features preserved + tests not skipped"
+    partial: "proportional"

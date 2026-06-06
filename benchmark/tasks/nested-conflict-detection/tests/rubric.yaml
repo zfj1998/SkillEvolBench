@@ -1,0 +1,32 @@
+task_id: E4-LS5-T3
+name: nested-conflict-detection
+role: variant
+gap: Gap-2 (nested field comparison)
+pass_threshold: 0.70
+
+dimensions:
+  - id: test_report_exists
+    weight: 0.05
+    public: true
+  - id: test_report_is_not_empty
+    weight: 0.20
+    public: false
+    note: TRAP-catching — shallow agent returns 0 differences
+  - id: test_nested_conflicts_detected
+    weight: 0.25
+    public: false
+  - id: test_dot_notation_paths
+    weight: 0.15
+    public: false
+  - id: test_no_false_positives_on_matching_fields
+    weight: 0.10
+    public: false
+  - id: test_street_and_zip_conflicts_paired
+    weight: 0.10
+    public: false
+  - id: test_report_contains_nested_paths
+    weight: 0.075
+    public: false
+  - id: test_each_difference_has_both_values
+    weight: 0.075
+    public: false

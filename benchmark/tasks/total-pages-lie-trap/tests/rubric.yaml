@@ -1,0 +1,19 @@
+{
+  "task_id": "E2-LS3-T5",
+  "judge_mode": "deterministic",
+  "trap_type": "stale_total_pages_metadata",
+  "dimensions": [
+    {
+      "name": "complete_eight_page_retrieval",
+      "weight": 35
+    },
+    {
+      "name": "dynamic_metadata_adaptation",
+      "weight": 25
+    },
+    {
+      "name": "process_checks",
+      "weight": 40
+    }
+  ]
+}

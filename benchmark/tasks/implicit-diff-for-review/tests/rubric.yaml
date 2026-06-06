@@ -1,0 +1,26 @@
+task_id: E4-LS4-T4
+task_name: implicit-diff-for-review
+role: context-shift
+
+dimensions:
+  - id: H1-H3
+    name: change-identification-and-precision
+    description: >
+      H1: ≥4 of 5 content changes identified.
+      H2: Content vs formatting/minor changes distinguished.
+      H3: Unchanged sections not falsely flagged.
+    weight: 0.55
+    scoring: proportional
+    max_score: 3
+
+  - id: P1-P2
+    name: process-quality
+    description: >
+      P1: Agent inferred diff task and performed comparison (not just read v2).
+      P2: Both v1 and v2 files explicitly referenced.
+    weight: 0.45
+    scoring: proportional
+    max_score: 2
+
+total_weight: 1.0
+pass_threshold: 0.60
