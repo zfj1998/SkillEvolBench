@@ -10,6 +10,15 @@ from typing import Any
 
 import pytest
 
+from skillevolbench.opencode_continuity import (
+    OPENCODE_AUTO_COMPACTION_KIND,
+    OPENCODE_COMPACTION_CONTINUE_KIND,
+    OPENCODE_COMPACTION_SUMMARY_KIND,
+    OPENCODE_EVENT_KEY,
+    OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
+    opencode_synthetic_continue,
+)
+
 
 SESSION_ID = "ses_solve_123"
 
@@ -284,6 +293,48 @@ def _export(*, include_reflection: bool, session_id: str = SESSION_ID):
     }
 
 
+def _export_with_compaction(*, overflow: bool = False) -> dict[str, Any]:
+    export = _export(include_reflection=True)
+    compaction = _message(
+        "user",
+        "compaction-user",
+        [{"type": "compaction", "auto": True, "overflow": overflow}],
+    )
+    summary = _message(
+        "assistant",
+        "compaction-summary",
+        [{"type": "text", "text": "bounded summary"}],
+    )
+    summary["info"].update(
+        {
+            "parentID": "compaction-user",
+            "mode": "compaction",
+            "agent": "compaction",
+            "summary": True,
+        }
+    )
+    synthetic_continue = _message(
+        "user",
+        "compaction-continue",
+        [
+            {
+                "type": "text",
+                "text": opencode_synthetic_continue(overflow=overflow),
+                "synthetic": True,
+                "metadata": {"compaction_continue": True},
+            }
+        ],
+    )
+    returned = _message(
+        "assistant",
+        "post-compaction-assistant",
+        [{"type": "text", "text": "continued reflection"}],
+    )
+    returned["info"]["parentID"] = "compaction-continue"
+    export["messages"].extend([compaction, summary, synthetic_continue, returned])
+    return export
+
+
 class _ScriptedEnvironment:
     def __init__(
         self,
@@ -380,16 +431,19 @@ def test_phase_validation_prefers_complete_tee_when_stdout_is_truncated(
     tmp_path: Path,
     preinstalled_module,
 ) -> None:
-    error_event = json.dumps(
-        {
-            "type": "error",
-            "sessionID": SESSION_ID,
-            "error": {
-                "name": "ProviderError",
-                "data": {"message": "error visible only in complete tee"},
-            },
-        }
-    ) + "\n"
+    error_event = (
+        json.dumps(
+            {
+                "type": "error",
+                "sessionID": SESSION_ID,
+                "error": {
+                    "name": "ProviderError",
+                    "data": {"message": "error visible only in complete tee"},
+                },
+            }
+        )
+        + "\n"
+    )
     agent = preinstalled_module.OpenCodePreinstalled(logs_dir=tmp_path)
     environment = _ScriptedEnvironment(
         solve_stream_suffix=error_event,
@@ -473,6 +527,57 @@ def test_export_is_canonical_complete_trajectory_and_populates_context(
     assert context.n_cache_tokens == 8
 
 
+@pytest.mark.parametrize("overflow", [False, True])
+def test_export_preserves_strict_auto_compaction_continuity_metadata(
+    tmp_path: Path,
+    preinstalled_module,
+    overflow: bool,
+) -> None:
+    agent = preinstalled_module.OpenCodePreinstalled(logs_dir=tmp_path)
+    agent._opencode_session_id = SESSION_ID
+
+    ordinary = agent._convert_export_to_trajectory(_export(include_reflection=True))
+    assert all(OPENCODE_EVENT_KEY not in step for step in ordinary["steps"])
+
+    compacted = agent._convert_export_to_trajectory(
+        _export_with_compaction(overflow=overflow)
+    )
+    compaction, summary, synthetic_continue, returned = compacted["steps"][-4:]
+    assert compaction[OPENCODE_EVENT_KEY] == {
+        "kind": OPENCODE_AUTO_COMPACTION_KIND,
+        "auto": True,
+        "overflow": overflow,
+        "exclusive": True,
+        "message_id": "compaction-user",
+        "part_message_id": "compaction-user",
+    }
+    assert summary[OPENCODE_EVENT_KEY] == {
+        "kind": OPENCODE_COMPACTION_SUMMARY_KIND,
+        "summary": True,
+        "mode": "compaction",
+        "agent": "compaction",
+        "message_id": "compaction-summary",
+        "parent_id": "compaction-user",
+    }
+    assert synthetic_continue["message"] == opencode_synthetic_continue(
+        overflow=overflow
+    )
+    assert synthetic_continue[OPENCODE_EVENT_KEY] == {
+        "kind": OPENCODE_COMPACTION_CONTINUE_KIND,
+        "synthetic": True,
+        "metadata": {"compaction_continue": True},
+        "exclusive": True,
+        "message_id": "compaction-continue",
+        "part_message_id": "compaction-continue",
+    }
+    assert returned[OPENCODE_EVENT_KEY] == {
+        "kind": OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
+        "ordinary": True,
+        "continue_message_id": "compaction-continue",
+        "parent_id": "compaction-continue",
+    }
+
+
 def test_export_normalizes_pinned_cli_user_prompt_rendering(
     tmp_path: Path,
     preinstalled_module,
@@ -480,7 +585,7 @@ def test_export_normalizes_pinned_cli_user_prompt_rendering(
     agent = preinstalled_module.OpenCodePreinstalled(logs_dir=tmp_path)
     agent._opencode_session_id = SESSION_ID
     prompt = '# Reflect\n\nFeedback: {"passed": true}\nPath: C:\\work\n'
-    cli_rendered = '"' + prompt.replace('"', r'\"') + '"'
+    cli_rendered = '"' + prompt.replace('"', r"\"") + '"'
     export = _export(include_reflection=False)
     export["messages"][0]["parts"][0]["text"] = cli_rendered
 

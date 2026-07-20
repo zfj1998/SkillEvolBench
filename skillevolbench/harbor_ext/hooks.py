@@ -31,7 +31,7 @@ import stat
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 from skillevolbench.components.in_session_reflection import (
     InSessionSkillReflection,
@@ -44,6 +44,14 @@ from skillevolbench.components.in_session_reflection import (
     ReflectionRecord,
 )
 from skillevolbench.components.verifier_adapter import UnscoreableTrialError
+from skillevolbench.opencode_continuity import (
+    OPENCODE_AUTO_COMPACTION_KIND,
+    OPENCODE_COMPACTION_CONTINUE_KIND,
+    OPENCODE_COMPACTION_SUMMARY_KIND,
+    OPENCODE_EVENT_KEY,
+    OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
+    opencode_synthetic_continue,
+)
 from skillevolbench.schemas import TaskRole
 
 if TYPE_CHECKING:
@@ -253,9 +261,13 @@ class SkillEvolBenchHooks:
 
         # ---- 6. Trajectory / history retrieval (control baselines) ----
         trajectories: list = []
-        if self.runtime.baseline.use_trajectory_rag and self.runtime.trajectory_retriever:
+        if (
+            self.runtime.baseline.use_trajectory_rag
+            and self.runtime.trajectory_retriever
+        ):
             trajectories = self.runtime.trajectory_retriever.retrieve(
-                task=task, k=self.runtime.baseline.trajectory_retrieval_k,
+                task=task,
+                k=self.runtime.baseline.trajectory_retrieval_k,
             )
         history_context: str | None = None
         if self.runtime.baseline.use_history_context and self.runtime.history_retriever:
@@ -447,9 +459,7 @@ class SkillEvolBenchHooks:
             )
 
         task_snapshot = Path(trial.paths.artifacts_dir) / "root" / "task"
-        task_hash_before = self._hash_tree_nofollow(
-            task_snapshot, task_id=task.task_id
-        )
+        task_hash_before = self._hash_tree_nofollow(task_snapshot, task_id=task.task_id)
         official_verifier = self._snapshot_and_hide_verifier(
             trial, audit_dir=audit_dir, task_id=task.task_id
         )
@@ -514,9 +524,7 @@ class SkillEvolBenchHooks:
                         task_id=task.task_id,
                     )
 
-                recover = getattr(
-                    trial.agent, "recover_timed_out_resume", None
-                )
+                recover = getattr(trial.agent, "recover_timed_out_resume", None)
                 if not callable(recover):
                     raise UnscoreableTrialError(
                         "reflection-timeout-recovery-unsupported",
@@ -524,27 +532,24 @@ class SkillEvolBenchHooks:
                     )
 
                 main_stopped_proven = False
-                await self._restart_main_and_prove(
-                    trial, task_id=task.task_id
-                )
+                await self._restart_main_and_prove(trial, task_id=task.task_id)
                 default_user_scope = getattr(
                     trial.agent_environment, "with_default_user", None
                 )
                 exec_env_scope = getattr(
                     trial.agent_environment, "scoped_exec_env", None
                 )
-                if not callable(default_user_scope) or not callable(
-                    exec_env_scope
-                ):
+                if not callable(default_user_scope) or not callable(exec_env_scope):
                     raise UnscoreableTrialError(
                         "reflection-timeout-recovery-scope-unsupported",
                         task_id=task.task_id,
                     )
                 try:
                     try:
-                        with default_user_scope(
-                            trial.task.config.agent.user
-                        ), exec_env_scope(trial.agent.extra_env):
+                        with (
+                            default_user_scope(trial.task.config.agent.user),
+                            exec_env_scope(trial.agent.extra_env),
+                        ):
                             recovered_session_id = await recover(
                                 trial.agent_environment,
                                 timeout_sec=_REFLECTION_EXPORT_TIMEOUT_SEC,
@@ -556,9 +561,7 @@ class SkillEvolBenchHooks:
                             exception_type=type(exc).__name__,
                         ) from exc
                 finally:
-                    await self._stop_main_and_prove(
-                        trial, task_id=task.task_id
-                    )
+                    await self._stop_main_and_prove(trial, task_id=task.task_id)
                     main_stopped_proven = True
                 if recovered_session_id != adapter_session_id:
                     raise UnscoreableTrialError(
@@ -598,9 +601,7 @@ class SkillEvolBenchHooks:
                 reason="reflection-full-trajectory-invalid",
             )
             full_export = audit_dir / "opencode.session.full.json"
-            self._write_new_regular(
-                full_export, full_export_raw, task.task_id
-            )
+            self._write_new_regular(full_export, full_export_raw, task.task_id)
             if reflection_stream_raw is None:
                 _, reflection_stream_raw = self._capture_agent_file(
                     reflection_stream,
@@ -636,9 +637,7 @@ class SkillEvolBenchHooks:
                 task_id=task.task_id,
                 phase="reflection",
             )
-            reflection_session_id = getattr(
-                trial.agent, "opencode_session_id", None
-            )
+            reflection_session_id = getattr(trial.agent, "opencode_session_id", None)
             if not (
                 isinstance(reflection_session_id, str)
                 and reflection_session_id
@@ -682,9 +681,7 @@ class SkillEvolBenchHooks:
                 candidate_raw: bytes | None = None
                 candidate_audit_path: Path | None = None
                 try:
-                    candidate_raw = self._read_candidate_nofollow(
-                        candidate_path
-                    )
+                    candidate_raw = self._read_candidate_nofollow(candidate_path)
                     patch = reflection.parse_candidate_bytes(
                         candidate_raw,
                         task=task,
@@ -703,9 +700,7 @@ class SkillEvolBenchHooks:
                         reason=str(exc)[:300],
                     )
                 else:
-                    candidate_audit_path = (
-                        audit_dir / REFLECTION_CANDIDATE_FILENAME
-                    )
+                    candidate_audit_path = audit_dir / REFLECTION_CANDIDATE_FILENAME
                     self._write_new_regular(
                         candidate_audit_path, candidate_raw, task.task_id
                     )
@@ -719,9 +714,7 @@ class SkillEvolBenchHooks:
                         reflection_session_id=reflection_session_id,
                         same_session_verified=True,
                         patch=patch,
-                        reason=(
-                            "model_selected_noop" if patch is None else ""
-                        ),
+                        reason=("model_selected_noop" if patch is None else ""),
                         candidate_path=candidate_audit_path,
                     )
 
@@ -774,9 +767,7 @@ class SkillEvolBenchHooks:
                 try:
                     # Never leave a model-authored candidate in mounted logs.
                     # Timeout and recovery failures must not leak raw output.
-                    self._remove_agent_candidate(
-                        candidate_path, task_id=task.task_id
-                    )
+                    self._remove_agent_candidate(candidate_path, task_id=task.task_id)
                 except BaseException as exc:
                     pending_error = pending_error or exc
                 try:
@@ -794,13 +785,13 @@ class SkillEvolBenchHooks:
         assert record is not None
         self._write_new_regular(
             result_path,
-            (json.dumps(record.to_dict(), indent=2, ensure_ascii=False) + "\n").encode(),
+            (
+                json.dumps(record.to_dict(), indent=2, ensure_ascii=False) + "\n"
+            ).encode(),
             task.task_id,
         )
         self._reflection_cache[cache_key] = record
-        self.runtime.event_store.record(
-            f"reflection_{record.status}", record.to_dict()
-        )
+        self.runtime.event_store.record(f"reflection_{record.status}", record.to_dict())
 
     @staticmethod
     def _create_host_audit_dir(trial: Any, *, task_id: str) -> Path:
@@ -855,12 +846,7 @@ class SkillEvolBenchHooks:
 
     @staticmethod
     def _write_new_regular(path: Path, raw: bytes, task_id: str) -> None:
-        flags = (
-            os.O_WRONLY
-            | os.O_CREAT
-            | os.O_EXCL
-            | getattr(os, "O_NOFOLLOW", 0)
-        )
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
         try:
             fd = os.open(path, flags, 0o600)
             try:
@@ -904,10 +890,7 @@ class SkillEvolBenchHooks:
                 exception_type=type(exc).__name__,
             ) from exc
         try:
-            if (
-                stat.S_ISDIR(metadata.st_mode)
-                and not stat.S_ISLNK(metadata.st_mode)
-            ):
+            if stat.S_ISDIR(metadata.st_mode) and not stat.S_ISLNK(metadata.st_mode):
                 shutil.rmtree(path)
             else:
                 os.unlink(path)
@@ -992,9 +975,7 @@ class SkillEvolBenchHooks:
         return session_id
 
     @classmethod
-    def _session_id_from_stream(
-        cls, raw: bytes, *, task_id: str, phase: str
-    ) -> str:
+    def _session_id_from_stream(cls, raw: bytes, *, task_id: str, phase: str) -> str:
         session_ids: set[str] = set()
         for line in raw.decode("utf-8", errors="replace").splitlines():
             try:
@@ -1019,8 +1000,168 @@ class SkillEvolBenchHooks:
         must never degrade into whitespace or substring matching.
         """
 
-        cli_rendered = '"' + prompt.replace('"', r'\"') + '"'
+        cli_rendered = '"' + prompt.replace('"', r"\"") + '"'
         return message == prompt or message == cli_rendered
+
+    @staticmethod
+    def _reflection_tail_state_machine(
+        tail: list[Any],
+        *,
+        is_prompt: Callable[[Any], bool],
+        is_regular_assistant: Callable[[Any], bool],
+        is_compaction_sequence: Callable[[Any, Any, Any], bool],
+        is_post_compaction_assistant: Callable[[Any, Any], bool],
+    ) -> bool:
+        """Validate one reflection turn with pinned auto-compaction interludes.
+
+        OpenCode 1.18.3 can append a three-message control sequence while a
+        turn is running: an auto-compaction user marker, an assistant summary,
+        and one fixed synthetic user continuation.  The model must then return
+        to an ordinary assistant message.  No other extra user message is
+        accepted, and consecutive or incomplete compactions fail closed.
+        """
+
+        if not tail or not is_prompt(tail[0]):
+            return False
+
+        index = 1
+        saw_regular_assistant = False
+        while index < len(tail):
+            item = tail[index]
+            if is_regular_assistant(item):
+                saw_regular_assistant = True
+                index += 1
+                continue
+
+            if index + 3 >= len(tail):
+                return False
+            summary = tail[index + 1]
+            synthetic_continue = tail[index + 2]
+            returned_assistant = tail[index + 3]
+            if not is_compaction_sequence(item, summary, synthetic_continue):
+                return False
+            if not is_post_compaction_assistant(returned_assistant, synthetic_continue):
+                return False
+
+            saw_regular_assistant = True
+            index += 4
+
+        return saw_regular_assistant
+
+    @staticmethod
+    def _trajectory_event(step: Any) -> Any:
+        return step.get(OPENCODE_EVENT_KEY) if isinstance(step, dict) else None
+
+    @classmethod
+    def _trajectory_tail_is_valid(cls, tail: list[Any], *, prompt: str) -> bool:
+        def is_compaction_sequence(
+            compaction: Any, summary: Any, synthetic_continue: Any
+        ) -> bool:
+            if not all(
+                isinstance(item, dict)
+                for item in (compaction, summary, synthetic_continue)
+            ):
+                return False
+            compaction_event = cls._trajectory_event(compaction)
+            summary_event = cls._trajectory_event(summary)
+            continue_event = cls._trajectory_event(synthetic_continue)
+            if not all(
+                isinstance(event, dict)
+                for event in (compaction_event, summary_event, continue_event)
+            ):
+                return False
+
+            compaction_id = compaction_event.get("message_id")
+            summary_id = summary_event.get("message_id")
+            continue_id = continue_event.get("message_id")
+            overflow = compaction_event.get("overflow")
+            return bool(
+                isinstance(compaction_id, str)
+                and compaction_id
+                and isinstance(summary_id, str)
+                and summary_id
+                and isinstance(continue_id, str)
+                and continue_id
+                and isinstance(overflow, bool)
+                and compaction.get("source") == "user"
+                and compaction.get("message") == ""
+                and compaction_event
+                == {
+                    "kind": OPENCODE_AUTO_COMPACTION_KIND,
+                    "auto": True,
+                    "overflow": overflow,
+                    "exclusive": True,
+                    "message_id": compaction_id,
+                    "part_message_id": compaction_id,
+                }
+                and summary.get("source") == "agent"
+                and summary_event
+                == {
+                    "kind": OPENCODE_COMPACTION_SUMMARY_KIND,
+                    "summary": True,
+                    "mode": "compaction",
+                    "agent": "compaction",
+                    "message_id": summary_id,
+                    "parent_id": compaction_id,
+                }
+                and synthetic_continue.get("source") == "user"
+                and synthetic_continue.get("message")
+                == opencode_synthetic_continue(overflow=overflow)
+                and continue_event
+                == {
+                    "kind": OPENCODE_COMPACTION_CONTINUE_KIND,
+                    "synthetic": True,
+                    "metadata": {"compaction_continue": True},
+                    "exclusive": True,
+                    "message_id": continue_id,
+                    "part_message_id": continue_id,
+                }
+            )
+
+        def is_post_compaction_assistant(
+            assistant: Any, synthetic_continue: Any
+        ) -> bool:
+            if not isinstance(assistant, dict) or not isinstance(
+                synthetic_continue, dict
+            ):
+                return False
+            continue_event = cls._trajectory_event(synthetic_continue)
+            assistant_event = cls._trajectory_event(assistant)
+            if not isinstance(continue_event, dict) or not isinstance(
+                assistant_event, dict
+            ):
+                return False
+            continue_id = continue_event.get("message_id")
+            return bool(
+                isinstance(continue_id, str)
+                and continue_id
+                and assistant.get("source") == "agent"
+                and assistant_event
+                == {
+                    "kind": OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
+                    "ordinary": True,
+                    "continue_message_id": continue_id,
+                    "parent_id": continue_id,
+                }
+            )
+
+        return cls._reflection_tail_state_machine(
+            tail,
+            is_prompt=lambda step: (
+                isinstance(step, dict)
+                and step.get("source") == "user"
+                and OPENCODE_EVENT_KEY not in step
+                and isinstance(step.get("message"), str)
+                and cls._opencode_exported_prompt_matches(step["message"], prompt)
+            ),
+            is_regular_assistant=lambda step: (
+                isinstance(step, dict)
+                and step.get("source") == "agent"
+                and OPENCODE_EVENT_KEY not in step
+            ),
+            is_compaction_sequence=is_compaction_sequence,
+            is_post_compaction_assistant=is_post_compaction_assistant,
+        )
 
     @classmethod
     def _verify_trajectory_continuity(
@@ -1046,19 +1187,7 @@ class SkillEvolBenchHooks:
                 "reflection-trajectory-prefix-mismatch", task_id=task_id
             )
         tail = full_steps[len(solve_steps) :]
-        if not (
-            len(tail) >= 2
-            and isinstance(tail[0], dict)
-            and tail[0].get("source") == "user"
-            and isinstance(tail[0].get("message"), str)
-            and cls._opencode_exported_prompt_matches(
-                tail[0]["message"], prompt
-            )
-            and all(
-                isinstance(step, dict) and step.get("source") == "agent"
-                for step in tail[1:]
-            )
-        ):
+        if not cls._trajectory_tail_is_valid(tail, prompt=prompt):
             raise UnscoreableTrialError(
                 "reflection-trajectory-tail-invalid", task_id=task_id
             )
@@ -1075,6 +1204,150 @@ class SkillEvolBenchHooks:
             if isinstance(part, dict)
             and part.get("type") == "text"
             and isinstance(part.get("text"), str)
+        )
+
+    @staticmethod
+    def _export_info(message: Any) -> dict[str, Any] | None:
+        if not isinstance(message, dict):
+            return None
+        info = message.get("info")
+        return info if isinstance(info, dict) else None
+
+    @staticmethod
+    def _export_parts(message: Any) -> list[Any] | None:
+        if not isinstance(message, dict):
+            return None
+        parts = message.get("parts")
+        return parts if isinstance(parts, list) else None
+
+    @classmethod
+    def _export_exact_user_text(
+        cls,
+        message: Any,
+        *,
+        matches: Callable[[str], bool],
+    ) -> bool:
+        info = cls._export_info(message)
+        parts = cls._export_parts(message)
+        return bool(
+            info is not None
+            and info.get("role") == "user"
+            and "summary" not in info
+            and parts is not None
+            and len(parts) == 1
+            and isinstance(parts[0], dict)
+            and parts[0].get("type") == "text"
+            and isinstance(parts[0].get("text"), str)
+            and "synthetic" not in parts[0]
+            and "metadata" not in parts[0]
+            and matches(parts[0]["text"])
+        )
+
+    @classmethod
+    def _export_regular_assistant(cls, message: Any) -> bool:
+        info = cls._export_info(message)
+        parts = cls._export_parts(message)
+        return bool(
+            info is not None
+            and info.get("role") == "assistant"
+            and "summary" not in info
+            and parts is not None
+            and all(
+                isinstance(part, dict) and part.get("type") != "compaction"
+                for part in parts
+            )
+        )
+
+    @classmethod
+    def _export_compaction_sequence(
+        cls, compaction: Any, summary: Any, synthetic_continue: Any
+    ) -> bool:
+        compaction_info = cls._export_info(compaction)
+        compaction_parts = cls._export_parts(compaction)
+        summary_info = cls._export_info(summary)
+        summary_parts = cls._export_parts(summary)
+        continue_info = cls._export_info(synthetic_continue)
+        continue_parts = cls._export_parts(synthetic_continue)
+        if not all(
+            isinstance(info, dict)
+            for info in (compaction_info, summary_info, continue_info)
+        ):
+            return False
+        if not all(
+            isinstance(parts, list)
+            for parts in (compaction_parts, summary_parts, continue_parts)
+        ):
+            return False
+        if len(compaction_parts) != 1 or len(continue_parts) != 1:
+            return False
+
+        compaction_part = compaction_parts[0]
+        continue_part = continue_parts[0]
+        if not isinstance(compaction_part, dict) or not isinstance(continue_part, dict):
+            return False
+        compaction_id = compaction_info.get("id")
+        continue_id = continue_info.get("id")
+        overflow = compaction_part.get("overflow")
+        return bool(
+            isinstance(compaction_id, str)
+            and compaction_id
+            and isinstance(summary_info.get("id"), str)
+            and summary_info["id"]
+            and isinstance(continue_id, str)
+            and continue_id
+            and isinstance(overflow, bool)
+            and compaction_info.get("role") == "user"
+            and "summary" not in compaction_info
+            and compaction_part.get("type") == "compaction"
+            and compaction_part.get("auto") is True
+            and compaction_part.get("messageID") == compaction_id
+            and summary_info.get("role") == "assistant"
+            and summary_info.get("summary") is True
+            and summary_info.get("mode") == "compaction"
+            and summary_info.get("agent") == "compaction"
+            and summary_info.get("parentID") == compaction_id
+            and all(
+                isinstance(part, dict) and part.get("type") != "compaction"
+                for part in summary_parts
+            )
+            and continue_info.get("role") == "user"
+            and "summary" not in continue_info
+            and continue_part.get("type") == "text"
+            and continue_part.get("text")
+            == opencode_synthetic_continue(overflow=overflow)
+            and continue_part.get("synthetic") is True
+            and continue_part.get("metadata") == {"compaction_continue": True}
+            and continue_part.get("messageID") == continue_id
+        )
+
+    @classmethod
+    def _export_post_compaction_assistant(
+        cls, assistant: Any, synthetic_continue: Any
+    ) -> bool:
+        continue_info = cls._export_info(synthetic_continue)
+        assistant_info = cls._export_info(assistant)
+        return bool(
+            isinstance(continue_info, dict)
+            and isinstance(continue_info.get("id"), str)
+            and continue_info["id"]
+            and cls._export_regular_assistant(assistant)
+            and isinstance(assistant_info, dict)
+            and assistant_info.get("parentID") == continue_info["id"]
+        )
+
+    @classmethod
+    def _export_tail_is_valid(cls, tail: list[Any], *, prompt: str) -> bool:
+        return cls._reflection_tail_state_machine(
+            tail,
+            is_prompt=lambda message: cls._export_exact_user_text(
+                message,
+                matches=lambda text: cls._opencode_exported_prompt_matches(
+                    text, prompt
+                ),
+            ),
+            is_regular_assistant=cls._export_regular_assistant,
+            is_compaction_sequence=cls._export_compaction_sequence,
+            is_post_compaction_assistant=cls._export_post_compaction_assistant,
         )
 
     @classmethod
@@ -1100,21 +1373,7 @@ class SkillEvolBenchHooks:
                 "reflection-export-prefix-mismatch", task_id=task_id
             )
         tail = full_messages[len(solve_messages) :]
-        if not (
-            len(tail) >= 2
-            and isinstance(tail[0], dict)
-            and isinstance(tail[0].get("info"), dict)
-            and tail[0]["info"].get("role") == "user"
-            and cls._opencode_exported_prompt_matches(
-                cls._export_message_text(tail[0]), prompt
-            )
-            and all(
-                isinstance(message, dict)
-                and isinstance(message.get("info"), dict)
-                and message["info"].get("role") == "assistant"
-                for message in tail[1:]
-            )
-        ):
+        if not cls._export_tail_is_valid(tail, prompt=prompt):
             raise UnscoreableTrialError(
                 "reflection-export-tail-invalid", task_id=task_id
             )
@@ -1143,10 +1402,14 @@ class SkillEvolBenchHooks:
                 rel_bytes = rel.as_posix().encode("utf-8", errors="surrogateescape")
                 mode = stat.S_IMODE(metadata.st_mode)
                 if stat.S_ISDIR(metadata.st_mode):
-                    digest.update(b"D\0" + rel_bytes + b"\0" + str(mode).encode() + b"\0")
+                    digest.update(
+                        b"D\0" + rel_bytes + b"\0" + str(mode).encode() + b"\0"
+                    )
                     visit(Path(entry.path), rel)
                 elif stat.S_ISREG(metadata.st_mode):
-                    digest.update(b"F\0" + rel_bytes + b"\0" + str(mode).encode() + b"\0")
+                    digest.update(
+                        b"F\0" + rel_bytes + b"\0" + str(mode).encode() + b"\0"
+                    )
                     file_digest = hashlib.sha256()
                     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
                     try:
@@ -1271,15 +1534,9 @@ class SkillEvolBenchHooks:
                 )
 
     @classmethod
-    async def _restart_main_and_prove(
-        cls, trial: Any, *, task_id: str
-    ) -> None:
-        restart = getattr(
-            trial.agent_environment, "restart_main_service", None
-        )
-        identity = getattr(
-            trial.agent_environment, "main_service_identity", None
-        )
+    async def _restart_main_and_prove(cls, trial: Any, *, task_id: str) -> None:
+        restart = getattr(trial.agent_environment, "restart_main_service", None)
+        identity = getattr(trial.agent_environment, "main_service_identity", None)
         if not callable(restart) or not callable(identity):
             raise UnscoreableTrialError(
                 "reflection-environment-cannot-restart-same-container",
@@ -1288,12 +1545,8 @@ class SkillEvolBenchHooks:
         await restart()
         trial._sevb_agent_main_stopped = False
         restarted_identity = await identity()
-        running_identity = await cls._main_running_identity(
-            trial, task_id=task_id
-        )
-        expected_identity = getattr(
-            trial, "_sevb_agent_container_identity", None
-        )
+        running_identity = await cls._main_running_identity(trial, task_id=task_id)
+        expected_identity = getattr(trial, "_sevb_agent_container_identity", None)
         if (
             not expected_identity
             or restarted_identity != expected_identity
@@ -1302,9 +1555,7 @@ class SkillEvolBenchHooks:
             raise UnscoreableTrialError(
                 "reflection-container-identity-changed", task_id=task_id
             )
-        healthcheck = getattr(
-            trial.agent_environment, "run_healthcheck", None
-        )
+        healthcheck = getattr(trial.agent_environment, "run_healthcheck", None)
         if callable(healthcheck):
             await healthcheck()
 
@@ -1369,6 +1620,7 @@ class SkillEvolBenchHooks:
         # primary retriever for non-T6 (defensive -- shadows are only
         # scheduled for T6 anyway).
         from skillevolbench.components.retriever import OracleRetriever
+
         oracle = OracleRetriever(
             task_registry=self.task_registry,
             inner=self.runtime.retriever,
@@ -1386,8 +1638,9 @@ class SkillEvolBenchHooks:
         # for the shadow we need the suffixed dir, so we patch
         # ``task.task_id`` momentarily via a small wrapper object).
         from types import SimpleNamespace
+
         shadow_task = SimpleNamespace(
-            task_id=runtime_basename,                # <task_id>__oracle_shadow
+            task_id=runtime_basename,  # <task_id>__oracle_shadow
             task_slug=task.task_slug,
             family_id=task.family_id,
             environment_id=task.environment_id,
@@ -1402,9 +1655,9 @@ class SkillEvolBenchHooks:
             run_root=self.runtime.run_root,
             baseline=self.runtime.baseline,
             retrieved_skills=(retrieval.skills if retrieval else []),
-            retrieved_trajectories=[],   # shadow does not see traj RAG
-            history_context=None,        # shadow does not see history
-            library_frozen=True,         # always frozen (we're at T6 eval)
+            retrieved_trajectories=[],  # shadow does not see traj RAG
+            history_context=None,  # shadow does not see history
+            library_frozen=True,  # always frozen (we're at T6 eval)
             runtime_basename=runtime_basename,
         )
 
@@ -1507,9 +1760,7 @@ class SkillEvolBenchHooks:
             # deliberately skipped reflection keeps the ordinary solve path.
             if reflection_record.status in {"completed", "noop", "rejected"}:
                 solve_path = reflection_record.solve_trajectory_path
-                full_session_trajectory = (
-                    reflection_record.full_session_trajectory_path
-                )
+                full_session_trajectory = reflection_record.full_session_trajectory_path
                 if (
                     solve_path is None
                     or full_session_trajectory is None
@@ -1539,10 +1790,12 @@ class SkillEvolBenchHooks:
         #       these separate ensures the "raw episodic experience" baseline
         #       doesn't silently inherit abstraction-friendly preprocessing.
         compacted = self.runtime.compactor.compact(
-            outcome.trajectory_path, outcome=outcome,
+            outcome.trajectory_path,
+            outcome=outcome,
         )
         compacted_rough = self.runtime.compactor_rough.compact(
-            outcome.trajectory_path, outcome=outcome,
+            outcome.trajectory_path,
+            outcome=outcome,
         )
 
         # 4. Persist ReplayRecord (Part 5 ReplayStore).
@@ -1644,7 +1897,8 @@ class SkillEvolBenchHooks:
 
         # 6. Learning block: build context + dispatch to strategy.
         from skillevolbench.strategies.base import (  # lazy: stub-safe at runtime
-            ApplyPatch, EvolutionContext,
+            ApplyPatch,
+            EvolutionContext,
         )
 
         if self.runtime.baseline.skill_update_source == "same_agent_session":
@@ -1656,6 +1910,7 @@ class SkillEvolBenchHooks:
                 decision = ApplyPatch(patch=reflection_record.patch)
             else:
                 from skillevolbench.strategies.base import NoOp
+
                 decision = NoOp(
                     reason=(
                         f"reflection_{reflection_record.status}:"
@@ -1736,7 +1991,7 @@ class SkillEvolBenchHooks:
                 self._learning_completed_per_env.get(env_id, 0) + 1
             )
             n_families_in_env = len(self.task_registry.families_in_env(env_id))
-            target = n_families_in_env * 3   # 3 learning roles per family
+            target = n_families_in_env * 3  # 3 learning roles per family
             if (
                 self._learning_completed_per_env[env_id] >= target
                 and not self.runtime.freeze_ctrl.frozen
@@ -1783,8 +2038,12 @@ class SkillEvolBenchHooks:
                     "from_env": prev_env,
                     "to_env": new_env,
                     "from_env_library_path": str(
-                        getattr(self.runtime, "library_root",
-                                self.runtime.run_root / "library") / prev_env
+                        getattr(
+                            self.runtime,
+                            "library_root",
+                            self.runtime.run_root / "library",
+                        )
+                        / prev_env
                     ),
                 },
             )

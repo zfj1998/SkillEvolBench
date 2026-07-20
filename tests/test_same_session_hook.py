@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 import shutil
 from contextlib import contextmanager
@@ -13,6 +14,14 @@ from skillevolbench.baselines import load_baseline
 from skillevolbench.components.verifier_adapter import UnscoreableTrialError
 from skillevolbench.harbor_ext import hooks as hooks_module
 from skillevolbench.harbor_ext.hooks import SkillEvolBenchHooks
+from skillevolbench.opencode_continuity import (
+    OPENCODE_AUTO_COMPACTION_KIND,
+    OPENCODE_COMPACTION_CONTINUE_KIND,
+    OPENCODE_COMPACTION_SUMMARY_KIND,
+    OPENCODE_EVENT_KEY,
+    OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
+    opencode_synthetic_continue,
+)
 from skillevolbench.schemas import TrialOutcome
 
 
@@ -21,6 +30,7 @@ SESSION_ID = "ses-1"
 
 class _FakeAgentTimeoutError(asyncio.TimeoutError):
     pass
+
 
 TASK = SimpleNamespace(
     task_id="E1-LS1-T1",
@@ -65,6 +75,176 @@ def _trajectory(messages: list[tuple[str, str]]) -> dict:
         ],
         "final_metrics": {},
     }
+
+
+def _trajectory_with_tail(solve: dict, tail: list[dict]) -> dict:
+    full = copy.deepcopy(solve)
+    full["steps"].extend(copy.deepcopy(tail))
+    for index, step in enumerate(full["steps"], start=1):
+        step["step_id"] = index
+    return full
+
+
+def _trajectory_compaction_sequence(
+    index: int, *, overflow: bool = False
+) -> list[dict]:
+    compaction_id = f"compaction-{index}"
+    summary_id = f"summary-{index}"
+    continue_id = f"continue-{index}"
+    return [
+        {
+            "source": "user",
+            "message": "",
+            OPENCODE_EVENT_KEY: {
+                "kind": OPENCODE_AUTO_COMPACTION_KIND,
+                "auto": True,
+                "overflow": overflow,
+                "exclusive": True,
+                "message_id": compaction_id,
+                "part_message_id": compaction_id,
+            },
+        },
+        {
+            "source": "agent",
+            "message": "bounded summary",
+            OPENCODE_EVENT_KEY: {
+                "kind": OPENCODE_COMPACTION_SUMMARY_KIND,
+                "summary": True,
+                "mode": "compaction",
+                "agent": "compaction",
+                "message_id": summary_id,
+                "parent_id": compaction_id,
+            },
+        },
+        {
+            "source": "user",
+            "message": opencode_synthetic_continue(overflow=overflow),
+            OPENCODE_EVENT_KEY: {
+                "kind": OPENCODE_COMPACTION_CONTINUE_KIND,
+                "synthetic": True,
+                "metadata": {"compaction_continue": True},
+                "exclusive": True,
+                "message_id": continue_id,
+                "part_message_id": continue_id,
+            },
+        },
+        {
+            "source": "agent",
+            "message": "continued reflection",
+            OPENCODE_EVENT_KEY: {
+                "kind": OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
+                "ordinary": True,
+                "continue_message_id": continue_id,
+                "parent_id": continue_id,
+            },
+        },
+    ]
+
+
+def _export_compaction_sequence(index: int, *, overflow: bool = False) -> list[dict]:
+    compaction_id = f"compaction-{index}"
+    summary_id = f"summary-{index}"
+    continue_id = f"continue-{index}"
+    return_id = f"return-{index}"
+    return [
+        {
+            "info": {
+                "id": compaction_id,
+                "role": "user",
+                "sessionID": SESSION_ID,
+            },
+            "parts": [
+                {
+                    "type": "compaction",
+                    "auto": True,
+                    "overflow": overflow,
+                    "messageID": compaction_id,
+                    "sessionID": SESSION_ID,
+                }
+            ],
+        },
+        {
+            "info": {
+                "id": summary_id,
+                "role": "assistant",
+                "sessionID": SESSION_ID,
+                "parentID": compaction_id,
+                "mode": "compaction",
+                "agent": "compaction",
+                "summary": True,
+            },
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "bounded summary",
+                    "messageID": summary_id,
+                    "sessionID": SESSION_ID,
+                }
+            ],
+        },
+        {
+            "info": {
+                "id": continue_id,
+                "role": "user",
+                "sessionID": SESSION_ID,
+            },
+            "parts": [
+                {
+                    "type": "text",
+                    "text": opencode_synthetic_continue(overflow=overflow),
+                    "synthetic": True,
+                    "metadata": {"compaction_continue": True},
+                    "messageID": continue_id,
+                    "sessionID": SESSION_ID,
+                }
+            ],
+        },
+        {
+            "info": {
+                "id": return_id,
+                "role": "assistant",
+                "sessionID": SESSION_ID,
+                "parentID": continue_id,
+            },
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "continued reflection",
+                    "messageID": return_id,
+                    "sessionID": SESSION_ID,
+                }
+            ],
+        },
+    ]
+
+
+def _compacted_continuity_payloads(
+    overflows: tuple[bool, ...] = (False,),
+) -> tuple[dict, dict, dict, dict]:
+    prompt = "reflect exactly"
+    solve_trajectory = _trajectory(
+        [("user", "solve prompt"), ("agent", "solve answer")]
+    )
+    trajectory_tail = [
+        {"source": "user", "message": prompt},
+        {"source": "agent", "message": "reflection before compaction"},
+    ]
+    export_tail = [
+        _export_message("user", prompt),
+        _export_message("assistant", "reflection before compaction"),
+    ]
+    for index, overflow in enumerate(overflows):
+        trajectory_tail.extend(
+            _trajectory_compaction_sequence(index, overflow=overflow)
+        )
+        export_tail.extend(_export_compaction_sequence(index, overflow=overflow))
+    full_trajectory = _trajectory_with_tail(solve_trajectory, trajectory_tail)
+    solve_export = _solve_export()
+    full_export = {
+        "info": {"id": SESSION_ID},
+        "messages": [*copy.deepcopy(solve_export["messages"]), *export_tail],
+    }
+    return solve_trajectory, full_trajectory, solve_export, full_export
 
 
 class _Library:
@@ -162,7 +342,6 @@ class _Agent:
         context.n_output_tokens = 2
         context.n_cache_tokens = 0
 
-
     async def recover_timed_out_resume(self, environment, *, timeout_sec: int) -> str:
         self.recovery_calls += 1
         self.recovery_timeout_sec = timeout_sec
@@ -198,6 +377,7 @@ class _Agent:
         )
         return SESSION_ID
 
+
 class _Trial:
     def __init__(
         self,
@@ -220,9 +400,7 @@ class _Trial:
         self.paths.agent_dir.mkdir(parents=True)
         self.paths.verifier_dir.mkdir()
         (self.paths.verifier_dir / "reward.txt").write_text("0.0\n")
-        (self.paths.verifier_dir / "hidden-detail.json").write_text(
-            '{"secret": true}'
-        )
+        (self.paths.verifier_dir / "hidden-detail.json").write_text('{"secret": true}')
         self.task_workspace = root / "container-task"
         self.task_workspace.mkdir()
         (self.task_workspace / "answer.txt").write_text("solve state\n")
@@ -231,9 +409,7 @@ class _Trial:
         (task_snapshot / "answer.txt").write_text("solve state\n")
         (self.paths.agent_dir / "trajectory.json").write_text(
             json.dumps(
-                _trajectory(
-                    [("user", "solve prompt"), ("agent", "solve answer")]
-                )
+                _trajectory([("user", "solve prompt"), ("agent", "solve answer")])
             )
         )
         (self.paths.agent_dir / "opencode.session.json").write_text(
@@ -292,9 +468,7 @@ class _Trial:
         )
         if self.phase_error is None:
             (self.paths.agent_dir / "opencode.session.json").write_text(
-                json.dumps(
-                    {"info": {"id": SESSION_ID}, "messages": solve_messages}
-                )
+                json.dumps({"info": {"id": SESSION_ID}, "messages": solve_messages})
             )
         if not self.missing_reflection_stream:
             (self.paths.agent_dir / "opencode.reflection.jsonl").write_text(
@@ -341,9 +515,7 @@ class _Trial:
         )
 
     async def _stop_agent_environment(self) -> None:
-        self.verifier_was_hidden_at_cleanup = not any(
-            self.paths.verifier_dir.iterdir()
-        )
+        self.verifier_was_hidden_at_cleanup = not any(self.paths.verifier_dir.iterdir())
         if not self.agent_environment.refuse_stop:
             self.agent_environment.running = False
         self._is_agent_environment_stopped = True
@@ -413,7 +585,7 @@ def test_post_verifier_resume_is_host_audited_and_continuous(
 
 def test_continuity_accepts_exact_pinned_cli_prompt_rendering() -> None:
     prompt = '# Reflect\n\nFeedback: {"passed": true}\nPath: C:\\work\n'
-    cli_rendered = '"' + prompt.replace('"', r'\"') + '"'
+    cli_rendered = '"' + prompt.replace('"', r"\"") + '"'
     solve_trajectory = _trajectory(
         [("user", "solve prompt"), ("agent", "solve answer")]
     )
@@ -453,6 +625,176 @@ def test_continuity_accepts_exact_pinned_cli_prompt_rendering() -> None:
         )
         == SESSION_ID
     )
+
+
+@pytest.mark.parametrize("overflows", [(False,), (True,), (False, True)])
+def test_continuity_accepts_strict_auto_compaction_sequences(
+    overflows: tuple[bool, ...],
+) -> None:
+    solve_trajectory, full_trajectory, solve_export, full_export = (
+        _compacted_continuity_payloads(overflows)
+    )
+
+    assert (
+        SkillEvolBenchHooks._verify_trajectory_continuity(
+            solve_trajectory,
+            full_trajectory,
+            prompt="reflect exactly",
+            task_id=TASK.task_id,
+        )
+        == SESSION_ID
+    )
+    assert (
+        SkillEvolBenchHooks._verify_export_continuity(
+            solve_export,
+            full_export,
+            prompt="reflect exactly",
+            task_id=TASK.task_id,
+        )
+        == SESSION_ID
+    )
+
+
+@pytest.mark.parametrize(
+    "near_miss",
+    [
+        "auto_false",
+        "overflow_not_bool",
+        "nonexclusive_compaction",
+        "missing_summary",
+        "misordered_summary",
+        "summary_false",
+        "summary_parent_mismatch",
+        "wrong_continue",
+        "continue_metadata_false",
+        "missing_return_assistant",
+        "return_parent_mismatch",
+        "arbitrary_user",
+    ],
+)
+def test_trajectory_compaction_near_misses_fail_closed(near_miss: str) -> None:
+    solve, full, _solve_export_payload, _full_export_payload = (
+        _compacted_continuity_payloads()
+    )
+    tail = full["steps"][len(solve["steps"]) :]
+    compaction, summary, synthetic_continue, returned = tail[2:6]
+
+    if near_miss == "auto_false":
+        compaction[OPENCODE_EVENT_KEY]["auto"] = False
+    elif near_miss == "overflow_not_bool":
+        compaction[OPENCODE_EVENT_KEY]["overflow"] = "false"
+    elif near_miss == "nonexclusive_compaction":
+        compaction[OPENCODE_EVENT_KEY]["exclusive"] = False
+    elif near_miss == "missing_summary":
+        tail.pop(3)
+    elif near_miss == "misordered_summary":
+        tail[3], tail[4] = tail[4], tail[3]
+    elif near_miss == "summary_false":
+        summary[OPENCODE_EVENT_KEY]["summary"] = False
+    elif near_miss == "summary_parent_mismatch":
+        summary[OPENCODE_EVENT_KEY]["parent_id"] = "wrong-parent"
+    elif near_miss == "wrong_continue":
+        synthetic_continue["message"] += " altered"
+    elif near_miss == "continue_metadata_false":
+        synthetic_continue[OPENCODE_EVENT_KEY]["metadata"] = {
+            "compaction_continue": False
+        }
+    elif near_miss == "missing_return_assistant":
+        tail.pop(5)
+    elif near_miss == "return_parent_mismatch":
+        returned[OPENCODE_EVENT_KEY]["parent_id"] = "wrong-parent"
+    elif near_miss == "arbitrary_user":
+        tail.insert(2, {"source": "user", "message": "arbitrary user turn"})
+    else:  # pragma: no cover - guarded by the parameter list
+        raise AssertionError(near_miss)
+    full["steps"] = [*solve["steps"], *tail]
+
+    with pytest.raises(UnscoreableTrialError) as error:
+        SkillEvolBenchHooks._verify_trajectory_continuity(
+            solve,
+            full,
+            prompt="reflect exactly",
+            task_id=TASK.task_id,
+        )
+
+    assert error.value.reason == "reflection-trajectory-tail-invalid"
+
+
+@pytest.mark.parametrize(
+    "near_miss",
+    [
+        "auto_false",
+        "overflow_not_bool",
+        "extra_compaction_part",
+        "missing_summary",
+        "misordered_summary",
+        "summary_false",
+        "summary_mode_wrong",
+        "summary_agent_wrong",
+        "summary_parent_mismatch",
+        "wrong_continue",
+        "continue_synthetic_false",
+        "continue_metadata_false",
+        "continue_message_link_mismatch",
+        "missing_return_assistant",
+        "return_parent_mismatch",
+        "arbitrary_user",
+    ],
+)
+def test_export_compaction_near_misses_fail_closed(near_miss: str) -> None:
+    _solve_trajectory, _full_trajectory, solve, full = _compacted_continuity_payloads()
+    tail = full["messages"][len(solve["messages"]) :]
+    compaction, summary, synthetic_continue, returned = tail[2:6]
+    compaction_part = compaction["parts"][0]
+    continue_part = synthetic_continue["parts"][0]
+
+    if near_miss == "auto_false":
+        compaction_part["auto"] = False
+    elif near_miss == "overflow_not_bool":
+        compaction_part["overflow"] = "false"
+    elif near_miss == "extra_compaction_part":
+        compaction["parts"].append(
+            {"type": "text", "text": "extra", "sessionID": SESSION_ID}
+        )
+    elif near_miss == "missing_summary":
+        tail.pop(3)
+    elif near_miss == "misordered_summary":
+        tail[3], tail[4] = tail[4], tail[3]
+    elif near_miss == "summary_false":
+        summary["info"]["summary"] = False
+    elif near_miss == "summary_mode_wrong":
+        summary["info"]["mode"] = "build"
+    elif near_miss == "summary_agent_wrong":
+        summary["info"]["agent"] = "build"
+    elif near_miss == "summary_parent_mismatch":
+        summary["info"]["parentID"] = "wrong-parent"
+    elif near_miss == "wrong_continue":
+        continue_part["text"] += " altered"
+    elif near_miss == "continue_synthetic_false":
+        continue_part["synthetic"] = False
+    elif near_miss == "continue_metadata_false":
+        continue_part["metadata"] = {"compaction_continue": False}
+    elif near_miss == "continue_message_link_mismatch":
+        continue_part["messageID"] = "wrong-message"
+    elif near_miss == "missing_return_assistant":
+        tail.pop(5)
+    elif near_miss == "return_parent_mismatch":
+        returned["info"]["parentID"] = "wrong-parent"
+    elif near_miss == "arbitrary_user":
+        tail.insert(2, _export_message("user", "arbitrary user turn"))
+    else:  # pragma: no cover - guarded by the parameter list
+        raise AssertionError(near_miss)
+    full["messages"] = [*solve["messages"], *tail]
+
+    with pytest.raises(UnscoreableTrialError) as error:
+        SkillEvolBenchHooks._verify_export_continuity(
+            solve,
+            full,
+            prompt="reflect exactly",
+            task_id=TASK.task_id,
+        )
+
+    assert error.value.reason == "reflection-export-tail-invalid"
 
 
 @pytest.mark.parametrize(

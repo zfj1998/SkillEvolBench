@@ -12,6 +12,14 @@ from harbor.agents.installed.opencode import OpenCode
 from harbor.agents.installed.base import NonZeroAgentExitCodeError, with_prompt_template
 from harbor.environments.base import BaseEnvironment
 
+from skillevolbench.opencode_continuity import (
+    OPENCODE_AUTO_COMPACTION_KIND,
+    OPENCODE_COMPACTION_CONTINUE_KIND,
+    OPENCODE_COMPACTION_SUMMARY_KIND,
+    OPENCODE_EVENT_KEY,
+    OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
+)
+
 
 def _toml_value(value: Any) -> str:
     if isinstance(value, str):
@@ -221,9 +229,7 @@ class CodexPreinstalled(_PreinstalledMixin, Codex):
                     _codex_config_flag(
                         f"model_providers.{provider}.base_url", base_url
                     ),
-                    _codex_config_flag(
-                        f"model_providers.{provider}.env_key", env_key
-                    ),
+                    _codex_config_flag(f"model_providers.{provider}.env_key", env_key),
                     _codex_config_flag(
                         f"model_providers.{provider}.wire_api", wire_api
                     ),
@@ -392,8 +398,8 @@ class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
 
         if len(text) < 2 or not text.startswith('"') or not text.endswith('"'):
             return text
-        candidate = text[1:-1].replace(r'\"', '"')
-        rendered = '"' + candidate.replace('"', r'\"') + '"'
+        candidate = text[1:-1].replace(r"\"", '"')
+        rendered = '"' + candidate.replace('"', r"\"") + '"'
         return candidate if rendered == text else text
 
     @staticmethod
@@ -461,7 +467,7 @@ class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
         export_info = export["info"]
         steps: list[dict[str, Any]] = []
 
-        for message in export["messages"]:
+        for message_index, message in enumerate(export["messages"]):
             info = message["info"]
             role = info.get("role")
             if role not in ("user", "assistant"):
@@ -483,6 +489,52 @@ class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
                         self._text_parts(parts, "text")
                     ),
                 }
+                compaction_parts = [
+                    part
+                    for part in parts
+                    if isinstance(part, dict) and part.get("type") == "compaction"
+                ]
+                if compaction_parts:
+                    compaction = (
+                        compaction_parts[0] if len(compaction_parts) == 1 else {}
+                    )
+                    step[OPENCODE_EVENT_KEY] = {
+                        "kind": OPENCODE_AUTO_COMPACTION_KIND,
+                        "auto": compaction.get("auto"),
+                        "overflow": compaction.get("overflow"),
+                        "exclusive": len(parts) == len(compaction_parts) == 1,
+                        "message_id": info.get("id"),
+                        "part_message_id": compaction.get("messageID"),
+                    }
+                else:
+                    synthetic_parts = [
+                        part
+                        for part in parts
+                        if isinstance(part, dict)
+                        and part.get("type") == "text"
+                        and (
+                            "synthetic" in part
+                            or (
+                                isinstance(part.get("metadata"), dict)
+                                and "compaction_continue" in part["metadata"]
+                            )
+                        )
+                    ]
+                    if synthetic_parts:
+                        synthetic = (
+                            synthetic_parts[0] if len(synthetic_parts) == 1 else {}
+                        )
+                        metadata = synthetic.get("metadata")
+                        if not isinstance(metadata, dict):
+                            metadata = {}
+                        step[OPENCODE_EVENT_KEY] = {
+                            "kind": OPENCODE_COMPACTION_CONTINUE_KIND,
+                            "synthetic": synthetic.get("synthetic"),
+                            "metadata": metadata,
+                            "exclusive": len(parts) == len(synthetic_parts) == 1,
+                            "message_id": info.get("id"),
+                            "part_message_id": synthetic.get("messageID"),
+                        }
                 if timestamp:
                     step["timestamp"] = timestamp
                 steps.append(step)
@@ -557,6 +609,44 @@ class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
                 "llm_call_count": 1,
                 "metrics": metrics,
             }
+            if "summary" in info:
+                step[OPENCODE_EVENT_KEY] = {
+                    "kind": OPENCODE_COMPACTION_SUMMARY_KIND,
+                    "summary": info.get("summary"),
+                    "mode": info.get("mode"),
+                    "agent": info.get("agent"),
+                    "message_id": info.get("id"),
+                    "parent_id": info.get("parentID"),
+                }
+            elif message_index > 0:
+                previous = export["messages"][message_index - 1]
+                previous_info = (
+                    previous.get("info") if isinstance(previous, dict) else None
+                )
+                previous_parts = (
+                    previous.get("parts") if isinstance(previous, dict) else None
+                )
+                if isinstance(previous_info, dict) and isinstance(previous_parts, list):
+                    continue_candidates = [
+                        part
+                        for part in previous_parts
+                        if isinstance(part, dict)
+                        and part.get("type") == "text"
+                        and (
+                            "synthetic" in part
+                            or (
+                                isinstance(part.get("metadata"), dict)
+                                and "compaction_continue" in part["metadata"]
+                            )
+                        )
+                    ]
+                    if continue_candidates:
+                        step[OPENCODE_EVENT_KEY] = {
+                            "kind": OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
+                            "ordinary": "summary" not in info,
+                            "continue_message_id": previous_info.get("id"),
+                            "parent_id": info.get("parentID"),
+                        }
             if timestamp:
                 step["timestamp"] = timestamp
             if reasoning:
@@ -726,8 +816,7 @@ class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
 
         if not self._opencode_session_id:
             raise RuntimeError(
-                "Cannot recover OpenCode reflection without a captured solve "
-                "sessionID"
+                "Cannot recover OpenCode reflection without a captured solve sessionID"
             )
         events = self._read_phase_events(self._REFLECTION_OUTPUT_FILENAME)
         session_id = self._capture_and_validate_session(events, resume=True)
@@ -736,9 +825,7 @@ class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
                 "OpenCode emitted error event(s): " + "; ".join(messages[:3])
             )
         if not self.model_name or "/" not in self.model_name:
-            raise ValueError(
-                "Model name must be in the format provider/model_name"
-            )
+            raise ValueError("Model name must be in the format provider/model_name")
         provider, _ = self.model_name.split("/", 1)
         await self._export_session(
             environment,
@@ -884,7 +971,9 @@ class GeminiCliPreinstalled(_PreinstalledMixin, GeminiCli):
         super().populate_context_post_run(context)
 
     @with_prompt_template
-    async def run(self, instruction: str, environment: BaseEnvironment, context) -> None:
+    async def run(
+        self, instruction: str, environment: BaseEnvironment, context
+    ) -> None:
         escaped_instruction = shlex.quote(instruction)
 
         if not self.model_name or "/" not in self.model_name:
@@ -975,7 +1064,9 @@ class KimiCliPreinstalled(_PreinstalledMixin, KimiCli):
         super().__init__(*args, **kwargs)
 
     @with_prompt_template
-    async def run(self, instruction: str, environment: BaseEnvironment, context) -> None:
+    async def run(
+        self, instruction: str, environment: BaseEnvironment, context
+    ) -> None:
         if not self.model_name or "/" not in self.model_name:
             raise ValueError("Model name must be in format provider/model_name")
 
