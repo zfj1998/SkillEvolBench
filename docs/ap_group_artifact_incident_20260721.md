@@ -37,6 +37,10 @@ job were cancelled at lower bounds of 14/30 and 23/30 completed primary tasks.
 Their continuation could not produce acceptable artifacts in the affected
 namespace and would only delay the replacement run.  Cancellation events,
 fallback state, and complete platform logs were retained and safety-scanned.
+The automatically triggered post-process job
+`ap-group-post-process-ce39bd7f868b50b5` was also cancelled after remaining
+Pending for 34 minutes: none of its six inputs had a downloadable benchmark
+artifact, so it could not produce an authoritative aggregate.
 
 In each case, the uploader successfully enumerated and compressed the output,
 then failed while opening the standard AP results object.  E1, E3, and E4
