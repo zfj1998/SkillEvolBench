@@ -106,7 +106,6 @@ def _sanitize(text: str, secrets: list[str]) -> str:
     for secret in secrets:
         if secret:
             sanitized = sanitized.replace(secret, "[REDACTED]")
-    sanitized = re.sub(r"\b(?:sk|ap)-[A-Za-z0-9_-]{6,}\b", "[REDACTED]", sanitized)
     sanitized = re.sub(
         r'(?i)("?(?:model_api_key|api_key|authorization)"?\s*[:=]\s*")[^"]*(")',
         r"\1[REDACTED]\2",

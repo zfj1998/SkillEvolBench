@@ -100,6 +100,15 @@ def test_credentials_are_required_and_sanitized() -> None:
     ) == ('api_key="[REDACTED]" model_api_key="[REDACTED]" ' "Authorization=[REDACTED]")
 
 
+def test_sanitize_preserves_non_secret_ap_identifiers() -> None:
+    text = (
+        '"job_id":"ap-skillevolbench-8a619e8ee39d4949-o4" '
+        '"User-Agent":"ap-client/0.1.16"'
+    )
+
+    assert submit._sanitize(text, []) == text
+
+
 def test_probe_model_checks_v1_models(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: dict[str, Any] = {}
 
