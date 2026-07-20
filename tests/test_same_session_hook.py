@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import shutil
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -10,11 +11,17 @@ import pytest
 
 from skillevolbench.baselines import load_baseline
 from skillevolbench.components.verifier_adapter import UnscoreableTrialError
+from skillevolbench.harbor_ext import hooks as hooks_module
 from skillevolbench.harbor_ext.hooks import SkillEvolBenchHooks
 from skillevolbench.schemas import TrialOutcome
 
 
 SESSION_ID = "ses-1"
+
+
+class _FakeAgentTimeoutError(asyncio.TimeoutError):
+    pass
+
 TASK = SimpleNamespace(
     task_id="E1-LS1-T1",
     family_id="E1-LS1",
@@ -84,12 +91,26 @@ class _Environment:
         self.running = False
         self.refuse_stop = False
         self.stop_calls = 0
+        self.restart_calls = 0
+        self.default_users: list[object] = []
+        self.exec_envs: list[dict[str, str]] = []
 
     async def empty_dirs(self, paths, chmod=False) -> None:
         self.empty_calls.append((list(paths), chmod))
 
     async def restart_main_service(self) -> None:
+        self.restart_calls += 1
         self.running = True
+
+    @contextmanager
+    def with_default_user(self, user):
+        self.default_users.append(user)
+        yield
+
+    @contextmanager
+    def scoped_exec_env(self, env):
+        self.exec_envs.append(dict(env))
+        yield
 
     async def main_service_identity(self) -> str:
         return "container-1"
@@ -119,6 +140,9 @@ class _Agent:
     def __init__(self, trial: "_Trial") -> None:
         self.trial = trial
         self.opencode_session_id = SESSION_ID
+        self.extra_env = {"OPENAI_API_KEY": "resolved-in-memory"}
+        self.recovery_calls = 0
+        self.recovery_timeout_sec: int | None = None
 
     def populate_context_post_run(self, context) -> None:
         assert not self.trial.agent_environment.running
@@ -139,6 +163,41 @@ class _Agent:
         context.n_cache_tokens = 0
 
 
+    async def recover_timed_out_resume(self, environment, *, timeout_sec: int) -> str:
+        self.recovery_calls += 1
+        self.recovery_timeout_sec = timeout_sec
+        assert environment.running
+        self.trial.verifier_was_hidden_during_recovery = not any(
+            self.trial.paths.verifier_dir.iterdir()
+        )
+        if self.trial.recovery_failure:
+            raise RuntimeError("export failed")
+        instruction = self.trial.reflection_instruction
+        assert instruction is not None
+        solve_messages = list(_solve_export()["messages"])
+        if self.trial.bad_prefix:
+            solve_messages[1] = _export_message("assistant", "tampered solve")
+        solve_messages.append(_export_message("user", instruction))
+        if not self.trial.missing_assistant_tail:
+            solve_messages.append(
+                _export_message("assistant", "encoded a reusable lesson")
+            )
+        export = {"info": {"id": SESSION_ID}, "messages": solve_messages}
+        (self.trial.paths.agent_dir / "opencode.session.json").write_text(
+            json.dumps(export)
+        )
+        steps = [
+            (
+                "user" if message["info"]["role"] == "user" else "agent",
+                message["parts"][0]["text"],
+            )
+            for message in solve_messages
+        ]
+        (self.trial.paths.agent_dir / "trajectory.json").write_text(
+            json.dumps(_trajectory(steps))
+        )
+        return SESSION_ID
+
 class _Trial:
     def __init__(
         self,
@@ -147,6 +206,10 @@ class _Trial:
         mutate_task: bool = False,
         bad_prefix: bool = False,
         candidate_kind: str = "valid",
+        phase_error: str | None = None,
+        missing_reflection_stream: bool = False,
+        missing_assistant_tail: bool = False,
+        recovery_failure: bool = False,
     ) -> None:
         self.paths = SimpleNamespace(
             trial_dir=root,
@@ -185,7 +248,11 @@ class _Trial:
             config=SimpleNamespace(agent=SimpleNamespace(user=None)),
         )
         self.config = SimpleNamespace()
-        self.result = SimpleNamespace(agent_result=None)
+        self.primary_agent_result = SimpleNamespace(source="solve")
+        self.result = SimpleNamespace(
+            agent_result=self.primary_agent_result,
+            exception_info=None,
+        )
         self.agent_environment = _Environment(self.task_workspace)
         self.agent = _Agent(self)
         self.agent_env_paths = SimpleNamespace(tests_dir="/tests")
@@ -194,10 +261,16 @@ class _Trial:
         self._sevb_agent_main_stopped = True
         self._sevb_agent_container_identity = "container-1"
         self.verifier_was_hidden_during_resume = False
+        self.verifier_was_hidden_during_recovery = False
         self.verifier_was_hidden_at_cleanup = False
         self.mutate_task = mutate_task
         self.bad_prefix = bad_prefix
         self.candidate_kind = candidate_kind
+        self.phase_error = phase_error
+        self.missing_reflection_stream = missing_reflection_stream
+        self.missing_assistant_tail = missing_assistant_tail
+        self.recovery_failure = recovery_failure
+        self.reflection_instruction: str | None = None
         self.outside_candidate = root / "outside-candidate.json"
 
     async def _run_agent_phase(self, *, target, instruction, resume, **_kwargs):
@@ -207,6 +280,7 @@ class _Trial:
         self.verifier_was_hidden_during_resume = not any(
             self.paths.verifier_dir.iterdir()
         )
+        self.reflection_instruction = instruction
         solve_messages = list(_solve_export()["messages"])
         if self.bad_prefix:
             solve_messages[1] = _export_message("assistant", "tampered solve")
@@ -216,12 +290,16 @@ class _Trial:
                 _export_message("assistant", "encoded a reusable lesson"),
             ]
         )
-        (self.paths.agent_dir / "opencode.session.json").write_text(
-            json.dumps({"info": {"id": SESSION_ID}, "messages": solve_messages})
-        )
-        (self.paths.agent_dir / "opencode.reflection.jsonl").write_text(
-            json.dumps({"type": "text", "sessionID": SESSION_ID}) + "\n"
-        )
+        if self.phase_error is None:
+            (self.paths.agent_dir / "opencode.session.json").write_text(
+                json.dumps(
+                    {"info": {"id": SESSION_ID}, "messages": solve_messages}
+                )
+            )
+        if not self.missing_reflection_stream:
+            (self.paths.agent_dir / "opencode.reflection.jsonl").write_text(
+                json.dumps({"type": "text", "sessionID": SESSION_ID}) + "\n"
+            )
         if self.mutate_task:
             (self.task_workspace / "answer.txt").write_text("reflection mutation\n")
 
@@ -247,6 +325,13 @@ class _Trial:
             candidate_path.write_text(json.dumps(candidate))
         else:
             candidate_path.write_text(json.dumps(candidate))
+
+        if self.phase_error == "agent_timeout":
+            raise _FakeAgentTimeoutError("reflection timed out")
+        if self.phase_error == "generic_timeout":
+            raise asyncio.TimeoutError("not Harbor AgentTimeoutError")
+        if self.phase_error == "runtime_error":
+            raise RuntimeError("reflection failed")
 
         target.agent_result = SimpleNamespace(
             cost_usd=None,
@@ -476,3 +561,158 @@ def test_verifier_stays_hidden_when_main_cannot_be_proven_stopped(
     assert (
         tmp_path / "self-reflection-audit" / "official-verifier" / "reward.txt"
     ).is_file()
+
+
+def test_agent_timeout_with_complete_evidence_is_terminal_rejected(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        hooks_module,
+        "_is_agent_timeout_error",
+        lambda exc: isinstance(exc, _FakeAgentTimeoutError),
+    )
+    hooks, trial, events = _build(tmp_path, phase_error="agent_timeout")
+
+    asyncio.run(hooks.on_post_verifier(trial))
+
+    record = hooks._reflection_cache[TASK.task_id]
+    assert record.status == "rejected"
+    assert record.reason == "reflection_agent_timeout"
+    assert record.patch is None
+    assert record.same_session_verified is True
+    assert record.trajectory_prefix_verified is True
+    assert record.export_prefix_verified is True
+    assert record.task_workspace_hash_before == record.task_workspace_hash_after
+    assert trial.result.agent_result is trial.primary_agent_result
+    assert trial.result.exception_info is None
+    assert trial.agent.recovery_calls == 1
+    assert trial.agent.recovery_timeout_sec == 60
+    assert trial.agent_environment.restart_calls == 2
+    assert trial.agent_environment.stop_calls == 2
+    assert trial.agent_environment.default_users == [None]
+    assert trial.agent_environment.exec_envs == [trial.agent.extra_env]
+    assert trial.verifier_was_hidden_during_resume is True
+    assert trial.verifier_was_hidden_during_recovery is True
+    assert trial.verifier_was_hidden_at_cleanup is True
+    assert not trial.agent_environment.running
+    assert (trial.paths.verifier_dir / "reward.txt").is_file()
+    audit = tmp_path / "self-reflection-audit"
+    assert (audit / "opencode.reflection.jsonl").is_file()
+    assert (audit / "trajectory.full.json").is_file()
+    assert (audit / "opencode.session.full.json").is_file()
+    assert (audit / "self_reflection_result.json").is_file()
+    assert not (audit / "self_reflection_patch.json").exists()
+    assert not (trial.paths.agent_dir / "self_reflection_patch.json").exists()
+    assert any(kind == "reflection_rejected" for kind, _ in events.items)
+
+
+def test_agent_timeout_missing_stream_remains_unscoreable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        hooks_module,
+        "_is_agent_timeout_error",
+        lambda exc: isinstance(exc, _FakeAgentTimeoutError),
+    )
+    hooks, trial, _events = _build(
+        tmp_path,
+        phase_error="agent_timeout",
+        missing_reflection_stream=True,
+    )
+
+    with pytest.raises(UnscoreableTrialError) as error:
+        asyncio.run(hooks.on_post_verifier(trial))
+
+    assert error.value.reason == "reflection-missing-reflection-stream"
+    assert trial.agent.recovery_calls == 0
+    assert not trial.agent_environment.running
+    assert (trial.paths.verifier_dir / "reward.txt").is_file()
+    assert not (trial.paths.agent_dir / "self_reflection_patch.json").exists()
+    assert TASK.task_id not in hooks._reflection_cache
+
+
+@pytest.mark.parametrize(
+    ("trial_kwargs", "reason"),
+    [
+        (
+            {"recovery_failure": True},
+            "reflection-timeout-recovery-failed",
+        ),
+        (
+            {"missing_assistant_tail": True},
+            "reflection-trajectory-tail-invalid",
+        ),
+    ],
+)
+def test_agent_timeout_recovery_failures_remain_unscoreable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    trial_kwargs: dict,
+    reason: str,
+) -> None:
+    monkeypatch.setattr(
+        hooks_module,
+        "_is_agent_timeout_error",
+        lambda exc: isinstance(exc, _FakeAgentTimeoutError),
+    )
+    hooks, trial, _events = _build(
+        tmp_path,
+        phase_error="agent_timeout",
+        **trial_kwargs,
+    )
+
+    with pytest.raises(UnscoreableTrialError) as error:
+        asyncio.run(hooks.on_post_verifier(trial))
+
+    assert error.value.reason == reason
+    assert trial.agent.recovery_calls == 1
+    assert not trial.agent_environment.running
+    assert (trial.paths.verifier_dir / "reward.txt").is_file()
+    assert not (trial.paths.agent_dir / "self_reflection_patch.json").exists()
+    assert TASK.task_id not in hooks._reflection_cache
+
+
+def test_generic_timeout_is_not_reclassified_as_reflection_outcome(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        hooks_module,
+        "_is_agent_timeout_error",
+        lambda exc: isinstance(exc, _FakeAgentTimeoutError),
+    )
+    hooks, trial, _events = _build(tmp_path, phase_error="generic_timeout")
+
+    with pytest.raises(asyncio.TimeoutError, match="not Harbor"):
+        asyncio.run(hooks.on_post_verifier(trial))
+
+    assert trial.agent.recovery_calls == 0
+    assert (trial.paths.verifier_dir / "reward.txt").is_file()
+    assert not (trial.paths.agent_dir / "self_reflection_patch.json").exists()
+    assert TASK.task_id not in hooks._reflection_cache
+
+
+def test_solve_timeout_remains_unscoreable_before_reflection(
+    tmp_path: Path,
+) -> None:
+    hooks, trial, _events = _build(tmp_path)
+
+    def _raise_solve_timeout(_result):
+        raise UnscoreableTrialError(
+            "agent-or-runtime-exception",
+            task_id=TASK.task_id,
+            exception_type="AgentTimeoutError",
+        )
+
+    hooks.runtime.verifier_adapter.parse = _raise_solve_timeout
+
+    with pytest.raises(UnscoreableTrialError) as error:
+        asyncio.run(hooks.on_post_verifier(trial))
+
+    assert error.value.reason == "agent-or-runtime-exception"
+    assert error.value.exception_type == "AgentTimeoutError"
+    assert trial.agent_environment.restart_calls == 0
+    assert trial.agent.recovery_calls == 0
+    assert TASK.task_id not in hooks._reflection_cache

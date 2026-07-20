@@ -35,6 +35,7 @@ from typing import TYPE_CHECKING, Any
 
 from skillevolbench.components.in_session_reflection import (
     InSessionSkillReflection,
+    REFLECTION_AGENT_TIMEOUT_REASON,
     REFLECTION_CANDIDATE_FILENAME,
     REFLECTION_FEEDBACK_FILENAME,
     REFLECTION_PROMPT_FILENAME,
@@ -73,6 +74,17 @@ _REPLAY_SUFFIX = "__replay"
 _AUDIT_DIRNAME = "self-reflection-audit"
 _MAX_AUDIT_FILE_BYTES = 64 * 1024 * 1024
 _MAX_CANDIDATE_BYTES = 1_000_000
+_REFLECTION_EXPORT_TIMEOUT_SEC = 60
+
+
+def _is_agent_timeout_error(exc: BaseException) -> bool:
+    """Recognize Harbor's timeout without importing Harbor at module load."""
+
+    try:
+        from harbor.trial.errors import AgentTimeoutError  # type: ignore
+    except ImportError:
+        return False
+    return isinstance(exc, AgentTimeoutError)
 
 
 def _is_shadow_trial_name(raw: str) -> bool:
@@ -360,7 +372,6 @@ class SkillEvolBenchHooks:
         session_export = agent_dir / "opencode.session.json"
         solve_stream = agent_dir / "opencode.solve.jsonl"
         reflection_stream = agent_dir / "opencode.reflection.jsonl"
-        candidate_path.unlink(missing_ok=True)
 
         prompt, feedback = reflection.build_prompt(task, outcome, mode=mode)
         audit_dir = self._create_host_audit_dir(trial, task_id=task.task_id)
@@ -377,6 +388,7 @@ class SkillEvolBenchHooks:
         # The solve container arrived stopped. Capture all model-controlled
         # inputs through no-follow file descriptors before it can run again.
         await self._require_main_not_running(trial, task_id=task.task_id)
+        self._remove_agent_candidate(candidate_path, task_id=task.task_id)
         solve_trajectory, solve_trajectory_raw = self._capture_agent_file(
             canonical_trajectory,
             audit_dir / "trajectory.solve.json",
@@ -445,35 +457,11 @@ class SkillEvolBenchHooks:
         record: ReflectionRecord | None = None
         pending_error: BaseException | None = None
         main_stopped_proven = True
+        reflection_timed_out = False
+        reflection_stream_raw: bytes | None = None
         try:
-            restart = getattr(trial.agent_environment, "restart_main_service", None)
-            identity = getattr(trial.agent_environment, "main_service_identity", None)
-            if not callable(restart) or not callable(identity):
-                raise UnscoreableTrialError(
-                    "reflection-environment-cannot-restart-same-container",
-                    task_id=task.task_id,
-                )
-            await restart()
             main_stopped_proven = False
-            trial._sevb_agent_main_stopped = False
-            restarted_identity = await identity()
-            running_identity = await self._main_running_identity(
-                trial, task_id=task.task_id
-            )
-            expected_identity = getattr(
-                trial, "_sevb_agent_container_identity", None
-            )
-            if (
-                not expected_identity
-                or restarted_identity != expected_identity
-                or running_identity != expected_identity
-            ):
-                raise UnscoreableTrialError(
-                    "reflection-container-identity-changed", task_id=task.task_id
-                )
-            healthcheck = getattr(trial.agent_environment, "run_healthcheck", None)
-            if callable(healthcheck):
-                await healthcheck()
+            await self._restart_main_and_prove(trial, task_id=task.task_id)
 
             # Hidden tests ran only in the destroyed verifier container. Empty
             # /tests defensively; bounded feedback in the prompt is the only
@@ -500,7 +488,83 @@ class SkillEvolBenchHooks:
                 await self._stop_main_and_prove(trial, task_id=task.task_id)
                 main_stopped_proven = True
             if phase_error is not None:
-                raise phase_error
+                if not _is_agent_timeout_error(phase_error):
+                    raise phase_error
+
+                # A reflection budget expiry is scoreable only when the
+                # already-written stream and a bounded export of the exact
+                # solve session provide the same evidence as a normal return.
+                # Recovery invokes no model turn; the task's resolved agent
+                # timeout remains the model-turn budget.
+                reflection_timed_out = True
+                _, reflection_stream_raw = self._capture_agent_file(
+                    reflection_stream,
+                    audit_dir / "opencode.reflection.jsonl",
+                    task_id=task.task_id,
+                    reason="reflection-missing-reflection-stream",
+                )
+                timed_out_stream_session_id = self._session_id_from_stream(
+                    reflection_stream_raw,
+                    task_id=task.task_id,
+                    phase="reflection",
+                )
+                if timed_out_stream_session_id != adapter_session_id:
+                    raise UnscoreableTrialError(
+                        "reflection-session-identity-mismatch",
+                        task_id=task.task_id,
+                    )
+
+                recover = getattr(
+                    trial.agent, "recover_timed_out_resume", None
+                )
+                if not callable(recover):
+                    raise UnscoreableTrialError(
+                        "reflection-timeout-recovery-unsupported",
+                        task_id=task.task_id,
+                    )
+
+                main_stopped_proven = False
+                await self._restart_main_and_prove(
+                    trial, task_id=task.task_id
+                )
+                default_user_scope = getattr(
+                    trial.agent_environment, "with_default_user", None
+                )
+                exec_env_scope = getattr(
+                    trial.agent_environment, "scoped_exec_env", None
+                )
+                if not callable(default_user_scope) or not callable(
+                    exec_env_scope
+                ):
+                    raise UnscoreableTrialError(
+                        "reflection-timeout-recovery-scope-unsupported",
+                        task_id=task.task_id,
+                    )
+                try:
+                    try:
+                        with default_user_scope(
+                            trial.task.config.agent.user
+                        ), exec_env_scope(trial.agent.extra_env):
+                            recovered_session_id = await recover(
+                                trial.agent_environment,
+                                timeout_sec=_REFLECTION_EXPORT_TIMEOUT_SEC,
+                            )
+                    except Exception as exc:
+                        raise UnscoreableTrialError(
+                            "reflection-timeout-recovery-failed",
+                            task_id=task.task_id,
+                            exception_type=type(exc).__name__,
+                        ) from exc
+                finally:
+                    await self._stop_main_and_prove(
+                        trial, task_id=task.task_id
+                    )
+                    main_stopped_proven = True
+                if recovered_session_id != adapter_session_id:
+                    raise UnscoreableTrialError(
+                        "reflection-session-identity-mismatch",
+                        task_id=task.task_id,
+                    )
 
             full_export_raw = self._read_regular_nofollow(
                 session_export,
@@ -515,15 +579,17 @@ class SkillEvolBenchHooks:
             self._replace_with_regular(
                 session_export, full_export_raw, task_id=task.task_id
             )
-            self._replace_with_regular(
-                canonical_trajectory, b"", task_id=task.task_id
-            )
-            if target.agent_result is None:
-                raise UnscoreableTrialError(
-                    "reflection-missing-agent-context", task_id=task.task_id
+            if not reflection_timed_out:
+                self._replace_with_regular(
+                    canonical_trajectory, b"", task_id=task.task_id
                 )
-            trial.agent.populate_context_post_run(target.agent_result)
-            trial.result.agent_result = target.agent_result
+                if target.agent_result is None:
+                    raise UnscoreableTrialError(
+                        "reflection-missing-agent-context",
+                        task_id=task.task_id,
+                    )
+                trial.agent.populate_context_post_run(target.agent_result)
+                trial.result.agent_result = target.agent_result
 
             full_trajectory, full_trajectory_raw = self._capture_agent_file(
                 canonical_trajectory,
@@ -535,12 +601,13 @@ class SkillEvolBenchHooks:
             self._write_new_regular(
                 full_export, full_export_raw, task.task_id
             )
-            _, reflection_stream_raw = self._capture_agent_file(
-                reflection_stream,
-                audit_dir / "opencode.reflection.jsonl",
-                task_id=task.task_id,
-                reason="reflection-missing-reflection-stream",
-            )
+            if reflection_stream_raw is None:
+                _, reflection_stream_raw = self._capture_agent_file(
+                    reflection_stream,
+                    audit_dir / "opencode.reflection.jsonl",
+                    task_id=task.task_id,
+                    reason="reflection-missing-reflection-stream",
+                )
 
             full_payload = self._json_object(
                 full_trajectory_raw,
@@ -598,17 +665,9 @@ class SkillEvolBenchHooks:
                     "reflection-mutated-task-workspace", task_id=task.task_id
                 )
 
-            candidate_raw: bytes | None = None
-            candidate_audit_path: Path | None = None
-            try:
-                candidate_raw = self._read_candidate_nofollow(candidate_path)
-                patch = reflection.parse_candidate_bytes(
-                    candidate_raw,
-                    task=task,
-                    outcome=outcome,
-                    mode=mode,
-                )
-            except ReflectionCandidateError as exc:
+            if reflection_timed_out:
+                # A candidate left by a cancelled process did not finish within
+                # the declared model-turn budget and must never mutate skills.
                 record = ReflectionRecord(
                     status="rejected",
                     task_id=task.task_id,
@@ -617,31 +676,54 @@ class SkillEvolBenchHooks:
                     solve_session_id=solve_session_id,
                     reflection_session_id=reflection_session_id,
                     same_session_verified=True,
-                    reason=str(exc)[:300],
+                    reason=REFLECTION_AGENT_TIMEOUT_REASON,
                 )
             else:
-                candidate_audit_path = audit_dir / REFLECTION_CANDIDATE_FILENAME
-                self._write_new_regular(
-                    candidate_audit_path, candidate_raw, task.task_id
-                )
-                status = "noop" if patch is None else "completed"
-                record = ReflectionRecord(
-                    status=status,
-                    task_id=task.task_id,
-                    mode=mode,
-                    session_id=reflection_session_id,
-                    solve_session_id=solve_session_id,
-                    reflection_session_id=reflection_session_id,
-                    same_session_verified=True,
-                    patch=patch,
-                    reason="model_selected_noop" if patch is None else "",
-                    candidate_path=candidate_audit_path,
-                )
-            finally:
-                # Never leave a model-authored candidate in the mounted agent
-                # directory. In particular, rejected secret-bearing raw output
-                # must not become an AP artifact.
-                candidate_path.unlink(missing_ok=True)
+                candidate_raw: bytes | None = None
+                candidate_audit_path: Path | None = None
+                try:
+                    candidate_raw = self._read_candidate_nofollow(
+                        candidate_path
+                    )
+                    patch = reflection.parse_candidate_bytes(
+                        candidate_raw,
+                        task=task,
+                        outcome=outcome,
+                        mode=mode,
+                    )
+                except ReflectionCandidateError as exc:
+                    record = ReflectionRecord(
+                        status="rejected",
+                        task_id=task.task_id,
+                        mode=mode,
+                        session_id=reflection_session_id,
+                        solve_session_id=solve_session_id,
+                        reflection_session_id=reflection_session_id,
+                        same_session_verified=True,
+                        reason=str(exc)[:300],
+                    )
+                else:
+                    candidate_audit_path = (
+                        audit_dir / REFLECTION_CANDIDATE_FILENAME
+                    )
+                    self._write_new_regular(
+                        candidate_audit_path, candidate_raw, task.task_id
+                    )
+                    status = "noop" if patch is None else "completed"
+                    record = ReflectionRecord(
+                        status=status,
+                        task_id=task.task_id,
+                        mode=mode,
+                        session_id=reflection_session_id,
+                        solve_session_id=solve_session_id,
+                        reflection_session_id=reflection_session_id,
+                        same_session_verified=True,
+                        patch=patch,
+                        reason=(
+                            "model_selected_noop" if patch is None else ""
+                        ),
+                        candidate_path=candidate_audit_path,
+                    )
 
             assert record is not None
             record.prompt_path = prompt_path
@@ -689,6 +771,14 @@ class SkillEvolBenchHooks:
                 main_stopped_proven = False
                 pending_error = pending_error or exc
             if main_stopped_proven:
+                try:
+                    # Never leave a model-authored candidate in mounted logs.
+                    # Timeout and recovery failures must not leak raw output.
+                    self._remove_agent_candidate(
+                        candidate_path, task_id=task.task_id
+                    )
+                except BaseException as exc:
+                    pending_error = pending_error or exc
                 try:
                     self._restore_verifier_evidence(
                         trial,
@@ -798,6 +888,39 @@ class SkillEvolBenchHooks:
                 exception_type=type(exc).__name__,
             ) from exc
         cls._write_new_regular(path, raw, task_id)
+
+    @staticmethod
+    def _remove_agent_candidate(path: Path, *, task_id: str) -> None:
+        """Remove a stopped agent's candidate without following symlinks."""
+
+        try:
+            metadata = os.lstat(path)
+        except FileNotFoundError:
+            return
+        except OSError as exc:
+            raise UnscoreableTrialError(
+                "reflection-candidate-cleanup-failed",
+                task_id=task_id,
+                exception_type=type(exc).__name__,
+            ) from exc
+        try:
+            if (
+                stat.S_ISDIR(metadata.st_mode)
+                and not stat.S_ISLNK(metadata.st_mode)
+            ):
+                shutil.rmtree(path)
+            else:
+                os.unlink(path)
+        except OSError as exc:
+            raise UnscoreableTrialError(
+                "reflection-candidate-cleanup-failed",
+                task_id=task_id,
+                exception_type=type(exc).__name__,
+            ) from exc
+        if os.path.lexists(path):
+            raise UnscoreableTrialError(
+                "reflection-candidate-cleanup-failed", task_id=task_id
+            )
 
     @classmethod
     def _capture_agent_file(
@@ -1146,6 +1269,44 @@ class SkillEvolBenchHooks:
                 raise UnscoreableTrialError(
                     "reflection-verifier-restore-invalid", task_id=task_id
                 )
+
+    @classmethod
+    async def _restart_main_and_prove(
+        cls, trial: Any, *, task_id: str
+    ) -> None:
+        restart = getattr(
+            trial.agent_environment, "restart_main_service", None
+        )
+        identity = getattr(
+            trial.agent_environment, "main_service_identity", None
+        )
+        if not callable(restart) or not callable(identity):
+            raise UnscoreableTrialError(
+                "reflection-environment-cannot-restart-same-container",
+                task_id=task_id,
+            )
+        await restart()
+        trial._sevb_agent_main_stopped = False
+        restarted_identity = await identity()
+        running_identity = await cls._main_running_identity(
+            trial, task_id=task_id
+        )
+        expected_identity = getattr(
+            trial, "_sevb_agent_container_identity", None
+        )
+        if (
+            not expected_identity
+            or restarted_identity != expected_identity
+            or running_identity != expected_identity
+        ):
+            raise UnscoreableTrialError(
+                "reflection-container-identity-changed", task_id=task_id
+            )
+        healthcheck = getattr(
+            trial.agent_environment, "run_healthcheck", None
+        )
+        if callable(healthcheck):
+            await healthcheck()
 
     @staticmethod
     async def _main_running_identity(trial: Any, *, task_id: str) -> str:

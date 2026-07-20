@@ -689,6 +689,7 @@ class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
         session_id: str,
         *,
         resume: bool,
+        timeout_sec: int | None = None,
     ) -> None:
         await self.exec_as_agent(
             environment,
@@ -698,6 +699,7 @@ class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
                 f"> /logs/agent/{self._SESSION_EXPORT_FILENAME}"
             ),
             env=env,
+            timeout_sec=timeout_sec,
         )
 
         # Bind-mounted Harbor environments expose /logs/agent immediately.
@@ -705,6 +707,47 @@ class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
         # downloaded this export and calls populate_context_post_run().
         if (self.logs_dir / self._SESSION_EXPORT_FILENAME).exists():
             self._write_canonical_trajectory(preserve_as_solve=not resume)
+
+    async def recover_timed_out_resume(
+        self,
+        environment: BaseEnvironment,
+        *,
+        timeout_sec: int = 60,
+    ) -> str:
+        """Export a cancelled reflection without starting another model turn.
+
+        Harbor cancels ``run`` when the task's agent budget expires, before
+        ``run`` can validate the reflection stream or export the complete
+        session. Once the caller has stopped the main service, it may restart
+        the exact same container solely to run this bounded, local export.
+        The partial tee must already prove that the cancelled invocation used
+        the solve session; otherwise recovery fails closed.
+        """
+
+        if not self._opencode_session_id:
+            raise RuntimeError(
+                "Cannot recover OpenCode reflection without a captured solve "
+                "sessionID"
+            )
+        events = self._read_phase_events(self._REFLECTION_OUTPUT_FILENAME)
+        session_id = self._capture_and_validate_session(events, resume=True)
+        if messages := self._error_messages_from_events(events):
+            raise NonZeroAgentExitCodeError(
+                "OpenCode emitted error event(s): " + "; ".join(messages[:3])
+            )
+        if not self.model_name or "/" not in self.model_name:
+            raise ValueError(
+                "Model name must be in the format provider/model_name"
+            )
+        provider, _ = self.model_name.split("/", 1)
+        await self._export_session(
+            environment,
+            self._provider_environment(provider),
+            session_id,
+            resume=True,
+            timeout_sec=timeout_sec,
+        )
+        return session_id
 
     @with_prompt_template
     async def run(

@@ -183,6 +183,7 @@ def test_reporter_strictly_verifies_sessions_and_treats_noop_as_valid(
         "reflection_rejected",
         {
             "task_id": "E1-LS1-T3",
+            "reason": "reflection_agent_timeout",
             # Equal IDs are insufficient without the explicit host verdict.
             "session_id": "ses-3",
             "solve_session_id": "ses-3",
@@ -199,6 +200,10 @@ def test_reporter_strictly_verifies_sessions_and_treats_noop_as_valid(
     assert report.reflection["patch_candidate_rate"] == pytest.approx(1 / 3)
     assert report.reflection["noop_rate"] == pytest.approx(1 / 3)
     assert report.reflection["rejection_rate"] == pytest.approx(1 / 3)
+    assert report.reflection["n_agent_timeouts"] == 1
+    assert report.reflection["rejection_reasons"] == {
+        "reflection_agent_timeout": 1
+    }
     assert "valid_candidate_rate" not in report.reflection
     assert report.reflection_transfer["n_pairs"] == 3
     assert report.reflection_transfer["fail_to_success_count"] == 1

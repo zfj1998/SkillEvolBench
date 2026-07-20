@@ -652,6 +652,9 @@ def _validate_reflection(
 
     compared = (
         "status",
+        "task_id",
+        "mode",
+        "reason",
         "session_id",
         "solve_session_id",
         "reflection_session_id",

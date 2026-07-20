@@ -30,6 +30,7 @@ REFLECTION_CANDIDATE_FILENAME = "self_reflection_patch.json"
 REFLECTION_FEEDBACK_FILENAME = "self_reflection_feedback.json"
 REFLECTION_PROMPT_FILENAME = "self_reflection_prompt.md"
 REFLECTION_RESULT_FILENAME = "self_reflection_result.json"
+REFLECTION_AGENT_TIMEOUT_REASON = "reflection_agent_timeout"
 
 _LEARNING_ROLES = frozenset({"canonical", "enriched", "variant"})
 _SAFE_SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")

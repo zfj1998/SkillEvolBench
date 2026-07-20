@@ -34,7 +34,7 @@ class _FakeInstalledAgent:
         self.logger = SimpleNamespace(debug=lambda *args, **kwargs: None)
 
     async def exec_as_agent(self, environment, command: str, env=None, **kwargs):
-        return await environment.execute(self, command, env or {})
+        return await environment.execute(self, command, env or {}, **kwargs)
 
     def _build_register_skills_command(self):
         return None
@@ -298,10 +298,18 @@ class _ScriptedEnvironment:
         self.solve_stream_suffix = solve_stream_suffix
         self.truncate_phase_stdout = truncate_phase_stdout
         self.commands: list[str] = []
+        self.timeouts: list[int | None] = []
         self.exports = 0
 
-    async def execute(self, agent, command: str, env: dict[str, str]):
+    async def execute(
+        self,
+        agent,
+        command: str,
+        env: dict[str, str],
+        **kwargs: Any,
+    ):
         self.commands.append(command)
+        self.timeouts.append(kwargs.get("timeout_sec"))
         if "opencode export " in command:
             self.exports += 1
             payload = _export(
@@ -542,3 +550,80 @@ def test_export_rejects_cross_session_message(
 
     with pytest.raises(RuntimeError, match="message from another session"):
         agent._convert_export_to_trajectory(export)
+
+
+def test_timed_out_resume_recovery_exports_exact_session_with_bounded_command(
+    tmp_path: Path,
+    preinstalled_module,
+) -> None:
+    agent = preinstalled_module.OpenCodePreinstalled(logs_dir=tmp_path)
+    environment = _ScriptedEnvironment()
+    asyncio.run(agent.run("solve prompt", environment, _context()))
+    (tmp_path / "opencode.reflection.jsonl").write_text(
+        _stream(SESSION_ID, "partial reflection answer")
+    )
+
+    recovered = asyncio.run(agent.recover_timed_out_resume(environment, timeout_sec=17))
+
+    assert recovered == SESSION_ID
+    assert environment.exports == 2
+    assert environment.timeouts[-1] == 17
+    assert f"opencode export {SESSION_ID}" in environment.commands[-1]
+    trajectory = json.loads((tmp_path / "trajectory.json").read_text())
+    assert trajectory["session_id"] == SESSION_ID
+    assert [step["source"] for step in trajectory["steps"]] == [
+        "user",
+        "agent",
+        "user",
+        "agent",
+    ]
+
+
+@pytest.mark.parametrize("stream_session_id", ["ses_wrong", ""])
+def test_timed_out_resume_recovery_fails_before_export_without_exact_session(
+    tmp_path: Path,
+    preinstalled_module,
+    stream_session_id: str,
+) -> None:
+    agent = preinstalled_module.OpenCodePreinstalled(logs_dir=tmp_path)
+    environment = _ScriptedEnvironment()
+    asyncio.run(agent.run("solve prompt", environment, _context()))
+    if stream_session_id:
+        (tmp_path / "opencode.reflection.jsonl").write_text(
+            _stream(stream_session_id, "partial reflection answer")
+        )
+
+    with pytest.raises(RuntimeError):
+        asyncio.run(agent.recover_timed_out_resume(environment, timeout_sec=17))
+
+    assert environment.exports == 1
+
+
+def test_timed_out_resume_recovery_does_not_swallow_stream_error(
+    tmp_path: Path,
+    preinstalled_module,
+) -> None:
+    agent = preinstalled_module.OpenCodePreinstalled(logs_dir=tmp_path)
+    environment = _ScriptedEnvironment()
+    asyncio.run(agent.run("solve prompt", environment, _context()))
+    error_event = json.dumps(
+        {
+            "type": "error",
+            "sessionID": SESSION_ID,
+            "error": {
+                "name": "ProviderError",
+                "data": {"message": "provider failed before timeout"},
+            },
+        }
+    )
+    (tmp_path / "opencode.reflection.jsonl").write_text(
+        _stream(SESSION_ID, "partial reflection answer") + error_event + "\n"
+    )
+
+    with pytest.raises(
+        preinstalled_module.NonZeroAgentExitCodeError,
+        match="provider failed before timeout",
+    ):
+        asyncio.run(agent.recover_timed_out_resume(environment, timeout_sec=17))
+
+    assert environment.exports == 1

@@ -8,12 +8,16 @@ Schema bumped from ``"0.1-part9"`` to ``"1.0"`` in this version.
 
 from __future__ import annotations
 
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from skillevolbench.components.in_session_reflection import (
+    REFLECTION_AGENT_TIMEOUT_REASON,
+)
 from skillevolbench.discovery import TaskRegistry
 from skillevolbench.metrics.composition import compute_t6_composition
 from skillevolbench.metrics.cost import compute_cost
@@ -261,8 +265,9 @@ class ReportGenerator:
         evolution_section = compute_evolution_replay(records)
 
         # 8. Same-session reflection protocol. Invalid/noop candidates are
-        # scoreable model outcomes; transport/session failures abort the run
-        # earlier and therefore never masquerade as a terminal event here.
+        # scoreable model outcomes. A reflection agent timeout is also a
+        # rejected outcome only after the hook proves complete same-session
+        # evidence; all other transport/session failures abort earlier.
         reflection_events = {
             status: events.events_of_type(f"reflection_{status}")
             for status in ("completed", "noop", "rejected", "skipped")
@@ -281,6 +286,14 @@ class ReportGenerator:
         n_noop = len(reflection_events["noop"])
         n_rejected = len(reflection_events["rejected"])
         n_attempted = len(attempted_events)
+        rejection_reasons = dict(
+            sorted(
+                Counter(
+                    str(event.get("reason") or "unspecified")
+                    for event in reflection_events["rejected"]
+                ).items()
+            )
+        )
 
         def _same_session_verified(event: dict[str, Any]) -> bool:
             """Require the explicit host verdict and three matching IDs."""
@@ -309,6 +322,10 @@ class ReportGenerator:
             "n_noop": n_noop,
             "n_rejected": n_rejected,
             "n_skipped": len(reflection_events["skipped"]),
+            "rejection_reasons": rejection_reasons,
+            "n_agent_timeouts": rejection_reasons.get(
+                REFLECTION_AGENT_TIMEOUT_REASON, 0
+            ),
             "n_same_session_verified": sum(
                 1 for event in attempted_events if _same_session_verified(event)
             ),

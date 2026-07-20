@@ -118,14 +118,15 @@ def test_complete_family_smoke_is_explicitly_noncanonical_and_unscoreable(
                 "enabled": True,
                 "n_terminal": 3,
                 "n_attempted": 3,
-                "n_completed": 2,
+                "n_completed": 1,
                 "n_noop": 1,
-                "n_rejected": 0,
+                "n_rejected": 1,
+                "n_agent_timeouts": 1,
                 "n_same_session_verified": 3,
-                "valid_output_rate": 1.0,
-                "patch_candidate_rate": 2 / 3,
+                "valid_output_rate": 2 / 3,
+                "patch_candidate_rate": 1 / 3,
                 "noop_rate": 1 / 3,
-                "rejection_rate": 0.0,
+                "rejection_rate": 1 / 3,
             },
         ),
     )
@@ -142,8 +143,9 @@ def test_complete_family_smoke_is_explicitly_noncanonical_and_unscoreable(
     assert metrics["n_replay_trials"] == 0
     assert metrics["expected_replay_trials"] == 0
     assert metrics["n_reflection_expected"] == 3
-    assert metrics["reflection_valid_output_rate"] == 1.0
-    assert metrics["reflection_patch_candidate_rate"] == pytest.approx(2 / 3)
+    assert metrics["reflection_valid_output_rate"] == pytest.approx(2 / 3)
+    assert metrics["reflection_patch_candidate_rate"] == pytest.approx(1 / 3)
+    assert metrics["n_reflection_agent_timeouts"] == 1
     assert "single-family smoke" in metrics["message"]
 
 
