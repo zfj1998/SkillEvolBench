@@ -195,11 +195,12 @@ def _assert_no_sensitive_files(source_tar: bytes) -> None:
                 findings.append(member.name)
                 continue
 
-            private_key_markers = (
-                b"-----BEGIN PRIVATE KEY-----",
-                b"-----BEGIN RSA PRIVATE KEY-----",
-                b"-----BEGIN EC PRIVATE KEY-----",
-                b"-----BEGIN OPENSSH PRIVATE KEY-----",
+            # Assemble markers at runtime so this scanner's own source does
+            # not contain (and therefore self-match) a complete private-key
+            # header when the repository is packaged.
+            private_key_markers = tuple(
+                b"-----BEGIN " + key_type + b"PRIVATE KEY-----"
+                for key_type in (b"", b"RSA ", b"EC ", b"OPENSSH ")
             )
             if any(marker in contents for marker in private_key_markers):
                 findings.append(member.name)
