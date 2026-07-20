@@ -182,3 +182,43 @@ def test_finalise_awaits_last_environment_transition(tmp_path: Path) -> None:
     asyncio.run(runner._finalise(runtime, Hooks(), benchmark_hash))
 
     assert call_order == ["transition:E1:END", "tag:final"]
+
+
+def test_failed_finalise_is_non_mutating(tmp_path: Path) -> None:
+    config = _run_config(tmp_path)
+    runner = LifelongRunner(config)
+    run_root = config.run_dir
+    run_root.mkdir(parents=True)
+    benchmark_hash = runner._snapshot_benchmark_hash(run_root)
+    call_order: list[str] = []
+
+    class Hooks:
+        _current_env = "E1"
+
+        async def _handle_env_transition(self, previous: str, new: str) -> None:
+            call_order.append(f"transition:{previous}:{new}")
+
+    class Snapshot:
+        def tag(self, name: str) -> None:
+            call_order.append(f"tag:{name}")
+
+    class Events:
+        def record(self, event_type: str, payload: dict) -> None:
+            call_order.append(f"event:{event_type}:{payload['finalization']}")
+
+    runtime = SimpleNamespace(
+        run_root=run_root,
+        snapshot_store=Snapshot(),
+        event_store=Events(),
+    )
+
+    asyncio.run(
+        runner._finalise(
+            runtime,
+            Hooks(),
+            benchmark_hash,
+            successful=False,
+        )
+    )
+
+    assert call_order == ["event:run_aborted:non-mutating"]

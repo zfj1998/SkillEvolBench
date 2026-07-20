@@ -52,16 +52,18 @@ Harbor instantiates this class once per trial. The ``trial_paths.trial_dir``
 basename has the form ``<task_id>__<random>``, which is how we recover
 ``task_id`` to compute the per-trial ``injection-context.json`` path.
 
-Migration note (Harbor 0.5 -> 0.6+)
------------------------------------
+Migration note (Harbor 0.5 -> current)
+--------------------------------------
 
 Harbor 0.5 had a ``get_extra_mounts(trial_config)`` extension hook that
 subclasses overrode to inject mounts at trial-start time. Harbor 0.6+
-removed this hook entirely; mounts are now declared via the
-``mounts_json: list[ServiceVolumeConfig]`` constructor parameter. We
-compute our two mounts in ``__init__`` and pass them through to
-``DockerEnvironment.__init__`` merged with whatever ``mounts_json`` the
-caller provided.
+removed this hook entirely; mounts are now declared as constructor data.
+Harbor releases through 0.6 called that argument ``mounts_json`` while current
+Harbor calls it ``mounts``.  We accept both spellings, preserve Harbor's own
+agent/verifier/artifact mounts, append our skill/injection mounts, and forward
+the spelling used by the caller.  This is important for remote Docker daemons:
+dropping Harbor's mounts makes verifier output disappear, while dropping ours
+silently disables skill injection.
 """
 
 from __future__ import annotations
@@ -121,6 +123,7 @@ class GlobalLibraryEnvironment(DockerEnvironment):
         trial_paths: Any,
         task_env_config: Any,
         keep_containers: bool = False,
+        mounts: list[Any] | None = None,
         mounts_json: list[Any] | None = None,
         **kwargs: Any,
     ) -> None:
@@ -200,7 +203,13 @@ class GlobalLibraryEnvironment(DockerEnvironment):
             "read_only": True,
         }
 
-        merged_mounts = list(mounts_json or []) + skill_mounts + [injection_mount]
+        if mounts is not None and mounts_json is not None:
+            raise ValueError(
+                "GlobalLibraryEnvironment received both mounts and mounts_json; "
+                "refusing to guess which Harbor mount set is authoritative"
+            )
+        harbor_mounts = mounts if mounts is not None else mounts_json
+        merged_mounts = list(harbor_mounts or []) + skill_mounts + [injection_mount]
 
         _LOG.info(
             "GlobalLibraryEnvironment init: task_id=%s library_active=%s "
@@ -208,6 +217,15 @@ class GlobalLibraryEnvironment(DockerEnvironment):
             task_id, self.library_active_path, is_frozen, len(merged_mounts),
         )
 
+        # Harbor 0.7+ passes ``mounts`` and BaseEnvironment consumes only that
+        # name.  Older supported releases passed ``mounts_json``.  Forward the
+        # spelling that arrived so neither API silently swallows the merged
+        # list through ``**kwargs``.
+        mount_kwarg = (
+            {"mounts": merged_mounts}
+            if mounts is not None or mounts_json is None
+            else {"mounts_json": merged_mounts}
+        )
         super().__init__(
             environment_dir=environment_dir,
             environment_name=environment_name,
@@ -215,7 +233,7 @@ class GlobalLibraryEnvironment(DockerEnvironment):
             trial_paths=trial_paths,
             task_env_config=task_env_config,
             keep_containers=keep_containers,
-            mounts_json=merged_mounts,
+            **mount_kwarg,
             **kwargs,
         )
 

@@ -1,9 +1,10 @@
 """Run one SkillEvolBench environment episode under Agent Platform.
 
 AP injects template parameters as environment variables. This entrypoint turns
-those values into a validated RunConfig, keeps all generated state under
-``OUTPUT_DIR``, and always writes the AP ``metrics.json`` contract. It never
-persists model or platform credentials in the run manifest.
+those values into a validated RunConfig, keeps stateful Harbor data under the
+optional DinD-shared ``SEVB_WORKSPACE_ROOT``, and always writes the AP
+``OUTPUT_DIR/metrics.json`` contract. It never persists model or platform
+credentials in the run manifest.
 """
 
 from __future__ import annotations
@@ -22,9 +23,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from skillevolbench.baselines import load_baseline
-from skillevolbench.orchestration import LifelongRunner
-from skillevolbench.schemas import BaselineConfig, RunConfig, StrategyConfig
+from skillevolbench.baselines import load_baseline  # noqa: E402
+from skillevolbench.components import UnscoreableTrialError  # noqa: E402
+from skillevolbench.orchestration import LifelongRunner  # noqa: E402
+from skillevolbench.schemas import (  # noqa: E402
+    BaselineConfig,
+    RunConfig,
+    StrategyConfig,
+)
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -82,6 +88,26 @@ def _sanitize_error(message: str) -> str:
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+
+def _actionable_exception(exc: BaseException) -> BaseException:
+    """Select the useful leaf from a Python 3.11 TaskGroup ExceptionGroup."""
+    leaves: list[BaseException] = []
+
+    def visit(current: BaseException) -> None:
+        children = getattr(current, "exceptions", None)
+        if isinstance(children, tuple) and children:
+            for child in children:
+                if isinstance(child, BaseException):
+                    visit(child)
+            return
+        leaves.append(current)
+
+    visit(exc)
+    for leaf in leaves:
+        if isinstance(leaf, UnscoreableTrialError):
+            return leaf
+    return leaves[0] if leaves else exc
 
 
 def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
@@ -170,13 +196,21 @@ def _build_config(output_dir: Path) -> RunConfig:
         "RUN_ID",
         f"ap__{baseline.name}__{environment_id}__{timestamp}",
     )
+    workspace_override = os.environ.get("SEVB_WORKSPACE_ROOT", "").strip()
+    if workspace_override:
+        workspace_root = Path(workspace_override).expanduser()
+        if not workspace_root.is_absolute():
+            raise ValueError("SEVB_WORKSPACE_ROOT must be an absolute path")
+        workspace_root = workspace_root.resolve()
+    else:
+        workspace_root = output_dir / "runs"
     return RunConfig(
         run_id=run_id,
         baseline=baseline,
         strategy=strategy,
         order_seed=os.environ.get("ORDER_SEED", "A"),
         environment_id=environment_id,
-        workspace_root=output_dir / "runs",
+        workspace_root=workspace_root,
         # Host-side calls are routed by SEVB_HOST_LITELLM_* above, while the
         # Harbor agent receives its endpoint through agent_kwargs.base_url.
         # Keeping this unset avoids duplicate base_url/api_base constructor
@@ -195,6 +229,9 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
     if config.baseline.within_env_replay:
         expected_replays = 30 if config.baseline.replay_eval else 15
     expected_shadows = 5 if config.baseline.dual_t6_retrieval else 0
+    n_verifier_backed_trials = (
+        report.n_primary_trials + report.n_replay_trials + report.n_shadow_trials
+    )
     complete = (
         config.max_tasks is None
         and report.n_primary_trials == 30
@@ -222,6 +259,7 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
         "n_primary_trials": report.n_primary_trials,
         "n_replay_trials": report.n_replay_trials,
         "n_shadow_trials": report.n_shadow_trials,
+        "n_verifier_backed_trials": n_verifier_backed_trials,
         "evolution_lift": evolution.get("evolution_lift"),
         "recovery_rate": evolution.get("recovery_rate"),
         "regression_rate": evolution.get("regression_rate"),
@@ -280,6 +318,7 @@ def main() -> int:
                 "within_env_replay": config.baseline.within_env_replay,
                 "replay_eval": config.baseline.replay_eval,
                 "smoke_max_tasks": config.max_tasks,
+                "workspace_root": str(config.workspace_root),
                 "started_at": datetime.now(timezone.utc).isoformat(),
             },
         )
@@ -287,6 +326,7 @@ def main() -> int:
         _write_json(metrics_path, _success_metrics(config, report))
         return 0
     except Exception as exc:
+        actionable = _actionable_exception(exc)
         _write_json(
             metrics_path,
             {
@@ -295,8 +335,9 @@ def main() -> int:
                 "status": "failed",
                 "scoreable": False,
                 "environment_id": os.environ.get("INSTANCE_ID"),
-                "error_type": type(exc).__name__,
-                "message": _sanitize_error(str(exc)),
+                "n_verifier_backed_trials": 0,
+                "error_type": type(actionable).__name__,
+                "message": _sanitize_error(str(actionable)),
             },
         )
         # Never emit the raw exception traceback: SDK errors often include

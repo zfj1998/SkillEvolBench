@@ -27,7 +27,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from skillevolbench.schemas import TaskRole, TaskPhase
+from skillevolbench.components.verifier_adapter import UnscoreableTrialError
+from skillevolbench.schemas import TaskRole
 
 if TYPE_CHECKING:
     # These types only need to exist at type-check time. They are NOT
@@ -355,7 +356,10 @@ class SkillEvolBenchHooks:
             self.runtime.event_store.record(
                 "trial_ended_no_result", {"task_name": getattr(event, "task_name", "?")}
             )
-            return
+            raise UnscoreableTrialError(
+                "missing-trial-result",
+                task_id=self._runtime_basename(event) or "?",
+            )
         # Run the substantive logic in a worker thread so we don't block
         # Harbor's event loop while doing sqlite + git work.
         await asyncio.to_thread(self._on_trial_ended_sync, event)
@@ -374,10 +378,29 @@ class SkillEvolBenchHooks:
                 "orphan_trial_ended",
                 {"task_id": task.task_id, "is_shadow": is_shadow},
             )
-            return
+            raise UnscoreableTrialError(
+                "missing-trial-pre-state",
+                task_id=task.task_id,
+            )
 
-        # 1. Parse verifier output (Part 6 VerifierAdapter).
-        outcome = self.runtime.verifier_adapter.parse(event.result)
+        # 1. Parse verifier output (Part 6 VerifierAdapter).  ``parse`` is a
+        # fail-closed boundary: agent/runtime exceptions, missing verifier
+        # state, a missing canonical reward, or a missing trajectory abort the
+        # whole episode here.  Crucially this happens before ReplayStore,
+        # strategy.decide(), or any library mutation, so infrastructure
+        # failures can never masquerade as reward=0 learning experience.
+        try:
+            outcome = self.runtime.verifier_adapter.parse(event.result)
+        except UnscoreableTrialError as exc:
+            self.runtime.event_store.record(
+                "trial_rejected_unscoreable",
+                {
+                    "task_id": task.task_id,
+                    "reason": exc.reason,
+                    "exception_type": exc.exception_type,
+                },
+            )
+            raise
 
         # 2. Extract actually-used skills from the trajectory.
         skills_used = self.runtime.trajectory_extractor.extract_skills_used(
@@ -485,7 +508,7 @@ class SkillEvolBenchHooks:
 
         # 6. Learning block: build context + dispatch to strategy.
         from skillevolbench.strategies.base import (  # lazy: stub-safe at runtime
-            ApplyPatch, NoOp, EvolutionContext,
+            ApplyPatch, EvolutionContext,
         )
 
         ctx = EvolutionContext(
@@ -691,9 +714,6 @@ class SkillEvolBenchHooks:
         is independent of any baseline-specific injection. The injected
         version goes into the *runtime* copy that the agent reads.
         """
-        path = Path(self.runtime.run_root) / ".." / ".." / ".." / (
-            f"benchmark/tasks/{task.task_slug}/{task.harbor.instruction}"
-        )
         # Falling back: ask the registry record for the resolved folder.
         record = self.task_registry.task(task.task_id)
         instr_path = record.folder / record.spec.harbor.instruction

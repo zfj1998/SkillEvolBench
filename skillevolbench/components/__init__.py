@@ -4,7 +4,10 @@ Each component is independent and unit-testable. The runtime (Part 8) wires
 them into a :class:`BaselineRuntime` based on the BaselineConfig flags.
 """
 
-from skillevolbench.components.verifier_adapter import VerifierAdapter
+from skillevolbench.components.verifier_adapter import (
+    UnscoreableTrialError,
+    VerifierAdapter,
+)
 from skillevolbench.components.trajectory_extractor import TrajectoryExtractor
 from skillevolbench.components.compactor import TrajectoryCompactor
 from skillevolbench.components.retriever import (
@@ -32,6 +35,7 @@ from skillevolbench.components.skill_author import (
 
 __all__ = [
     "VerifierAdapter",
+    "UnscoreableTrialError",
     "TrajectoryExtractor",
     "TrajectoryCompactor",
     "Embedder",

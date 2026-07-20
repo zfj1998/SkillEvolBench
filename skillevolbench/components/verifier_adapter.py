@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import json
 import logging
+import math
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Optional
 
@@ -34,6 +36,29 @@ from skillevolbench.schemas import (
 _LOG = logging.getLogger(__name__)
 
 
+class UnscoreableTrialError(RuntimeError):
+    """A Harbor trial whose outcome cannot be used as learning evidence.
+
+    Messages intentionally contain only a task id, a stable reason code, and
+    (when applicable) an exception *type*.  Agent exception messages and
+    tracebacks can contain prompts, request URLs, or credentials and therefore
+    must not be copied into AP metrics.
+    """
+
+    def __init__(
+        self,
+        reason: str,
+        *,
+        task_id: str = "?",
+        exception_type: str | None = None,
+    ) -> None:
+        self.reason = reason
+        self.task_id = task_id
+        self.exception_type = exception_type
+        detail = f" ({exception_type})" if exception_type else ""
+        super().__init__(f"Unscoreable trial {task_id}: {reason}{detail}")
+
+
 class VerifierAdapter:
     """Parse Harbor verifier outputs into a :class:`TrialOutcome`."""
 
@@ -44,10 +69,25 @@ class VerifierAdapter:
         Harbor exposes. Robust to the SDK changing names by falling back to
         the on-disk verifier files.
         """
-        log_dir = self._resolve_log_dir(trial_result)
         task_id = self._resolve_task_id(trial_result)
-        return self._parse_from_dir(log_dir=log_dir, task_id=task_id,
-                                    trial_result=trial_result)
+        log_dir = self._resolve_log_dir(trial_result)
+        self._validate_harbor_result(
+            trial_result,
+            log_dir=log_dir,
+            task_id=task_id,
+        )
+        outcome = self._parse_from_dir(
+            log_dir=log_dir,
+            task_id=task_id,
+            trial_result=trial_result,
+        )
+        trajectory = outcome.trajectory_path
+        if trajectory is None or not trajectory.is_file():
+            raise UnscoreableTrialError(
+                "missing-agent-trajectory",
+                task_id=task_id,
+            )
+        return outcome
 
     def parse_from_dir(
         self,
@@ -63,6 +103,93 @@ class VerifierAdapter:
     # Internals
     # ------------------------------------------------------------------
 
+    def _validate_harbor_result(
+        self,
+        trial_result: Any,
+        *,
+        log_dir: Path,
+        task_id: str,
+    ) -> None:
+        """Fail closed before a trial can enter replay or skill evolution.
+
+        A real task failure is valid evidence: a verifier-backed canonical
+        reward of ``0`` passes this check.  Agent/runtime exceptions, missing
+        verifier state, missing bind-mounted files, malformed values, and
+        disagreement between Harbor and ``reward.txt`` are infrastructure
+        failures instead.
+        """
+        if trial_result is None:
+            raise UnscoreableTrialError("missing-trial-result", task_id=task_id)
+
+        exception_info = getattr(trial_result, "exception_info", None)
+        if exception_info is not None:
+            exception_type = getattr(exception_info, "exception_type", None)
+            if not isinstance(exception_type, str) or not exception_type:
+                exception_type = type(exception_info).__name__
+            raise UnscoreableTrialError(
+                "agent-or-runtime-exception",
+                task_id=task_id,
+                exception_type=exception_type,
+            )
+
+        verifier_result = getattr(trial_result, "verifier_result", None)
+        if verifier_result is None:
+            raise UnscoreableTrialError(
+                "missing-verifier-result",
+                task_id=task_id,
+            )
+        rewards = getattr(verifier_result, "rewards", None)
+        if not isinstance(rewards, Mapping) or not rewards:
+            raise UnscoreableTrialError(
+                "missing-verifier-rewards",
+                task_id=task_id,
+            )
+
+        reward_path = log_dir / "reward.txt"
+        canonical = self._read_reward(
+            reward_path,
+            trial_result=None,
+            task_id=task_id,
+        )
+        if not math.isfinite(canonical) or not 0.0 <= canonical <= 1.0:
+            raise UnscoreableTrialError(
+                "canonical-reward-out-of-range",
+                task_id=task_id,
+            )
+
+        # Harbor reads reward.json before reward.txt.  Most SkillEvolBench
+        # tasks expose ``normalized_score`` there; tasks with only reward.txt
+        # expose ``reward``.  Never use an arbitrary first mapping value -- in
+        # reward.json that is commonly total_score on a 0..100 scale.
+        result_reward: float | None = None
+        for key in ("reward", "normalized_score"):
+            if key not in rewards:
+                continue
+            try:
+                value = float(rewards[key])
+            except (TypeError, ValueError):
+                raise UnscoreableTrialError(
+                    "invalid-verifier-reward",
+                    task_id=task_id,
+                ) from None
+            if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+                raise UnscoreableTrialError(
+                    "verifier-reward-out-of-range",
+                    task_id=task_id,
+                )
+            result_reward = value
+            break
+        if result_reward is None:
+            raise UnscoreableTrialError(
+                "missing-canonical-verifier-reward",
+                task_id=task_id,
+            )
+        if not math.isclose(canonical, result_reward, abs_tol=1e-4):
+            raise UnscoreableTrialError(
+                "verifier-reward-mismatch",
+                task_id=task_id,
+            )
+
     def _parse_from_dir(
         self,
         *,
@@ -73,7 +200,11 @@ class VerifierAdapter:
         log_dir = Path(log_dir)
 
         # 1. reward.txt -- canonical Harbor signal (required by contract)
-        reward = self._read_reward(log_dir / "reward.txt", trial_result)
+        reward = self._read_reward(
+            log_dir / "reward.txt",
+            trial_result,
+            task_id=task_id,
+        )
 
         # 2. score_report.json -- rubric dimensions + max_score
         score_path = log_dir / "score_report.json"
@@ -186,21 +317,26 @@ class VerifierAdapter:
         return (n_input, n_output, n_cache, usd, "computed_from_tokens")
 
     @staticmethod
-    def _read_reward(path: Path, trial_result: Any) -> float:
-        if path.exists():
-            try:
-                return float(path.read_text().strip())
-            except (ValueError, OSError):
-                _LOG.warning("VerifierAdapter: bad reward.txt at %s", path)
-        # Fallback to Harbor's TrialResult.verifier_result.rewards if present.
-        if trial_result is not None:
-            try:
-                rewards = trial_result.verifier_result.rewards  # type: ignore[union-attr]
-                if rewards:
-                    return float(next(iter(rewards.values())))
-            except AttributeError:
-                pass
-        return 0.0
+    def _read_reward(
+        path: Path,
+        trial_result: Any,
+        *,
+        task_id: str = "?",
+    ) -> float:
+        del trial_result  # kept in the private signature for call-site compatibility
+        if not path.is_file():
+            raise UnscoreableTrialError(
+                "missing-canonical-reward-file",
+                task_id=task_id,
+            )
+        try:
+            return float(path.read_text().strip())
+        except (ValueError, OSError):
+            _LOG.warning("VerifierAdapter: bad reward.txt at %s", path)
+            raise UnscoreableTrialError(
+                "invalid-canonical-reward-file",
+                task_id=task_id,
+            ) from None
 
     @staticmethod
     def _read_json(path: Path) -> dict[str, Any]:
@@ -474,4 +610,4 @@ class VerifierAdapter:
         return "?"
 
 
-__all__ = ["VerifierAdapter"]
+__all__ = ["UnscoreableTrialError", "VerifierAdapter"]

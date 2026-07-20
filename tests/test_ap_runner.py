@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import builtins
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -9,6 +10,7 @@ import pytest
 from scripts.ap import run_episode
 from scripts.ap.mask_secrets import mask_tree
 from skillevolbench.baselines import load_baseline
+from skillevolbench.components import UnscoreableTrialError
 from skillevolbench.schemas import RunConfig, StrategyConfig
 
 
@@ -74,6 +76,7 @@ def test_complete_episode_metrics_are_scoreable(tmp_path: Path) -> None:
     assert metrics["passed"] is True
     assert metrics["n_primary_trials"] == 30
     assert metrics["n_replay_trials"] == 15
+    assert metrics["n_verifier_backed_trials"] == 45
     assert metrics["recovery_rate"] == 0.5
     assert metrics["cross_task_revision_pairs"] == 12
     assert metrics["cross_task_fail_to_success_count"] == 4
@@ -140,6 +143,37 @@ def test_build_config_routes_codex_without_duplicate_api_base(
     assert "api_base" not in config.baseline.agent_kwargs
     assert config.baseline.model_name == "openai/served-model"
     assert config.environment_id == "E2"
+    assert config.workspace_root == (tmp_path / "runs").resolve()
+
+
+def test_build_config_uses_absolute_dind_shared_workspace(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    shared_workspace = tmp_path / "dind-shared" / "runs"
+    monkeypatch.setenv("INSTANCE_ID", "E1")
+    monkeypatch.setenv("MODEL", "served-model")
+    monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1")
+    monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("SEVB_WORKSPACE_ROOT", str(shared_workspace))
+
+    config = run_episode._build_config(tmp_path / "output")
+
+    assert config.workspace_root == shared_workspace.resolve()
+
+
+def test_build_config_rejects_relative_dind_shared_workspace(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("INSTANCE_ID", "E1")
+    monkeypatch.setenv("MODEL", "served-model")
+    monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1")
+    monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("SEVB_WORKSPACE_ROOT", "relative/runs")
+
+    with pytest.raises(ValueError, match="must be an absolute path"):
+        run_episode._build_config(tmp_path)
 
 
 def test_build_config_rejects_non_codex_agent(
@@ -217,6 +251,22 @@ def test_sanitize_error_redacts_credentials(monkeypatch: pytest.MonkeyPatch) -> 
     assert run_episode._sanitize_error("bad header raw-secret") == (
         "bad header [REDACTED]"
     )
+
+
+def test_actionable_exception_unwraps_unscoreable_taskgroup_leaf() -> None:
+    exception_group = getattr(builtins, "ExceptionGroup", None)
+    if exception_group is None:
+        pytest.skip("ExceptionGroup is only available on Python 3.11+")
+    rejected = UnscoreableTrialError(
+        "missing-verifier-result",
+        task_id="E1-LS1-T1",
+    )
+    grouped = exception_group(
+        "trial task group failed",
+        [ValueError("noise"), rejected],
+    )
+
+    assert run_episode._actionable_exception(grouped) is rejected
 
 
 def test_packaged_revision_file_takes_precedence(

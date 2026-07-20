@@ -136,10 +136,28 @@ class LifelongRunner:
         # 5. Execute
         try:
             await job.run()
-        finally:
+        except BaseException:
+            # A failed/unscoreable trial must not trigger post-eval maintenance
+            # or a nominal "final" skill snapshot.  Those are mutating success
+            # operations and could otherwise turn an infrastructure failure
+            # into benchmark learning evidence.  Keep only non-mutating audit
+            # cleanup, then preserve the original exception for AP.
+            await self._finalise(
+                runtime,
+                hooks,
+                benchmark_hash,
+                successful=False,
+            )
+            raise
+        else:
             # 6. Finalise: clean up the last env (post-eval maintenance)
             #    + tag final library + assert benchmark unchanged.
-            await self._finalise(runtime, hooks, benchmark_hash)
+            await self._finalise(
+                runtime,
+                hooks,
+                benchmark_hash,
+                successful=True,
+            )
 
         # 7. Generate report (Part 10 schema 1.0; sections are dicts).
         report_gen = ReportGenerator(
@@ -288,29 +306,43 @@ class LifelongRunner:
         runtime: BaselineRuntime,
         hooks: Any,
         benchmark_hash_at_start: str,
+        *,
+        successful: bool = True,
     ) -> None:
-        # 1. Final env transition (if a partial env was last)
-        try:
-            if hooks._current_env is not None:
-                # Final maintenance and snapshotting must finish before report
-                # generation. Scheduling a background task here races the
-                # reporter and can silently omit the last environment's state.
-                await hooks._handle_env_transition(hooks._current_env, "END")
-        except AssertionError:
-            # Freeze/hash protocol violations invalidate the run. Never turn
-            # them into a nominally successful AP score.
-            raise
-        except Exception as exc:  # best-effort cleanup for non-protocol errors.
-            _LOG.warning("LifelongRunner finalise: env_transition failed: %s", exc)
-
-        # 2. Tag final snapshot
-        if runtime.snapshot_store is not None:
+        # Final env transition and snapshotting mutate the library (maintenance,
+        # freeze state, git tags).  They belong only to a normally completed
+        # job.  Failed jobs retain their exact failure-time state for audit.
+        if successful:
             try:
-                runtime.snapshot_store.tag("final")
-            except Exception as exc:
-                _LOG.warning("LifelongRunner finalise: snapshot tag failed: %s", exc)
+                if hooks._current_env is not None:
+                    # Final maintenance and snapshotting must finish before report
+                    # generation. Scheduling a background task here races the
+                    # reporter and can silently omit the last environment's state.
+                    await hooks._handle_env_transition(hooks._current_env, "END")
+            except AssertionError:
+                # Freeze/hash protocol violations invalidate the run. Never turn
+                # them into a nominally successful AP score.
+                raise
+            except Exception as exc:  # best-effort cleanup for non-protocol errors.
+                _LOG.warning("LifelongRunner finalise: env_transition failed: %s", exc)
 
-        # 3. Assert benchmark unchanged
+            if runtime.snapshot_store is not None:
+                try:
+                    runtime.snapshot_store.tag("final")
+                except Exception as exc:
+                    _LOG.warning(
+                        "LifelongRunner finalise: snapshot tag failed: %s", exc
+                    )
+        else:
+            runtime.event_store.record(
+                "run_aborted",
+                {
+                    "run_id": self.config.run_id,
+                    "finalization": "non-mutating",
+                },
+            )
+
+        # Assert benchmark unchanged on both success and failure.
         try:
             now_hash = self._snapshot_benchmark_hash(runtime.run_root.parent / "_check")
         except Exception:
