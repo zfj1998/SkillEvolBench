@@ -60,6 +60,10 @@ from scripts.ap.scan_export_safety import (  # noqa: E402
     SCHEMA_VERSION as SAFETY_SCAN_SCHEMA_VERSION,
 )
 from scripts.ap.scan_export_safety import ScanError, scan_tree  # noqa: E402
+from skillevolbench.components.verifier_adapter import (  # noqa: E402
+    UnscoreableTrialError,
+)
+from skillevolbench.harbor_ext.hooks import SkillEvolBenchHooks  # noqa: E402
 
 
 EXPECTED_ENVIRONMENTS = tuple(f"E{i}" for i in range(1, 7))
@@ -231,6 +235,23 @@ def _load_json_object(
         context.error(f"{code}_not_object", scope)
         return None
     return value
+
+
+def _load_utf8_text(
+    path: Path,
+    *,
+    context: AuditContext,
+    code: str,
+    scope: str,
+) -> str | None:
+    if path.is_symlink() or not path.is_file():
+        context.error(f"{code}_missing", scope)
+        return None
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        context.error(f"{code}_invalid", scope)
+        return None
 
 
 def _load_jsonl_objects(
@@ -630,38 +651,75 @@ def _stream_session_ids(
     return ids
 
 
-def _validate_strict_prefix(
-    solve_path: Path,
-    full_path: Path,
+def _validate_delivered_reflection_continuity(
     *,
-    list_key: str,
+    audit: Path,
+    task_id: str,
+    result_session: Any,
     context: AuditContext,
-    code: str,
-    scope: str,
 ) -> None:
-    solve = _load_json_object(
-        solve_path,
+    """Re-run the runtime's exact continuity checks on delivered evidence."""
+
+    prompt = _load_utf8_text(
+        audit / "self_reflection_prompt.md",
         context=context,
-        code=f"{code}_solve",
-        scope=scope,
+        code="reflection_prompt",
+        scope=task_id,
     )
-    full = _load_json_object(
-        full_path,
+    solve_trajectory = _load_json_object(
+        audit / "trajectory.solve.json",
         context=context,
-        code=f"{code}_full",
-        scope=scope,
+        code="reflection_trajectory_solve",
+        scope=task_id,
     )
-    if solve is None or full is None:
+    full_trajectory = _load_json_object(
+        audit / "trajectory.full.json",
+        context=context,
+        code="reflection_trajectory_full",
+        scope=task_id,
+    )
+    solve_export = _load_json_object(
+        audit / "opencode.session.solve.json",
+        context=context,
+        code="reflection_export_solve",
+        scope=task_id,
+    )
+    full_export = _load_json_object(
+        audit / "opencode.session.full.json",
+        context=context,
+        code="reflection_export_full",
+        scope=task_id,
+    )
+    if prompt is None:
         return
-    solve_rows = solve.get(list_key)
-    full_rows = full.get(list_key)
-    if (
-        not isinstance(solve_rows, list)
-        or not isinstance(full_rows, list)
-        or len(full_rows) <= len(solve_rows)
-        or full_rows[: len(solve_rows)] != solve_rows
-    ):
-        context.error(f"{code}_not_strict_prefix", scope)
+
+    if solve_trajectory is not None and full_trajectory is not None:
+        try:
+            trajectory_session = SkillEvolBenchHooks._verify_trajectory_continuity(
+                solve_trajectory,
+                full_trajectory,
+                prompt=prompt,
+                task_id=task_id,
+            )
+        except UnscoreableTrialError:
+            context.error("reflection_trajectory_continuity_invalid", task_id)
+        else:
+            if trajectory_session != result_session:
+                context.error("reflection_trajectory_session_mismatch", task_id)
+
+    if solve_export is not None and full_export is not None:
+        try:
+            export_session = SkillEvolBenchHooks._verify_export_continuity(
+                solve_export,
+                full_export,
+                prompt=prompt,
+                task_id=task_id,
+            )
+        except UnscoreableTrialError:
+            context.error("reflection_export_continuity_invalid", task_id)
+        else:
+            if export_session != result_session:
+                context.error("reflection_export_session_mismatch", task_id)
 
 
 def _validate_reflection(
@@ -767,21 +825,11 @@ def _validate_reflection(
             context.error("reflection_runtime_delivered_hash_invalid", scope)
             break
 
-    _validate_strict_prefix(
-        audit / "trajectory.solve.json",
-        audit / "trajectory.full.json",
-        list_key="steps",
+    _validate_delivered_reflection_continuity(
+        audit=audit,
+        task_id=task_id,
+        result_session=session,
         context=context,
-        code="reflection_trajectory",
-        scope=scope,
-    )
-    _validate_strict_prefix(
-        audit / "opencode.session.solve.json",
-        audit / "opencode.session.full.json",
-        list_key="messages",
-        context=context,
-        code="reflection_export",
-        scope=scope,
     )
 
     required = [

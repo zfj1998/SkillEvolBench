@@ -24,6 +24,7 @@ from scripts.ap.compose_standalone_full import (
     CompositionError,
     compose_standalone_full,
 )
+from skillevolbench.opencode_continuity import opencode_synthetic_continue
 
 
 BENCHMARK_REVISION = "a" * 40
@@ -70,6 +71,34 @@ def _reward() -> dict[str, float]:
     }
 
 
+def _export_message(
+    *,
+    session_id: str,
+    message_id: str,
+    role: str,
+    text: str,
+    parent_id: str | None = None,
+) -> dict[str, object]:
+    info: dict[str, object] = {
+        "id": message_id,
+        "role": role,
+        "sessionID": session_id,
+    }
+    if parent_id is not None:
+        info["parentID"] = parent_id
+    return {
+        "info": info,
+        "parts": [
+            {
+                "type": "text",
+                "text": text,
+                "messageID": message_id,
+                "sessionID": session_id,
+            }
+        ],
+    }
+
+
 def _reflection_result(audit: Path, task_id: str) -> dict[str, object]:
     session_id = f"session-{task_id}"
     prompt = audit / "self_reflection_prompt.md"
@@ -77,34 +106,73 @@ def _reflection_result(audit: Path, task_id: str) -> dict[str, object]:
     full_trajectory = audit / "trajectory.full.json"
     solve_export = audit / "opencode.session.solve.json"
     full_export = audit / "opencode.session.full.json"
-    prompt.write_text("reflect on the verified outcome\n", encoding="utf-8")
-    _write_json(
-        solve_trajectory,
-        {
-            "schema_version": "1.0",
-            "session_id": session_id,
-            "steps": [{"kind": "solve"}],
-        },
-    )
+    prompt_text = "reflect on the verified outcome\n"
+    prompt.write_text(prompt_text, encoding="utf-8")
+    solve_steps = [
+        {"step_id": 1, "source": "user", "message": "solve prompt"},
+        {"step_id": 2, "source": "agent", "message": "solve answer"},
+    ]
+    trajectory_base = {
+        "schema_version": "ATIF-v1.7",
+        "session_id": session_id,
+        "agent": {"name": "opencode", "version": "1.18.3"},
+        "final_metrics": {},
+    }
+    _write_json(solve_trajectory, {**trajectory_base, "steps": solve_steps})
     _write_json(
         full_trajectory,
         {
-            "schema_version": "1.0",
-            "session_id": session_id,
-            "steps": [{"kind": "solve"}, {"kind": "reflection"}],
+            **trajectory_base,
+            "steps": [
+                *solve_steps,
+                {"step_id": 3, "source": "user", "message": prompt_text},
+                {
+                    "step_id": 4,
+                    "source": "agent",
+                    "message": "reflection answer",
+                },
+            ],
         },
     )
+    solve_messages = [
+        _export_message(
+            session_id=session_id,
+            message_id="solve-user",
+            role="user",
+            text="solve prompt",
+        ),
+        _export_message(
+            session_id=session_id,
+            message_id="solve-assistant",
+            role="assistant",
+            text="solve answer",
+            parent_id="solve-user",
+        ),
+    ]
     _write_json(
         solve_export,
-        {"info": {"id": session_id}, "messages": [{"role": "assistant"}]},
+        {"info": {"id": session_id}, "messages": solve_messages},
     )
     _write_json(
         full_export,
         {
             "info": {"id": session_id},
             "messages": [
-                {"role": "assistant"},
-                {"role": "assistant", "phase": "reflection"},
+                *solve_messages,
+                _export_message(
+                    session_id=session_id,
+                    message_id="reflection-user",
+                    role="user",
+                    text=prompt_text,
+                    parent_id="solve-assistant",
+                ),
+                _export_message(
+                    session_id=session_id,
+                    message_id="reflection-assistant",
+                    role="assistant",
+                    text="reflection answer",
+                    parent_id="reflection-user",
+                ),
             ],
         },
     )
@@ -532,6 +600,130 @@ def _make_group(tmp_path: Path) -> Path:
     return root
 
 
+def _reflection_fixture_paths(
+    root: Path,
+    task_id: str,
+) -> tuple[Path, Path, Path]:
+    environment_id = task_id.split("-", 1)[0]
+    run_id = f"run-{environment_id.lower()}"
+    run = (
+        root
+        / "jobs"
+        / f"job-{environment_id.lower()}"
+        / "artifacts"
+        / "output"
+        / "runs"
+        / run_id
+    )
+    audit = run / "harbor-job" / run_id / f"{task_id}__trial" / "self-reflection-audit"
+    record = run / "stores" / "replay" / "records" / f"{task_id}.json"
+    lifecycle = run / "stores" / "events" / "lifecycle.jsonl"
+    return audit, record, lifecycle
+
+
+def _sync_reflection_fields(
+    root: Path,
+    task_id: str,
+    fields: dict[str, object],
+) -> None:
+    audit, record_path, lifecycle_path = _reflection_fixture_paths(root, task_id)
+    result_path = audit / "self_reflection_result.json"
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    result.update(fields)
+    _write_json(result_path, result)
+
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    record["reflection"].update(fields)
+    _write_json(record_path, record)
+
+    rows = [
+        json.loads(line)
+        for line in lifecycle_path.read_text(encoding="utf-8").splitlines()
+        if line
+    ]
+    matched = 0
+    for row in rows:
+        if row.get("task_id") == task_id and str(row.get("event_type", "")).startswith(
+            "reflection_"
+        ):
+            row.update(fields)
+            matched += 1
+    assert matched == 1
+    lifecycle_path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+
+def _export_compaction(
+    session_id: str, *, auto: bool = True
+) -> list[dict[str, object]]:
+    compaction_id = "compaction"
+    summary_id = "compaction-summary"
+    continue_id = "compaction-continue"
+    return [
+        {
+            "info": {
+                "id": compaction_id,
+                "role": "user",
+                "sessionID": session_id,
+            },
+            "parts": [
+                {
+                    "type": "compaction",
+                    "auto": auto,
+                    "overflow": False,
+                    "messageID": compaction_id,
+                    "sessionID": session_id,
+                }
+            ],
+        },
+        {
+            "info": {
+                "id": summary_id,
+                "role": "assistant",
+                "sessionID": session_id,
+                "parentID": compaction_id,
+                "mode": "compaction",
+                "agent": "compaction",
+                "summary": True,
+            },
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "bounded summary",
+                    "messageID": summary_id,
+                    "sessionID": session_id,
+                }
+            ],
+        },
+        {
+            "info": {
+                "id": continue_id,
+                "role": "user",
+                "sessionID": session_id,
+            },
+            "parts": [
+                {
+                    "type": "text",
+                    "text": opencode_synthetic_continue(overflow=False),
+                    "synthetic": True,
+                    "metadata": {"compaction_continue": True},
+                    "messageID": continue_id,
+                    "sessionID": session_id,
+                }
+            ],
+        },
+        _export_message(
+            session_id=session_id,
+            message_id="post-compaction-assistant",
+            role="assistant",
+            text="continued reflection",
+            parent_id=continue_id,
+        ),
+    ]
+
+
 def _make_standalone_exports(tmp_path: Path) -> dict[str, Path]:
     exports: dict[str, Path] = {}
     for index, environment_id in enumerate(EXPECTED_ENVIRONMENTS, start=1):
@@ -609,6 +801,115 @@ def test_complete_group_passes_and_reports_observational_transitions(
     assert exit_code == 0
     assert SIGNED_URL_MARKER not in captured.out
     assert json.loads(captured.out)["passed"] is True
+
+
+def test_delivered_reflection_extra_user_fails_strict_continuity(
+    tmp_path: Path,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    full_path = audit / "trajectory.full.json"
+    full = json.loads(full_path.read_text(encoding="utf-8"))
+    full["steps"].append(
+        {
+            "step_id": len(full["steps"]) + 1,
+            "source": "user",
+            "message": "arbitrary extra user turn",
+        }
+    )
+    _write_json(full_path, full)
+    _sync_reflection_fields(
+        root,
+        task_id,
+        {"full_session_trajectory_sha256": _sha256(full_path)},
+    )
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert ("reflection_trajectory_continuity_invalid", task_id) in errors
+    assert ("reflection_prefix_flags_invalid", task_id) not in errors
+    assert ("reflection_runtime_delivered_hash_invalid", task_id) not in errors
+
+
+def test_delivered_reflection_valid_compaction_passes_strict_continuity(
+    tmp_path: Path,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    full_path = audit / "opencode.session.full.json"
+    full = json.loads(full_path.read_text(encoding="utf-8"))
+    session_id = full["info"]["id"]
+    full["messages"].extend(_export_compaction(session_id))
+    _write_json(full_path, full)
+    _sync_reflection_fields(
+        root,
+        task_id,
+        {"full_session_export_sha256": _sha256(full_path)},
+    )
+
+    report = audit_full_group(root)
+
+    assert report.passed is True
+
+
+def test_delivered_reflection_compaction_near_miss_fails_strict_continuity(
+    tmp_path: Path,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    full_path = audit / "opencode.session.full.json"
+    full = json.loads(full_path.read_text(encoding="utf-8"))
+    session_id = full["info"]["id"]
+    full["messages"].extend(_export_compaction(session_id, auto=False))
+    _write_json(full_path, full)
+    _sync_reflection_fields(
+        root,
+        task_id,
+        {"full_session_export_sha256": _sha256(full_path)},
+    )
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert ("reflection_export_continuity_invalid", task_id) in errors
+    assert ("reflection_prefix_flags_invalid", task_id) not in errors
+    assert ("reflection_runtime_delivered_hash_invalid", task_id) not in errors
+
+
+def test_delivered_reflection_validator_session_must_match_result(
+    tmp_path: Path,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    solve_path = audit / "trajectory.solve.json"
+    full_path = audit / "trajectory.full.json"
+    for path in (solve_path, full_path):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["session_id"] = "different-valid-session"
+        _write_json(path, payload)
+    _sync_reflection_fields(
+        root,
+        task_id,
+        {
+            "solve_trajectory_sha256": _sha256(solve_path),
+            "full_session_trajectory_sha256": _sha256(full_path),
+        },
+    )
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert ("reflection_trajectory_session_mismatch", task_id) in errors
+    assert ("reflection_trajectory_continuity_invalid", task_id) not in errors
+    assert ("reflection_runtime_delivered_hash_invalid", task_id) not in errors
 
 
 def test_missing_environment_fails_group_completeness(tmp_path: Path) -> None:
