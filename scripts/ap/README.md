@@ -42,3 +42,34 @@ output is aggregate JSON: no matched value, file content, or path is printed.
 Exit status is `0` only when the scan is complete and has zero findings, and is
 nonzero otherwise. Provide any live exact credentials through their normal
 named environment variables, never as command-line arguments.
+
+## Compose six standalone full-environment jobs
+
+When AP group artifact delivery is unavailable, export one successful
+standalone job for each of E1 through E6 and compose them locally:
+
+    python scripts/ap/compose_standalone_full.py \
+      /exports/E1 /exports/E2 /exports/E3 /exports/E4 /exports/E5 /exports/E6 \
+      --output-root /results/skillevolbench-local-full \
+      --expected-benchmark-revision BENCHMARK_GIT_SHA \
+      --expected-agenthub-revision AGENTHUB_GIT_SHA \
+      --expected-split v1@8
+
+The command accepts only standalone jobs (`group_id=null`) from
+`megaflow-benchmark-dev`, requires one canonical complete episode per
+environment, copies all six exports, and writes deterministic aggregate
+metrics using the Agent-Hub group post-process formula. The resulting
+`group.json` and `composition_manifest.json` explicitly use
+`composition_mode=standalone_jobs_local_aggregate`; they are not evidence of a
+real AP group. Every source and copied tree must pass the secret-safe safety
+scanner. The manifest binds full-tree content digests and scan proofs, excludes
+all AP `artifacts.json` signed-download metadata, and records the normalized
+private permission policy (`0700` directories and `0600` regular files).
+
+Audit the composed root with the same expected revisions and split:
+
+    python scripts/ap/audit_full_group.py \
+      /results/skillevolbench-local-full \
+      --expected-benchmark-revision BENCHMARK_GIT_SHA \
+      --expected-agenthub-revision AGENTHUB_GIT_SHA \
+      --expected-split v1@8

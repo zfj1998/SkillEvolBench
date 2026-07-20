@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
 import yaml
 
 from scripts.ap.audit_full_group import (
@@ -17,6 +18,11 @@ from scripts.ap.audit_full_group import (
     TRANSITION_KEYS,
     audit_full_group,
     main,
+)
+from scripts.ap.compose_standalone_full import (
+    COMPOSITION_MODE,
+    CompositionError,
+    compose_standalone_full,
 )
 
 
@@ -526,6 +532,43 @@ def _make_group(tmp_path: Path) -> Path:
     return root
 
 
+def _make_standalone_exports(tmp_path: Path) -> dict[str, Path]:
+    exports: dict[str, Path] = {}
+    for index, environment_id in enumerate(EXPECTED_ENVIRONMENTS, start=1):
+        export_root = tmp_path / "standalone" / f"job-{environment_id.lower()}"
+        output = export_root / "artifacts" / "output"
+        _make_environment(output, environment_id)
+        metrics_path = output / "metrics.json"
+        metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        metrics.update(
+            {
+                "t4_transfer": index / 10,
+                "fail_to_success_count": index,
+                "cross_task_success_to_fail_count": 6 - index,
+            }
+        )
+        _write_json(metrics_path, metrics)
+        _write_json(
+            export_root / "job.json",
+            {
+                "job_id": f"standalone-{environment_id.lower()}",
+                "group_id": None,
+                "status": "Succeeded",
+                "instance_id": environment_id,
+                "k8s_namespace": "megaflow-benchmark-dev",
+                "template": "skillevolbench",
+                "agenthub_revision": AGENTHUB_REVISION,
+                "template_commit": AGENTHUB_REVISION,
+            },
+        )
+        _write_json(
+            export_root / "artifacts.json",
+            {"url": f"https://example.invalid/object?signature={SIGNED_URL_MARKER}"},
+        )
+        exports[environment_id] = export_root
+    return exports
+
+
 def test_complete_group_passes_and_reports_observational_transitions(
     tmp_path: Path, capsys
 ) -> None:
@@ -547,6 +590,8 @@ def test_complete_group_passes_and_reports_observational_transitions(
     assert report.reflection_transitions["success_to_success_count"] == 90
     assert report.revision_applied == 0
     assert report.revision_cross_task_pairs == 0
+    assert report.composition_mode == "ap_group"
+    assert report.aggregation_origin == "ap_group_post_process"
     assert "observational_only" in report.transition_interpretation
     assert SIGNED_URL_MARKER not in json.dumps(report.to_dict(), sort_keys=True)
 
@@ -609,4 +654,242 @@ def test_group_aggregate_is_recomputed_from_raw_environment_metrics(
     assert report.group_post_process_verified is False
     assert any(
         item.code == "group_post_process_aggregate_mismatch" for item in report.errors
+    )
+
+
+def test_standalone_jobs_compose_and_pass_the_full_audit(tmp_path: Path) -> None:
+    exports = _make_standalone_exports(tmp_path)
+    output = tmp_path / "local-composition"
+
+    compose_standalone_full(
+        exports.values(),
+        output_root=output,
+        expected_benchmark_revision=BENCHMARK_REVISION,
+        expected_agenthub_revision=AGENTHUB_REVISION,
+        expected_split=EXPECTED_SPLIT,
+    )
+
+    group = json.loads((output / "group.json").read_text(encoding="utf-8"))
+    manifest = json.loads(
+        (output / "composition_manifest.json").read_text(encoding="utf-8")
+    )
+    aggregate = json.loads(
+        (
+            output
+            / "jobs"
+            / "local-post-process"
+            / "artifacts"
+            / "output"
+            / "metrics.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert group["composition_mode"] == COMPOSITION_MODE
+    assert group["ap_group_id"] is None
+    assert manifest["composition_mode"] == COMPOSITION_MODE
+    assert manifest["ap_group_id"] is None
+    assert aggregate["t4_transfer"] == pytest.approx(0.35)
+    assert aggregate["fail_to_success_count"] == 21
+    assert aggregate["cross_task_success_to_fail_count"] == 15
+    assert aggregate["selected_job_ids"] == {
+        environment_id: f"standalone-{environment_id.lower()}"
+        for environment_id in EXPECTED_ENVIRONMENTS
+    }
+    assert not list(output.rglob("artifacts.json"))
+    assert SIGNED_URL_MARKER not in json.dumps(manifest, sort_keys=True)
+    assert (
+        manifest["source_jobs"]["E1"]["source_projected_tree"][
+            "excluded_artifacts_json"
+        ]
+        == 1
+    )
+    assert (
+        manifest["source_jobs"]["E1"]["copied_projected_tree"][
+            "excluded_artifacts_json"
+        ]
+        == 0
+    )
+    assert manifest["source_jobs"]["E1"]["source_safety_scan"]["clean"] is True
+    assert manifest["source_jobs"]["E1"]["copied_safety_scan"]["clean"] is True
+    assert output.stat().st_mode & 0o7777 == 0o700
+    assert (output / "group.json").stat().st_mode & 0o7777 == 0o600
+    assert (output / "jobs" / "standalone-e1").stat().st_mode & 0o7777 == 0o700
+    assert (
+        output / "jobs" / "standalone-e1" / "job.json"
+    ).stat().st_mode & 0o7777 == 0o600
+
+    report = audit_full_group(
+        output,
+        expected_benchmark_revision=BENCHMARK_REVISION,
+        expected_agenthub_revision=AGENTHUB_REVISION,
+    )
+
+    assert report.passed is True
+    assert report.composition_mode == COMPOSITION_MODE
+    assert report.aggregation_origin == "local_postprocess"
+    assert report.group_post_process_verified is True
+
+
+def test_standalone_composition_rejects_grouped_source_before_writing(
+    tmp_path: Path,
+) -> None:
+    exports = _make_standalone_exports(tmp_path)
+    job_path = exports["E1"] / "job.json"
+    job = json.loads(job_path.read_text(encoding="utf-8"))
+    job["group_id"] = "real-ap-group"
+    _write_json(job_path, job)
+    output = tmp_path / "must-not-exist"
+
+    with pytest.raises(CompositionError):
+        compose_standalone_full(
+            exports.values(),
+            output_root=output,
+            expected_benchmark_revision=BENCHMARK_REVISION,
+            expected_agenthub_revision=AGENTHUB_REVISION,
+            expected_split=EXPECTED_SPLIT,
+        )
+
+    assert not output.exists()
+
+
+def test_local_composition_job_metadata_tamper_fails_audit(tmp_path: Path) -> None:
+    exports = _make_standalone_exports(tmp_path)
+    output = tmp_path / "local-composition"
+    compose_standalone_full(
+        exports.values(),
+        output_root=output,
+        expected_benchmark_revision=BENCHMARK_REVISION,
+        expected_agenthub_revision=AGENTHUB_REVISION,
+        expected_split=EXPECTED_SPLIT,
+    )
+    job_path = output / "jobs" / "standalone-e4" / "job.json"
+    job = json.loads(job_path.read_text(encoding="utf-8"))
+    job["k8s_namespace"] = "unexpected-namespace"
+    _write_json(job_path, job)
+
+    report = audit_full_group(output)
+
+    assert report.passed is False
+    assert any(
+        item.scope == "E4" and item.code == "composition_job_metadata_invalid"
+        for item in report.errors
+    )
+    assert any(
+        item.scope == "E4" and item.code == "composition_source_hash_mismatch"
+        for item in report.errors
+    )
+
+
+def test_standalone_composition_rejects_full_tree_safety_finding(
+    tmp_path: Path,
+) -> None:
+    exports = _make_standalone_exports(tmp_path)
+    (exports["E2"] / "unsafe-evidence.txt").write_text(
+        "sevb-no-auth-must-not-survive\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "must-not-exist"
+
+    with pytest.raises(CompositionError):
+        compose_standalone_full(
+            exports.values(),
+            output_root=output,
+            expected_benchmark_revision=BENCHMARK_REVISION,
+            expected_agenthub_revision=AGENTHUB_REVISION,
+            expected_split=EXPECTED_SPLIT,
+        )
+
+    assert not output.exists()
+
+
+def test_standalone_composition_rejects_escaping_symlink(tmp_path: Path) -> None:
+    exports = _make_standalone_exports(tmp_path)
+    outside = tmp_path / "outside.txt"
+    outside.write_text("outside\n", encoding="utf-8")
+    (exports["E3"] / "escape-link").symlink_to(outside)
+    output = tmp_path / "must-not-exist"
+
+    with pytest.raises(CompositionError):
+        compose_standalone_full(
+            exports.values(),
+            output_root=output,
+            expected_benchmark_revision=BENCHMARK_REVISION,
+            expected_agenthub_revision=AGENTHUB_REVISION,
+            expected_split=EXPECTED_SPLIT,
+        )
+
+    assert not output.exists()
+
+
+def test_local_composition_noncore_file_tamper_fails_audit(tmp_path: Path) -> None:
+    exports = _make_standalone_exports(tmp_path)
+    output = tmp_path / "local-composition"
+    compose_standalone_full(
+        exports.values(),
+        output_root=output,
+        expected_benchmark_revision=BENCHMARK_REVISION,
+        expected_agenthub_revision=AGENTHUB_REVISION,
+        expected_split=EXPECTED_SPLIT,
+    )
+    added = output / "jobs" / "standalone-e3" / "unexpected-evidence.txt"
+    added.write_text("added after composition\n", encoding="utf-8")
+    added.chmod(0o600)
+
+    report = audit_full_group(output)
+
+    assert report.passed is False
+    assert any(
+        item.scope == "E3" and item.code == "composition_copied_tree_mismatch"
+        for item in report.errors
+    )
+
+
+def test_local_composition_permission_tamper_fails_audit(tmp_path: Path) -> None:
+    exports = _make_standalone_exports(tmp_path)
+    output = tmp_path / "local-composition"
+    compose_standalone_full(
+        exports.values(),
+        output_root=output,
+        expected_benchmark_revision=BENCHMARK_REVISION,
+        expected_agenthub_revision=AGENTHUB_REVISION,
+        expected_split=EXPECTED_SPLIT,
+    )
+    (output / "group.json").chmod(0o644)
+
+    report = audit_full_group(output)
+
+    assert report.passed is False
+    assert any(
+        item.scope == "group" and item.code == "composition_private_permissions_invalid"
+        for item in report.errors
+    )
+
+
+def test_local_composition_aggregate_tamper_fails_audit(tmp_path: Path) -> None:
+    exports = _make_standalone_exports(tmp_path)
+    output = tmp_path / "local-composition"
+    compose_standalone_full(
+        exports.values(),
+        output_root=output,
+        expected_benchmark_revision=BENCHMARK_REVISION,
+        expected_agenthub_revision=AGENTHUB_REVISION,
+        expected_split=EXPECTED_SPLIT,
+    )
+    metrics_path = (
+        output / "jobs" / "local-post-process" / "artifacts" / "output" / "metrics.json"
+    )
+    aggregate = json.loads(metrics_path.read_text(encoding="utf-8"))
+    aggregate["evaluation_sr"] = 0.5
+    _write_json(metrics_path, aggregate)
+    metrics_path.chmod(0o600)
+
+    report = audit_full_group(output)
+
+    assert report.passed is False
+    assert any(
+        item.scope == "group" and item.code == "composition_local_metrics_hash_mismatch"
+        for item in report.errors
+    )
+    assert any(
+        item.scope == "group" and item.code == "composition_local_aggregate_mismatch"
+        for item in report.errors
     )

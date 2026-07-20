@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Fail-closed, read-only audit for a full SkillEvolBench AP group export.
 
-The expected input is the directory produced by ``ap group export`` with the
-group post-process job exported below ``jobs/<job-id>`` as well.  The auditor
-only opens a fixed allowlist of benchmark-owned JSON/YAML/text artifacts.  In
-particular, it never opens AP ``artifacts.json``/download-link metadata, and it
-never prints model endpoints, submitted parameters, artifact URLs, or file
-contents.
+The expected input is either the directory produced by ``ap group export`` or
+the explicitly labelled local root produced by ``compose_standalone_full.py``.
+An AP group must include its post-process job below ``jobs/<job-id>``; a local
+composition must include its strict composition manifest and copied standalone
+job metadata.  Its semantic audit only opens a fixed allowlist of
+benchmark-owned JSON/YAML/text artifacts.  A local composition additionally
+receives a secret-safe full-tree scan that reports aggregate counts only.  The
+auditor never opens AP ``artifacts.json``/download-link metadata, and it never
+prints model endpoints, submitted parameters, artifact URLs, or file contents.
 
 Exit status is ``0`` only when all six canonical environment episodes and the
 group post-process result pass every integrity check.  Integrity failures use
@@ -34,6 +37,29 @@ if str(REPO_ROOT) not in sys.path:
 from scripts.ap.mask_secrets import (  # noqa: E402
     _read_manifest as read_sanitization_manifest,
 )
+from scripts.ap.compose_standalone_full import (  # noqa: E402
+    AGGREGATION_METHOD,
+    COMPOSITION_MODE,
+    COMPOSITION_SCHEMA_VERSION,
+    EXPECTED_NAMESPACE,
+    LOCAL_METRICS_RELATIVE_PATH,
+    LOCAL_POSTPROCESS_JOB_ID,
+    build_aggregate_metrics,
+    build_composition_id,
+    canonical_metric_errors,
+    private_permissions_valid,
+    summarize_projected_tree,
+)
+from scripts.ap.scan_export_safety import (  # noqa: E402
+    ALL_CATEGORIES as SAFETY_SCAN_CATEGORIES,
+)
+from scripts.ap.scan_export_safety import (  # noqa: E402
+    ALL_SURFACES as SAFETY_SCAN_SURFACES,
+)
+from scripts.ap.scan_export_safety import (  # noqa: E402
+    SCHEMA_VERSION as SAFETY_SCAN_SCHEMA_VERSION,
+)
+from scripts.ap.scan_export_safety import ScanError, scan_tree  # noqa: E402
 
 
 EXPECTED_ENVIRONMENTS = tuple(f"E{i}" for i in range(1, 7))
@@ -130,6 +156,8 @@ class AuditReport:
     observed_environments: list[str] = field(default_factory=list)
     selected_job_count: int = 0
     group_post_process_verified: bool = False
+    composition_mode: str = "ap_group"
+    aggregation_origin: str = "ap_group_post_process"
     benchmark_revision: str = "unknown"
     agenthub_revision: str = "unknown"
     dataset: str = "unknown"
@@ -259,6 +287,23 @@ def _sha256_file(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _is_regular_beneath(root: Path, path: Path) -> bool:
+    """Return true only when every path component stays non-symlinked."""
+
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        return False
+    cursor = root
+    if cursor.is_symlink() or not cursor.is_dir():
+        return False
+    for part in relative.parts:
+        cursor = cursor / part
+        if cursor.is_symlink():
+            return False
+    return cursor.is_file()
 
 
 def _is_number(value: Any) -> bool:
@@ -1373,7 +1418,7 @@ def _discover_environment_outputs(
             continue
         output_root = job_dir / "artifacts" / "output"
         dataset_path = output_root / "dataset_episode.json"
-        if dataset_path.is_symlink() or not dataset_path.is_file():
+        if not _is_regular_beneath(job_dir, dataset_path):
             continue
         dataset_context = AuditContext()
         dataset = _load_json_object(
@@ -1391,6 +1436,541 @@ def _discover_environment_outputs(
             continue
         outputs.setdefault(str(environment_id), []).append(output_root)
     return outputs
+
+
+def _safety_scan_proof_valid(
+    report: Any,
+    *,
+    require_no_transport_metadata: bool,
+) -> bool:
+    if not isinstance(report, dict):
+        return False
+    expected_report_keys = {
+        "schema_version",
+        "clean",
+        "scan_complete",
+        "finding_count",
+        "category_counts",
+        "surface_counts",
+        "scan_counts",
+        "policy",
+    }
+    expected_scan_count_keys = {
+        "bytes_scanned",
+        "directories",
+        "entries",
+        "regular_files",
+        "symlinks",
+        "skipped_artifacts_json",
+        "exact_secret_values_loaded",
+        "exact_secret_values_ignored",
+    }
+    expected_policy = {
+        "artifacts_json_content": "skipped_by_default",
+        "finding_count_unit": "category_per_object_surface",
+        "matched_values_reported": False,
+        "paths_reported": False,
+        "symlinks_followed": False,
+        "writes_performed": False,
+    }
+    category_counts = report.get("category_counts")
+    surface_counts = report.get("surface_counts")
+    scan_counts = report.get("scan_counts")
+    return bool(
+        set(report) == expected_report_keys
+        and report.get("schema_version") == SAFETY_SCAN_SCHEMA_VERSION
+        and report.get("clean") is True
+        and report.get("scan_complete") is True
+        and report.get("finding_count") == 0
+        and isinstance(category_counts, dict)
+        and set(category_counts) == set(SAFETY_SCAN_CATEGORIES)
+        and all(value == 0 for value in category_counts.values())
+        and isinstance(surface_counts, dict)
+        and set(surface_counts) == set(SAFETY_SCAN_SURFACES)
+        and all(value == 0 for value in surface_counts.values())
+        and isinstance(scan_counts, dict)
+        and set(scan_counts) == expected_scan_count_keys
+        and all(type(value) is int and value >= 0 for value in scan_counts.values())
+        and (
+            not require_no_transport_metadata
+            or scan_counts.get("skipped_artifacts_json") == 0
+        )
+        and report.get("policy") == expected_policy
+    )
+
+
+def _tree_proof_valid(value: Any) -> bool:
+    expected_keys = {
+        "algorithm",
+        "sha256",
+        "directories",
+        "regular_files",
+        "symlinks",
+        "regular_file_bytes",
+        "excluded_artifacts_json",
+    }
+    return bool(
+        isinstance(value, dict)
+        and set(value) == expected_keys
+        and value.get("algorithm") == "sha256_path_type_content_v1"
+        and isinstance(value.get("sha256"), str)
+        and HEX64.fullmatch(value["sha256"]) is not None
+        and type(value.get("directories")) is int
+        and value["directories"] >= 1
+        and all(
+            type(value.get(key)) is int and value[key] >= 0
+            for key in (
+                "regular_files",
+                "symlinks",
+                "regular_file_bytes",
+                "excluded_artifacts_json",
+            )
+        )
+    )
+
+
+def _validate_local_composition(
+    group_root: Path,
+    group: dict[str, Any],
+    *,
+    expected_benchmark_revision: str | None,
+    expected_agenthub_revision: str | None,
+    expected_dataset: str,
+    expected_split: str,
+    expected_baseline: str,
+    expected_order_seed: str,
+    context: AuditContext,
+) -> None:
+    """Verify the provenance boundary of a standalone-job local composition."""
+
+    manifest = _load_json_object(
+        group_root / "composition_manifest.json",
+        context=context,
+        code="composition_manifest",
+        scope="group",
+    )
+    if manifest is None:
+        return
+
+    expected_group_keys = {
+        "schema_version",
+        "composition_mode",
+        "aggregation_origin",
+        "ap_group_id",
+        "group_id",
+        "template",
+        "dataset",
+        "split",
+        "benchmark_revision",
+        "template_commit",
+        "k8s_namespace",
+        "composition_manifest",
+        "expected_environments",
+        "source_job_ids",
+        "group_post_process_job_id",
+        "stats",
+    }
+    expected_manifest_keys = {
+        "schema_version",
+        "composition_mode",
+        "composition_id",
+        "ap_group_id",
+        "template",
+        "dataset",
+        "split",
+        "benchmark_revision",
+        "agenthub_revision",
+        "k8s_namespace",
+        "baseline_name",
+        "order_seed",
+        "expected_environments",
+        "source_job_count",
+        "source_jobs",
+        "transport_metadata_policy",
+        "permission_policy",
+        "composition_safety_scan",
+        "local_postprocess",
+    }
+    expected_stats = {
+        "total": 6,
+        "finished": 6,
+        "succeeded": 6,
+        "failed": 0,
+        "cancelled": 0,
+        "pending": 0,
+        "queued": 0,
+        "running": 0,
+        "scheduling": 0,
+        "unknown": 0,
+    }
+    expected_environment_list = list(EXPECTED_ENVIRONMENTS)
+    composition_id = manifest.get("composition_id")
+    benchmark_revision = manifest.get("benchmark_revision")
+    agenthub_revision = manifest.get("agenthub_revision")
+    source_jobs = manifest.get("source_jobs")
+    source_job_ids = group.get("source_job_ids")
+    local_postprocess = manifest.get("local_postprocess")
+
+    manifest_structure_valid = (
+        set(manifest) == expected_manifest_keys
+        and manifest.get("schema_version") == COMPOSITION_SCHEMA_VERSION
+        and manifest.get("composition_mode") == COMPOSITION_MODE
+        and isinstance(composition_id, str)
+        and composition_id.startswith("local-standalone-")
+        and SAFE_ID.fullmatch(composition_id) is not None
+        and manifest.get("ap_group_id") is None
+        and manifest.get("template") == "skillevolbench"
+        and manifest.get("dataset") == expected_dataset
+        and manifest.get("split") == expected_split
+        and isinstance(benchmark_revision, str)
+        and HEX40.fullmatch(benchmark_revision) is not None
+        and isinstance(agenthub_revision, str)
+        and HEX40.fullmatch(agenthub_revision) is not None
+        and manifest.get("k8s_namespace") == EXPECTED_NAMESPACE
+        and manifest.get("baseline_name") == expected_baseline
+        and manifest.get("order_seed") == expected_order_seed
+        and manifest.get("expected_environments") == expected_environment_list
+        and manifest.get("source_job_count") == len(EXPECTED_ENVIRONMENTS)
+        and isinstance(source_jobs, dict)
+        and set(source_jobs) == set(EXPECTED_ENVIRONMENTS)
+        and manifest.get("transport_metadata_policy") == "artifacts_json_excluded"
+        and manifest.get("permission_policy")
+        == {
+            "directories": "0700",
+            "regular_files": "0600",
+            "symlinks": "preserved_without_following",
+        }
+        and manifest.get("composition_safety_scan")
+        == {
+            "scanner_schema_version": SAFETY_SCAN_SCHEMA_VERSION,
+            "scope": "complete_composition_tree_before_atomic_publish",
+            "clean": True,
+            "scan_complete": True,
+            "finding_count": 0,
+            "artifacts_json_retained": False,
+        }
+        and isinstance(local_postprocess, dict)
+    )
+    if not manifest_structure_valid:
+        context.error("composition_manifest_invalid", "group")
+
+    group_structure_valid = (
+        set(group) == expected_group_keys
+        and group.get("schema_version") == COMPOSITION_SCHEMA_VERSION
+        and group.get("composition_mode") == COMPOSITION_MODE
+        and group.get("aggregation_origin") == "local_postprocess"
+        and group.get("ap_group_id") is None
+        and group.get("group_id") == composition_id
+        and group.get("template") == "skillevolbench"
+        and group.get("dataset") == expected_dataset
+        and group.get("split") == expected_split
+        and group.get("benchmark_revision") == benchmark_revision
+        and group.get("template_commit") == agenthub_revision
+        and group.get("k8s_namespace") == EXPECTED_NAMESPACE
+        and group.get("composition_manifest") == "composition_manifest.json"
+        and group.get("expected_environments") == expected_environment_list
+        and isinstance(source_job_ids, dict)
+        and set(source_job_ids) == set(EXPECTED_ENVIRONMENTS)
+        and group.get("group_post_process_job_id") == LOCAL_POSTPROCESS_JOB_ID
+        and group.get("stats") == expected_stats
+    )
+    if not group_structure_valid:
+        context.error("local_composition_group_metadata_invalid", "group")
+    if (
+        expected_benchmark_revision is not None
+        and benchmark_revision != expected_benchmark_revision
+    ):
+        context.error("benchmark_revision_mismatch", "group")
+    if (
+        expected_agenthub_revision is not None
+        and agenthub_revision != expected_agenthub_revision
+    ):
+        context.error("agenthub_revision_mismatch", "group")
+
+    if not isinstance(source_jobs, dict) or not isinstance(source_job_ids, dict):
+        return
+
+    expected_entry_keys = {
+        "job_id",
+        "relative_path",
+        "job_metadata_sha256",
+        "dataset_episode_sha256",
+        "run_manifest_sha256",
+        "metrics_sha256",
+        "source_projected_tree",
+        "copied_projected_tree",
+        "source_safety_scan",
+        "copied_safety_scan",
+    }
+    observed_job_ids: set[str] = set()
+    raw_metrics: dict[str, dict[str, Any]] = {}
+    validated_job_ids: dict[str, str] = {}
+    source_entries_valid = True
+    for environment_id in EXPECTED_ENVIRONMENTS:
+        entry = source_jobs.get(environment_id)
+        job_id = source_job_ids.get(environment_id)
+        if not (
+            isinstance(entry, dict)
+            and set(entry) == expected_entry_keys
+            and isinstance(job_id, str)
+            and SAFE_ID.fullmatch(job_id) is not None
+            and entry.get("job_id") == job_id
+            and entry.get("relative_path") == f"jobs/{job_id}"
+            and all(
+                isinstance(entry.get(key), str)
+                and HEX64.fullmatch(entry[key]) is not None
+                for key in (
+                    "job_metadata_sha256",
+                    "dataset_episode_sha256",
+                    "run_manifest_sha256",
+                    "metrics_sha256",
+                )
+            )
+            and _tree_proof_valid(entry.get("source_projected_tree"))
+            and _tree_proof_valid(entry.get("copied_projected_tree"))
+            and _safety_scan_proof_valid(
+                entry.get("source_safety_scan"),
+                require_no_transport_metadata=False,
+            )
+            and _safety_scan_proof_valid(
+                entry.get("copied_safety_scan"),
+                require_no_transport_metadata=True,
+            )
+        ):
+            source_entries_valid = False
+            continue
+        source_tree = entry["source_projected_tree"]
+        copied_tree = entry["copied_projected_tree"]
+        source_scan_counts = entry["source_safety_scan"]["scan_counts"]
+        copied_scan_counts = entry["copied_safety_scan"]["scan_counts"]
+        expected_copied_tree = {
+            **source_tree,
+            "excluded_artifacts_json": 0,
+        }
+        scan_proofs_consistent = (
+            copied_tree == expected_copied_tree
+            and source_scan_counts["directories"] == source_tree["directories"]
+            and source_scan_counts["regular_files"]
+            == source_tree["regular_files"] + source_tree["excluded_artifacts_json"]
+            and source_scan_counts["symlinks"] == source_tree["symlinks"]
+            and source_scan_counts["bytes_scanned"] == source_tree["regular_file_bytes"]
+            and source_scan_counts["skipped_artifacts_json"]
+            == source_tree["excluded_artifacts_json"]
+            and copied_scan_counts["directories"] == copied_tree["directories"]
+            and copied_scan_counts["regular_files"] == copied_tree["regular_files"]
+            and copied_scan_counts["symlinks"] == copied_tree["symlinks"]
+            and copied_scan_counts["bytes_scanned"] == copied_tree["regular_file_bytes"]
+        )
+        if not scan_proofs_consistent:
+            source_entries_valid = False
+            continue
+        if job_id in observed_job_ids:
+            source_entries_valid = False
+            continue
+        observed_job_ids.add(job_id)
+        validated_job_ids[environment_id] = job_id
+        job_root = group_root / "jobs" / job_id
+        try:
+            observed_tree = summarize_projected_tree(job_root)
+        except ValueError:
+            context.error("composition_copied_tree_invalid", environment_id)
+            continue
+        if (
+            observed_tree != copied_tree
+            or observed_tree["excluded_artifacts_json"] != 0
+        ):
+            context.error("composition_copied_tree_mismatch", environment_id)
+        output_root = job_root / "artifacts" / "output"
+        job_path = job_root / "job.json"
+        dataset_path = output_root / "dataset_episode.json"
+        run_manifest_path = output_root / "ap_run_manifest.json"
+        metrics_path = output_root / "metrics.json"
+        if not all(
+            _is_regular_beneath(job_root, path)
+            for path in (job_path, dataset_path, run_manifest_path, metrics_path)
+        ):
+            context.error("composition_source_path_invalid", environment_id)
+            continue
+        job = _load_json_object(
+            job_path,
+            context=context,
+            code="composition_job_metadata",
+            scope=environment_id,
+        )
+        dataset = _load_json_object(
+            dataset_path,
+            context=context,
+            code="composition_dataset_episode",
+            scope=environment_id,
+        )
+        run_manifest = _load_json_object(
+            run_manifest_path,
+            context=context,
+            code="composition_run_manifest",
+            scope=environment_id,
+        )
+        metrics = _load_json_object(
+            metrics_path,
+            context=context,
+            code="composition_metrics",
+            scope=environment_id,
+        )
+        if job is not None and not (
+            "group_id" in job
+            and job["group_id"] is None
+            and job.get("job_id") == job_id
+            and job.get("instance_id") == environment_id
+            and job.get("status") == "Succeeded"
+            and job.get("k8s_namespace") == EXPECTED_NAMESPACE
+            and job.get("template") == "skillevolbench"
+            and job.get("agenthub_revision") == agenthub_revision
+            and job.get("template_commit") == agenthub_revision
+        ):
+            context.error("composition_job_metadata_invalid", environment_id)
+        if dataset is not None and not (
+            dataset.get("schema_version") == "1.0"
+            and dataset.get("dataset") == expected_dataset
+            and dataset.get("split") == expected_split
+            and dataset.get("instance_id") == environment_id
+            and dataset.get("environment_id") == environment_id
+            and dataset.get("benchmark_revision") == benchmark_revision
+            and dataset.get("family_count") == FAMILIES_PER_ENVIRONMENT
+            and dataset.get("primary_task_count") == PRIMARY_PER_ENVIRONMENT
+            and dataset.get("roles") == [f"T{i}" for i in range(1, 7)]
+            and dataset.get("scoreable_unit") == "complete_environment_episode"
+        ):
+            context.error("composition_dataset_episode_invalid", environment_id)
+        if run_manifest is not None and not (
+            run_manifest.get("schema_version") == "1.0"
+            and run_manifest.get("benchmark_revision") == benchmark_revision
+            and run_manifest.get("canonical") is True
+            and run_manifest.get("execution_scope") == "environment"
+            and run_manifest.get("environment_id") == environment_id
+            and run_manifest.get("family_smoke_id") is None
+            and run_manifest.get("smoke_max_tasks") is None
+            and run_manifest.get("baseline_name") == expected_baseline
+            and run_manifest.get("order_seed") == expected_order_seed
+            and run_manifest.get("within_env_replay") is False
+            and run_manifest.get("replay_eval") is False
+            and isinstance(run_manifest.get("run_id"), str)
+            and SAFE_ID.fullmatch(run_manifest["run_id"]) is not None
+            and (metrics or {}).get("run_id") == run_manifest.get("run_id")
+        ):
+            context.error("composition_run_manifest_invalid", environment_id)
+        if metrics is not None:
+            if canonical_metric_errors(
+                metrics,
+                expected_environment=environment_id,
+                expected_baseline=expected_baseline,
+            ):
+                context.error("composition_metrics_invalid", environment_id)
+            raw_metrics[environment_id] = metrics
+
+        paths_and_keys = (
+            (job_path, "job_metadata_sha256"),
+            (dataset_path, "dataset_episode_sha256"),
+            (run_manifest_path, "run_manifest_sha256"),
+            (metrics_path, "metrics_sha256"),
+        )
+        for path, key in paths_and_keys:
+            if path.is_symlink() or not path.is_file():
+                continue
+            try:
+                matches = _sha256_file(path) == entry[key]
+            except OSError:
+                matches = False
+            if not matches:
+                context.error("composition_source_hash_mismatch", environment_id)
+
+    if not source_entries_valid or len(observed_job_ids) != len(EXPECTED_ENVIRONMENTS):
+        context.error("composition_source_jobs_invalid", "group")
+
+    jobs_root = group_root / "jobs"
+    if not jobs_root.is_symlink() and jobs_root.is_dir():
+        try:
+            job_entries = list(jobs_root.iterdir())
+        except OSError:
+            job_entries = []
+        expected_job_names = observed_job_ids | {LOCAL_POSTPROCESS_JOB_ID}
+        if not (
+            {entry.name for entry in job_entries} == expected_job_names
+            and all(not entry.is_symlink() and entry.is_dir() for entry in job_entries)
+        ):
+            context.error("composition_jobs_root_invalid", "group")
+
+    if not private_permissions_valid(group_root):
+        context.error("composition_private_permissions_invalid", "group")
+    try:
+        observed_safety_scan = dict(scan_tree(group_root))
+    except ScanError:
+        context.error("composition_safety_scan_incomplete", "group")
+    else:
+        if not _safety_scan_proof_valid(
+            observed_safety_scan,
+            require_no_transport_metadata=True,
+        ):
+            context.error("composition_safety_scan_failed", "group")
+
+    expected_local_postprocess = {
+        "job_id": LOCAL_POSTPROCESS_JOB_ID,
+        "relative_metrics_path": LOCAL_METRICS_RELATIVE_PATH,
+        "aggregation_method": AGGREGATION_METHOD,
+    }
+    if not (
+        isinstance(local_postprocess, dict)
+        and set(local_postprocess) == {*expected_local_postprocess, "metrics_sha256"}
+        and all(
+            local_postprocess.get(key) == value
+            for key, value in expected_local_postprocess.items()
+        )
+        and isinstance(local_postprocess.get("metrics_sha256"), str)
+        and HEX64.fullmatch(local_postprocess["metrics_sha256"]) is not None
+    ):
+        context.error("composition_local_postprocess_invalid", "group")
+        return
+
+    local_metrics_path = group_root / LOCAL_METRICS_RELATIVE_PATH
+    local_metrics = _load_json_object(
+        local_metrics_path,
+        context=context,
+        code="composition_local_metrics",
+        scope="group",
+    )
+    if local_metrics is None:
+        return
+    try:
+        local_metrics_hash = _sha256_file(local_metrics_path)
+    except OSError:
+        local_metrics_hash = ""
+    if local_metrics_hash != local_postprocess["metrics_sha256"]:
+        context.error("composition_local_metrics_hash_mismatch", "group")
+    if len(raw_metrics) == len(EXPECTED_ENVIRONMENTS) and len(validated_job_ids) == len(
+        EXPECTED_ENVIRONMENTS
+    ):
+        try:
+            expected_metrics = build_aggregate_metrics(
+                raw_metrics,
+                validated_job_ids,
+                expected_baseline=expected_baseline,
+            )
+        except ValueError:
+            context.error("composition_aggregate_input_invalid", "group")
+        else:
+            if local_metrics != expected_metrics:
+                context.error("composition_local_aggregate_mismatch", "group")
+            source_entries_for_id = {
+                environment_id: source_jobs[environment_id]
+                for environment_id in EXPECTED_ENVIRONMENTS
+            }
+            expected_composition_id = build_composition_id(
+                benchmark_revision=str(benchmark_revision),
+                agenthub_revision=str(agenthub_revision),
+                dataset=expected_dataset,
+                split=expected_split,
+                source_entries=source_entries_for_id,
+            )
+            if composition_id != expected_composition_id:
+                context.error("composition_id_mismatch", "group")
 
 
 def _find_group_metrics(
@@ -1487,43 +2067,61 @@ def audit_full_group(
     template_commit = group.get("template_commit")
     report.agenthub_revision = _safe_identifier(template_commit)
     stats = group.get("stats")
-    # AP group stats currently stores the base dataset namespace, while some
-    # older exports retained the submitted dataset-version string.  The split
-    # remains authoritative in each environment's dataset_episode.json.
-    accepted_group_datasets = {
-        expected_dataset,
-        f"{expected_dataset}/{expected_split}",
-    }
-    if not (
-        group.get("template") == "skillevolbench"
-        and group.get("dataset") in accepted_group_datasets
-        and isinstance(template_commit, str)
-        and HEX40.fullmatch(template_commit)
-        and isinstance(group.get("group_post_process_job_id"), str)
-        and SAFE_ID.fullmatch(group["group_post_process_job_id"])
-        and isinstance(stats, dict)
-        and stats.get("total") == len(EXPECTED_ENVIRONMENTS)
-        and stats.get("finished") == len(EXPECTED_ENVIRONMENTS)
-        and stats.get("succeeded") == len(EXPECTED_ENVIRONMENTS)
-        and all(
-            stats.get(key, 0) == 0
-            for key in (
-                "failed",
-                "cancelled",
-                "pending",
-                "queued",
-                "running",
-                "scheduling",
-                "unknown",
-            )
+    local_composition = group.get("composition_mode") == COMPOSITION_MODE
+    if local_composition:
+        report.composition_mode = COMPOSITION_MODE
+        report.aggregation_origin = "local_postprocess"
+        _validate_local_composition(
+            root,
+            group,
+            expected_benchmark_revision=expected_benchmark_revision,
+            expected_agenthub_revision=expected_agenthub_revision,
+            expected_dataset=expected_dataset,
+            expected_split=expected_split,
+            expected_baseline=expected_baseline,
+            expected_order_seed=expected_order_seed,
+            context=context,
         )
-    ):
-        context.error("group_metadata_incomplete", "group")
-    if (
-        expected_agenthub_revision is not None
-        and template_commit != expected_agenthub_revision
-    ):
-        context.error("agenthub_revision_mismatch", "group")
+    else:
+        if group.get("composition_mode") is not None:
+            context.error("composition_mode_unsupported", "group")
+        # AP group stats currently stores the base dataset namespace, while some
+        # older exports retained the submitted dataset-version string.  The split
+        # remains authoritative in each environment's dataset_episode.json.
+        accepted_group_datasets = {
+            expected_dataset,
+            f"{expected_dataset}/{expected_split}",
+        }
+        if not (
+            group.get("template") == "skillevolbench"
+            and group.get("dataset") in accepted_group_datasets
+            and isinstance(template_commit, str)
+            and HEX40.fullmatch(template_commit)
+            and isinstance(group.get("group_post_process_job_id"), str)
+            and SAFE_ID.fullmatch(group["group_post_process_job_id"])
+            and isinstance(stats, dict)
+            and stats.get("total") == len(EXPECTED_ENVIRONMENTS)
+            and stats.get("finished") == len(EXPECTED_ENVIRONMENTS)
+            and stats.get("succeeded") == len(EXPECTED_ENVIRONMENTS)
+            and all(
+                stats.get(key, 0) == 0
+                for key in (
+                    "failed",
+                    "cancelled",
+                    "pending",
+                    "queued",
+                    "running",
+                    "scheduling",
+                    "unknown",
+                )
+            )
+        ):
+            context.error("group_metadata_incomplete", "group")
+        if (
+            expected_agenthub_revision is not None
+            and template_commit != expected_agenthub_revision
+        ):
+            context.error("agenthub_revision_mismatch", "group")
 
     discovered = _discover_environment_outputs(root, context=context)
     report.observed_environments = sorted(discovered)
@@ -1716,6 +2314,11 @@ def _render_human(report: AuditReport) -> str:
     lines = [
         f"GROUP {report.group_id}",
         f"RESULT {'PASS' if report.passed else 'FAIL'}",
+        (
+            "COMPOSITION "
+            f"mode={report.composition_mode} "
+            f"aggregation={report.aggregation_origin}"
+        ),
         (
             "ENVIRONMENTS "
             f"observed={','.join(report.observed_environments) or '-'} "
