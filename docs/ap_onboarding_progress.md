@@ -20,10 +20,10 @@ machine cannot run Docker:
 
 ## Repositories and branches
 
-| Repository | Branch | Starting revision |
-| --- | --- | --- |
-| SkillEvolBench | `feat/ap-skillevolbench` | upstream `main` at onboarding start |
-| Agent-Hub | `feat/skillevolbench` | `b7a94cadec1258f41774b454a546258ea14781e5` |
+| Repository | Branch | Starting revision | Integration revision |
+| --- | --- | --- | --- |
+| SkillEvolBench | `feat/ap-skillevolbench` | upstream `main` at onboarding start | `58ee5a1b75661d4b6faf98e9cbf984b7df710f4c` |
+| Agent-Hub | `feat/skillevolbench` | `b7a94cadec1258f41774b454a546258ea14781e5` | `3cdf1d78869417eb9999a0e17c1ae150da8e242b` |
 
 Existing untracked inputs (`ap_dev_docs/` and
 `docs/task_tiering_in_paper.md`) predate this work and must be preserved.
@@ -120,9 +120,28 @@ environment scores equals the full-benchmark evaluation success rate.
 - AP rejected a dynamic attempt to override the stock probe's sidecar args, so
   the DNS fix cannot be validated through `cluster-verify`; it must be tested
   after the feature Agent-Hub branch is pushed.
-- Current local validation: 34 tests pass in SkillEvolBench; Agent-Hub group
+- Current local validation: 36 tests pass in SkillEvolBench; Agent-Hub group
   aggregation has 3 passing end-to-end tests; both repositories pass shell
   syntax and whitespace checks.
+
+### 2026-07-20: dataset publication and submission dry-run
+
+- Built dataset version `skillevolbench/skillevolbench/v1@0` from the exact
+  SkillEvolBench integration revision. Two independent builds produced the
+  same 13 files byte for byte.
+- Uploaded six instance JSON files, six `content.tgz` assets, and the package
+  manifest to the staging dataset bucket. Every remote object was checked
+  against both its local byte size and single-part ETag after upload.
+- Queried the dataset through AP on `benchmark-dev`; AP reports exactly six
+  instances: `E1`, `E2`, `E3`, `E4`, `E5`, and `E6`.
+- Ran the safe one-task E1 submission dry-run against the reference SGLang
+  endpoint. `/v1/models` found the requested served model and the generated AP
+  request uses the expected template, dataset split, environment id,
+  `responses` wire API, and non-scoreable smoke limit.
+- The local Agent-Hub integration revision is ready and validated, but the
+  current environment's cached Git identity cannot push to the shared
+  repository. A real smoke remains blocked until
+  `feat/skillevolbench` exists on the Agent-Hub remote.
 
 ## Planned implementation
 
@@ -138,19 +157,22 @@ environment scores equals the full-benchmark evaluation success rate.
 - [x] Validate configuration without Docker.
 - [x] Verify AP main-container access to the reference SGLang endpoint.
 - [ ] Verify AP DinD-container DNS and SGLang access through the new template.
-- [ ] Build/push images and assets using an environment with Docker/ACR access.
+- [x] Publish deterministic E1-E6 assets to the staging AP dataset bucket.
+- [ ] Validate the bootstrap-built runtime image in AP DinD (or replace it
+  with a pinned ACR image after the first smoke).
 - [ ] Submit and inspect a one-task infrastructure smoke.
 - [ ] Submit and inspect one complete environment episode.
 - [ ] Submit the six-environment group and aggregate reports.
-- [ ] Finish and validate the reusable onboarding skill.
-- [ ] Append stable lessons to the allowed memory extension directory.
+- [x] Finish and validate the reusable onboarding skill.
+- [x] Append stable lessons to the allowed memory extension directory.
 
 ## Open risks
 
 - The current machine has no working Docker daemon, so image builds must run in
   DSW/DLC/AP infrastructure.
 - Every task Dockerfile uses `FROM agent-runtime:latest`; the AP DinD daemon
-  must pull a pinned registry image and retag it locally before Harbor builds.
+  must either build that image from the pinned source bundle or pull a pinned
+  registry image and retag it locally before Harbor builds.
 - AP job timeout and ephemeral storage must cover 30 or 45 sequential Harbor
   trials plus build cache.
 - Logs and artifacts must mask all model and platform credentials.
