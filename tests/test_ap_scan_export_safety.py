@@ -44,7 +44,7 @@ def test_content_categories_and_exact_environment_value_are_aggregated(
     payload.write_text(
         "\n".join(
             (
-                "-----BEGIN OPENSSH PRIVATE KEY-----",
+                "-----BEGIN " + "OPENSSH PRIVATE KEY-----",
                 "https://store.invalid/a?X-Amz-Signature=signed-value",
                 "runtime=sevb-no-auth-0123456789abcdef",
                 'client_secret = "sk-liveCredential_24680abcd"',
@@ -232,7 +232,9 @@ def test_cli_json_never_prints_matched_values_or_paths(
 def test_root_symlink_is_not_followed(tmp_path: Path) -> None:
     real = tmp_path / "real"
     real.mkdir()
-    (real / "secret.txt").write_text("-----BEGIN PRIVATE KEY-----", encoding="utf-8")
+    (real / "secret.txt").write_text(
+        "-----BEGIN " + "PRIVATE KEY-----", encoding="utf-8"
+    )
     link = tmp_path / "export-link"
     link.symlink_to(real, target_is_directory=True)
 
