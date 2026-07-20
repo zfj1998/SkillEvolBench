@@ -22,6 +22,7 @@ from skillevolbench.schemas.baseline import (
     SkillInit,
     RevisionTrigger,
     DefaultStrategy,
+    SkillUpdateSource,
 )
 from skillevolbench.schemas.strategy import (
     StrategyConfig,
@@ -91,6 +92,7 @@ __all__ = [
     "SkillInit",
     "RevisionTrigger",
     "DefaultStrategy",
+    "SkillUpdateSource",
     "StrategyConfig",
     "StrategyName",
     "CandidateMode",

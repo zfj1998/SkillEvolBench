@@ -30,12 +30,26 @@ def _config(tmp_path: Path, *, max_tasks: int | None = None) -> RunConfig:
     )
 
 
+def _family_config(tmp_path: Path) -> RunConfig:
+    return RunConfig(
+        run_id="ap-family-smoke-test",
+        baseline=load_baseline("selfgen_in_session_always"),
+        strategy=StrategyConfig.from_yaml(
+            REPO_ROOT / "configs" / "strategies" / "chain.yaml"
+        ),
+        environment_id="E1",
+        family_smoke_id="E1-LS1",
+        workspace_root=tmp_path,
+    )
+
+
 def _report(
     *,
     evaluation_sr: float = 1.0,
     n_primary_trials: int = 30,
     n_replay_trials: int = 15,
     n_shadow_trials: int = 0,
+    reflection: dict[str, object] | None = None,
 ) -> SimpleNamespace:
     return SimpleNamespace(
         task_success={
@@ -64,6 +78,7 @@ def _report(
         n_primary_trials=n_primary_trials,
         n_replay_trials=n_replay_trials,
         n_shadow_trials=n_shadow_trials,
+        reflection=reflection or {},
     )
 
 
@@ -75,8 +90,11 @@ def test_complete_episode_metrics_are_scoreable(tmp_path: Path) -> None:
     assert metrics["task_score"] == 1.0
     assert metrics["passed"] is True
     assert metrics["n_primary_trials"] == 30
+    assert metrics["expected_primary_trials"] == 30
     assert metrics["n_replay_trials"] == 15
+    assert metrics["expected_replay_trials"] == 15
     assert metrics["n_verifier_backed_trials"] == 45
+    assert metrics["expected_verifier_backed_trials"] == 45
     assert metrics["recovery_rate"] == 0.5
     assert metrics["cross_task_revision_pairs"] == 12
     assert metrics["cross_task_fail_to_success_count"] == 4
@@ -84,6 +102,48 @@ def test_complete_episode_metrics_are_scoreable(tmp_path: Path) -> None:
     assert metrics["cross_task_failure_recovery_rate"] == pytest.approx(2 / 3)
     assert metrics["cross_task_success_regression_rate"] == pytest.approx(1 / 6)
     assert "message" not in metrics
+
+
+def test_complete_family_smoke_is_explicitly_noncanonical_and_unscoreable(
+    tmp_path: Path,
+) -> None:
+    metrics = run_episode._success_metrics(
+        _family_config(tmp_path),
+        _report(
+            evaluation_sr=1.0,
+            n_primary_trials=6,
+            n_replay_trials=0,
+            reflection={
+                "enabled": True,
+                "n_terminal": 3,
+                "n_attempted": 3,
+                "n_completed": 2,
+                "n_noop": 1,
+                "n_rejected": 0,
+                "n_same_session_verified": 3,
+                "valid_output_rate": 1.0,
+                "patch_candidate_rate": 2 / 3,
+                "noop_rate": 1 / 3,
+                "rejection_rate": 0.0,
+            },
+        ),
+    )
+
+    assert metrics["execution_scope"] == "family_smoke"
+    assert metrics["family_smoke_id"] == "E1-LS1"
+    assert metrics["canonical"] is False
+    assert metrics["status"] == "completed_noncanonical"
+    assert metrics["scoreable"] is False
+    assert metrics["passed"] is False
+    assert metrics["task_score"] == 0.0
+    assert metrics["n_primary_trials"] == 6
+    assert metrics["expected_primary_trials"] == 6
+    assert metrics["n_replay_trials"] == 0
+    assert metrics["expected_replay_trials"] == 0
+    assert metrics["n_reflection_expected"] == 3
+    assert metrics["reflection_valid_output_rate"] == 1.0
+    assert metrics["reflection_patch_candidate_rate"] == pytest.approx(2 / 3)
+    assert "single-family smoke" in metrics["message"]
 
 
 @pytest.mark.parametrize(
@@ -219,6 +279,28 @@ def test_build_config_uses_absolute_dind_shared_workspace(
     config = run_episode._build_config(tmp_path / "output")
 
     assert config.workspace_root == shared_workspace.resolve()
+
+
+def test_build_config_selects_explicit_t1_t6_family_smoke(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("INSTANCE_ID", "E1")
+    monkeypatch.setenv("SMOKE_FAMILY_ID", "E1-LS1")
+    monkeypatch.setenv("MODEL", "served-model")
+    monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1")
+    monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.delenv("SMOKE_MAX_TASKS", raising=False)
+    monkeypatch.delenv("WITHIN_ENV_REPLAY", raising=False)
+    monkeypatch.delenv("REPLAY_EVAL", raising=False)
+
+    config = run_episode._build_config(tmp_path)
+
+    assert config.environment_id == "E1"
+    assert config.family_smoke_id == "E1-LS1"
+    assert config.max_tasks is None
+    assert config.baseline.within_env_replay is False
+    assert config.baseline.replay_eval is False
 
 
 def test_build_config_rejects_relative_dind_shared_workspace(

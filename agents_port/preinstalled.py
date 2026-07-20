@@ -1,6 +1,7 @@
 import json
 import os
 import shlex
+from datetime import datetime, timezone
 from typing import Any
 
 from harbor.agents.installed.claude_code import ClaudeCode
@@ -241,12 +242,521 @@ class CodexPreinstalled(_PreinstalledMixin, Codex):
 
 
 class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
-    """Use the image-baked OpenCode CLI, with Harbor's installer as fallback."""
+    """OpenCode with explicit, artifact-complete same-session continuation.
+
+    Harbor's stock adapter uses ``--continue`` and writes every invocation to
+    the same ``opencode.txt`` file.  That is ambiguous when more than one
+    session exists and a resumed invocation overwrites the solve stream.  The
+    benchmark needs a stronger contract: the post-verifier reflection must be
+    another turn in the *exact* session that solved the task, and both phases
+    must remain independently auditable.
+
+    This subclass therefore keeps the solve and reflection JSONL streams
+    separate, captures the solve session ID, resumes with ``--session``, and
+    exports the complete OpenCode session after every phase.  The export is the
+    source of truth for the canonical ATIF trajectory because, unlike the
+    streaming output, it contains every user turn as well as all assistant
+    reasoning/tool records.
+    """
 
     _preinstalled_check_command = (
         'if [ -s "$HOME/.nvm/nvm.sh" ]; then . "$HOME/.nvm/nvm.sh"; fi; '
         "command -v opencode && opencode --version"
     )
+
+    _SOLVE_OUTPUT_FILENAME = "opencode.solve.jsonl"
+    _REFLECTION_OUTPUT_FILENAME = "opencode.reflection.jsonl"
+    _SESSION_EXPORT_FILENAME = "opencode.session.json"
+    _TRAJECTORY_FILENAME = "trajectory.json"
+    _SOLVE_TRAJECTORY_FILENAME = "trajectory.solve.json"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._opencode_session_id: str | None = None
+
+    @property
+    def opencode_session_id(self) -> str | None:
+        """The explicit session captured from the initial solve stream."""
+
+        return self._opencode_session_id
+
+    @staticmethod
+    def _jsonl_events(text: str) -> list[dict[str, Any]]:
+        events: list[dict[str, Any]] = []
+        for line in text.splitlines():
+            try:
+                event = json.loads(line)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            if isinstance(event, dict):
+                events.append(event)
+        return events
+
+    def _read_phase_events(self, filename: str) -> list[dict[str, Any]]:
+        path = self.logs_dir / filename
+        if not path.exists():
+            return []
+        return self._jsonl_events(path.read_text(errors="replace"))
+
+    def _parse_stdout(self) -> list[dict[str, Any]]:
+        """Keep Harbor's stdout helpers useful with the split phase files."""
+
+        return self._read_phase_events(
+            self._SOLVE_OUTPUT_FILENAME
+        ) + self._read_phase_events(self._REFLECTION_OUTPUT_FILENAME)
+
+    @staticmethod
+    def _event_session_ids(events: list[dict[str, Any]]) -> set[str]:
+        return {
+            session_id
+            for event in events
+            if isinstance(session_id := event.get("sessionID"), str) and session_id
+        }
+
+    def _capture_and_validate_session(
+        self,
+        events: list[dict[str, Any]],
+        *,
+        resume: bool,
+    ) -> str:
+        session_ids = self._event_session_ids(events)
+        if len(session_ids) != 1:
+            phase = "reflection" if resume else "solve"
+            raise RuntimeError(
+                f"OpenCode {phase} stream must contain exactly one sessionID; "
+                f"found {sorted(session_ids)!r}"
+            )
+
+        session_id = next(iter(session_ids))
+        if resume:
+            if not self._opencode_session_id:
+                raise RuntimeError(
+                    "Cannot resume OpenCode reflection without a captured solve "
+                    "sessionID"
+                )
+            if session_id != self._opencode_session_id:
+                raise RuntimeError(
+                    "OpenCode reflection escaped the solve session: "
+                    f"expected {self._opencode_session_id!r}, got {session_id!r}"
+                )
+        else:
+            self._opencode_session_id = session_id
+        return session_id
+
+    @staticmethod
+    def _error_messages_from_events(events: list[dict[str, Any]]) -> list[str]:
+        messages: list[str] = []
+        for event in events:
+            if event.get("type") != "error":
+                continue
+            error = event.get("error")
+            if isinstance(error, dict):
+                data = error.get("data")
+                message = data.get("message") if isinstance(data, dict) else None
+                messages.append(str(message or error.get("name") or error))
+            else:
+                messages.append(str(error))
+        return messages
+
+    @staticmethod
+    def _timestamp_to_iso(timestamp_ms: Any) -> str | None:
+        if not isinstance(timestamp_ms, (int, float)):
+            return None
+        try:
+            return datetime.fromtimestamp(
+                timestamp_ms / 1000, tz=timezone.utc
+            ).isoformat()
+        except (OSError, OverflowError, ValueError):
+            return None
+
+    @staticmethod
+    def _text_parts(parts: list[Any], part_type: str) -> str:
+        return "\n".join(
+            text
+            for part in parts
+            if isinstance(part, dict)
+            and part.get("type") == part_type
+            and isinstance(text := part.get("text"), str)
+        )
+
+    @staticmethod
+    def _observation_content(state: dict[str, Any]) -> str | None:
+        if "output" in state and state["output"] is not None:
+            output = state["output"]
+        elif "error" in state and state["error"] is not None:
+            output = state["error"]
+        else:
+            return None
+        if isinstance(output, str):
+            return output
+        return json.dumps(output, ensure_ascii=False, default=str)
+
+    def _validate_export_session(
+        self,
+        export: dict[str, Any],
+    ) -> str:
+        info = export.get("info")
+        if not isinstance(info, dict) or not isinstance(info.get("id"), str):
+            raise RuntimeError("OpenCode export is missing info.id")
+        export_session_id = info["id"]
+        if not self._opencode_session_id:
+            self._opencode_session_id = export_session_id
+        if export_session_id != self._opencode_session_id:
+            raise RuntimeError(
+                "OpenCode export session does not match the solve session: "
+                f"expected {self._opencode_session_id!r}, "
+                f"got {export_session_id!r}"
+            )
+
+        messages = export.get("messages")
+        if not isinstance(messages, list):
+            raise RuntimeError("OpenCode export is missing messages")
+        for message in messages:
+            if not isinstance(message, dict):
+                raise RuntimeError("OpenCode export contains a non-object message")
+            message_info = message.get("info")
+            if not isinstance(message_info, dict):
+                raise RuntimeError("OpenCode export message is missing info")
+            message_session_id = message_info.get("sessionID")
+            if message_session_id != export_session_id:
+                raise RuntimeError(
+                    "OpenCode export contains a message from another session: "
+                    f"{message_session_id!r}"
+                )
+            for part in message.get("parts") or []:
+                if not isinstance(part, dict):
+                    continue
+                part_session_id = part.get("sessionID")
+                if part_session_id is not None and part_session_id != export_session_id:
+                    raise RuntimeError(
+                        "OpenCode export contains a part from another session: "
+                        f"{part_session_id!r}"
+                    )
+        return export_session_id
+
+    def _convert_export_to_trajectory(
+        self,
+        export: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Convert an unsanitized OpenCode export into canonical ATIF."""
+
+        session_id = self._validate_export_session(export)
+        export_info = export["info"]
+        steps: list[dict[str, Any]] = []
+
+        for message in export["messages"]:
+            info = message["info"]
+            role = info.get("role")
+            if role not in ("user", "assistant"):
+                continue
+            parts = message.get("parts")
+            if not isinstance(parts, list):
+                parts = []
+            timestamp = self._timestamp_to_iso(
+                (info.get("time") or {}).get("created")
+                if isinstance(info.get("time"), dict)
+                else None
+            )
+
+            if role == "user":
+                step: dict[str, Any] = {
+                    "step_id": len(steps) + 1,
+                    "source": "user",
+                    "message": self._text_parts(parts, "text"),
+                }
+                if timestamp:
+                    step["timestamp"] = timestamp
+                steps.append(step)
+                continue
+
+            text = self._text_parts(parts, "text")
+            reasoning = self._text_parts(parts, "reasoning")
+            tool_calls: list[dict[str, Any]] = []
+            observations: list[dict[str, Any]] = []
+            for part in parts:
+                if not isinstance(part, dict) or part.get("type") != "tool":
+                    continue
+                state = part.get("state")
+                if not isinstance(state, dict):
+                    state = {}
+                arguments = state.get("input")
+                if not isinstance(arguments, dict):
+                    arguments = {"value": arguments} if arguments is not None else {}
+                call_id = part.get("callID") or part.get("id") or ""
+                tool_calls.append(
+                    {
+                        "tool_call_id": str(call_id),
+                        "function_name": str(part.get("tool") or ""),
+                        "arguments": arguments,
+                    }
+                )
+                output = self._observation_content(state)
+                if output is not None:
+                    observations.append(
+                        {
+                            "source_call_id": str(call_id) or None,
+                            "content": output,
+                        }
+                    )
+
+            tokens = info.get("tokens")
+            if not isinstance(tokens, dict):
+                tokens = {}
+            cache = tokens.get("cache")
+            if not isinstance(cache, dict):
+                cache = {}
+            input_tokens = tokens.get("input", 0) or 0
+            output_tokens = tokens.get("output", 0) or 0
+            cache_read = cache.get("read", 0) or 0
+            cache_write = cache.get("write", 0) or 0
+            reasoning_tokens = tokens.get("reasoning", 0) or 0
+            cost = info.get("cost", 0) or 0
+            metrics: dict[str, Any] = {
+                "prompt_tokens": input_tokens + cache_read,
+                "completion_tokens": output_tokens,
+            }
+            if cache_read:
+                metrics["cached_tokens"] = cache_read
+            if cost:
+                metrics["cost_usd"] = cost
+            metrics_extra = {
+                key: value
+                for key, value in {
+                    "reasoning_tokens": reasoning_tokens,
+                    "cache_write_tokens": cache_write,
+                }.items()
+                if value
+            }
+            if metrics_extra:
+                metrics["extra"] = metrics_extra
+
+            step = {
+                "step_id": len(steps) + 1,
+                "source": "agent",
+                "message": text,
+                "model_name": self.model_name,
+                "llm_call_count": 1,
+                "metrics": metrics,
+            }
+            if timestamp:
+                step["timestamp"] = timestamp
+            if reasoning:
+                step["reasoning_content"] = reasoning
+            if tool_calls:
+                step["tool_calls"] = tool_calls
+            if observations:
+                step["observation"] = {"results": observations}
+            steps.append(step)
+
+        total_tokens = export_info.get("tokens")
+        if not isinstance(total_tokens, dict):
+            total_tokens = {}
+        total_cache = total_tokens.get("cache")
+        if not isinstance(total_cache, dict):
+            total_cache = {}
+        total_cache_read = total_cache.get("read", 0) or 0
+        total_input = total_tokens.get("input", 0) or 0
+        final_metrics: dict[str, Any] = {
+            "total_prompt_tokens": total_input + total_cache_read,
+            "total_completion_tokens": total_tokens.get("output", 0) or 0,
+            "total_steps": len(steps),
+        }
+        if total_cache_read:
+            final_metrics["total_cached_tokens"] = total_cache_read
+        if export_info.get("cost"):
+            final_metrics["total_cost_usd"] = export_info["cost"]
+
+        return {
+            "schema_version": "ATIF-v1.7",
+            "session_id": session_id,
+            "agent": {
+                "name": "opencode",
+                "version": str(
+                    export_info.get("version") or self.version() or "unknown"
+                ),
+                "model_name": self.model_name,
+            },
+            "steps": steps,
+            "final_metrics": final_metrics,
+        }
+
+    def _trajectory_from_export_file(self) -> dict[str, Any]:
+        export_path = self.logs_dir / self._SESSION_EXPORT_FILENAME
+        if not export_path.exists():
+            raise RuntimeError(f"OpenCode session export is missing: {export_path}")
+        try:
+            export = json.loads(export_path.read_text())
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("OpenCode session export is not valid JSON") from exc
+        if not isinstance(export, dict):
+            raise RuntimeError("OpenCode session export must be a JSON object")
+        return self._convert_export_to_trajectory(export)
+
+    def _write_canonical_trajectory(
+        self,
+        *,
+        preserve_as_solve: bool = False,
+    ) -> dict[str, Any]:
+        trajectory = self._trajectory_from_export_file()
+        serialized = json.dumps(trajectory, indent=2, ensure_ascii=False) + "\n"
+        (self.logs_dir / self._TRAJECTORY_FILENAME).write_text(serialized)
+        if preserve_as_solve:
+            (self.logs_dir / self._SOLVE_TRAJECTORY_FILENAME).write_text(serialized)
+        return trajectory
+
+    def populate_context_post_run(self, context) -> None:
+        # Harbor calls this once immediately after the solve phase.  On a
+        # non-mounted backend this is the first point where the export is
+        # locally available, so preserve the solve-only view here as well.
+        preserve_as_solve = not (
+            self.logs_dir / self._REFLECTION_OUTPUT_FILENAME
+        ).exists()
+        trajectory = self._write_canonical_trajectory(
+            preserve_as_solve=preserve_as_solve
+        )
+        final_metrics = trajectory["final_metrics"]
+        context.cost_usd = final_metrics.get("total_cost_usd")
+        context.n_input_tokens = final_metrics.get("total_prompt_tokens", 0)
+        context.n_output_tokens = final_metrics.get("total_completion_tokens", 0)
+        context.n_cache_tokens = final_metrics.get("total_cached_tokens", 0)
+
+    def _provider_environment(self, provider: str) -> dict[str, str]:
+        provider_keys = {
+            "amazon-bedrock": (
+                "AWS_ACCESS_KEY_ID",
+                "AWS_SECRET_ACCESS_KEY",
+                "AWS_REGION",
+            ),
+            "anthropic": ("ANTHROPIC_API_KEY",),
+            "azure": ("AZURE_RESOURCE_NAME", "AZURE_API_KEY"),
+            "deepseek": ("DEEPSEEK_API_KEY",),
+            "github-copilot": ("GITHUB_TOKEN",),
+            "google": (
+                "GEMINI_API_KEY",
+                "GOOGLE_GENERATIVE_AI_API_KEY",
+                "GOOGLE_APPLICATION_CREDENTIALS",
+                "GOOGLE_CLOUD_PROJECT",
+                "GOOGLE_CLOUD_LOCATION",
+                "GOOGLE_GENAI_USE_VERTEXAI",
+                "GOOGLE_API_KEY",
+            ),
+            "groq": ("GROQ_API_KEY",),
+            "huggingface": ("HF_TOKEN",),
+            "llama": ("LLAMA_API_KEY",),
+            "mistral": ("MISTRAL_API_KEY",),
+            "openai": ("OPENAI_API_KEY", "OPENAI_BASE_URL"),
+            "opencode": ("OPENCODE_API_KEY",),
+            "xai": ("XAI_API_KEY",),
+            "openrouter": ("OPENROUTER_API_KEY",),
+        }
+        env = {
+            key: os.environ[key]
+            for key in provider_keys.get(provider, ())
+            if key in os.environ
+        }
+        env.update(
+            {
+                "OPENCODE_FAKE_VCS": "git",
+                "XDG_DATA_HOME": "/logs/agent/opencode/xdg-data",
+                "XDG_STATE_HOME": "/logs/agent/opencode/xdg-state",
+            }
+        )
+        return env
+
+    async def _export_session(
+        self,
+        environment: BaseEnvironment,
+        env: dict[str, str],
+        session_id: str,
+        *,
+        resume: bool,
+    ) -> None:
+        await self.exec_as_agent(
+            environment,
+            command=(
+                ". ~/.nvm/nvm.sh; "
+                f"opencode export {shlex.quote(session_id)} "
+                f"> /logs/agent/{self._SESSION_EXPORT_FILENAME}"
+            ),
+            env=env,
+        )
+
+        # Bind-mounted Harbor environments expose /logs/agent immediately.
+        # Non-mounted backends generate the trajectory later, after Harbor has
+        # downloaded this export and calls populate_context_post_run().
+        if (self.logs_dir / self._SESSION_EXPORT_FILENAME).exists():
+            self._write_canonical_trajectory(preserve_as_solve=not resume)
+
+    @with_prompt_template
+    async def run(
+        self,
+        instruction: str,
+        environment: BaseEnvironment,
+        context,
+    ) -> None:
+        self._instruction = instruction
+        if not self.model_name or "/" not in self.model_name:
+            raise ValueError("Model name must be in the format provider/model_name")
+
+        provider, _ = self.model_name.split("/", 1)
+        env = self._provider_environment(provider)
+
+        skills_command = self._build_register_skills_command()
+        if skills_command:
+            await self.exec_as_agent(environment, command=skills_command, env=env)
+        config_command = self._build_register_config_command()
+        if config_command:
+            await self.exec_as_agent(environment, command=config_command, env=env)
+
+        resume = bool(self._resume)
+        if resume and not self._opencode_session_id:
+            raise RuntimeError(
+                "Cannot resume OpenCode reflection before the solve sessionID "
+                "has been captured"
+            )
+        resume_flag = (
+            f"--session {shlex.quote(self._opencode_session_id)} " if resume else ""
+        )
+        phase_filename = (
+            self._REFLECTION_OUTPUT_FILENAME if resume else self._SOLVE_OUTPUT_FILENAME
+        )
+        cli_flags = self.build_cli_flags()
+        cli_flags_arg = f"{cli_flags} " if cli_flags else ""
+
+        result = await self.exec_as_agent(
+            environment,
+            command=(
+                ". ~/.nvm/nvm.sh; "
+                f"opencode --model={shlex.quote(self.model_name)} "
+                "run --format=json "
+                f"{resume_flag}{cli_flags_arg}--thinking "
+                "--dangerously-skip-permissions -- "
+                f"{shlex.quote(instruction)} "
+                "2>&1 </dev/null | stdbuf -oL "
+                f"tee /logs/agent/{phase_filename}"
+            ),
+            env=env,
+        )
+
+        # ``exec`` output may be truncated by the environment/transport.  The
+        # tee file is the complete per-phase audit stream when logs are bind
+        # mounted, so make it authoritative and retain stdout only for
+        # backends where that file is not locally visible yet.
+        events = self._read_phase_events(phase_filename)
+        if not events:
+            events = self._jsonl_events(str(getattr(result, "stdout", "") or ""))
+        session_id = self._capture_and_validate_session(events, resume=resume)
+        await self._export_session(
+            environment,
+            env,
+            session_id,
+            resume=resume,
+        )
+
+        if messages := self._error_messages_from_events(events):
+            raise NonZeroAgentExitCodeError(
+                "OpenCode emitted error event(s): " + "; ".join(messages[:3])
+            )
 
 
 class GeminiCliPreinstalled(_PreinstalledMixin, GeminiCli):

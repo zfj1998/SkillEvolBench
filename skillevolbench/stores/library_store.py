@@ -40,7 +40,6 @@ from __future__ import annotations
 import logging
 import shutil
 import subprocess
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -298,6 +297,20 @@ class LibraryStore:
             )
 
         manifest = self._load_manifest()
+        # Physical skill folders are keyed by slug, while the manifest is
+        # keyed by latent skill id. Two families claiming the same slug would
+        # otherwise overwrite one directory and create contradictory history.
+        existing_slug_owner = {
+            skill_id_to_slug(skill_id): skill_id for skill_id in manifest.skills
+        }
+        for skill_id in patch.target_skill_ids:
+            slug = skill_id_to_slug(skill_id)
+            owner = existing_slug_owner.get(slug)
+            if owner is not None and owner != skill_id:
+                raise ValueError(
+                    f"skill slug {slug!r} is already owned by {owner!r}; "
+                    f"cannot assign it to {skill_id!r}"
+                )
         applied_upserts: list[str] = []
         applied_deletes: list[str] = []
         affected_skill_ids: set[str] = set()

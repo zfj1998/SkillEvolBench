@@ -1,0 +1,43 @@
+# Experimental protocol requested for AP: the task agent itself authors the
+# post-verifier skill update by continuing the exact same OpenCode session.
+# This is intentionally NOT one of the paper's canonical baseline rows; pair
+# it with selfgen_experience_always for an author-isolation ablation.
+name: selfgen_in_session_always
+description: Same task-agent session solves, receives verifier feedback, then authors the skill update.
+track: path-a
+
+skill_init: empty
+allow_self_gen_induction: true
+allow_zero_shot_creation: false
+allow_curated_inject: false
+
+allow_revision: true
+allow_retirement: false
+allow_quarantine: false
+allow_applicability_narrow: false
+allow_rollback: false
+
+use_skill_library: true
+skill_retrieval_k: 8
+# Avoid an extra host-side LLM call in the setting whose purpose is to isolate
+# the task model's own self-reflection capability.
+retriever_type: embedding
+
+feedback_level: process
+feedback_to_skill_text: true
+
+default_strategy: chain
+revision_trigger: always
+max_revisions_per_skill: 5
+skill_update_source: same_agent_session
+
+library_scope: environment
+# Different T1/T2/T3 inputs already test forward transfer. Do not immediately
+# rerun the same tasks in this setting unless explicitly requested.
+within_env_replay: false
+replay_eval: false
+
+# AP overwrites the served model id, but validation deliberately requires the
+# OpenCode adapter because it records and explicitly resumes one session id.
+harbor_agent_name: opencode
+model_name: openai-compatible/model

@@ -66,6 +66,7 @@ DefaultStrategy = Literal["none", "chain", "chain_tier3"]
 #                    families still share one library and accumulate
 #                    revisions normally.
 LibraryScope = Literal["global", "environment"]
+SkillUpdateSource = Literal["host_skill_author", "same_agent_session"]
 
 
 # ---------------------------------------------------------------------------
@@ -242,6 +243,14 @@ class BaselineConfig(BaseModel):
     revision_trigger: RevisionTrigger = "never"
     max_revisions_per_skill: int = Field(default=3, ge=0)
 
+    # Who authors learning-time skill updates after T1-T3:
+    #
+    # - host_skill_author: the paper-compatible, independent host LLM call.
+    # - same_agent_session: resume the task agent after verifier feedback and
+    #   ask that exact session to emit a candidate patch.  The host still
+    #   validates/applies it, so the agent never writes the shared library.
+    skill_update_source: SkillUpdateSource = "host_skill_author"
+
     # ===== Harbor agent =====
     harbor_agent_name: str = "claude-code"
     model_name: str = "anthropic/claude-opus-4-5"
@@ -365,7 +374,31 @@ class BaselineConfig(BaseModel):
                 "feedback_to_memory=True requires use_feedback_memory=True"
             )
 
-        # ---- 9. Strategy must be 'none' iff no revision/induction ----
+        # ---- 9. Same-session reflection is an OpenCode-only protocol ----
+        # The AP adapter records and explicitly resumes an OpenCode session
+        # id. Other CLIs may grow equivalent support later, but accepting one
+        # now would silently degrade "same session" into a fresh model call.
+        if self.skill_update_source == "same_agent_session":
+            if self.harbor_agent_name != "opencode":
+                raise ValueError(
+                    "skill_update_source='same_agent_session' currently "
+                    "requires harbor_agent_name='opencode'"
+                )
+            if not self.use_skill_library:
+                raise ValueError(
+                    "same-session skill updates require use_skill_library=True"
+                )
+            if not (self.allow_self_gen_induction or self.allow_revision):
+                raise ValueError(
+                    "same-session skill updates require induction or revision"
+                )
+            if self.allow_zero_shot_creation:
+                raise ValueError(
+                    "same-session skill updates are post-verifier; zero-shot "
+                    "pre-task creation must use a separate setting"
+                )
+
+        # ---- 10. Strategy must be 'none' iff no revision/induction ----
         # A strategy only does work in the learning block (T1 induction +
         # T2/T3 revision). If both are off, the strategy will never be invoked.
         does_anything = (

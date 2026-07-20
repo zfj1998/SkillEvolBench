@@ -22,6 +22,7 @@ Hard invariants enforced here:
 from __future__ import annotations
 
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, Optional
@@ -141,6 +142,12 @@ class RunConfig(BaseModel):
     # benchmark. This is the AP execution unit: the selected environment keeps
     # all of its trials in one process so the skill library remains stateful.
     environment_id: Optional[EnvironmentId] = None
+    # Explicit six-primary-trial infrastructure smoke for one skill family.
+    # This is deliberately non-canonical and therefore never scoreable.  It is
+    # a separate selector (rather than max_tasks=6) because the canonical
+    # environment order's first six tasks are T1-T3 from two families, not one
+    # family's T1-T6 sequence.
+    family_smoke_id: Optional[str] = None
     workspace_root: Path = Path("workspace/runs")
 
     # ===== Execution =====
@@ -184,6 +191,16 @@ class RunConfig(BaseModel):
         # (e.g. `runtime/<task_id>/environment/workspace/runs/.../library/active`).
         return v.expanduser().resolve()
 
+    @field_validator("family_smoke_id")
+    @classmethod
+    def _check_family_smoke_id(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and not re.fullmatch(r"E[1-6]-LS[1-5]", v):
+            raise ValueError(
+                "family_smoke_id must match E[1-6]-LS[1-5], "
+                f"got {v!r}"
+            )
+        return v
+
     # -----------------------------------------------------------------
     # Cross-field invariants
     # -----------------------------------------------------------------
@@ -212,6 +229,30 @@ class RunConfig(BaseModel):
                 f"library_scope={self.baseline.library_scope!r}; global-scope "
                 "baselines must run all six environments in one process"
             )
+
+        if self.family_smoke_id is not None:
+            if self.environment_id is None:
+                raise ValueError(
+                    "family_smoke_id requires its environment_id so the "
+                    "stateful library scope is explicit"
+                )
+            family_environment = self.family_smoke_id.split("-", 1)[0]
+            if self.environment_id != family_environment:
+                raise ValueError(
+                    f"family_smoke_id {self.family_smoke_id!r} belongs to "
+                    f"{family_environment}, not environment_id="
+                    f"{self.environment_id!r}"
+                )
+            if self.max_tasks is not None:
+                raise ValueError(
+                    "family_smoke_id and max_tasks are mutually exclusive; "
+                    "a family smoke has an explicit T1-T6 schedule"
+                )
+            if self.baseline.within_env_replay or self.baseline.replay_eval:
+                raise ValueError(
+                    "family_smoke_id requires within_env_replay=False and "
+                    "replay_eval=False so the smoke contains exactly T1-T6"
+                )
 
         # ---- 2. baseline.default_strategy <-> strategy.name ----
         # The baseline's "default_strategy" lives in its yaml as a hint about
@@ -269,6 +310,7 @@ class RunConfig(BaseModel):
         strategy_yaml: Path | str,
         order_seed: OrderSeed = "A",
         environment_id: Optional[EnvironmentId] = None,
+        family_smoke_id: Optional[str] = None,
         workspace_root: Path | str = "workspace/runs",
         api_base: Optional[str] = None,
         api_key_env_var: str = "ANTHROPIC_API_KEY",
@@ -284,6 +326,7 @@ class RunConfig(BaseModel):
             strategy=strategy,
             order_seed=order_seed,
             environment_id=environment_id,
+            family_smoke_id=family_smoke_id,
             workspace_root=Path(workspace_root),
             api_base=api_base,
             api_key_env_var=api_key_env_var,

@@ -14,10 +14,8 @@ accidental asset drift.
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import shutil
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -29,6 +27,7 @@ from skillevolbench.discovery import (
 )
 from skillevolbench.metrics.reporter import FullReport, ReportGenerator
 from skillevolbench.scheduler import (
+    assert_family_smoke_invariants,
     assert_order_invariants,
     compute_task_order,
 )
@@ -97,7 +96,11 @@ class LifelongRunner:
         # Harbor SDK is loaded only here -- module imports remain SDK-free.
         from harbor.job import Job  # type: ignore  # noqa: F401  -- runtime-only
         from skillevolbench.harbor_ext import SkillEvolBenchHooks
-        from skillevolbench.harbor_ext._patches import apply_harbor_patches
+        from skillevolbench.harbor_ext._patches import (
+            apply_harbor_patches,
+            clear_post_verifier_callback,
+            register_post_verifier_callback,
+        )
         from skillevolbench.harbor_ext.job_builder import build_job_config
 
         # Patch ``Trial._execute_agent`` so on-disk ``instruction.md``
@@ -112,15 +115,28 @@ class LifelongRunner:
         # task/metric registries before the Job becomes runnable.
         job = await Job.create(job_config)
 
+        # In the explicit single-family smoke, hooks must see one family in
+        # the selected environment so their learning-completion threshold is
+        # three.  This makes the library freeze immediately after T3, before
+        # T4 is constructed, while keeping the full registry available to the
+        # report generator for task metadata.
+        hook_registry = (
+            registry.scoped_to_family(self.config.family_smoke_id)
+            if self.config.family_smoke_id is not None
+            else registry
+        )
         hooks = SkillEvolBenchHooks(
             runtime=runtime,
-            task_registry=registry,
+            task_registry=hook_registry,
             runtime_builder=runtime.runtime_builder,
             prompt_builder=runtime.prompt_builder,
         )
         job.on_trial_started(hooks.on_trial_started)
         job.on_trial_ended(hooks.on_trial_ended)
 
+        same_session = (
+            self.config.baseline.skill_update_source == "same_agent_session"
+        )
         runtime.event_store.record(
             "run_started",
             {
@@ -130,10 +146,25 @@ class LifelongRunner:
                 "order_seed": self.config.order_seed,
                 "benchmark_hash": benchmark_hash,
                 "n_tasks": len(ordered_tasks),
+                "execution_scope": (
+                    "family_smoke"
+                    if self.config.family_smoke_id is not None
+                    else (
+                        "environment"
+                        if self.config.environment_id is not None
+                        else "full"
+                    )
+                ),
+                "family_smoke_id": self.config.family_smoke_id,
             },
         )
 
         # 5. Execute
+        if same_session:
+            # Register only after every fallible pre-run bookkeeping step so
+            # a setup failure cannot leak a process-global callback into the
+            # next job in the same AP worker.
+            register_post_verifier_callback(hooks.on_post_verifier)
         try:
             await job.run()
         except BaseException:
@@ -158,6 +189,9 @@ class LifelongRunner:
                 benchmark_hash,
                 successful=True,
             )
+        finally:
+            if same_session:
+                clear_post_verifier_callback()
 
         # 7. Generate report (Part 10 schema 1.0; sections are dicts).
         report_gen = ReportGenerator(
@@ -218,7 +252,14 @@ class LifelongRunner:
             ),
             replay_eval=getattr(self.config.baseline, "replay_eval", False),
             environment_id=self.config.environment_id,
+            family_smoke_id=self.config.family_smoke_id,
         )
+        if self.config.family_smoke_id is not None:
+            assert_family_smoke_invariants(
+                ordered_tasks,
+                family_id=self.config.family_smoke_id,
+            )
+            return ordered_tasks
         if self.config.max_tasks is None:
             expected_envs = (
                 [self.config.environment_id]
@@ -343,10 +384,6 @@ class LifelongRunner:
             )
 
         # Assert benchmark unchanged on both success and failure.
-        try:
-            now_hash = self._snapshot_benchmark_hash(runtime.run_root.parent / "_check")
-        except Exception:
-            now_hash = ""
         # Re-hash without writing to a temp dir; do an in-place compare.
         re_hash = hashlib.sha256()
         bench_dir = self._repo_root() / "benchmark"

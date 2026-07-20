@@ -16,11 +16,9 @@ This module is read-only — it never mutates the benchmark directory.
 
 from __future__ import annotations
 
-import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 import yaml
 
@@ -218,6 +216,30 @@ class TaskRegistry:
         return sorted(
             (t for t in self._tasks_by_id.values() if t.spec.family_id == family_id),
             key=lambda t: t.spec.task_index,
+        )
+
+    def scoped_to_family(self, family_id: str) -> "TaskRegistry":
+        """Return a registry view containing exactly one six-task family.
+
+        A family smoke is deliberately not a canonical environment episode.
+        Its hooks must nevertheless see the correct learning boundary: after
+        this family's T3, not after the 15th learning task that a full
+        five-family environment would contain.  Returning a new registry
+        keeps the source registry immutable while making
+        ``families_in_env()`` accurately describe the selected execution
+        unit.
+        """
+        family = self.family(family_id)  # fail closed for unknown ids
+        tasks = self.tasks_in_family(family_id)
+        if len(tasks) != 6:
+            raise ValueError(
+                f"family {family_id!r} must contain exactly 6 tasks; "
+                f"got {len(tasks)}"
+            )
+        return TaskRegistry(
+            {family_id: family},
+            {task.spec.task_id: task for task in tasks},
+            {task.slug: task for task in tasks},
         )
 
 

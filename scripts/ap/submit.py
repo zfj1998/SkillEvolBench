@@ -31,7 +31,7 @@ from typing import Any, Mapping
 DEFAULT_AP_BASE_URL = "http://agentplatform.aliyun-inc.com"
 DEFAULT_CLUSTER = "benchmark-dev"
 DEFAULT_DATASET = "skillevolbench/skillevolbench"
-DEFAULT_SPLIT = "v1@3"
+DEFAULT_SPLIT = "v1@4"
 
 
 def _required(value: str | None, description: str) -> str:
@@ -51,6 +51,14 @@ def _env_bool(name: str, default: bool) -> bool:
     if normalized in {"0", "false", "no", "off"}:
         return False
     raise ValueError(f"{name} must be a boolean, got {raw!r}")
+
+
+def _env_optional_bool(name: str) -> bool | None:
+    """Read an optional boolean without overriding benchmark config defaults."""
+    raw = os.environ.get(name)
+    if raw is None or not raw.strip():
+        return None
+    return _env_bool(name, False)
 
 
 def _models_url(base_url: str) -> str:
@@ -153,10 +161,15 @@ def build_submission(
         "baseline_name": args.baseline_name,
         "strategy_name": args.strategy_name,
         "order_seed": args.order_seed,
-        "within_env_replay": args.within_env_replay,
-        "replay_eval": args.replay_eval,
         "runtime_timeout_sec": args.runtime_timeout_sec,
     }
+    # Tri-state CLI flags: omission means "use the selected baseline's yaml".
+    # In particular, the same-session baseline intentionally disables replay;
+    # an AP launcher must not silently turn it back on.
+    if args.within_env_replay is not None:
+        params["within_env_replay"] = args.within_env_replay
+    if args.replay_eval is not None:
+        params["replay_eval"] = args.replay_eval
     if args.harbor_agent == "codex":
         params["codex_wire_api"] = args.codex_wire_api
     elif args.harbor_agent == "opencode":
@@ -168,6 +181,13 @@ def build_submission(
 
     if args.scope == "smoke":
         params["smoke_max_tasks"] = args.smoke_max_tasks
+    elif args.scope == "family":
+        if args.within_env_replay is True or args.replay_eval is True:
+            raise ValueError(
+                "--scope family requires replay disabled; omit the replay "
+                "flags or pass --no-within-env-replay --no-replay-eval"
+            )
+        params["smoke_family_id"] = args.family_id
 
     command = [
         args.ap_cli,
@@ -192,12 +212,21 @@ def build_submission(
         command.append("--enable-post-process")
         description = f"full six-environment dataset {dataset_version}"
     else:
-        environment_id = args.environment_id
+        environment_id = (
+            args.family_id.split("-", 1)[0]
+            if args.scope == "family"
+            else args.environment_id
+        )
         command.extend(["--instance-id", environment_id, "--concurrency", "1"])
         if args.scope == "smoke":
             description = (
                 f"non-scoreable {environment_id} smoke "
                 f"({args.smoke_max_tasks} task(s))"
+            )
+        elif args.scope == "family":
+            description = (
+                f"non-scoreable {args.family_id} T1-T6 family smoke "
+                f"in one stateful session sequence"
             )
         else:
             description = f"complete {environment_id} environment episode"
@@ -234,9 +263,12 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--scope",
-        choices=("smoke", "environment", "full"),
+        choices=("smoke", "family", "environment", "full"),
         default="smoke",
-        help="smoke=truncated E1 by default; environment=one full episode; full=E1-E6",
+        help=(
+            "smoke=truncated E1; family=one non-canonical T1-T6 family; "
+            "environment=one complete episode; full=E1-E6"
+        ),
     )
     parser.add_argument(
         "--environment-id",
@@ -244,6 +276,12 @@ def _parser() -> argparse.ArgumentParser:
         default="E1",
     )
     parser.add_argument("--smoke-max-tasks", type=int, default=1)
+    parser.add_argument(
+        "--family-id",
+        choices=tuple(f"E{env}-LS{family}" for env in range(1, 7) for family in range(1, 6)),
+        default="E1-LS1",
+        help="single family selected by --scope family (default: E1-LS1)",
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
         "--cluster", default=os.environ.get("AP_CLUSTER", DEFAULT_CLUSTER)
@@ -270,18 +308,18 @@ def _parser() -> argparse.ArgumentParser:
         "--opencode-version",
         default=os.environ.get("OPENCODE_VERSION", "1.18.3"),
     )
-    parser.add_argument("--baseline-name", default="selfgen_experience_always")
+    parser.add_argument("--baseline-name", default="selfgen_in_session_always")
     parser.add_argument("--strategy-name", default="chain")
     parser.add_argument("--order-seed", choices=("A", "B", "C"), default="A")
     parser.add_argument(
         "--within-env-replay",
         action=argparse.BooleanOptionalAction,
-        default=_env_bool("WITHIN_ENV_REPLAY", True),
+        default=_env_optional_bool("WITHIN_ENV_REPLAY"),
     )
     parser.add_argument(
         "--replay-eval",
         action=argparse.BooleanOptionalAction,
-        default=_env_bool("REPLAY_EVAL", False),
+        default=_env_optional_bool("REPLAY_EVAL"),
     )
     parser.add_argument("--runtime-timeout-sec", type=int, default=86400)
     parser.add_argument("--concurrency", type=int, default=6)

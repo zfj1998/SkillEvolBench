@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import importlib.util
 import sys
 from pathlib import Path
@@ -111,3 +112,37 @@ def test_legacy_harbor_mounts_json_is_still_supported(
     environment = environment_cls(**_common_args(tmp_path), mounts_json=base_mounts)
 
     _assert_complete_mount_set(environment, base_mounts)
+
+
+def test_main_service_lifecycle_queries_are_checked_and_state_specific(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class CurrentDockerEnvironment:
+        def __init__(self, *, mounts: list[dict] | None = None, **_kwargs: Any):
+            self.forwarded_mounts = list(mounts or [])
+
+    environment_cls = _load_environment_class(monkeypatch, CurrentDockerEnvironment)
+    environment = environment_cls(**_common_args(tmp_path), mounts=[])
+    calls: list[tuple[list[str], dict[str, Any]]] = []
+    outputs = iter(("", "all-container-id\n", "running-container-id\n"))
+
+    async def compose(
+        command: list[str], **kwargs: Any
+    ) -> SimpleNamespace:
+        calls.append((command, kwargs))
+        return SimpleNamespace(stdout=next(outputs))
+
+    environment._run_docker_compose_command = compose
+
+    asyncio.run(environment.restart_main_service())
+    identity = asyncio.run(environment.main_service_identity())
+    running_identity = asyncio.run(environment.main_service_running_identity())
+
+    assert identity == "all-container-id"
+    assert running_identity == "running-container-id"
+    assert calls == [
+        (["start", "main"], {}),
+        (["ps", "--all", "--quiet", "main"], {}),
+        (["ps", "--status", "running", "--quiet", "main"], {}),
+    ]

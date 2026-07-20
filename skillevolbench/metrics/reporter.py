@@ -8,7 +8,6 @@ Schema bumped from ``"0.1-part9"`` to ``"1.0"`` in this version.
 
 from __future__ import annotations
 
-import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -16,29 +15,17 @@ from typing import Any, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 from skillevolbench.discovery import TaskRegistry
-from skillevolbench.metrics.composition import (
-    T6CompositionReport,
-    compute_t6_composition,
-)
-from skillevolbench.metrics.cost import CostReport, compute_cost
+from skillevolbench.metrics.composition import compute_t6_composition
+from skillevolbench.metrics.cost import compute_cost
 from skillevolbench.metrics.evolution_replay import compute_evolution_replay
-from skillevolbench.metrics.library_health import (
-    LibraryHealthReport,
-    compute_library_health,
+from skillevolbench.metrics.library_health import compute_library_health
+from skillevolbench.metrics.retrieval_metrics import compute_retrieval_metrics
+from skillevolbench.metrics.reflection_transfer import (
+    compute_reflection_transfer,
 )
-from skillevolbench.metrics.retrieval_metrics import (
-    RetrievalReport,
-    compute_retrieval_metrics,
-)
-from skillevolbench.metrics.revision_safety import (
-    RevisionSafetyReport,
-    compute_revision_safety,
-)
-from skillevolbench.metrics.task_success import (
-    TaskSuccessReport,
-    compute_task_success,
-)
-from skillevolbench.metrics.transfer import TransferReport, compute_transfer
+from skillevolbench.metrics.revision_safety import compute_revision_safety
+from skillevolbench.metrics.task_success import compute_task_success
+from skillevolbench.metrics.transfer import compute_transfer
 from skillevolbench.schemas import RunConfig
 from skillevolbench.stores import (
     EventStore,
@@ -112,6 +99,8 @@ class FullReport(BaseModel):
     t6_composition: dict[str, Any] = Field(default_factory=dict)
     transfer: dict[str, Any] = Field(default_factory=dict)
     evolution_replay: dict[str, Any] = Field(default_factory=dict)
+    reflection: dict[str, Any] = Field(default_factory=dict)
+    reflection_transfer: dict[str, Any] = Field(default_factory=dict)
     cost: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -271,7 +260,84 @@ class ReportGenerator:
         # 7. Paired original -> within-environment replay outcomes.
         evolution_section = compute_evolution_replay(records)
 
-        # 8. Cost
+        # 8. Same-session reflection protocol. Invalid/noop candidates are
+        # scoreable model outcomes; transport/session failures abort the run
+        # earlier and therefore never masquerade as a terminal event here.
+        reflection_events = {
+            status: events.events_of_type(f"reflection_{status}")
+            for status in ("completed", "noop", "rejected", "skipped")
+        }
+        terminal_events = [
+            event
+            for status_events in reflection_events.values()
+            for event in status_events
+        ]
+        attempted_events = [
+            event
+            for status in ("completed", "noop", "rejected")
+            for event in reflection_events[status]
+        ]
+        n_completed = len(reflection_events["completed"])
+        n_noop = len(reflection_events["noop"])
+        n_rejected = len(reflection_events["rejected"])
+        n_attempted = len(attempted_events)
+
+        def _same_session_verified(event: dict[str, Any]) -> bool:
+            """Require the explicit host verdict and three matching IDs."""
+            session_id = event.get("session_id")
+            solve_session_id = event.get("solve_session_id")
+            reflection_session_id = event.get("reflection_session_id")
+            return (
+                event.get("same_session_verified") is True
+                and isinstance(session_id, str)
+                and bool(session_id)
+                and isinstance(solve_session_id, str)
+                and bool(solve_session_id)
+                and isinstance(reflection_session_id, str)
+                and bool(reflection_session_id)
+                and session_id == solve_session_id == reflection_session_id
+            )
+
+        reflection_section = {
+            "enabled": (
+                self.run_config.baseline.skill_update_source
+                == "same_agent_session"
+            ),
+            "n_terminal": len(terminal_events),
+            "n_attempted": n_attempted,
+            "n_completed": n_completed,
+            "n_noop": n_noop,
+            "n_rejected": n_rejected,
+            "n_skipped": len(reflection_events["skipped"]),
+            "n_same_session_verified": sum(
+                1 for event in attempted_events if _same_session_verified(event)
+            ),
+            # A deliberate no-op is a valid, parseable model output even
+            # though it does not propose a patch. Keep output validity and
+            # actionable patch production as separate metrics.
+            "valid_output_rate": (
+                (n_completed + n_noop) / n_attempted
+                if n_attempted else None
+            ),
+            "patch_candidate_rate": (
+                n_completed / n_attempted if n_attempted else None
+            ),
+            "noop_rate": (
+                n_noop / n_attempted if n_attempted else None
+            ),
+            "rejection_rate": (
+                n_rejected / n_attempted if n_attempted else None
+            ),
+        }
+
+        # 9. Cross-task transfer after every terminal reflection outcome,
+        # including no-op/rejected/skipped. This intentionally does not
+        # condition on patch_applied.
+        reflection_transfer_section = compute_reflection_transfer(
+            primary_records
+        )
+
+        # 10. Cost
         n_passed = sum(1 for r in records if r.outcome.verifier_passed)
         cost_section = compute_cost(
             event_counts=event_counts,
@@ -299,6 +365,8 @@ class ReportGenerator:
             t6_composition=_to_dict(comp_section),
             transfer=_to_dict(transfer_section),
             evolution_replay=_to_dict(evolution_section),
+            reflection=reflection_section,
+            reflection_transfer=_to_dict(reflection_transfer_section),
             cost=_to_dict(cost_section),
         )
 

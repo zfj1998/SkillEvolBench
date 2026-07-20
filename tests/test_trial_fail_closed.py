@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -75,6 +76,98 @@ def test_normalized_reward_is_used_instead_of_first_mapping_value(
     )
 
     assert outcome.reward == 0.25
+
+
+def _write_atif(path: Path, *, session_id: str = "ses-test") -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "ATIF-v1.7",
+                "session_id": session_id,
+                "agent": {
+                    "name": "opencode",
+                    "version": "1.18.3",
+                    "model_name": "test-model",
+                },
+                "steps": [
+                    {
+                        "step_id": 1,
+                        "source": "user",
+                        "message": "solve this task",
+                    },
+                    {
+                        "step_id": 2,
+                        "source": "agent",
+                        "message": "done",
+                    },
+                ],
+            }
+        )
+    )
+
+
+@pytest.mark.parametrize(
+    "relative_path",
+    [
+        "artifacts/logs/agent/trajectory.json",
+        "agent/trajectory.json",
+    ],
+)
+def test_resolves_canonical_atif_in_harbor_layouts(
+    tmp_path: Path,
+    relative_path: str,
+) -> None:
+    result = _trial_result(
+        tmp_path,
+        rewards={"reward": 0.0},
+        trajectory=False,
+    )
+    trial_dir = VerifierAdapter._path_from_uri_or_str(result.trial_uri)
+    trajectory_path = trial_dir / relative_path
+    _write_atif(trajectory_path)
+
+    outcome = VerifierAdapter().parse(result)
+
+    assert outcome.trajectory_path == trajectory_path
+
+
+def test_manifest_and_arbitrary_json_are_not_trajectories(tmp_path: Path) -> None:
+    result = _trial_result(
+        tmp_path,
+        rewards={"reward": 0.0},
+        trajectory=False,
+    )
+    trial_dir = VerifierAdapter._path_from_uri_or_str(result.trial_uri)
+    artifacts_dir = trial_dir / "artifacts"
+    artifacts_dir.mkdir()
+    (artifacts_dir / "manifest.json").write_text(
+        '[{"source":"/logs/agent/trajectory.json","status":"failed"}]'
+    )
+    (artifacts_dir / "unrelated.json").write_text('{"events": [{"ok": true}]}')
+    (artifacts_dir / "trajectory.json").write_text(
+        '{"schema_version":"ATIF-v1.7","steps":[]}'
+    )
+
+    with pytest.raises(UnscoreableTrialError) as captured:
+        VerifierAdapter().parse(result)
+
+    assert captured.value.reason == "missing-agent-trajectory"
+
+
+def test_valid_atif_cli_specific_filename_is_safe_fallback(tmp_path: Path) -> None:
+    result = _trial_result(
+        tmp_path,
+        rewards={"reward": 0.0},
+        trajectory=False,
+    )
+    trial_dir = VerifierAdapter._path_from_uri_or_str(result.trial_uri)
+    trajectory_path = trial_dir / "agent" / "future-cli.trajectory.json"
+    _write_atif(trajectory_path)
+
+    outcome = VerifierAdapter().parse(result)
+
+    assert outcome.trajectory_path == trajectory_path
 
 
 @pytest.mark.parametrize(

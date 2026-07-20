@@ -61,6 +61,7 @@ class AuthorStrategy(str, Enum):
     ZERO_SHOT = "zero_shot"
     INDUCTION = "induction"
     CHAIN = "chain"
+    IN_SESSION_REFLECTION = "in_session_reflection"
     LIFECYCLE_MAINTAINER = "lifecycle_maintainer"
 
 

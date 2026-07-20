@@ -20,6 +20,12 @@ from skillevolbench.metrics.library_health import (
     compute_library_health,
 )
 from skillevolbench.metrics.reporter import FullReport, ReportGenerator
+from skillevolbench.metrics.reflection_transfer import (
+    ReflectionTransferReport,
+    ReflectionTransitionCounts,
+    ReflectionTransitionPair,
+    compute_reflection_transfer,
+)
 from skillevolbench.metrics.retrieval_metrics import (
     RetrievalReport,
     compute_retrieval_metrics,
@@ -47,6 +53,9 @@ __all__ = [
     "TransferReport",
     "CostReport",
     "EvolutionReplayReport",
+    "ReflectionTransferReport",
+    "ReflectionTransitionCounts",
+    "ReflectionTransitionPair",
     "compute_task_success",
     "compute_library_health",
     "compute_revision_safety",
@@ -55,4 +64,5 @@ __all__ = [
     "compute_transfer",
     "compute_cost",
     "compute_evolution_replay",
+    "compute_reflection_transfer",
 ]

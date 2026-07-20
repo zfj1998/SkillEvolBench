@@ -22,11 +22,26 @@ internal hooks for unit-test seams.
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import logging
+import os
+import shutil
+import stat
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
+from skillevolbench.components.in_session_reflection import (
+    InSessionSkillReflection,
+    REFLECTION_CANDIDATE_FILENAME,
+    REFLECTION_FEEDBACK_FILENAME,
+    REFLECTION_PROMPT_FILENAME,
+    REFLECTION_RESULT_FILENAME,
+    ReflectionCandidateError,
+    ReflectionRecord,
+)
 from skillevolbench.components.verifier_adapter import UnscoreableTrialError
 from skillevolbench.schemas import TaskRole
 
@@ -54,6 +69,10 @@ _EVAL_ROLES = {TaskRole.CONTEXT_SHIFT, TaskRole.ADVERSARIAL, TaskRole.COMPOSITIO
 # and REPLAY_SUFFIX. Duplicated here to avoid an import cycle.
 _SHADOW_T6_SUFFIX = "__oracle_shadow"
 _REPLAY_SUFFIX = "__replay"
+
+_AUDIT_DIRNAME = "self-reflection-audit"
+_MAX_AUDIT_FILE_BYTES = 64 * 1024 * 1024
+_MAX_CANDIDATE_BYTES = 1_000_000
 
 
 def _is_shadow_trial_name(raw: str) -> bool:
@@ -103,6 +122,10 @@ class SkillEvolBenchHooks:
         # freeze, BEFORE the first eval trial's container is constructed).
         # See _on_trial_ended_sync's freeze trigger.
         self._learning_completed_per_env: dict[str, int] = {}
+        # Same-session candidates are generated before Harbor stops the task
+        # environment, then consumed by the ordinary END hook. Keying mirrors
+        # _pre_state_cache so shadow/replay names cannot alias a primary trial.
+        self._reflection_cache: dict[str, ReflectionRecord] = {}
 
     # ==================================================================
     # HOOK 1: on_trial_started
@@ -267,6 +290,887 @@ class SkillEvolBenchHooks:
             },
         )
 
+    # ==================================================================
+    # POST-VERIFIER SEAM (before Harbor stops the shared environment)
+    # ==================================================================
+
+    async def on_post_verifier(self, trial: Any) -> None:
+        """Resume the original OpenCode session for one reflection turn.
+
+        This is called by the exact-version Harbor compatibility patch after
+        ``SingleStepTrial._run_verifier`` returns. It intentionally runs before
+        ``TrialEvent.END`` because END is emitted only after container stop.
+        """
+        if self.runtime.baseline.skill_update_source != "same_agent_session":
+            return
+
+        event = SimpleNamespace(
+            task_name=getattr(getattr(trial, "task", None), "name", ""),
+            config=getattr(trial, "config", None),
+            result=getattr(trial, "result", None),
+        )
+        task = self._resolve_task(event)
+        runtime_basename = self._runtime_basename(event)
+        is_shadow = _is_shadow_trial_name(runtime_basename)
+        is_replay = _is_replay_trial_name(runtime_basename)
+        cache_key = runtime_basename if (is_shadow or is_replay) else task.task_id
+
+        # Evaluation, replay, and oracle-shadow trials remain frozen observers.
+        if is_shadow or is_replay or task.role in {r.value for r in _EVAL_ROLES}:
+            return
+
+        if getattr(trial, "_is_agent_environment_stopped", False):
+            raise UnscoreableTrialError(
+                "reflection-environment-already-stopped", task_id=task.task_id
+            )
+        if not getattr(trial.agent_environment.capabilities, "mounted", False):
+            raise UnscoreableTrialError(
+                "reflection-requires-mounted-agent-logs", task_id=task.task_id
+            )
+        if not getattr(trial, "_sevb_agent_main_stopped", False):
+            raise UnscoreableTrialError(
+                "reflection-requires-stopped-solve-container",
+                task_id=task.task_id,
+            )
+
+        # Fail closed against missing/contradictory official verifier state
+        # before the model sees any feedback or a library candidate is cached.
+        outcome = self.runtime.verifier_adapter.parse(trial.result)
+        reflection = InSessionSkillReflection(
+            baseline=self.runtime.baseline,
+            # Always take the current runtime library: environment-scoped runs
+            # swap LibraryStore objects as E1..E6 advance.
+            library=self.runtime.library,
+        )
+        should_reflect, mode_or_reason = reflection.plan(task, outcome)
+        if not should_reflect:
+            record = ReflectionRecord(
+                status="skipped",
+                task_id=task.task_id,
+                reason=mode_or_reason,
+            )
+            self._reflection_cache[cache_key] = record
+            self.runtime.event_store.record("reflection_skipped", record.to_dict())
+            return
+        mode = mode_or_reason
+
+        agent_dir = Path(trial.paths.agent_dir)
+        candidate_path = agent_dir / REFLECTION_CANDIDATE_FILENAME
+        canonical_trajectory = agent_dir / "trajectory.json"
+        session_export = agent_dir / "opencode.session.json"
+        solve_stream = agent_dir / "opencode.solve.jsonl"
+        reflection_stream = agent_dir / "opencode.reflection.jsonl"
+        candidate_path.unlink(missing_ok=True)
+
+        prompt, feedback = reflection.build_prompt(task, outcome, mode=mode)
+        audit_dir = self._create_host_audit_dir(trial, task_id=task.task_id)
+        prompt_path = audit_dir / REFLECTION_PROMPT_FILENAME
+        feedback_path = audit_dir / REFLECTION_FEEDBACK_FILENAME
+        result_path = audit_dir / REFLECTION_RESULT_FILENAME
+        self._write_new_regular(prompt_path, prompt.encode("utf-8"), task.task_id)
+        self._write_new_regular(
+            feedback_path,
+            (json.dumps(feedback, indent=2, ensure_ascii=False) + "\n").encode(),
+            task.task_id,
+        )
+
+        # The solve container arrived stopped. Capture all model-controlled
+        # inputs through no-follow file descriptors before it can run again.
+        await self._require_main_not_running(trial, task_id=task.task_id)
+        solve_trajectory, solve_trajectory_raw = self._capture_agent_file(
+            canonical_trajectory,
+            audit_dir / "trajectory.solve.json",
+            task_id=task.task_id,
+            reason="reflection-missing-solve-trajectory",
+        )
+        solve_export, solve_export_raw = self._capture_agent_file(
+            session_export,
+            audit_dir / "opencode.session.solve.json",
+            task_id=task.task_id,
+            reason="reflection-missing-solve-session-export",
+        )
+        self._capture_agent_file(
+            solve_stream,
+            audit_dir / "opencode.solve.jsonl",
+            task_id=task.task_id,
+            reason="reflection-missing-solve-stream",
+        )
+        solve_payload = self._json_object(
+            solve_trajectory_raw,
+            reason="reflection-solve-trajectory-invalid",
+            task_id=task.task_id,
+        )
+        solve_export_payload = self._json_object(
+            solve_export_raw,
+            reason="reflection-solve-session-export-invalid",
+            task_id=task.task_id,
+        )
+        solve_session_id = self._session_id_from_trajectory(
+            solve_payload, task_id=task.task_id
+        )
+        solve_export_session_id = self._session_id_from_export(
+            solve_export_payload, task_id=task.task_id
+        )
+        solve_stream_session_id = self._session_id_from_stream(
+            self._read_regular_nofollow(
+                solve_stream,
+                max_bytes=_MAX_AUDIT_FILE_BYTES,
+                task_id=task.task_id,
+                reason="reflection-solve-stream-invalid",
+            ),
+            task_id=task.task_id,
+            phase="solve",
+        )
+        adapter_session_id = getattr(trial.agent, "opencode_session_id", None)
+        if not (
+            isinstance(adapter_session_id, str)
+            and adapter_session_id
+            and adapter_session_id
+            == solve_session_id
+            == solve_export_session_id
+            == solve_stream_session_id
+        ):
+            raise UnscoreableTrialError(
+                "reflection-solve-session-mismatch", task_id=task.task_id
+            )
+
+        task_snapshot = Path(trial.paths.artifacts_dir) / "root" / "task"
+        task_hash_before = self._hash_tree_nofollow(
+            task_snapshot, task_id=task.task_id
+        )
+        official_verifier = self._snapshot_and_hide_verifier(
+            trial, audit_dir=audit_dir, task_id=task.task_id
+        )
+
+        record: ReflectionRecord | None = None
+        pending_error: BaseException | None = None
+        main_stopped_proven = True
+        try:
+            restart = getattr(trial.agent_environment, "restart_main_service", None)
+            identity = getattr(trial.agent_environment, "main_service_identity", None)
+            if not callable(restart) or not callable(identity):
+                raise UnscoreableTrialError(
+                    "reflection-environment-cannot-restart-same-container",
+                    task_id=task.task_id,
+                )
+            await restart()
+            main_stopped_proven = False
+            trial._sevb_agent_main_stopped = False
+            restarted_identity = await identity()
+            running_identity = await self._main_running_identity(
+                trial, task_id=task.task_id
+            )
+            expected_identity = getattr(
+                trial, "_sevb_agent_container_identity", None
+            )
+            if (
+                not expected_identity
+                or restarted_identity != expected_identity
+                or running_identity != expected_identity
+            ):
+                raise UnscoreableTrialError(
+                    "reflection-container-identity-changed", task_id=task.task_id
+                )
+            healthcheck = getattr(trial.agent_environment, "run_healthcheck", None)
+            if callable(healthcheck):
+                await healthcheck()
+
+            # Hidden tests ran only in the destroyed verifier container. Empty
+            # /tests defensively; bounded feedback in the prompt is the only
+            # authorized verifier signal.
+            await trial.agent_environment.empty_dirs(
+                [trial.agent_env_paths.tests_dir], chmod=False
+            )
+
+            target = SimpleNamespace(agent_result=None, agent_execution=None)
+            phase_error: BaseException | None = None
+            try:
+                await trial._run_agent_phase(
+                    target=target,
+                    instruction=prompt,
+                    timeout_sec=trial._agent_timeout_sec,
+                    user=trial.task.config.agent.user,
+                    resume=True,
+                )
+            except BaseException as exc:
+                phase_error = exc
+            finally:
+                # Stop immediately when the resumed CLI returns (successfully or
+                # otherwise), then prove no background process remains.
+                await self._stop_main_and_prove(trial, task_id=task.task_id)
+                main_stopped_proven = True
+            if phase_error is not None:
+                raise phase_error
+
+            full_export_raw = self._read_regular_nofollow(
+                session_export,
+                max_bytes=_MAX_AUDIT_FILE_BYTES,
+                task_id=task.task_id,
+                reason="reflection-full-session-export-invalid",
+            )
+            # populate_context_post_run is deliberately invoked only after the
+            # container is stopped. Normalize its input/output paths to regular
+            # files first so this host-side method cannot follow an agent-created
+            # symlink.
+            self._replace_with_regular(
+                session_export, full_export_raw, task_id=task.task_id
+            )
+            self._replace_with_regular(
+                canonical_trajectory, b"", task_id=task.task_id
+            )
+            if target.agent_result is None:
+                raise UnscoreableTrialError(
+                    "reflection-missing-agent-context", task_id=task.task_id
+                )
+            trial.agent.populate_context_post_run(target.agent_result)
+            trial.result.agent_result = target.agent_result
+
+            full_trajectory, full_trajectory_raw = self._capture_agent_file(
+                canonical_trajectory,
+                audit_dir / "trajectory.full.json",
+                task_id=task.task_id,
+                reason="reflection-full-trajectory-invalid",
+            )
+            full_export = audit_dir / "opencode.session.full.json"
+            self._write_new_regular(
+                full_export, full_export_raw, task.task_id
+            )
+            _, reflection_stream_raw = self._capture_agent_file(
+                reflection_stream,
+                audit_dir / "opencode.reflection.jsonl",
+                task_id=task.task_id,
+                reason="reflection-missing-reflection-stream",
+            )
+
+            full_payload = self._json_object(
+                full_trajectory_raw,
+                reason="reflection-full-trajectory-invalid",
+                task_id=task.task_id,
+            )
+            full_export_payload = self._json_object(
+                full_export_raw,
+                reason="reflection-full-session-export-invalid",
+                task_id=task.task_id,
+            )
+            full_session_id = self._verify_trajectory_continuity(
+                solve_payload,
+                full_payload,
+                prompt=prompt,
+                task_id=task.task_id,
+            )
+            full_export_session_id = self._verify_export_continuity(
+                solve_export_payload,
+                full_export_payload,
+                prompt=prompt,
+                task_id=task.task_id,
+            )
+            reflection_stream_session_id = self._session_id_from_stream(
+                reflection_stream_raw,
+                task_id=task.task_id,
+                phase="reflection",
+            )
+            reflection_session_id = getattr(
+                trial.agent, "opencode_session_id", None
+            )
+            if not (
+                isinstance(reflection_session_id, str)
+                and reflection_session_id
+                and adapter_session_id
+                == reflection_session_id
+                == full_session_id
+                == full_export_session_id
+                == reflection_stream_session_id
+            ):
+                raise UnscoreableTrialError(
+                    "reflection-session-identity-mismatch", task_id=task.task_id
+                )
+
+            reflection_task = audit_dir / "task.after"
+            reflection_task.mkdir(mode=0o700)
+            await trial.agent_environment.service_download_dir(
+                "/root/task", reflection_task, service="main"
+            )
+            task_hash_after = self._hash_tree_nofollow(
+                reflection_task, task_id=task.task_id
+            )
+            if task_hash_after != task_hash_before:
+                raise UnscoreableTrialError(
+                    "reflection-mutated-task-workspace", task_id=task.task_id
+                )
+
+            candidate_raw: bytes | None = None
+            candidate_audit_path: Path | None = None
+            try:
+                candidate_raw = self._read_candidate_nofollow(candidate_path)
+                patch = reflection.parse_candidate_bytes(
+                    candidate_raw,
+                    task=task,
+                    outcome=outcome,
+                    mode=mode,
+                )
+            except ReflectionCandidateError as exc:
+                record = ReflectionRecord(
+                    status="rejected",
+                    task_id=task.task_id,
+                    mode=mode,
+                    session_id=reflection_session_id,
+                    solve_session_id=solve_session_id,
+                    reflection_session_id=reflection_session_id,
+                    same_session_verified=True,
+                    reason=str(exc)[:300],
+                )
+            else:
+                candidate_audit_path = audit_dir / REFLECTION_CANDIDATE_FILENAME
+                self._write_new_regular(
+                    candidate_audit_path, candidate_raw, task.task_id
+                )
+                status = "noop" if patch is None else "completed"
+                record = ReflectionRecord(
+                    status=status,
+                    task_id=task.task_id,
+                    mode=mode,
+                    session_id=reflection_session_id,
+                    solve_session_id=solve_session_id,
+                    reflection_session_id=reflection_session_id,
+                    same_session_verified=True,
+                    patch=patch,
+                    reason="model_selected_noop" if patch is None else "",
+                    candidate_path=candidate_audit_path,
+                )
+            finally:
+                # Never leave a model-authored candidate in the mounted agent
+                # directory. In particular, rejected secret-bearing raw output
+                # must not become an AP artifact.
+                candidate_path.unlink(missing_ok=True)
+
+            assert record is not None
+            record.prompt_path = prompt_path
+            record.feedback_path = feedback_path
+            record.solve_trajectory_path = solve_trajectory
+            record.full_session_trajectory_path = full_trajectory
+            record.solve_session_export_path = solve_export
+            record.full_session_export_path = full_export
+            record.prompt_sha256 = hashlib.sha256(prompt.encode()).hexdigest()
+            record.solve_trajectory_sha256 = hashlib.sha256(
+                solve_trajectory_raw
+            ).hexdigest()
+            record.full_session_trajectory_sha256 = hashlib.sha256(
+                full_trajectory_raw
+            ).hexdigest()
+            record.solve_session_export_sha256 = hashlib.sha256(
+                solve_export_raw
+            ).hexdigest()
+            record.full_session_export_sha256 = hashlib.sha256(
+                full_export_raw
+            ).hexdigest()
+            record.task_workspace_hash_before = task_hash_before
+            record.task_workspace_hash_after = task_hash_after
+            record.trajectory_prefix_verified = True
+            record.export_prefix_verified = True
+        except BaseException as exc:
+            pending_error = exc
+        finally:
+            # Even a failed resume must not expose verifier evidence until the
+            # main service is independently proven stopped.
+            if not main_stopped_proven:
+                try:
+                    await self._stop_main_and_prove(trial, task_id=task.task_id)
+                    main_stopped_proven = True
+                except BaseException as exc:
+                    pending_error = pending_error or exc
+            try:
+                await trial._stop_agent_environment()
+            except BaseException as exc:
+                pending_error = pending_error or exc
+            try:
+                await self._require_main_not_running(trial, task_id=task.task_id)
+                main_stopped_proven = True
+            except BaseException as exc:
+                main_stopped_proven = False
+                pending_error = pending_error or exc
+            if main_stopped_proven:
+                try:
+                    self._restore_verifier_evidence(
+                        trial,
+                        official_verifier=official_verifier,
+                        audit_dir=audit_dir,
+                        task_id=task.task_id,
+                    )
+                except BaseException as exc:
+                    pending_error = pending_error or exc
+
+        if pending_error is not None:
+            raise pending_error
+        assert record is not None
+        self._write_new_regular(
+            result_path,
+            (json.dumps(record.to_dict(), indent=2, ensure_ascii=False) + "\n").encode(),
+            task.task_id,
+        )
+        self._reflection_cache[cache_key] = record
+        self.runtime.event_store.record(
+            f"reflection_{record.status}", record.to_dict()
+        )
+
+    @staticmethod
+    def _create_host_audit_dir(trial: Any, *, task_id: str) -> Path:
+        audit_dir = Path(trial.paths.trial_dir) / _AUDIT_DIRNAME
+        if os.path.lexists(audit_dir):
+            raise UnscoreableTrialError(
+                "reflection-audit-dir-preexists", task_id=task_id
+            )
+        try:
+            audit_dir.mkdir(mode=0o700)
+        except OSError as exc:
+            raise UnscoreableTrialError(
+                "reflection-audit-dir-create-failed",
+                task_id=task_id,
+                exception_type=type(exc).__name__,
+            ) from exc
+        return audit_dir
+
+    @staticmethod
+    def _read_regular_nofollow(
+        path: Path,
+        *,
+        max_bytes: int,
+        task_id: str,
+        reason: str,
+    ) -> bytes:
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+        try:
+            fd = os.open(path, flags)
+        except OSError as exc:
+            raise UnscoreableTrialError(
+                reason, task_id=task_id, exception_type=type(exc).__name__
+            ) from exc
+        try:
+            metadata = os.fstat(fd)
+            if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > max_bytes:
+                raise UnscoreableTrialError(reason, task_id=task_id)
+            chunks: list[bytes] = []
+            remaining = max_bytes + 1
+            while remaining:
+                chunk = os.read(fd, min(1024 * 1024, remaining))
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                remaining -= len(chunk)
+            raw = b"".join(chunks)
+            if len(raw) > max_bytes:
+                raise UnscoreableTrialError(reason, task_id=task_id)
+            return raw
+        finally:
+            os.close(fd)
+
+    @staticmethod
+    def _write_new_regular(path: Path, raw: bytes, task_id: str) -> None:
+        flags = (
+            os.O_WRONLY
+            | os.O_CREAT
+            | os.O_EXCL
+            | getattr(os, "O_NOFOLLOW", 0)
+        )
+        try:
+            fd = os.open(path, flags, 0o600)
+            try:
+                view = memoryview(raw)
+                while view:
+                    written = os.write(fd, view)
+                    view = view[written:]
+            finally:
+                os.close(fd)
+        except OSError as exc:
+            raise UnscoreableTrialError(
+                "reflection-audit-write-failed",
+                task_id=task_id,
+                exception_type=type(exc).__name__,
+            ) from exc
+
+    @classmethod
+    def _replace_with_regular(cls, path: Path, raw: bytes, *, task_id: str) -> None:
+        try:
+            path.unlink(missing_ok=True)
+        except OSError as exc:
+            raise UnscoreableTrialError(
+                "reflection-agent-file-normalize-failed",
+                task_id=task_id,
+                exception_type=type(exc).__name__,
+            ) from exc
+        cls._write_new_regular(path, raw, task_id)
+
+    @classmethod
+    def _capture_agent_file(
+        cls,
+        source: Path,
+        destination: Path,
+        *,
+        task_id: str,
+        reason: str,
+    ) -> tuple[Path, bytes]:
+        raw = cls._read_regular_nofollow(
+            source,
+            max_bytes=_MAX_AUDIT_FILE_BYTES,
+            task_id=task_id,
+            reason=reason,
+        )
+        cls._write_new_regular(destination, raw, task_id)
+        return destination, raw
+
+    @staticmethod
+    def _read_candidate_nofollow(path: Path) -> bytes:
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+        try:
+            fd = os.open(path, flags)
+        except FileNotFoundError as exc:
+            raise ReflectionCandidateError("candidate_file_missing") from exc
+        except OSError as exc:
+            raise ReflectionCandidateError("candidate_file_not_regular") from exc
+        try:
+            metadata = os.fstat(fd)
+            if not stat.S_ISREG(metadata.st_mode):
+                raise ReflectionCandidateError("candidate_file_not_regular")
+            if metadata.st_size > _MAX_CANDIDATE_BYTES:
+                raise ReflectionCandidateError("candidate_file_too_large")
+            raw = os.read(fd, _MAX_CANDIDATE_BYTES + 1)
+            if len(raw) > _MAX_CANDIDATE_BYTES:
+                raise ReflectionCandidateError("candidate_file_too_large")
+            return raw
+        finally:
+            os.close(fd)
+
+    @staticmethod
+    def _json_object(raw: bytes, *, reason: str, task_id: str) -> dict[str, Any]:
+        try:
+            payload = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise UnscoreableTrialError(reason, task_id=task_id) from exc
+        if not isinstance(payload, dict):
+            raise UnscoreableTrialError(reason, task_id=task_id)
+        return payload
+
+    @staticmethod
+    def _session_id_from_trajectory(payload: dict[str, Any], *, task_id: str) -> str:
+        session_id = payload.get("session_id")
+        if not isinstance(session_id, str) or not session_id:
+            raise UnscoreableTrialError(
+                "reflection-trajectory-missing-session", task_id=task_id
+            )
+        return session_id
+
+    @staticmethod
+    def _session_id_from_export(payload: dict[str, Any], *, task_id: str) -> str:
+        info = payload.get("info")
+        session_id = info.get("id") if isinstance(info, dict) else None
+        if not isinstance(session_id, str) or not session_id:
+            raise UnscoreableTrialError(
+                "reflection-export-missing-session", task_id=task_id
+            )
+        return session_id
+
+    @classmethod
+    def _session_id_from_stream(
+        cls, raw: bytes, *, task_id: str, phase: str
+    ) -> str:
+        session_ids: set[str] = set()
+        for line in raw.decode("utf-8", errors="replace").splitlines():
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(event, dict) and isinstance(event.get("sessionID"), str):
+                session_ids.add(event["sessionID"])
+        if len(session_ids) != 1:
+            raise UnscoreableTrialError(
+                f"reflection-{phase}-stream-session-invalid", task_id=task_id
+            )
+        return next(iter(session_ids))
+
+    @classmethod
+    def _verify_trajectory_continuity(
+        cls,
+        solve: dict[str, Any],
+        full: dict[str, Any],
+        *,
+        prompt: str,
+        task_id: str,
+    ) -> str:
+        solve_id = cls._session_id_from_trajectory(solve, task_id=task_id)
+        full_id = cls._session_id_from_trajectory(full, task_id=task_id)
+        solve_steps = solve.get("steps")
+        full_steps = full.get("steps")
+        if (
+            solve.get("schema_version") != full.get("schema_version")
+            or solve_id != full_id
+            or not isinstance(solve_steps, list)
+            or not isinstance(full_steps, list)
+            or full_steps[: len(solve_steps)] != solve_steps
+        ):
+            raise UnscoreableTrialError(
+                "reflection-trajectory-prefix-mismatch", task_id=task_id
+            )
+        tail = full_steps[len(solve_steps) :]
+        if not (
+            len(tail) >= 2
+            and isinstance(tail[0], dict)
+            and tail[0].get("source") == "user"
+            and tail[0].get("message") == prompt
+            and all(
+                isinstance(step, dict) and step.get("source") == "agent"
+                for step in tail[1:]
+            )
+        ):
+            raise UnscoreableTrialError(
+                "reflection-trajectory-tail-invalid", task_id=task_id
+            )
+        return full_id
+
+    @staticmethod
+    def _export_message_text(message: dict[str, Any]) -> str:
+        parts = message.get("parts")
+        if not isinstance(parts, list):
+            return ""
+        return "\n".join(
+            part["text"]
+            for part in parts
+            if isinstance(part, dict)
+            and part.get("type") == "text"
+            and isinstance(part.get("text"), str)
+        )
+
+    @classmethod
+    def _verify_export_continuity(
+        cls,
+        solve: dict[str, Any],
+        full: dict[str, Any],
+        *,
+        prompt: str,
+        task_id: str,
+    ) -> str:
+        solve_id = cls._session_id_from_export(solve, task_id=task_id)
+        full_id = cls._session_id_from_export(full, task_id=task_id)
+        solve_messages = solve.get("messages")
+        full_messages = full.get("messages")
+        if (
+            solve_id != full_id
+            or not isinstance(solve_messages, list)
+            or not isinstance(full_messages, list)
+            or full_messages[: len(solve_messages)] != solve_messages
+        ):
+            raise UnscoreableTrialError(
+                "reflection-export-prefix-mismatch", task_id=task_id
+            )
+        tail = full_messages[len(solve_messages) :]
+        if not (
+            len(tail) >= 2
+            and isinstance(tail[0], dict)
+            and isinstance(tail[0].get("info"), dict)
+            and tail[0]["info"].get("role") == "user"
+            and cls._export_message_text(tail[0]) == prompt
+            and all(
+                isinstance(message, dict)
+                and isinstance(message.get("info"), dict)
+                and message["info"].get("role") == "assistant"
+                for message in tail[1:]
+            )
+        ):
+            raise UnscoreableTrialError(
+                "reflection-export-tail-invalid", task_id=task_id
+            )
+        return full_id
+
+    @staticmethod
+    def _hash_tree_nofollow(root: Path, *, task_id: str) -> str:
+        if not root.is_dir() or root.is_symlink():
+            raise UnscoreableTrialError(
+                "reflection-task-snapshot-invalid", task_id=task_id
+            )
+        digest = hashlib.sha256()
+
+        def visit(directory: Path, relative: Path) -> None:
+            try:
+                entries = sorted(os.scandir(directory), key=lambda item: item.name)
+            except OSError as exc:
+                raise UnscoreableTrialError(
+                    "reflection-task-snapshot-invalid",
+                    task_id=task_id,
+                    exception_type=type(exc).__name__,
+                ) from exc
+            for entry in entries:
+                rel = relative / entry.name
+                metadata = entry.stat(follow_symlinks=False)
+                rel_bytes = rel.as_posix().encode("utf-8", errors="surrogateescape")
+                mode = stat.S_IMODE(metadata.st_mode)
+                if stat.S_ISDIR(metadata.st_mode):
+                    digest.update(b"D\0" + rel_bytes + b"\0" + str(mode).encode() + b"\0")
+                    visit(Path(entry.path), rel)
+                elif stat.S_ISREG(metadata.st_mode):
+                    digest.update(b"F\0" + rel_bytes + b"\0" + str(mode).encode() + b"\0")
+                    file_digest = hashlib.sha256()
+                    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+                    try:
+                        fd = os.open(entry.path, flags)
+                        try:
+                            opened = os.fstat(fd)
+                            if not stat.S_ISREG(opened.st_mode):
+                                raise OSError("task file changed type while hashing")
+                            while chunk := os.read(fd, 1024 * 1024):
+                                file_digest.update(chunk)
+                        finally:
+                            os.close(fd)
+                    except OSError as exc:
+                        raise UnscoreableTrialError(
+                            "reflection-task-snapshot-invalid",
+                            task_id=task_id,
+                            exception_type=type(exc).__name__,
+                        ) from exc
+                    digest.update(file_digest.digest())
+                elif stat.S_ISLNK(metadata.st_mode):
+                    target = os.readlink(entry.path)
+                    digest.update(
+                        b"L\0"
+                        + rel_bytes
+                        + b"\0"
+                        + str(mode).encode()
+                        + b"\0"
+                        + target.encode("utf-8", errors="surrogateescape")
+                        + b"\0"
+                    )
+                else:
+                    raise UnscoreableTrialError(
+                        "reflection-task-snapshot-special-file", task_id=task_id
+                    )
+
+        visit(root, Path())
+        return digest.hexdigest()
+
+    @classmethod
+    def _copy_tree_nofollow(
+        cls, source: Path, destination: Path, *, task_id: str
+    ) -> None:
+        if not source.is_dir() or source.is_symlink() or os.path.lexists(destination):
+            raise UnscoreableTrialError(
+                "reflection-verifier-snapshot-invalid", task_id=task_id
+            )
+        destination.mkdir(mode=0o700)
+        for entry in sorted(os.scandir(source), key=lambda item: item.name):
+            src = Path(entry.path)
+            dst = destination / entry.name
+            metadata = entry.stat(follow_symlinks=False)
+            if stat.S_ISDIR(metadata.st_mode):
+                cls._copy_tree_nofollow(src, dst, task_id=task_id)
+            elif stat.S_ISREG(metadata.st_mode):
+                raw = cls._read_regular_nofollow(
+                    src,
+                    max_bytes=_MAX_AUDIT_FILE_BYTES,
+                    task_id=task_id,
+                    reason="reflection-verifier-snapshot-invalid",
+                )
+                cls._write_new_regular(dst, raw, task_id)
+            else:
+                raise UnscoreableTrialError(
+                    "reflection-verifier-snapshot-special-file", task_id=task_id
+                )
+
+    @staticmethod
+    def _empty_directory(path: Path) -> None:
+        path.mkdir(parents=True, exist_ok=True)
+        for child in path.iterdir():
+            if child.is_symlink() or not child.is_dir():
+                child.unlink(missing_ok=True)
+            else:
+                shutil.rmtree(child)
+
+    @classmethod
+    def _snapshot_and_hide_verifier(
+        cls, trial: Any, *, audit_dir: Path, task_id: str
+    ) -> Path:
+        verifier_dir = Path(trial.paths.verifier_dir)
+        official = audit_dir / "official-verifier"
+        cls._copy_tree_nofollow(verifier_dir, official, task_id=task_id)
+        cls._empty_directory(verifier_dir)
+        return official
+
+    @classmethod
+    def _restore_verifier_evidence(
+        cls,
+        trial: Any,
+        *,
+        official_verifier: Path,
+        audit_dir: Path,
+        task_id: str,
+    ) -> None:
+        verifier_dir = Path(trial.paths.verifier_dir)
+        if any(verifier_dir.iterdir()):
+            cls._copy_tree_nofollow(
+                verifier_dir,
+                audit_dir / "reflection-verifier-noise",
+                task_id=task_id,
+            )
+        cls._empty_directory(verifier_dir)
+        # Copy rather than move: the host-only audit remains the canonical
+        # immutable record even after Harbor's conventional path is restored.
+        for entry in sorted(os.scandir(official_verifier), key=lambda item: item.name):
+            source = Path(entry.path)
+            destination = verifier_dir / entry.name
+            metadata = entry.stat(follow_symlinks=False)
+            if stat.S_ISDIR(metadata.st_mode):
+                cls._copy_tree_nofollow(source, destination, task_id=task_id)
+            elif stat.S_ISREG(metadata.st_mode):
+                raw = cls._read_regular_nofollow(
+                    source,
+                    max_bytes=_MAX_AUDIT_FILE_BYTES,
+                    task_id=task_id,
+                    reason="reflection-verifier-restore-invalid",
+                )
+                cls._write_new_regular(destination, raw, task_id)
+            else:
+                raise UnscoreableTrialError(
+                    "reflection-verifier-restore-invalid", task_id=task_id
+                )
+
+    @staticmethod
+    async def _main_running_identity(trial: Any, *, task_id: str) -> str:
+        running = getattr(
+            trial.agent_environment, "main_service_running_identity", None
+        )
+        if not callable(running):
+            raise UnscoreableTrialError(
+                "reflection-environment-cannot-prove-main-stopped",
+                task_id=task_id,
+            )
+        try:
+            return str(await running() or "").strip()
+        except BaseException as exc:
+            raise UnscoreableTrialError(
+                "reflection-main-state-query-failed",
+                task_id=task_id,
+                exception_type=type(exc).__name__,
+            ) from exc
+
+    @classmethod
+    async def _require_main_not_running(cls, trial: Any, *, task_id: str) -> None:
+        if await cls._main_running_identity(trial, task_id=task_id):
+            raise UnscoreableTrialError(
+                "reflection-main-still-running", task_id=task_id
+            )
+
+    @classmethod
+    async def _stop_main_and_prove(cls, trial: Any, *, task_id: str) -> None:
+        stop_error: BaseException | None = None
+        try:
+            await trial.agent_environment.stop_service("main")
+        except BaseException as exc:
+            stop_error = exc
+        await cls._require_main_not_running(trial, task_id=task_id)
+        trial._sevb_agent_main_stopped = True
+        if stop_error is not None:
+            raise UnscoreableTrialError(
+                "reflection-main-stop-failed",
+                task_id=task_id,
+                exception_type=type(stop_error).__name__,
+            ) from stop_error
+
     async def _on_shadow_trial_started(
         self,
         event: "TrialHookEvent",
@@ -382,6 +1286,7 @@ class SkillEvolBenchHooks:
                 "missing-trial-pre-state",
                 task_id=task.task_id,
             )
+        reflection_record = self._reflection_cache.pop(cache_key, None)
 
         # 1. Parse verifier output (Part 6 VerifierAdapter).  ``parse`` is a
         # fail-closed boundary: agent/runtime exceptions, missing verifier
@@ -401,6 +1306,45 @@ class SkillEvolBenchHooks:
                 },
             )
             raise
+
+        # The complete same-session trajectory is retained as the canonical
+        # user-facing audit artifact. Task behavior metrics must remain based
+        # on the solve turn only; otherwise reflection-time reads of /skills
+        # would be misclassified as skills used to solve the task.
+        full_session_trajectory: Path | None = None
+        if (
+            self.runtime.baseline.skill_update_source == "same_agent_session"
+            and not is_shadow
+            and not is_replay
+            and task.role in {r.value for r in _LEARNING_ROLES}
+        ):
+            if reflection_record is None:
+                raise UnscoreableTrialError(
+                    "missing-reflection-record", task_id=task.task_id
+                )
+            # Only attempted reflections have a second turn. Their trusted
+            # solve/full trajectories live in the host-only audit directory;
+            # never derive them from an agent-writable artifact path. A
+            # deliberately skipped reflection keeps the ordinary solve path.
+            if reflection_record.status in {"completed", "noop", "rejected"}:
+                solve_path = reflection_record.solve_trajectory_path
+                full_session_trajectory = (
+                    reflection_record.full_session_trajectory_path
+                )
+                if (
+                    solve_path is None
+                    or full_session_trajectory is None
+                    or not solve_path.is_file()
+                    or not full_session_trajectory.is_file()
+                ):
+                    raise UnscoreableTrialError(
+                        "missing-reflection-audit-trajectory", task_id=task.task_id
+                    )
+                outcome = outcome.model_copy(update={"trajectory_path": solve_path})
+            elif reflection_record.status != "skipped":
+                raise UnscoreableTrialError(
+                    "invalid-reflection-status", task_id=task.task_id
+                )
 
         # 2. Extract actually-used skills from the trajectory.
         skills_used = self.runtime.trajectory_extractor.extract_skills_used(
@@ -454,6 +1398,19 @@ class SkillEvolBenchHooks:
             trajectory_compact=compacted.to_dict(),
             trajectory_compact_rough=compacted_rough.to_dict(),
             replay_mode=mode,
+            reflection=(
+                {
+                    **reflection_record.to_dict(),
+                    "solve_trajectory_path": str(outcome.trajectory_path),
+                    "full_session_trajectory_path": (
+                        str(full_session_trajectory)
+                        if full_session_trajectory is not None
+                        else None
+                    ),
+                }
+                if reflection_record is not None
+                else {}
+            ),
         )
         self.runtime.replay_store.persist(record)
 
@@ -511,24 +1468,45 @@ class SkillEvolBenchHooks:
             ApplyPatch, EvolutionContext,
         )
 
-        ctx = EvolutionContext(
-            task=task,
-            outcome=outcome,
-            compacted=compacted,
-            pre_retrieval=pre_state["retrieval"],
-            skills_actually_used=skills_used,
-            baseline=self.runtime.baseline,
-            replay_store=self.runtime.replay_store,
-            library=self.runtime.library,
-        )
-        decision = self.runtime.strategy.decide(ctx)
+        if self.runtime.baseline.skill_update_source == "same_agent_session":
+            assert reflection_record is not None
+            if reflection_record.patch is not None:
+                self.runtime.event_store.record_patch_proposed(
+                    reflection_record.patch, "in_session_reflection"
+                )
+                decision = ApplyPatch(patch=reflection_record.patch)
+            else:
+                from skillevolbench.strategies.base import NoOp
+                decision = NoOp(
+                    reason=(
+                        f"reflection_{reflection_record.status}:"
+                        f"{reflection_record.reason or 'no_patch'}"
+                    )
+                )
+        else:
+            ctx = EvolutionContext(
+                task=task,
+                outcome=outcome,
+                compacted=compacted,
+                pre_retrieval=pre_state["retrieval"],
+                skills_actually_used=skills_used,
+                baseline=self.runtime.baseline,
+                replay_store=self.runtime.replay_store,
+                library=self.runtime.library,
+            )
+            decision = self.runtime.strategy.decide(ctx)
 
         # 7. Apply / NoOp -- all writes go through freeze_ctrl.
         # (Rollback decision was an RGPE-only path; removed.)
         if isinstance(decision, ApplyPatch):
+            strategy_name = (
+                "in_session_reflection"
+                if self.runtime.baseline.skill_update_source == "same_agent_session"
+                else self.runtime.strategy.name
+            )
             self.runtime.freeze_ctrl.submit_patch(
                 patch=decision.patch,
-                strategy_name=self.runtime.strategy.name,
+                strategy_name=strategy_name,
                 current_task=task.task_id,
             )
         else:  # NoOp
@@ -543,6 +1521,9 @@ class SkillEvolBenchHooks:
                 "task_id": task.task_id,
                 "verifier_passed": outcome.verifier_passed,
                 "decision_type": type(decision).__name__,
+                "reflection_status": (
+                    reflection_record.status if reflection_record else None
+                ),
                 "library_hash_after": self.runtime.library.compute_hash(),
             },
         )

@@ -133,8 +133,10 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
         os.environ["CODEX_PROVIDER_ENV_KEY"] = "OPENAI_API_KEY"
         os.environ["CODEX_WIRE_API"] = wire_api
 
-    # SkillAuthor/Judge/LLMSelfRetriever run in the AP main container rather
-    # than the Harbor task container. Route them to the same model endpoint.
+    # Legacy SkillAuthor/Judge/LLMSelfRetriever components run in the AP main
+    # container rather than the Harbor task container. Same-session reflection
+    # does not construct SkillAuthor; these variables remain useful for other
+    # baselines and retrievers.
     os.environ["SEVB_HOST_LITELLM_MODEL"] = (
         model if "/" in model else f"openai/{model}"
     )
@@ -236,7 +238,7 @@ def _build_config(output_dir: Path) -> RunConfig:
         )
 
     baseline_name = os.environ.get(
-        "BASELINE_NAME", "selfgen_experience_always"
+        "BASELINE_NAME", "selfgen_in_session_always"
     )
     baseline = _configure_model(load_baseline(baseline_name))
     strategy_name = os.environ.get("STRATEGY_NAME", baseline.default_strategy)
@@ -246,6 +248,7 @@ def _build_config(output_dir: Path) -> RunConfig:
         REPO_ROOT / "configs" / "strategies" / f"{strategy_name}.yaml"
     )
 
+    family_smoke_id = os.environ.get("SMOKE_FAMILY_ID", "").strip() or None
     max_tasks_raw = os.environ.get("SMOKE_MAX_TASKS", "").strip()
     max_tasks = int(max_tasks_raw) if max_tasks_raw else None
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -267,6 +270,7 @@ def _build_config(output_dir: Path) -> RunConfig:
         strategy=strategy,
         order_seed=os.environ.get("ORDER_SEED", "A"),
         environment_id=environment_id,
+        family_smoke_id=family_smoke_id,
         workspace_root=workspace_root,
         # Host-side calls are routed by SEVB_HOST_LITELLM_* above. The Harbor
         # agent receives the endpoint through its agent-specific config/env.
@@ -282,26 +286,60 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
     task_success = report.task_success
     evolution = report.evolution_replay
     revision_safety = getattr(report, "revision_safety", {})
+    reflection_transfer = getattr(report, "reflection_transfer", {}) or {}
+    family_smoke = config.family_smoke_id is not None
+    expected_primary = 6 if family_smoke else 30
     expected_replays = 0
-    if config.baseline.within_env_replay:
+    if not family_smoke and config.baseline.within_env_replay:
         expected_replays = 30 if config.baseline.replay_eval else 15
-    expected_shadows = 5 if config.baseline.dual_t6_retrieval else 0
+    expected_shadows = (
+        (1 if family_smoke else 5)
+        if config.baseline.dual_t6_retrieval
+        else 0
+    )
     n_verifier_backed_trials = (
         report.n_primary_trials + report.n_replay_trials + report.n_shadow_trials
     )
-    complete = (
+    unit_complete = (
         config.max_tasks is None
-        and report.n_primary_trials == 30
+        and report.n_primary_trials == expected_primary
         and report.n_replay_trials == expected_replays
         and report.n_shadow_trials == expected_shadows
     )
+    reflection = getattr(report, "reflection", {}) or {}
+    expected_reflections = 0
+    if config.baseline.skill_update_source == "same_agent_session":
+        # A family smoke has one family x T1-T3; a canonical environment has
+        # five. Both require a terminal same-session result for every learning
+        # primary trial before the execution unit is considered complete.
+        expected_reflections = 3 if family_smoke else 15
+        unit_complete = (
+            unit_complete
+            and reflection.get("n_terminal") == expected_reflections
+        )
+        unit_complete = unit_complete and (
+            reflection.get("n_same_session_verified")
+            == reflection.get("n_attempted")
+        )
+    canonical_complete = bool(unit_complete and not family_smoke)
     evaluation_sr = float(task_success.get("evaluation_sr", 0.0))
     metrics: dict[str, Any] = {
-        "task_score": evaluation_sr if complete else 0.0,
-        "passed": bool(complete and evaluation_sr == 1.0),
-        "status": "completed" if complete else "partial",
-        "scoreable": complete,
+        "task_score": evaluation_sr if canonical_complete else 0.0,
+        "passed": bool(canonical_complete and evaluation_sr == 1.0),
+        "status": (
+            "completed"
+            if canonical_complete
+            else ("completed_noncanonical" if unit_complete else "partial")
+        ),
+        "scoreable": canonical_complete,
+        "canonical": not family_smoke and config.max_tasks is None,
+        "execution_scope": (
+            "family_smoke"
+            if family_smoke
+            else ("truncated_smoke" if config.max_tasks is not None else "environment")
+        ),
         "environment_id": config.environment_id,
+        "family_smoke_id": config.family_smoke_id,
         "run_id": config.run_id,
         "baseline_name": config.baseline.name,
         "evaluation_sr": evaluation_sr,
@@ -314,9 +352,15 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
             task_success.get("t6_composition_rate", 0.0)
         ),
         "n_primary_trials": report.n_primary_trials,
+        "expected_primary_trials": expected_primary,
         "n_replay_trials": report.n_replay_trials,
+        "expected_replay_trials": expected_replays,
         "n_shadow_trials": report.n_shadow_trials,
+        "expected_shadow_trials": expected_shadows,
         "n_verifier_backed_trials": n_verifier_backed_trials,
+        "expected_verifier_backed_trials": (
+            expected_primary + expected_replays + expected_shadows
+        ),
         "evolution_lift": evolution.get("evolution_lift"),
         "recovery_rate": evolution.get("recovery_rate"),
         "regression_rate": evolution.get("regression_rate"),
@@ -337,6 +381,41 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
         "cross_task_success_to_fail_count": revision_safety.get(
             "success_to_fail_count", 0
         ),
+        "reflection_enabled": bool(reflection.get("enabled", False)),
+        "n_reflection_expected": expected_reflections,
+        "n_reflection_terminal": reflection.get("n_terminal", 0),
+        "n_reflection_attempted": reflection.get("n_attempted", 0),
+        "n_reflection_completed": reflection.get("n_completed", 0),
+        "n_reflection_noop": reflection.get("n_noop", 0),
+        "n_reflection_rejected": reflection.get("n_rejected", 0),
+        "n_same_session_verified": reflection.get(
+            "n_same_session_verified", 0
+        ),
+        "reflection_valid_output_rate": reflection.get("valid_output_rate"),
+        "reflection_patch_candidate_rate": reflection.get(
+            "patch_candidate_rate"
+        ),
+        "reflection_noop_rate": reflection.get("noop_rate"),
+        "reflection_rejection_rate": reflection.get("rejection_rate"),
+        "reflection_transfer_pairs": reflection_transfer.get("n_pairs", 0),
+        "reflection_fail_to_success_count": reflection_transfer.get(
+            "fail_to_success_count", 0
+        ),
+        "reflection_fail_to_fail_count": reflection_transfer.get(
+            "fail_to_fail_count", 0
+        ),
+        "reflection_success_to_success_count": reflection_transfer.get(
+            "success_to_success_count", 0
+        ),
+        "reflection_success_to_fail_count": reflection_transfer.get(
+            "success_to_fail_count", 0
+        ),
+        "reflection_failure_recovery_rate": reflection_transfer.get(
+            "failure_recovery_rate"
+        ),
+        "reflection_success_regression_rate": reflection_transfer.get(
+            "success_regression_rate"
+        ),
         "cross_task_failure_recovery_rate": revision_safety.get(
             "failure_recovery_rate"
         ),
@@ -344,7 +423,12 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
             "success_regression_rate"
         ),
     }
-    if not complete:
+    if family_smoke and unit_complete:
+        metrics["message"] = (
+            "Complete T1-T6 single-family smoke; intentionally non-canonical "
+            "and unscoreable as a benchmark result."
+        )
+    elif not canonical_complete:
         metrics["message"] = (
             "Partial infrastructure smoke; task_score is intentionally zero "
             "and must not be aggregated as a benchmark result."
@@ -366,6 +450,19 @@ def main() -> int:
                 "benchmark_revision": _safe_git_revision(),
                 "run_id": config.run_id,
                 "environment_id": config.environment_id,
+                "family_smoke_id": config.family_smoke_id,
+                "execution_scope": (
+                    "family_smoke"
+                    if config.family_smoke_id is not None
+                    else (
+                        "truncated_smoke"
+                        if config.max_tasks is not None
+                        else "environment"
+                    )
+                ),
+                "canonical": (
+                    config.family_smoke_id is None and config.max_tasks is None
+                ),
                 "baseline_name": config.baseline.name,
                 "strategy_name": config.strategy.name,
                 "order_seed": config.order_seed,
@@ -384,6 +481,8 @@ def main() -> int:
         return 0
     except Exception as exc:
         actionable = _actionable_exception(exc)
+        failed_family_smoke_id = os.environ.get("SMOKE_FAMILY_ID") or None
+        failed_max_tasks = os.environ.get("SMOKE_MAX_TASKS") or None
         _write_json(
             metrics_path,
             {
@@ -391,7 +490,16 @@ def main() -> int:
                 "passed": False,
                 "status": "failed",
                 "scoreable": False,
+                "canonical": not failed_family_smoke_id and not failed_max_tasks,
+                "execution_scope": (
+                    "family_smoke"
+                    if failed_family_smoke_id
+                    else ("truncated_smoke" if failed_max_tasks else "environment")
+                ),
                 "environment_id": os.environ.get("INSTANCE_ID"),
+                "family_smoke_id": failed_family_smoke_id,
+                "expected_primary_trials": 6 if failed_family_smoke_id else 30,
+                "n_primary_trials": 0,
                 "n_verifier_backed_trials": 0,
                 "error_type": type(actionable).__name__,
                 "message": _sanitize_error(str(actionable)),

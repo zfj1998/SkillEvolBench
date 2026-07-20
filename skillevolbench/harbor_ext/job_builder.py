@@ -261,9 +261,17 @@ def build_job_config(
         # already on host as ``<run_root>/runtime/<task_id>/
         # injection-context.json`` (RuntimeBuilder writes it directly),
         # so archiving it is pure redundancy.
-        artifacts=[
-            "/logs/agent/trajectory.json",
-        ],
+        artifacts=(
+            # The same-session protocol grades an immutable copy of the
+            # stopped solve container in a separate verifier environment.
+            # Keep trajectory.json out of artifacts in this mode: reflection
+            # later replaces the host-mounted agent copy with the full
+            # two-turn export, and a stale solve-only artifact would be
+            # ambiguous to downstream consumers.
+            ["/root/task"]
+            if config.baseline.skill_update_source == "same_agent_session"
+            else ["/logs/agent/trajectory.json"]
+        ),
     )
 
 

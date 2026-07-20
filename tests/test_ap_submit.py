@@ -42,13 +42,14 @@ def test_default_submission_is_one_task_e1_smoke() -> None:
     assert "--suite-name" not in submission.command
     params = _params(submission.command)
     assert params["dataset"] == "skillevolbench/skillevolbench"
-    assert params["split"] == "v1@3"
+    assert params["split"] == "v1@4"
     assert params["smoke_max_tasks"] == 1
     assert params["harbor_agent"] == "opencode"
     assert params["agent_cli_set"] == "opencode"
     assert params["opencode_version"] == "1.18.3"
     assert "codex_wire_api" not in params
-    assert params["within_env_replay"] is True
+    assert "within_env_replay" not in params
+    assert "replay_eval" not in params
     assert params["model_api_key"] == "sk-model-secret-for-test"
     assert "ap-secret-for-test" not in submission.command
     assert submission.child_env["AP_API_KEY"] == "ap-secret-for-test"
@@ -62,7 +63,7 @@ def test_full_submission_uses_dataset_and_no_smoke_truncation() -> None:
     submission = submit.build_submission(args, _environment())
 
     assert submission.command[submission.command.index("--dataset") + 1] == (
-        "skillevolbench/skillevolbench/v1@3"
+        "skillevolbench/skillevolbench/v1@4"
     )
     assert submission.command[submission.command.index("--concurrency") + 1] == "4"
     assert "--instance-id" not in submission.command
@@ -70,6 +71,41 @@ def test_full_submission_uses_dataset_and_no_smoke_truncation() -> None:
     assert "--suite-name" in submission.command
     assert "smoke_max_tasks" not in _params(submission.command)
     assert "--dry-run" not in submission.command
+
+
+def test_family_submission_selects_exact_family_without_max_tasks_or_replay() -> None:
+    args = submit._parser().parse_args(
+        ["--scope", "family", "--family-id", "E2-LS3", "--dry-run"]
+    )
+    submission = submit.build_submission(args, _environment())
+    params = _params(submission.command)
+
+    assert submission.command[submission.command.index("--instance-id") + 1] == "E2"
+    assert submission.command[submission.command.index("--concurrency") + 1] == "1"
+    assert params["smoke_family_id"] == "E2-LS3"
+    assert "smoke_max_tasks" not in params
+    assert "within_env_replay" not in params
+    assert "replay_eval" not in params
+    assert "non-scoreable E2-LS3 T1-T6" in submission.description
+
+
+def test_family_submission_rejects_explicit_replay() -> None:
+    args = submit._parser().parse_args(
+        ["--scope", "family", "--within-env-replay"]
+    )
+
+    with pytest.raises(ValueError, match="requires replay disabled"):
+        submit.build_submission(args, _environment())
+
+
+def test_submission_only_overrides_replay_when_user_explicitly_requests_it() -> None:
+    args = submit._parser().parse_args(
+        ["--within-env-replay", "--no-replay-eval"]
+    )
+    params = _params(submit.build_submission(args, _environment()).command)
+
+    assert params["within_env_replay"] is True
+    assert params["replay_eval"] is False
 
 
 def test_codex_submission_keeps_runtime_and_wire_api_aligned() -> None:

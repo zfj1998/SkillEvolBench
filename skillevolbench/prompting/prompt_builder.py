@@ -38,7 +38,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Optional
 
-from skillevolbench.schemas import BaselineConfig, RetrievedSkill
+from skillevolbench.schemas import BaselineConfig
 
 
 _LOG = logging.getLogger(__name__)
@@ -150,10 +150,8 @@ class PromptBuilder:
         """Soft skill-use mandate during learning trials (T1-T3).
 
         Differences vs ``_format_freeze_hint``:
-        - No "MUST NOT modify any skill" clause -- learning trials are
-          where the library evolves, but the agent itself still doesn't
-          touch SKILL.md (the SkillAuthor on the host writes patches
-          based on the trajectory after the trial ends).
+        - Learning trials are where the host may evolve the library after the
+          verifier, but the task agent itself never writes the mounted skills.
         - Acknowledges the library may be empty (T1 of the very first
           family in an env) so the wording is "if any skills are
           available", not an unconditional mandate.
@@ -182,6 +180,10 @@ class PromptBuilder:
             "Skipping this step and reinventing a workflow that an existing\n"
             "skill already encodes wastes the library's accumulated\n"
             "knowledge. Your trajectory will be reviewed for skill use.\n"
+            "\n"
+            "The mounted library is read-only. Do not modify any SKILL.md or\n"
+            "Tier-3 file while solving the task; any learning update is handled\n"
+            "after the official verifier through the benchmark protocol.\n"
         )
 
     @staticmethod

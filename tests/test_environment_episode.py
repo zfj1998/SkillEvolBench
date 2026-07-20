@@ -14,7 +14,11 @@ from skillevolbench.discovery import (
 )
 from skillevolbench.metrics.reporter import ReportGenerator
 from skillevolbench.orchestration import LifelongRunner
-from skillevolbench.scheduler import assert_order_invariants, compute_task_order
+from skillevolbench.scheduler import (
+    assert_family_smoke_invariants,
+    assert_order_invariants,
+    compute_task_order,
+)
 from skillevolbench.schemas import EnvOrders, RunConfig, StrategyConfig
 from skillevolbench.stores import LibraryStore
 
@@ -39,15 +43,22 @@ def _run_config(
     *,
     run_id: str = "episode-test",
     environment_id: str | None = "E1",
+    family_smoke_id: str | None = None,
 ) -> RunConfig:
+    baseline = load_baseline("selfgen_experience_always")
+    if family_smoke_id is not None:
+        baseline = baseline.model_copy(
+            update={"within_env_replay": False, "replay_eval": False}
+        )
     return RunConfig(
         run_id=run_id,
-        baseline=load_baseline("selfgen_experience_always"),
+        baseline=baseline,
         strategy=StrategyConfig.from_yaml(
             REPO_ROOT / "configs" / "strategies" / "chain.yaml"
         ),
         order_seed="A",
         environment_id=environment_id,
+        family_smoke_id=family_smoke_id,
         workspace_root=tmp_path,
     )
 
@@ -125,6 +136,106 @@ def test_environment_invariant_rejects_wrong_episode(
     )
     with pytest.raises(AssertionError, match="Expected environments"):
         assert_order_invariants(records, expected_environment_ids=["E2"])
+
+
+def test_single_family_smoke_is_exact_t1_through_t6_not_env_prefix(
+    registry: TaskRegistry,
+    env_orders: EnvOrders,
+) -> None:
+    records = compute_task_order(
+        registry,
+        env_orders,
+        "A",
+        environment_id="E1",
+        family_smoke_id="E1-LS1",
+    )
+    environment_prefix = compute_task_order(
+        registry,
+        env_orders,
+        "A",
+        environment_id="E1",
+    )[:6]
+
+    assert [record.spec.task_id for record in records] == [
+        f"E1-LS1-T{i}" for i in range(1, 7)
+    ]
+    assert [record.spec.task_index for record in records] == list(range(1, 7))
+    assert [record.spec.task_id for record in environment_prefix] != [
+        record.spec.task_id for record in records
+    ]
+    assert_family_smoke_invariants(records, family_id="E1-LS1")
+
+
+def test_single_family_smoke_rejects_replay_and_mismatched_environment(
+    registry: TaskRegistry,
+    env_orders: EnvOrders,
+) -> None:
+    with pytest.raises(ValueError, match="requires within_env_replay=False"):
+        compute_task_order(
+            registry,
+            env_orders,
+            "A",
+            within_env_replay=True,
+            environment_id="E1",
+            family_smoke_id="E1-LS1",
+        )
+    with pytest.raises(ValueError, match="belongs to E1"):
+        compute_task_order(
+            registry,
+            env_orders,
+            "A",
+            environment_id="E2",
+            family_smoke_id="E1-LS1",
+        )
+
+
+def test_family_registry_view_sets_t3_freeze_threshold_to_one_family(
+    registry: TaskRegistry,
+) -> None:
+    scoped = registry.scoped_to_family("E1-LS1")
+
+    assert [family.meta.family_id for family in scoped.families_in_env("E1")] == [
+        "E1-LS1"
+    ]
+    assert [task.spec.task_id for task in scoped.tasks] == [
+        f"E1-LS1-T{i}" for i in range(1, 7)
+    ]
+
+
+def test_family_smoke_run_config_cannot_be_max_tasks_truncation(
+    tmp_path: Path,
+) -> None:
+    baseline = load_baseline("selfgen_experience_always").model_copy(
+        update={"within_env_replay": False, "replay_eval": False}
+    )
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        RunConfig(
+            run_id="bad-family-smoke",
+            baseline=baseline,
+            strategy=StrategyConfig.from_yaml(
+                REPO_ROOT / "configs" / "strategies" / "chain.yaml"
+            ),
+            environment_id="E1",
+            family_smoke_id="E1-LS1",
+            workspace_root=tmp_path,
+            max_tasks=6,
+        )
+
+
+def test_runner_uses_explicit_family_schedule(
+    tmp_path: Path,
+    registry: TaskRegistry,
+    env_orders: EnvOrders,
+) -> None:
+    runner = LifelongRunner(
+        _run_config(tmp_path, family_smoke_id="E1-LS1")
+    )
+
+    records = runner._compute_ordered_tasks(registry, env_orders)
+
+    assert [record.spec.task_id for record in records] == [
+        f"E1-LS1-T{i}" for i in range(1, 7)
+    ]
 
 
 def test_reporter_aggregates_environment_scoped_libraries(

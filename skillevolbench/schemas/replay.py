@@ -155,6 +155,12 @@ class ReplayRecord(BaseModel):
     # fall back to ``trajectory_compact`` when absent.
     trajectory_compact_rough: dict[str, Any] = Field(default_factory=dict)
 
+    # Present for the same-agent-session protocol. This is deliberately a
+    # plain audit dict so legacy records and paper-compatible baselines remain
+    # schema-compatible. Typical keys: status, mode, session_id, patch_id,
+    # candidate_path, and reason.
+    reflection: dict[str, Any] = Field(default_factory=dict)
+
     # Dual-T6 evaluation marker. ``"primary"`` is the standard trial whose
     # outcome feeds evaluation_sr / t6_composition_rate. ``"shadow_oracle"``
     # is the second trial of the same T6 task, run with OracleRetriever

@@ -31,6 +31,11 @@ from skillevolbench.components.skill_author import (
     PatchGenerationFailure,
     LiteLLMClient,
 )
+from skillevolbench.components.in_session_reflection import (
+    InSessionSkillReflection,
+    ReflectionCandidateError,
+    ReflectionRecord,
+)
 
 
 __all__ = [
@@ -53,4 +58,7 @@ __all__ = [
     "SkillAuthor",
     "PatchGenerationFailure",
     "LiteLLMClient",
+    "InSessionSkillReflection",
+    "ReflectionCandidateError",
+    "ReflectionRecord",
 ]

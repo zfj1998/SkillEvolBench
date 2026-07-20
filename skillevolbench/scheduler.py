@@ -65,6 +65,7 @@ def compute_task_order(
     within_env_replay: bool = False,
     replay_eval: bool = False,
     environment_id: Optional[str] = None,
+    family_smoke_id: Optional[str] = None,
 ) -> list[TaskRecord]:
     """Build the ordered list of TaskRecords for a run.
 
@@ -84,6 +85,12 @@ def compute_task_order(
         Optional ``E1`` ... ``E6`` selector. When set, emit one complete,
         stateful environment episode while preserving its canonical internal
         order. This is the execution unit used by Agent Platform.
+    family_smoke_id
+        Optional explicit non-canonical smoke selector such as ``E1-LS1``.
+        It emits that family's originals in exact ``T1`` ... ``T6`` order.
+        Unlike ``max_tasks=6``, this never takes the first six records from an
+        environment-wide learning block. Replays are forbidden because the
+        family smoke contract is exactly six primary trials.
 
     Returns
     -------
@@ -91,6 +98,28 @@ def compute_task_order(
     run the length is 180 without replay, 270 with learning replay, or 360
     with evaluation replay too. A single environment has 30, 45, or 60.
     """
+    if family_smoke_id is not None:
+        if within_env_replay or replay_eval:
+            raise ValueError(
+                "family_smoke_id requires within_env_replay=False and "
+                "replay_eval=False"
+            )
+        try:
+            family = registry.family(family_smoke_id)
+        except KeyError as exc:
+            raise ValueError(
+                f"unknown family_smoke_id {family_smoke_id!r}"
+            ) from exc
+        family_env = family.meta.environment_id
+        if environment_id is not None and environment_id != family_env:
+            raise ValueError(
+                f"family_smoke_id {family_smoke_id!r} belongs to {family_env}, "
+                f"not environment_id={environment_id!r}"
+            )
+        records = registry.tasks_in_family(family_smoke_id)
+        assert_family_smoke_invariants(records, family_id=family_smoke_id)
+        return records
+
     env_sequence = env_orders.for_seed(order_seed)
     if environment_id is not None:
         if environment_id not in env_sequence:
@@ -100,6 +129,44 @@ def compute_task_order(
             )
         env_sequence = [environment_id]
     return list(_iter_tasks(registry, env_sequence, within_env_replay, replay_eval))
+
+
+def assert_family_smoke_invariants(
+    records: list[TaskRecord],
+    *,
+    family_id: str,
+) -> None:
+    """Assert the explicit, non-canonical single-family smoke contract."""
+    if len(records) != 6:
+        raise AssertionError(
+            f"family smoke {family_id!r}: expected 6 tasks, got {len(records)}"
+        )
+    if any(getattr(record, "is_replay", False) for record in records):
+        raise AssertionError(f"family smoke {family_id!r}: replays are forbidden")
+
+    expected_task_ids = [f"{family_id}-T{i}" for i in range(1, 7)]
+    actual_task_ids = [record.spec.task_id for record in records]
+    if actual_task_ids != expected_task_ids:
+        raise AssertionError(
+            f"family smoke {family_id!r}: expected task order "
+            f"{expected_task_ids}, got {actual_task_ids}"
+        )
+
+    expected_roles = [*_LEARNING_ROLES, *_EVAL_ROLES]
+    actual_roles = [record.spec.role.value for record in records]
+    if actual_roles != expected_roles:
+        raise AssertionError(
+            f"family smoke {family_id!r}: expected role order "
+            f"{expected_roles}, got {actual_roles}"
+        )
+
+    environments = {record.spec.environment_id for record in records}
+    expected_environment = family_id.split("-", 1)[0]
+    if environments != {expected_environment}:
+        raise AssertionError(
+            f"family smoke {family_id!r}: expected environment "
+            f"{expected_environment!r}, got {sorted(environments)}"
+        )
 
 
 def _iter_tasks(
@@ -296,4 +363,5 @@ def assert_order_invariants(
 __all__ = [
     "compute_task_order",
     "assert_order_invariants",
+    "assert_family_smoke_invariants",
 ]

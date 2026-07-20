@@ -488,6 +488,12 @@ class BaselineRuntime:
         ``host_llm_clients`` so the run-end CostReport can sum its tokens
         + USD spend. Test stubs (``llm_author_call`` not None) bypass this.
         """
+        # In the same-agent-session protocol the task agent itself emits the
+        # post-verifier candidate. Constructing a host SkillAuthor here would
+        # silently reintroduce the independent model call the setting removes.
+        if baseline.skill_update_source == "same_agent_session":
+            return None
+
         needs_evolver = (
             baseline.allow_self_gen_induction
             or baseline.allow_zero_shot_creation
@@ -661,10 +667,16 @@ class BaselineRuntime:
             pass
         elif strategy_cfg.name in {"chain", "chain_tier3"}:
             if (baseline.allow_self_gen_induction or baseline.allow_revision):
-                assert evolver is not None, (
-                    f"strategy {strategy_cfg.name!r} requires an evolver "
-                    f"when baseline allows induction/revision"
-                )
+                if baseline.skill_update_source == "same_agent_session":
+                    assert evolver is None, (
+                        "same-agent-session baseline must not construct a host "
+                        "SkillAuthor evolver"
+                    )
+                else:
+                    assert evolver is not None, (
+                        f"strategy {strategy_cfg.name!r} requires an evolver "
+                        f"when baseline allows induction/revision"
+                    )
 
     # ------------------------------------------------------------------
     # Convenience properties (the hook never reads these but tests do)

@@ -468,9 +468,16 @@ class VerifierAdapter:
     def _resolve_trajectory_path(
         log_dir: Path, trial_result: Any
     ) -> Optional[Path]:
-        """Locate the trial's trajectory file under ``<trial_dir>/agent/``.
+        """Locate an explicit or structurally valid agent trajectory.
 
-        Each agent CLI writes a slightly different filename:
+        Harbor has used more than one artifact layout across releases.  In
+        particular, Harbor 0.20 preserves the configured absolute artifact
+        path below ``artifacts/``, so ``/logs/agent/trajectory.json`` becomes
+        ``artifacts/logs/agent/trajectory.json``.  Older runs may instead
+        expose the canonical file at ``artifacts/trajectory.json`` or
+        ``agent/trajectory.json``.
+
+        Each agent CLI also writes a slightly different legacy filename:
           * claude-code / codex / kimi-cli / opencode
                                              -> ``trajectory.json`` (ATIF)
           * gemini-cli                     -> ``gemini-cli.trajectory.json``
@@ -480,58 +487,62 @@ class VerifierAdapter:
                                               on shutdown)
           * openclaw                       -> ``openclaw-result.json`` / ``.txt``
 
-        Returns the first existing candidate; falls back to a glob over
-        ``*.trajectory.json*`` so future agent additions don't silently
-        produce ``(trajectory unavailable)``.
+        JSON is never accepted merely because it exists.  Canonical and
+        ``*.trajectory.json`` files must have the minimum ATIF structure;
+        this prevents Harbor's ``artifacts/manifest.json`` (or any unrelated
+        JSON artifact) from making an otherwise missing trajectory appear
+        scoreable.  Explicit legacy non-ATIF filenames remain supported.
         """
         if log_dir.name != "verifier":
             return None
         trial_dir = log_dir.parent
-        # Harbor 0.6+ archives JobConfig.artifacts paths to
-        # ``<trial_dir>/artifacts/<basename>`` (verified empirically on a real
-        # claude-opus-4.5 trial: trajectory.json sits at
-        # ``<trial>/artifacts/trajectory.json``, NOT ``<trial>/agent/``).
-        # Older Harbor versions used ``<trial_dir>/agent/`` instead. We probe
-        # both, ``artifacts/`` first since it's the current convention.
-        # Each agent CLI writes a different filename: ATIF-aware CLIs
-        # (claude-code, kimi-cli, opencode) emit ``trajectory.json``; gemini-cli is
-        # post-processed into ``gemini-cli.trajectory.{json,jsonl}`` by
-        # ``agents_port/preinstalled.py``; codex/oracle write raw stdout.
-        for agent_dir in (trial_dir / "artifacts", trial_dir / "agent"):
+
+        # Prefer the pinned Harbor 0.20 layout, then the flattened artifact
+        # layout seen in earlier runs, then Harbor's agent-log directory.
+        agent_dirs = (
+            trial_dir / "artifacts" / "logs" / "agent",
+            trial_dir / "artifacts",
+            trial_dir / "agent",
+        )
+        for agent_dir in agent_dirs:
             if not agent_dir.exists():
                 continue
-            candidates = [
-                # 1. ATIF canonical
+
+            atif_candidates = [
                 agent_dir / "trajectory.json",
-                # 2. gemini-cli (post-processed jsonl preferred since
-                #    preinstalled.py's converter occasionally drops events)
                 agent_dir / "gemini-cli.trajectory.json",
+            ]
+            for candidate in atif_candidates:
+                if VerifierAdapter._is_valid_atif(candidate):
+                    return candidate
+
+            # These filenames are explicit agent trajectory contracts but are
+            # not ATIF JSON documents.  Do not widen this list to arbitrary
+            # ``*.json`` / ``*.txt`` files.
+            legacy_candidates = [
                 agent_dir / "gemini-cli.trajectory.jsonl",
-                # 3. openclaw
                 agent_dir / "openclaw-result.json",
                 agent_dir / "openclaw.txt",
-                # 4. Per-CLI raw text logs (no ATIF: tee'd stdout).
-                #    TrajectoryCompactor's plain-text branch handles these.
                 agent_dir / "oracle.txt",
                 agent_dir / "claude-code.txt",
                 agent_dir / "kimi-cli.txt",
                 agent_dir / "codex.txt",
                 agent_dir / "gemini-cli.txt",
             ]
-            for c in candidates:
-                if c.exists():
-                    return c
-            # Glob fallbacks within this dir (ordered by compaction quality):
-            for c in sorted(agent_dir.glob("*.trajectory.json*")):
-                return c
-            for c in sorted(agent_dir.glob("*.json")):
-                return c
-            for c in sorted(agent_dir.glob("*.txt")):
-                return c
+            for candidate in legacy_candidates:
+                if candidate.is_file():
+                    return candidate
+
+            # Future ATIF-producing agents may use a CLI-specific filename.
+            # Content validation, rather than a generic JSON fallback, is the
+            # safety boundary here.
+            for candidate in sorted(agent_dir.glob("*.trajectory.json")):
+                if VerifierAdapter._is_valid_atif(candidate):
+                    return candidate
 
         # Diagnostic: log what each candidate dir actually contains so the
         # next failing trial leaves a breadcrumb in stdout.
-        for d in (trial_dir / "artifacts", trial_dir / "agent"):
+        for d in agent_dirs:
             if d.exists():
                 _LOG.warning(
                     "VerifierAdapter: no trajectory file found in %s; "
@@ -543,6 +554,45 @@ class VerifierAdapter:
                     "VerifierAdapter: candidate dir missing: %s", d,
                 )
         return None
+
+    @staticmethod
+    def _is_valid_atif(path: Path) -> bool:
+        """Return whether *path* has the minimum valid ATIF shape.
+
+        Importing Harbor's Pydantic model here would make offline report
+        parsing depend on the Harbor SDK.  The resolver only needs a strict
+        discriminator, so validate the required ATIF root fields and ordered
+        step skeleton locally.  Full schema validation remains Harbor's job.
+        """
+        if not path.is_file():
+            return False
+        try:
+            data = json.loads(path.read_text())
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+            return False
+        if not isinstance(data, dict):
+            return False
+        schema_version = data.get("schema_version")
+        if not (
+            isinstance(schema_version, str)
+            and schema_version.startswith("ATIF-v")
+        ):
+            return False
+        if not isinstance(data.get("agent"), dict):
+            return False
+        steps = data.get("steps")
+        if not isinstance(steps, list) or not steps:
+            return False
+        for expected_id, step in enumerate(steps, start=1):
+            if not isinstance(step, dict):
+                return False
+            if step.get("step_id") != expected_id:
+                return False
+            if step.get("source") not in {"system", "user", "agent"}:
+                return False
+            if not isinstance(step.get("message"), (str, list)):
+                return False
+        return True
 
     @staticmethod
     def _resolve_task_id(trial_result: Any) -> str:

@@ -187,13 +187,18 @@ class GlobalLibraryEnvironment(DockerEnvironment):
         )
         skill_mounts: list[dict[str, Any]] = []
         for target in skill_targets:
+            # The task agent is a reader, never the library writer. Learning
+            # patches are applied by the host through LibraryStore so git,
+            # validation, audit events, and the freeze controller cannot be
+            # bypassed. This must remain read-only in T1-T3 as well as T4-T6,
+            # especially when the same agent resumes for post-verifier
+            # reflection.
             m: dict[str, Any] = {
                 "type": "bind",
                 "source": str(self.library_active_path),
                 "target": target,
+                "read_only": True,
             }
-            if is_frozen:
-                m["read_only"] = True
             skill_mounts.append(m)
 
         injection_mount: dict[str, Any] = {
@@ -236,6 +241,38 @@ class GlobalLibraryEnvironment(DockerEnvironment):
             **mount_kwarg,
             **kwargs,
         )
+
+    async def restart_main_service(self) -> None:
+        """Restart the stopped agent container without recreating it.
+
+        Same-session reflection stops ``main`` before verifier execution so
+        no solve-turn background process can observe hidden tests or verifier
+        output. ``docker compose start`` preserves the container writable
+        layer, including the task workspace and installed OpenCode runtime;
+        the OpenCode session database itself is additionally bind-mounted
+        under ``/logs/agent``.
+        """
+        await self._run_docker_compose_command(["start", "main"])
+
+    async def main_service_identity(self) -> str:
+        """Return the stable Docker container id for the main service."""
+        result = await self._run_docker_compose_command(
+            ["ps", "--all", "--quiet", "main"],
+        )
+        return (result.stdout or "").strip()
+
+    async def main_service_running_identity(self) -> str:
+        """Return the running ``main`` container id, or ``""`` when stopped.
+
+        This intentionally uses Docker Compose's running-state filter rather
+        than inferring state from ``stop_service`` returning successfully.
+        The command is checked: a compose/query failure is not evidence that
+        the agent is stopped and therefore propagates to the caller.
+        """
+        result = await self._run_docker_compose_command(
+            ["ps", "--status", "running", "--quiet", "main"],
+        )
+        return (result.stdout or "").strip()
 
     # ------------------------------------------------------------------
     # Helpers
