@@ -27,6 +27,35 @@ This is a non-canonical `family_smoke`, so its correct benchmark status is
 canonical 30-primary-task environment. Canonical one-environment and
 six-environment validation remain open.
 
+## Active canonical full run
+
+The six-environment canonical run was submitted on 2026-07-21 at 02:20 CST:
+
+- suite: `skillevolbench-full-selfgen-v1-7-20260721`;
+- group: `group-3fa2a5793bcb4237ad2ceab701167100-o4`;
+- idempotency key: `37d06fef-309c-4a71-bdca-6abbfc53ccb6`;
+- exact Agent-Hub/template commit:
+  `1e10fc0cf557d1c74e3b6dda13f4ac6001c225ad`;
+- dataset: `skillevolbench/skillevolbench/v1@7`;
+- concurrency: six independent environment jobs;
+- per environment: 30 primary tasks, 15 same-session learning reflections,
+  no replay;
+- post-process job: `ap-group-post-process-ce39bd7f868b50b5`.
+
+| Environment | AP job |
+| --- | --- |
+| E1 | `ap-skillevolbench-7a8bb89996764d47-o4` |
+| E2 | `ap-skillevolbench-a83b30f814d54d75-o4` |
+| E3 | `ap-skillevolbench-e55f84389a954c19-o4` |
+| E4 | `ap-skillevolbench-bcec361cc8e84e22-o4` |
+| E5 | `ap-skillevolbench-bc6f555a627745f8-o4` |
+| E6 | `ap-skillevolbench-9ac26c01ebea4382-o4` |
+
+The dry run enumerated exactly E1-E6 and the live submission reported six
+submitted, zero failed. A stable UUID4 was supplied because AP CLI 0.1.16 does
+not retry POST automatically; reuse this exact key after an ambiguous transport
+failure rather than issuing an unkeyed duplicate submission.
+
 ## Repositories and pinned runtime
 
 | Component | Branch or source | Accepted revision | Publication status |
@@ -261,7 +290,9 @@ surface.
   reflection, freeze boundary, complete trajectories, and artifact-integrity
   audit.
 - [ ] Gate 5: one canonical 30-primary-task environment episode.
-- [ ] Gate 6: all six environments with retry-safe aggregation.
+- [ ] Gate 6: all six environments with retry-safe aggregation. The canonical
+  E1-E6 group above is currently running and is not accepted until every
+  environment artifact plus group post-processing passes audit.
 - [ ] Optional hardening: replace the bootstrap-built
   `agent-runtime:latest` with a pinned registry image.
 
