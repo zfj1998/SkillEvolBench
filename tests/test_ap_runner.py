@@ -128,6 +128,7 @@ def test_build_config_routes_codex_without_duplicate_api_base(
     monkeypatch.setenv("MODEL", "served-model")
     monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1/")
     monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("HARBOR_AGENT", "codex")
     monkeypatch.delenv("CODEX_WIRE_API", raising=False)
 
     config = run_episode._build_config(tmp_path)
@@ -144,6 +145,64 @@ def test_build_config_routes_codex_without_duplicate_api_base(
     assert config.baseline.model_name == "openai/served-model"
     assert config.environment_id == "E2"
     assert config.workspace_root == (tmp_path / "runs").resolve()
+
+
+def test_build_config_routes_opencode_via_chat_completions_without_secret(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    baseline = load_baseline("selfgen_experience_always").model_copy(
+        update={
+            "agent_kwargs": {
+                "api_base": "http://stale.example/v1",
+                "wire_api": "responses",
+            }
+        }
+    )
+    monkeypatch.setattr(run_episode, "load_baseline", lambda _name: baseline)
+    monkeypatch.setenv("INSTANCE_ID", "E1")
+    monkeypatch.setenv("MODEL", "served-model")
+    monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1/")
+    monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("MODEL_PROVIDER", "sglang")
+    monkeypatch.setenv("OPENCODE_VERSION", "1.18.3")
+    monkeypatch.delenv("HARBOR_AGENT", raising=False)
+
+    config = run_episode._build_config(tmp_path)
+
+    assert config.api_base is None
+    assert config.baseline.harbor_agent_name == "opencode"
+    assert config.baseline.model_name == "openai-compatible/served-model"
+    assert config.baseline.agent_kwargs == {
+        "version": "1.18.3",
+        "opencode_config": {
+            "$schema": "https://opencode.ai/config.json",
+            "autoupdate": False,
+            "snapshot": False,
+            "permission": "allow",
+            "provider": {
+                "openai-compatible": {
+                    "npm": "@ai-sdk/openai-compatible",
+                    "name": "sglang",
+                    "options": {
+                        "baseURL": "{env:OPENAI_BASE_URL}",
+                        "apiKey": "{env:OPENAI_API_KEY}",
+                    },
+                    "models": {
+                        "served-model": {
+                            "name": "served-model",
+                            "attachment": False,
+                            "limit": {"context": 131072, "output": 16384},
+                        }
+                    },
+                }
+            },
+        },
+    }
+    assert "test-key" not in json.dumps(config.baseline.agent_kwargs)
+    assert "stale.example" not in json.dumps(config.baseline.agent_kwargs)
+    assert run_episode.os.environ["OPENAI_API_KEY"] == "test-key"
+    assert run_episode.os.environ["OPENAI_BASE_URL"] == "http://model.example/v1"
 
 
 def test_build_config_uses_absolute_dind_shared_workspace(
@@ -176,7 +235,7 @@ def test_build_config_rejects_relative_dind_shared_workspace(
         run_episode._build_config(tmp_path)
 
 
-def test_build_config_rejects_non_codex_agent(
+def test_build_config_rejects_unsupported_agent(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -186,7 +245,7 @@ def test_build_config_rejects_non_codex_agent(
     monkeypatch.setenv("MODEL_API_KEY", "test-key")
     monkeypatch.setenv("HARBOR_AGENT", "claude-code")
 
-    with pytest.raises(ValueError, match="supports only HARBOR_AGENT='codex'"):
+    with pytest.raises(ValueError, match="supports HARBOR_AGENT='codex' or 'opencode'"):
         run_episode._build_config(tmp_path)
 
 

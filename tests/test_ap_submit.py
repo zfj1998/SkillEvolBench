@@ -42,9 +42,12 @@ def test_default_submission_is_one_task_e1_smoke() -> None:
     assert "--suite-name" not in submission.command
     params = _params(submission.command)
     assert params["dataset"] == "skillevolbench/skillevolbench"
-    assert params["split"] == "v1@2"
+    assert params["split"] == "v1@3"
     assert params["smoke_max_tasks"] == 1
-    assert params["codex_wire_api"] == "responses"
+    assert params["harbor_agent"] == "opencode"
+    assert params["agent_cli_set"] == "opencode"
+    assert params["opencode_version"] == "1.18.3"
+    assert "codex_wire_api" not in params
     assert params["within_env_replay"] is True
     assert params["model_api_key"] == "sk-model-secret-for-test"
     assert "ap-secret-for-test" not in submission.command
@@ -59,7 +62,7 @@ def test_full_submission_uses_dataset_and_no_smoke_truncation() -> None:
     submission = submit.build_submission(args, _environment())
 
     assert submission.command[submission.command.index("--dataset") + 1] == (
-        "skillevolbench/skillevolbench/v1@2"
+        "skillevolbench/skillevolbench/v1@3"
     )
     assert submission.command[submission.command.index("--concurrency") + 1] == "4"
     assert "--instance-id" not in submission.command
@@ -67,6 +70,18 @@ def test_full_submission_uses_dataset_and_no_smoke_truncation() -> None:
     assert "--suite-name" in submission.command
     assert "smoke_max_tasks" not in _params(submission.command)
     assert "--dry-run" not in submission.command
+
+
+def test_codex_submission_keeps_runtime_and_wire_api_aligned() -> None:
+    args = submit._parser().parse_args(
+        ["--harbor-agent", "codex", "--codex-wire-api", "chat"]
+    )
+    params = _params(submit.build_submission(args, _environment()).command)
+
+    assert params["harbor_agent"] == "codex"
+    assert params["agent_cli_set"] == "codex"
+    assert params["codex_wire_api"] == "chat"
+    assert "opencode_version" not in params
 
 
 def test_credentials_are_required_and_sanitized() -> None:

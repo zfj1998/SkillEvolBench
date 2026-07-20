@@ -114,12 +114,12 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
     model = _required_env("MODEL")
     model_base_url = _required_env("MODEL_BASE_URL").rstrip("/")
     model_api_key = _required_env("MODEL_API_KEY")
-    harbor_agent = os.environ.get("HARBOR_AGENT", "codex").strip() or "codex"
+    harbor_agent = os.environ.get("HARBOR_AGENT", "opencode").strip() or "opencode"
     provider = os.environ.get("MODEL_PROVIDER", "sglang").strip() or "sglang"
-    if harbor_agent != "codex":
+    if harbor_agent not in {"codex", "opencode"}:
         raise ValueError(
-            "The AP OpenAI-compatible runner currently supports only "
-            f"HARBOR_AGENT='codex'; got {harbor_agent!r}"
+            "The AP OpenAI-compatible runner supports HARBOR_AGENT='codex' "
+            f"or 'opencode'; got {harbor_agent!r}"
         )
 
     wire_api = (
@@ -128,9 +128,10 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
 
     os.environ["OPENAI_BASE_URL"] = model_base_url
     os.environ["OPENAI_API_KEY"] = model_api_key
-    os.environ["CODEX_MODEL_PROVIDER"] = provider
-    os.environ["CODEX_PROVIDER_ENV_KEY"] = "OPENAI_API_KEY"
-    os.environ["CODEX_WIRE_API"] = wire_api
+    if harbor_agent == "codex":
+        os.environ["CODEX_MODEL_PROVIDER"] = provider
+        os.environ["CODEX_PROVIDER_ENV_KEY"] = "OPENAI_API_KEY"
+        os.environ["CODEX_WIRE_API"] = wire_api
 
     # SkillAuthor/Judge/LLMSelfRetriever run in the AP main container rather
     # than the Harbor task container. Route them to the same model endpoint.
@@ -142,22 +143,78 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
 
     baseline_data = baseline.model_dump()
     baseline_data["harbor_agent_name"] = harbor_agent
+    # Normalize the AP-facing convenience prefix away from the actual served
+    # model id. OpenCode must use a non-reserved provider id: naming a generic
+    # ``@ai-sdk/openai-compatible`` provider ``openai`` makes OpenCode select
+    # its Responses-specific path instead of Chat Completions.
+    served_model_id = model.removeprefix("openai/")
     baseline_data["model_name"] = (
-        model if "/" in model else f"openai/{model}"
+        f"openai/{served_model_id}"
+        if harbor_agent == "codex"
+        else f"openai-compatible/{served_model_id}"
     )
     agent_kwargs = dict(baseline_data.get("agent_kwargs") or {})
-    # CodexPreinstalled consumes ``base_url``. Do not also populate
-    # RunConfig.api_base: job_builder would add a second ``api_base`` kwarg,
-    # which the adapter passes to Harbor's Codex constructor unchanged.
-    agent_kwargs.pop("api_base", None)
-    agent_kwargs.update(
-        {
-            "base_url": model_base_url,
-            "provider": provider,
-            "env_key": "OPENAI_API_KEY",
-            "wire_api": wire_api,
-        }
-    )
+    for stale_key in (
+        "api_base",
+        "base_url",
+        "provider",
+        "env_key",
+        "wire_api",
+        "opencode_config",
+        "version",
+    ):
+        agent_kwargs.pop(stale_key, None)
+
+    if harbor_agent == "codex":
+        # CodexPreinstalled consumes ``base_url``. Do not also populate
+        # RunConfig.api_base: job_builder would add a second ``api_base``
+        # kwarg, which the adapter passes to Harbor's Codex constructor.
+        agent_kwargs.update(
+            {
+                "base_url": model_base_url,
+                "provider": provider,
+                "env_key": "OPENAI_API_KEY",
+                "wire_api": wire_api,
+            }
+        )
+    else:
+        opencode_version = (
+            os.environ.get("OPENCODE_VERSION", "1.18.3").strip() or "1.18.3"
+        )
+        # Use OpenCode's generic Chat Completions provider.  The placeholders
+        # are resolved in the task container, so the Harbor config and AP
+        # artifacts never contain the credential itself.
+        agent_kwargs.update(
+            {
+                "version": opencode_version,
+                "opencode_config": {
+                    "$schema": "https://opencode.ai/config.json",
+                    "autoupdate": False,
+                    "snapshot": False,
+                    "permission": "allow",
+                    "provider": {
+                        "openai-compatible": {
+                            "npm": "@ai-sdk/openai-compatible",
+                            "name": provider,
+                            "options": {
+                                "baseURL": "{env:OPENAI_BASE_URL}",
+                                "apiKey": "{env:OPENAI_API_KEY}",
+                            },
+                            "models": {
+                                served_model_id: {
+                                    "name": served_model_id,
+                                    "attachment": False,
+                                    "limit": {
+                                        "context": 131072,
+                                        "output": 16384,
+                                    },
+                                }
+                            },
+                        }
+                    },
+                },
+            }
+        )
     baseline_data["agent_kwargs"] = agent_kwargs
 
     if "WITHIN_ENV_REPLAY" in os.environ:
@@ -211,8 +268,8 @@ def _build_config(output_dir: Path) -> RunConfig:
         order_seed=os.environ.get("ORDER_SEED", "A"),
         environment_id=environment_id,
         workspace_root=workspace_root,
-        # Host-side calls are routed by SEVB_HOST_LITELLM_* above, while the
-        # Harbor agent receives its endpoint through agent_kwargs.base_url.
+        # Host-side calls are routed by SEVB_HOST_LITELLM_* above. The Harbor
+        # agent receives the endpoint through its agent-specific config/env.
         # Keeping this unset avoids duplicate base_url/api_base constructor
         # kwargs in skillevolbench.harbor_ext.job_builder.
         api_base=None,

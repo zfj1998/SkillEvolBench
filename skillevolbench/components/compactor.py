@@ -215,7 +215,7 @@ class TrajectoryCompactor:
     def _events_from_json(self, data: Any) -> list[dict[str, Any]]:
         # Harbor ATIF (Agent Trajectory Interchange Format).
         # Schema: {schema_version: "ATIF-vX.Y", session_id, agent, steps: [...], final_metrics}.
-        # All four agent CLIs (claude-code, codex, gemini-cli, kimi-cli)
+        # All supported ATIF-aware CLIs (including OpenCode)
         # converge on this format -- writing canonical trajectory.json.
         if (
             isinstance(data, dict)

@@ -53,13 +53,14 @@ _LOG = logging.getLogger(__name__)
 
 
 # Map our baseline.harbor_agent_name -> the agents_port adapter import_path.
-# All four adapters extend Harbor's BaseInstalledAgent and assume
+# These adapters extend Harbor's BaseInstalledAgent and assume
 # agent-runtime:latest is the base image.
 _AGENT_IMPORT_PATHS: dict[str, str] = {
     "claude-code": "agents_port.preinstalled:ClaudeCodePreinstalled",
     "codex":       "agents_port.preinstalled:CodexPreinstalled",
     "gemini-cli":  "agents_port.preinstalled:GeminiCliPreinstalled",
     "kimi-cli":    "agents_port.preinstalled:KimiCliPreinstalled",
+    "opencode":    "agents_port.preinstalled:OpenCodePreinstalled",
     "openclaw":    "agents_port.openclaw:OpenClaw",
 }
 
@@ -206,6 +207,17 @@ def build_job_config(
             "name": agent_name,
             "model_name": config.baseline.model_name,
             "kwargs": agent_kwargs,
+        }
+
+    if agent_name == "opencode":
+        # Keep credentials out of agent_kwargs and persisted Harbor configs.
+        # AgentConfig serializes these as templates, AgentFactory resolves them
+        # from the AP main-process environment, and Trial.scoped_exec_env makes
+        # the resolved values available to setup/run without logging per-call
+        # exec env dictionaries.
+        agent_cfg_kwargs["env"] = {
+            "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+            "OPENAI_BASE_URL": "${OPENAI_BASE_URL}",
         }
 
     # ---- 3. Build JobConfig ----

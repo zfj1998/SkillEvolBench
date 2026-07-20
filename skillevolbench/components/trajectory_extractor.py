@@ -19,6 +19,7 @@ Claude Code       ``Skill``                     ``{"skill": "<slug>"}``  (slug, 
 OpenAI Codex      ``exec_command``              ``{"cmd": "sed -n '1,N' /root/.agents/skills/<slug>/..."}``
 Gemini CLI        ``run_shell_command``         ``{"command": "cat /skills/<slug>/...", "description": "..."}``
 Kimi / others     ``shell`` / ``execute_command``  ``{"command": "...", ...}``
+OpenCode          ``read`` / ``bash``           paths under ``~/.agents/skills``
 ================  ============================  =====================================
 
 If the trajectory file isn't valid JSON or doesn't expose a ``steps`` list
@@ -71,17 +72,20 @@ _SKILL_REF_RE = _SKILL_PATH_RE
 # variants used by other CLIs.
 _PATH_TOOLS: frozenset[str] = frozenset({
     "Read", "Edit", "Write", "MultiEdit", "Glob", "Grep",
+    "read", "edit", "write", "glob", "grep",
     "NotebookRead", "NotebookEdit",
     "read_file", "write_file", "view_file",
 })
-_PATH_ARG_KEYS: tuple[str, ...] = ("file_path", "path", "files", "filename")
+_PATH_ARG_KEYS: tuple[str, ...] = (
+    "file_path", "filePath", "path", "files", "filename",
+)
 
 # Tools that execute a shell command. Slugs come from any path inside the
 # command string. Covers Claude Code's ``Bash``, Codex's ``exec_command``,
 # Gemini's ``run_shell_command``, plus generic variants.
 _SHELL_TOOLS: frozenset[str] = frozenset({
     "Bash", "exec_command", "run_shell_command",
-    "shell", "execute_command", "run_command", "Run",
+    "bash", "shell", "execute_command", "run_command", "Run",
 })
 _SHELL_ARG_KEYS: tuple[str, ...] = ("command", "cmd", "script", "shell_command")
 
@@ -89,7 +93,7 @@ _SHELL_ARG_KEYS: tuple[str, ...] = ("command", "cmd", "script", "shell_command")
 # Claude Code's ``Skill`` tool is the canonical example (``Sonnet`` uses
 # it heavily). The arg is the slug exactly as it appears on disk.
 _SKILL_TOOLS: frozenset[str] = frozenset({
-    "Skill",
+    "Skill", "skill",
 })
 _SKILL_ARG_KEYS: tuple[str, ...] = ("skill", "skill_name", "name", "slug")
 

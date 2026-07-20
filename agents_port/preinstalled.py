@@ -7,6 +7,7 @@ from harbor.agents.installed.claude_code import ClaudeCode
 from harbor.agents.installed.codex import Codex
 from harbor.agents.installed.gemini_cli import GeminiCli
 from harbor.agents.installed.kimi_cli import KimiCli, _OUTPUT_FILENAME, _PROVIDER_CONFIG
+from harbor.agents.installed.opencode import OpenCode
 from harbor.agents.installed.base import NonZeroAgentExitCodeError, with_prompt_template
 from harbor.environments.base import BaseEnvironment
 
@@ -237,6 +238,15 @@ class CodexPreinstalled(_PreinstalledMixin, Codex):
         if verbosity:
             parts.append(_codex_config_flag("model_verbosity", verbosity))
         return " ".join(part for part in parts if part)
+
+
+class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
+    """Use the image-baked OpenCode CLI, with Harbor's installer as fallback."""
+
+    _preinstalled_check_command = (
+        'if [ -s "$HOME/.nvm/nvm.sh" ]; then . "$HOME/.nvm/nvm.sh"; fi; '
+        "command -v opencode && opencode --version"
+    )
 
 
 class GeminiCliPreinstalled(_PreinstalledMixin, GeminiCli):

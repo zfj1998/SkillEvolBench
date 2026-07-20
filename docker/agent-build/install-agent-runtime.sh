@@ -6,6 +6,7 @@ set -euo pipefail
 : "${CLAUDE_CODE_VERSION:=latest}"
 : "${GEMINI_CLI_VERSION:=latest}"
 : "${CODEX_CLI_VERSION:=latest}"
+: "${OPENCODE_VERSION:=1.18.3}"
 : "${KIMI_CLI_VERSION:=latest}"
 : "${OPENCLAW_VERSION:=latest}"
 : "${APT_MIRROR:=http://us-east-1.ec2.archive.ubuntu.com/ubuntu}"
@@ -245,6 +246,7 @@ verify_installations() {
   if agent_cli_enabled claude-code; then claude --version; fi
   if agent_cli_enabled gemini-cli; then gemini --version; fi
   if agent_cli_enabled codex; then codex --version; fi
+  if agent_cli_enabled opencode; then opencode --version; fi
   if agent_cli_enabled kimi-cli; then kimi --version; fi
   if agent_cli_enabled openclaw; then openclaw --version; fi
 }
@@ -262,6 +264,9 @@ fi
 if agent_cli_enabled codex; then
   npm_install_global "@openai/codex" "$CODEX_CLI_VERSION"
 fi
+if agent_cli_enabled opencode; then
+  npm_install_global "opencode-ai" "$OPENCODE_VERSION"
+fi
 if agent_cli_enabled openclaw; then
   npm_install_global "openclaw" "$OPENCLAW_VERSION"
 fi
@@ -272,6 +277,7 @@ link_binary npx
 if agent_cli_enabled claude-code; then link_binary claude; fi
 if agent_cli_enabled gemini-cli; then link_binary gemini; fi
 if agent_cli_enabled codex; then link_binary codex; fi
+if agent_cli_enabled opencode; then link_binary opencode; fi
 if agent_cli_enabled openclaw; then
   link_binary openclaw
   prewarm_openclaw

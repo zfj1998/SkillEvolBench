@@ -64,7 +64,7 @@ Raw-trajectory reuse frequently outperforms distilled skills, suggesting that cu
 | `configs/strategies/` | Runtime strategies, mainly `chain` and `chain_tier3`. Most baselines choose this automatically. |
 | `configs/env_orders.yaml` | Deterministic environment orders for seeds `A`, `B`, and `C`. |
 | `skillevolbench/` | Core benchmark engine: scheduler, runtime, stores, retrieval, prompting, metrics, schemas, and Harbor hooks. |
-| `agents_port/` | Preinstalled-agent adapter layer for `codex`, `claude-code`, `gemini-cli`, and `kimi-cli`. |
+| `agents_port/` | Preinstalled-agent adapter layer for `codex`, `opencode`, `claude-code`, `gemini-cli`, and `kimi-cli`. |
 | `scripts/run.py` | Main single-run launcher. Use this for individual reproductions. |
 | `scripts/launch_main_experiment.py` | Batch launcher for canonical baselines. |
 | `scripts/launch_multi_model.py` | Batch launcher for baseline × model sweeps. |

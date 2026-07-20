@@ -153,7 +153,8 @@ def _check_agents_port(report: ValidationReport) -> None:
     # Confirm at least one Preinstalled class is exported
     from agents_port import preinstalled  # type: ignore
     expected = ["ClaudeCodePreinstalled", "CodexPreinstalled",
-                "GeminiCliPreinstalled", "KimiCliPreinstalled"]
+                "GeminiCliPreinstalled", "KimiCliPreinstalled",
+                "OpenCodePreinstalled"]
     missing = [name for name in expected if not hasattr(preinstalled, name)]
     if missing:
         report.warn(

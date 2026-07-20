@@ -471,7 +471,8 @@ class VerifierAdapter:
         """Locate the trial's trajectory file under ``<trial_dir>/agent/``.
 
         Each agent CLI writes a slightly different filename:
-          * claude-code / codex / kimi-cli  -> ``trajectory.json`` (ATIF)
+          * claude-code / codex / kimi-cli / opencode
+                                             -> ``trajectory.json`` (ATIF)
           * gemini-cli                     -> ``gemini-cli.trajectory.json``
                                               (or ``.jsonl`` if conversion
                                               failed; agents_port/preinstalled.py
@@ -493,7 +494,7 @@ class VerifierAdapter:
         # Older Harbor versions used ``<trial_dir>/agent/`` instead. We probe
         # both, ``artifacts/`` first since it's the current convention.
         # Each agent CLI writes a different filename: ATIF-aware CLIs
-        # (claude-code, kimi-cli) emit ``trajectory.json``; gemini-cli is
+        # (claude-code, kimi-cli, opencode) emit ``trajectory.json``; gemini-cli is
         # post-processed into ``gemini-cli.trajectory.{json,jsonl}`` by
         # ``agents_port/preinstalled.py``; codex/oracle write raw stdout.
         for agent_dir in (trial_dir / "artifacts", trial_dir / "agent"):

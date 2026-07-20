@@ -5,6 +5,7 @@ This image preinstalls the CLIs that Harbor agents may need:
 - Claude Code
 - Gemini CLI
 - Codex CLI
+- OpenCode
 - Kimi CLI
 - OpenClaw
 
@@ -16,8 +17,8 @@ OpenClaw runtime dependencies are prewarmed under `/opt/openclaw-plugin-stage`
 to avoid repeated per-task plugin staging during Harbor runs.
 
 `AGENT_CLI_SET` can restrict the image to a comma- or space-separated subset
-of `claude-code`, `gemini-cli`, `codex`, `kimi-cli`, and `openclaw`. Its default
-is `all`; AP's Codex-only smoke uses `codex` to avoid downloading unrelated
+of `claude-code`, `gemini-cli`, `codex`, `opencode`, `kimi-cli`, and `openclaw`.
+Its default is `all`; AP can select one CLI to avoid downloading unrelated
 agent runtimes. `APT_MIRROR` is also configurable because the AWS-local default
 is not reachable efficiently from every execution cluster.
 
@@ -40,9 +41,10 @@ NODE_VERSION=22 \
 CLAUDE_CODE_VERSION=latest \
 GEMINI_CLI_VERSION=latest \
 CODEX_CLI_VERSION=latest \
+OPENCODE_VERSION=1.18.3 \
 KIMI_CLI_VERSION=latest \
 OPENCLAW_VERSION=latest \
-AGENT_CLI_SET=codex \
+AGENT_CLI_SET=opencode \
 APT_MIRROR=http://mirrors.aliyun.com/ubuntu \
 docker/agent-build/build.sh
 ```

@@ -12,7 +12,7 @@ that implement skill injection:
 
     ``/root/.claude/skills``   -- Claude Code (anthropic)
     ``/root/.gemini/skills``   -- Gemini CLI (google)
-    ``/root/.agents/skills``   -- OpenAI Codex (and Gemini's universal alias)
+    ``/root/.agents/skills``   -- OpenAI Codex and OpenCode (plus universal aliases)
     ``/root/.kimi/skills``     -- Kimi CLI (moonshot)
 
   Readonly when ``library/.frozen`` exists (eval-block invariant).
@@ -181,7 +181,7 @@ class GlobalLibraryEnvironment(DockerEnvironment):
         skill_targets = (
             "/root/.claude/skills",   # Claude Code
             "/root/.gemini/skills",   # Gemini CLI
-            "/root/.agents/skills",   # OpenAI Codex (also Gemini/Kimi alias)
+            "/root/.agents/skills",   # OpenAI Codex/OpenCode; universal alias
             "/root/.kimi/skills",     # Kimi CLI
             "/skills",                # legacy: PromptBuilder-injected paths
         )

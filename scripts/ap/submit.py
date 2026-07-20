@@ -31,7 +31,7 @@ from typing import Any, Mapping
 DEFAULT_AP_BASE_URL = "http://agentplatform.aliyun-inc.com"
 DEFAULT_CLUSTER = "benchmark-dev"
 DEFAULT_DATASET = "skillevolbench/skillevolbench"
-DEFAULT_SPLIT = "v1@2"
+DEFAULT_SPLIT = "v1@3"
 
 
 def _required(value: str | None, description: str) -> str:
@@ -149,8 +149,8 @@ def build_submission(
         "model_base_url": model_base_url,
         "model_api_key": model_api_key,
         "harbor_agent": args.harbor_agent,
+        "agent_cli_set": args.harbor_agent,
         "model_provider": args.model_provider,
-        "codex_wire_api": args.codex_wire_api,
         "baseline_name": args.baseline_name,
         "strategy_name": args.strategy_name,
         "order_seed": args.order_seed,
@@ -158,6 +158,12 @@ def build_submission(
         "replay_eval": args.replay_eval,
         "runtime_timeout_sec": args.runtime_timeout_sec,
     }
+    if args.harbor_agent == "codex":
+        params["codex_wire_api"] = args.codex_wire_api
+    elif args.harbor_agent == "opencode":
+        params["opencode_version"] = _required(
+            args.opencode_version, "--opencode-version"
+        )
     if args.agent_runtime_image:
         params["agent_runtime_image"] = args.agent_runtime_image
 
@@ -254,10 +260,16 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--split", default=DEFAULT_SPLIT)
     parser.add_argument("--model", default=None)
     parser.add_argument("--model-base-url", default=None)
-    parser.add_argument("--harbor-agent", default="codex")
+    parser.add_argument(
+        "--harbor-agent", choices=("codex", "opencode"), default="opencode"
+    )
     parser.add_argument("--model-provider", default="sglang")
     parser.add_argument(
         "--codex-wire-api", choices=("responses", "chat"), default="responses"
+    )
+    parser.add_argument(
+        "--opencode-version",
+        default=os.environ.get("OPENCODE_VERSION", "1.18.3"),
     )
     parser.add_argument("--baseline-name", default="selfgen_experience_always")
     parser.add_argument("--strategy-name", default="chain")
