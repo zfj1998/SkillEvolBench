@@ -59,8 +59,8 @@ failure rather than issuing an unkeyed duplicate submission.
 The six jobs passed asset download, host and DinD model probes, shared-mount
 probe, strict preflight, and entered their stateful 30-task episodes. They are
 still running; no retry has been issued. Full artifacts will be preserved under
-`/cpfs02/user/zhangfengji.zfj/workspace/skillevolbench_ap_results/` because the
-`/cpfs01` filesystem currently reports no available capacity.
+`/mnt/workspace/zhangfengji.zfj/skillevolbench_ap_results/` on the persistent
+NAS because both CPFS mounts currently report no available capacity.
 
 ## Full-run acceptance tooling
 
