@@ -31,7 +31,7 @@ from typing import Any, Mapping
 DEFAULT_AP_BASE_URL = "http://agentplatform.aliyun-inc.com"
 DEFAULT_CLUSTER = "benchmark-dev"
 DEFAULT_DATASET = "skillevolbench/skillevolbench"
-DEFAULT_SPLIT = "v1@0"
+DEFAULT_SPLIT = "v1@1"
 
 
 def _required(value: str | None, description: str) -> str:
