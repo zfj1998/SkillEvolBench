@@ -1,41 +1,45 @@
 # Agent Platform onboarding progress
 
-Last updated: 2026-07-20 UTC
+Last updated: 2026-07-21 UTC
 
-This document is the implementation log for onboarding SkillEvolBench to
-Agent Platform (AP). It intentionally contains no API keys, registry passwords,
-OSS credentials, or signed artifact URLs.
+This is the credential-free implementation log for onboarding SkillEvolBench
+to Agent Platform (AP). Do not add API keys, registry passwords, OSS
+credentials, signed artifact URLs, or raw transport metadata to this file.
 
-## Goal and acceptance boundary
+## Current status
 
-Run the faithful SkillEvolBench lifelong protocol on AP even when the local
-machine cannot run Docker:
+The AP runtime now passes a complete ordered T1-T6 family diagnostic with:
 
-- one AP instance represents one environment episode (`E1` ... `E6`);
-- trials inside an episode run sequentially and share one environment-scoped
-  skill library;
-- the six independent environment episodes may run concurrently;
-- AP artifacts preserve the report, skill-library history, replay store,
-  events, retrieval traces, Harbor output, and per-trial verifier evidence;
-- an AP `Succeeded` state is not sufficient: the run must also contain a
-  verifier-backed result and the expected metrics and artifacts.
+- six verifier-backed primary trials in one stateful AP job;
+- same-agent, same-session solve and reflection for T1-T3;
+- a shared environment skill library, frozen between T3 and T4;
+- no reflection or library mutation during T4-T6;
+- complete trajectories, verifier evidence, library history, event stores, and
+  platform logs in the downloaded artifacts;
+- a validated runtime-to-delivered digest manifest for sanitizer rewrites.
 
-A one-task smoke is intentionally `scoreable=false`, `passed=false`, and
-`task_score=0`. Onboarding is not complete until one canonical 30-primary-task
-environment is scoreable and the six-environment group aggregation is tested.
+Accepted family job: `ap-skillevolbench-8199e9ce930845fb-o4`. Its detailed
+model and verifier analysis is in [ap_family_smoke_v1_7.md](ap_family_smoke_v1_7.md).
+
+This is a non-canonical `family_smoke`, so its correct benchmark status is
+`completed_noncanonical`, `scoreable=false`, `passed=false`, and
+`task_score=0`. It is stronger than a one-task bootstrap smoke, but is not a
+canonical 30-primary-task environment. Canonical one-environment and
+six-environment validation remain open.
 
 ## Repositories and pinned runtime
 
-| Component | Branch or source | Current integration revision | Publication status |
+| Component | Branch or source | Accepted revision | Publication status |
 | --- | --- | --- | --- |
-| SkillEvolBench | `feat/ap-skillevolbench` | runtime `1ef46dc12e791bcffbe20bc35fc94a267dcfd798`; branch head `83ec227f8b46a862d235cf8fc6279f18c2500c79` adds a submission-output sanitizer fix | runtime packaged in immutable dataset `v1@3`; benchmark branch intentionally not pushed |
-| Agent-Hub | `feat/skillevolbench` | `ed34889381d47a7065e7531d05025e38a4335011` | pushed and verified at the same remote revision |
+| SkillEvolBench runtime | `feat/ap-skillevolbench` | `a0972c3b98f724e6b89e35ac974c142368a0c6d0` | packaged in immutable dataset `v1@7`; benchmark branch intentionally not pushed |
+| Agent-Hub template | `feat/skillevolbench` | `1e10fc0cf557d1c74e3b6dda13f4ac6001c225ad` | pushed; remote branch resolves to this exact revision |
 | Harbor | official Git revision | `071281b3d931aafd6a5375fa7d5933e23054d784` (`0.20.0`) | installed and provenance-recorded by the AP template |
+| OpenCode | npm runtime | `1.18.3` | pinned in template and Harbor fallback |
 
-The Agent-Hub integration started from
+The Agent-Hub work started from
 `b7a94cadec1258f41774b454a546258ea14781e5`. Existing untracked inputs
-(`ap_dev_docs/` and `docs/task_tiering_in_paper.md`) predate this work and must
-be preserved.
+`ap_dev_docs/` and `docs/task_tiering_in_paper.md` predate this work and must be
+preserved.
 
 ## Confirmed runtime inputs
 
@@ -43,196 +47,276 @@ be preserved.
 - Development cluster: `benchmark-dev`
 - AP template: `skillevolbench`
 - Reference SGLang job: `dlc1xg8veyu370w6` in workspace `314370`
-- Reference OpenAI-compatible endpoint:
+- OpenAI-compatible endpoint used by the accepted run:
   `http://10.101.224.230:22001/v1`
-- Served model id reported by `/v1/models`:
+- Served model id:
   `serve-3.8-maxp-cpt-s1-0715-fable-1ep`
 
-The endpoint is an ephemeral dependency. Re-probe `/v1/models` before every
-submission and distinguish endpoint-capacity errors from verifier failures.
+The model endpoint is ephemeral. Probe `/v1/models` before every submission and
+distinguish endpoint availability/capacity failures from task-verifier
+failures.
 
-## Architecture decision
+## Scientific and platform state boundaries
 
-Do not submit 180 independent AP jobs. That would discard the skill state and
-freeze boundary between tasks. Use six AP instances instead:
+The canonical AP execution unit is one environment episode, not one task:
 
 ```text
 AP group
-  E1 job: 30 originals (+ optional 15 learning replays), sequential
-  E2 job: 30 originals (+ optional 15 learning replays), sequential
+  E1 job: 30 primary tasks (+ optional replay block), sequential
+  E2 job: 30 primary tasks (+ optional replay block), sequential
   ...
-  E6 job: 30 originals (+ optional 15 learning replays), sequential
+  E6 job: 30 primary tasks (+ optional replay block), sequential
 ```
 
-Each job reports its environment-level evaluation success rate. Since every
-environment contains the same number of evaluation tasks, the mean of the six
-environment scores equals the full-benchmark evaluation success rate.
+Submitting 180 independent AP jobs would discard the shared skill library,
+ordering, and freeze boundary. The six environment jobs are independent and
+may run concurrently; trials inside one environment must remain sequential.
 
-The task container is launched by a remote Docker daemon (DinD). Harbor passes
-absolute host paths to that daemon for agent logs, verifier logs/rewards,
-artifacts, skills, and injection context. Therefore the AP main container and
-DinD sidecar must mount one named `emptyDir` at the same absolute path
-(`/sevb-workspace`); copying files only into AP's output directory is not a
-substitute for this state boundary.
+For the user's same-agent experiment, the setting is
+`selfgen_in_session_always`:
+
+```text
+per learning task:
+  solve turn -> official verifier -> resume exact OpenCode session
+             -> bounded reflection turn -> host validates/applies candidate
+
+after T3:
+  freeze library -> T4/T5/T6 consume it without reflection
+```
+
+“Same session” means a task's solve and reflection share one session. Different
+tasks use different sessions but share the environment library. Session IDs,
+trajectory/export prefix continuity, container identity, and an unchanged task
+workspace are verified. A continuity failure is unscoreable. A malformed skill
+candidate is recorded as model behavior and rejected without corrupting the
+library.
+
+The explicit family diagnostic selects one family ID such as `E1-LS1`, asserts
+exact T1-T6 order and canonical/enriched/variant/context-shift/adversarial/
+composition roles, forbids replay, and remains non-canonical. It must not be
+implemented as `max_tasks=6`, which would select the wrong environment-wide
+prefix.
+
+## Container and artifact architecture
+
+Harbor launches task containers through the AP job's remote Docker daemon
+(DinD). Harbor passes absolute host paths for agent logs, verifier output,
+artifacts, skills, and injection context. The AP main container and DinD
+sidecar therefore mount one named `emptyDir` at the identical absolute path
+`/sevb-workspace`. A bidirectional sentinel probe validates the mount before
+execution.
+
+The template stages are: validate inputs, wait for DinD, download and validate
+the pinned asset, install dependencies, probe the model from the AP main
+container, prepare the agent runtime, probe from a DinD task container, run
+strict benchmark preflight, execute the episode, validate metrics, sanitize
+artifacts, and delegate to AP's injected completion callback. Every premature
+exit produces bounded, sanitized, unscoreable fallback metrics.
 
 ## Dataset releases
 
-All releases use the namespace `skillevolbench/skillevolbench`, contain exactly
-six instance JSON files plus six per-environment `content.tgz` assets, and were
-built from committed source only. Old versions are retained as immutable
-debugging evidence and are not overwritten.
+All releases use `skillevolbench/skillevolbench`, contain six instance JSON
+files plus six per-environment `content.tgz` assets, and are built from
+committed source only. Releases are immutable and never overwritten.
 
-| Split | SkillEvolBench revision | Status and reason |
+| Split | SkillEvolBench revision | Status |
 | --- | --- | --- |
-| `v1@0` | `58ee5a1b75661d4b6faf98e9cbf984b7df710f4c` | initial publication; stale because its Harbor adapter used a pre-0.20 private `Trial` API |
-| `v1@1` | `330698547fc7868d56d18138cfa9f38ccbaae660` | added Harbor 0.20 compatibility; stale because verifier failures could still collapse silently to reward zero and the DinD state mounts were not yet proven |
-| `v1@2` | `ee0e585200a7aa5f4151e7e2803e10858f6f3acc` | fail-closed verifier semantics and shared state mounts; retained as Codex-runtime evidence |
-| `v1@3` | `1ef46dc12e791bcffbe20bc35fc94a267dcfd798` | current release with pinned OpenCode 1.18.3 runtime and canonical OpenCode trajectory support |
+| `v1@0` | `58ee5a1b75661d4b6faf98e9cbf984b7df710f4c` | stale pre-Harbor-0.20 adapter |
+| `v1@1` | `330698547fc7868d56d18138cfa9f38ccbaae660` | Harbor 0.20 compatibility; incomplete fail-close/mount evidence |
+| `v1@2` | `ee0e585200a7aa5f4151e7e2803e10858f6f3acc` | fail-closed verifier and shared-state mounts |
+| `v1@3` | `1ef46dc12e791bcffbe20bc35fc94a267dcfd798` | OpenCode 1.18.3 runtime and canonical trajectories |
+| `v1@4` | `a730b3b1155d26183374713df3b7ceac97064b85` | first same-session family protocol; exposed stopped-container snapshot issue |
+| `v1@5` | `5eae7a574006fd0303b5181a9b9ee3216b67c4cd` | stopped-container fix; exposed OpenCode session-export compatibility issue |
+| `v1@6` | `322225dba44a668a36e6ead9b22f5836a494218f` | first completed family run; artifact redaction corrupted ordinary `EMPTY` identifiers and audit hashes |
+| `v1@7` | `a0972c3b98f724e6b89e35ac974c142368a0c6d0` | accepted family diagnostic with fail-closed, manifest-backed sanitization |
 
-For `v1@3`, two independent builds produced the same 13 files byte for byte.
-The source archive SHA-256 is
-`4d6d95f02adc615076c4eb2adba964d861b399423726f70ba752d293fcc0ffbe`
-and the uncompressed Git archive tar SHA-256 is
-`0db0bcc512a41f9fee5ca5de46959a4e221ca71816f824cfe8b97af4e2a616e2`.
-The release manifest SHA-256 is
-`c343bc372878c0feccbe9c1cdf92cf5e5f97c45afb85d1e210d11d15d9c57b85`.
-All 13 objects were uploaded to versioned staging paths, checked against local
-size and checksum/ETag evidence, and AP enumerated exactly `E1` through `E6`.
+For `v1@7`, two independent builds produced the same 13 files byte for byte.
+The release-manifest SHA-256 is
+`744c2f051441ac000c75a7ba752aa0452feb84bba01cee912ef7adbf35b06c06`.
+All 13 remote objects were checked by size and ETag/MD5; AP discovery returned
+exactly `E1` through `E6`.
 
-## Implementation changes after live smokes
+## Key implementation decisions
 
-### Harbor 0.20 adapter and mount contract
+### Fail-closed verifier and learning mutation
 
-- Replaced the removed private `Trial._execute_agent` patch with the supported
-  Harbor 0.20 hook and result flow.
-- The global-library environment now accepts Harbor 0.20's `mounts` argument
-  (while retaining the legacy compatibility input), preserves Harbor's three
-  built-in mounts, and appends five skill mounts plus the injection mount.
-  Object-level validation against the pinned Harbor build produced exactly
-  nine mounts.
-- Agent-Hub commit `661aec5535acac7b5198c616550dd00e941a38b8`
-  added the same-path `/sevb-workspace` volume to main and DinD, a bidirectional
-  bind sentinel, and copying of the shared run tree into AP artifacts.
-- Agent-Hub commit `ee0b9c9ce9d54cfc2baa7ff58655f4222e160bd6`
-  corrected the workspace init container to execute its setup through `sh`.
+A trial is valid only if Harbor has no exception, verifier rewards exist,
+`reward.txt` is finite and in `[0,1]`, the canonical Harbor reward agrees, and
+a trajectory exists. Validation happens before replay-store, skill-library,
+strategy, or patch mutation. Missing evidence becomes an unscoreable error,
+never an ordinary task failure or a learnable experience.
 
-### Fail-closed verifier and lifecycle semantics
+### OpenCode provider and secret plumbing
 
-- A trial is valid only when there is no Harbor exception, a verifier result
-  and non-empty rewards exist, `reward.txt` exists and contains a finite value
-  in `[0, 1]`, Harbor's canonical reward agrees with that value, and a
-  trajectory exists. Missing evidence raises an unscoreable error instead of
-  becoming an ordinary reward of zero.
-- All 180 task verifiers write `reward.txt`; 120 also write `reward.json`.
-  The adapter no longer guesses an arbitrary first value from `reward.json`.
-- Validation happens before replay-store, skill-library, strategy, or patch
-  mutation. Failure finalization is non-mutating, so an infrastructure/model
-  failure cannot be learned as benchmark experience.
-- The AP runner records `n_verifier_backed_trials` and emits bounded,
-  sanitized failure information.
+The SGLang endpoint and CLI agent are separate layers. Raw API reachability did
+not prove a real filesystem/shell tool loop, so the exact pinned OpenCode CLI
+was exercised against the endpoint. It uses a non-reserved
+`openai-compatible` provider backed by `@ai-sdk/openai-compatible`; the reserved
+`openai` provider selected an incompatible Responses path.
 
-### OpenCode runtime and provider contract
+Harbor stores `${OPENAI_BASE_URL}` and `${OPENAI_API_KEY}` templates, and
+OpenCode references `{env:OPENAI_BASE_URL}` and `{env:OPENAI_API_KEY}`. Resolved
+credentials are not persisted in kwargs or runtime configuration. OpenCode's
+lowercase tool names and camelCase arguments are normalized into canonical
+trajectories.
 
-- The model server and CLI agent are separate layers: the same SGLang endpoint
-  can serve Codex, OpenCode, or another compatible agent, but the CLI must still
-  perform the filesystem/shell tool loop and emit a trajectory.
-- A raw Chat Completions and function-call probe passed. The exact pinned
-  OpenCode 1.18.3 CLI then completed a real write/read tool loop against the
-  same server.
-- OpenCode uses the non-reserved provider id `openai-compatible` with
-  `@ai-sdk/openai-compatible`. The reserved `openai` id selected a
-  Responses-specific path and failed against this generic Chat Completions
-  adapter.
-- Harbor stores only `${OPENAI_BASE_URL}` and `${OPENAI_API_KEY}` templates;
-  OpenCode config references `{env:OPENAI_BASE_URL}` and
-  `{env:OPENAI_API_KEY}`. Resolved credentials are not placed in agent kwargs
-  or persisted runtime config.
-- The existing `/root/.agents/skills` mount is reused. OpenCode lowercase tool
-  names and camelCase parameters are normalized into the canonical trajectory;
-  no duplicate skill mount is added, so the validated mount count remains nine.
+### Same-session reflection
 
-### AP completion callback
+The task container is stopped after solve but not destroyed. The host snapshots
+`/root/task`, runs the verifier in isolation, restarts the same container, and
+resumes the recorded OpenCode session with bounded verifier feedback. The model
+may write only one candidate JSON file. The host validates JSON, paths, sizes,
+skill frontmatter, family ownership, and secret safety before the freeze
+controller applies it.
 
-The first live runs showed that the template's own `EXIT` trap shadowed AP's
-injected `_final_exit`, leaving the AP metrics endpoint empty even when an
-artifact `metrics.json` existed. Agent-Hub commit
-`fa0ef7f7ec55a7782467c93eccf0deb4a1561e58` now delegates to `_final_exit`
-after local artifact sync, fallback metrics, and sanitization. An executable
-wrapper-contract test covers both callback status and copied artifacts.
+### Sanitized artifact integrity
+
+Generic no-auth placeholders such as `EMPTY` cannot be used as global exact
+redaction tokens because they occur in ordinary code. Before Harbor starts, the
+runner replaces such placeholders with a high-entropy ephemeral
+`sevb-no-auth-*` value. The primary sanitizer then:
+
+- rejects unsafe short secret values;
+- scans all regular files plus binary, symlink-name, and symlink-target cases;
+- atomically rewrites stable files and snapshots an actively written
+  `logs/main.log` by inode replacement;
+- writes `sanitization_manifest.json` with runtime and delivered SHA-256/size
+  for every changed file;
+- fails closed if sanitization or manifest creation fails.
+
+Agent-Hub requires the benchmark-generated manifest. A missing/failing primary
+sanitizer discards artifacts instead of silently falling back after partial
+writes. A bootstrap-only sanitizer remains available for failures before the
+benchmark source is extracted.
 
 ## Live validation history
 
-| Job | Dataset / template revision | Observed result | Disposition |
-| --- | --- | --- | --- |
-| `ap-cluster-verify-ad33803c8bd9456e-o4` | stock connectivity template | AP main reached the model and DinD pulled an image; stock DinD DNS checks failed | superseded by explicit DNS in the benchmark template |
-| `ap-skillevolbench-91dbf9372a2b468a-o4` | `v1@0` / `f9348a6495c18fac4e087dd410d4c00557ac6787` | failed at `model-probe-dind`; curl config was not streamed correctly | fixed by Agent-Hub `ad9094651` |
-| `ap-skillevolbench-aa243b2bfa8b43e4-o4` | `v1@0` / `fbab989778bd71ae2c20824161e4aef49c1fef3b` | host and DinD probes plus preflight passed, then the stale Harbor private API raised `AttributeError` | fixed in SkillEvolBench `3306985`; published as `v1@1` |
-| `ap-skillevolbench-acab8fcd23fa4787-o4` | `v1@1` / stale branch resolution `fbab989778bd71ae2c20824161e4aef49c1fef3b` | AP reported `Succeeded` and the artifact was an explicit one-task partial, but AP metrics were empty and verifier/DinD evidence was incomplete; the model call also encountered endpoint demand | rejected as a valid Gate 4 smoke; drove callback, fail-close, and shared-workspace fixes |
-| `ap-skillevolbench-4671f93cb2b6471e-o4` | `v1@2` / `661aec5535acac7b5198c616550dd00e941a38b8` | failed before main at workspace init, exit 127 | fixed by Agent-Hub `ee0b9c9ce` |
-| `ap-skillevolbench-9637d96a722b4728-o4` | `v1@2` / exact `ee0b9c9ce9d54cfc2baa7ff58655f4222e160bd6` | Codex CLI exhausted five retries because the endpoint reported high demand; fail-closed metrics were non-empty and no learning state was mutated | valid failure-path evidence, but not a Gate 4 verifier-backed smoke |
-| `ap-skillevolbench-555629ec612149dc-o4` | `v1@2` / Codex retry | repeated the same Codex high-demand failure with sanitized, unscoreable output | motivated testing a compatible CLI rather than changing the server |
-| `ap-skillevolbench-8a619e8ee39d4949-o4` | `v1@3` / exact `ed34889381d47a7065e7531d05025e38a4335011` | succeeded in 784 seconds; OpenCode completed 15 trajectory steps and 26 tool calls; verifier reward was 1.0 with public 5/5, hidden 8/8, and process 5/5 | accepted Gate 4 smoke: callback is non-empty and intentionally partial/unscoreable, with one verifier-backed primary trial |
+| Job | Dataset / Agent-Hub revision | Result and disposition |
+| --- | --- | --- |
+| `ap-skillevolbench-8a619e8ee39d4949-o4` | `v1@3` / `ed34889381d47a7065e7531d05025e38a4335011` | accepted one-task Gate 4 smoke; verifier reward 1.0, complete trajectory, explicitly partial/unscoreable |
+| `ap-skillevolbench-ad7492fa642b4039-o4` | `v1@4` / `9e9c6219f0d4cc800e86b4fd5d85b77954cfff67` | failed before a primary result; exposed task snapshot against a stopped container |
+| `ap-skillevolbench-df78d870f5224353-o4` | `v1@5` / `071eea52d84ae0c2de9196361e18dbd99d57488a` | failed before a primary result; exposed pinned OpenCode prompt/session-export shape drift |
+| `ap-skillevolbench-6cea7fc3b09446d2-o4` | `v1@6` / `d8a8154efac7776ec8f52037f03a278b29beadca` | six trials completed, but artifact audit rejected global `EMPTY` replacement and unexplained reflection-hash changes |
+| `ap-skillevolbench-8199e9ce930845fb-o4` | `v1@7` / `1e10fc0cf557d1c74e3b6dda13f4ac6001c225ad` | accepted T1-T6 family diagnostic; protocol, sanitizer manifest, frozen library, trajectories, and logs audit passed |
 
-These runs deliberately use exact Agent-Hub commit ids where possible. A
-moving branch name previously resolved to stale template code and is not
-sufficient provenance for an acceptance run.
+Earlier bootstrap failures are retained in AP but are superseded by the
+accepted one-task and family runs. Exact immutable commits are used because a
+moving Agent-Hub branch previously resolved to stale template code.
 
-## Validation evidence
+## Accepted family evidence
 
-- SkillEvolBench: 64 tests pass, including a real verifier-backed
-  reward-zero path and assertions that invalid trials cannot mutate learning
-  state.
-- Harbor 0.20 object-level mount validation: nine mounts with all built-in,
-  skill, and injection targets present.
-- Agent-Hub: eight template/group tests pass; `bash -n`, whitespace checks, and
-  targeted AP path-migration lint rules R1-R6 pass.
-- Dataset `v1@3`: deterministic two-build comparison passes; six remote assets,
-  six indexes, and one release manifest were verified; AP discovery returns
-  exactly six environment ids.
-- The reusable AP onboarding skill passes its package validator after adding the
-  OpenCode/provider and secret-interpolation lessons from this integration.
-- The accepted OpenCode smoke contains the canonical trajectory, verifier logs
-  and reward, complete report, replay record, event stores, and environment
-  library history. It started with no retrieved skill and generated one active
-  `systematic-error-diagnosis` skill from the successful T1 outcome; one patch
-  was proposed and applied.
-- A scan of the 103-file benchmark result payload found no live AP/model keys,
-  bearer authorization values, Aliyun credential ids, signed URLs, or private
-  keys. AP CLI export metadata is transport-layer material and is excluded from
-  benchmark artifacts and handoff copies.
-- Local strict preflight cannot be a complete runtime gate on this machine
-  because it has no usable Docker daemon. The AP smoke is the authoritative
-  DinD acceptance surface.
+- AP job ran from `2026-07-21T01:19:41.224` through
+  `2026-07-21T01:53:08.907` (about 33.5 minutes).
+- Six-trial episode completed in about 26 minutes 34 seconds.
+- T1/T2/T3 rewards: `1.00`, `1.00`, `1.00`.
+- T4/T5/T6 official rewards: `0.35`, `0.90`, `0.75`. Contract-level
+  inspection found implementation-coupled verifier false negatives in all
+  three: T4's delivered CI tests and real FastAPI webhook pass, while T5/T6
+  pass every functional verifier test.
+- T1 and T3 reflections completed; T2 was correctly rejected for invalid YAML
+  frontmatter. All three same-session continuity proofs passed.
+- One final active `systematic-error-diagnosis` skill was created at T1 and
+  revised at T3; T2-T6 retrieved and explicitly referenced it.
+- The library was frozen once between T3 and T4; T4-T6 did not mutate it.
+- The downloaded tree is about 112 MiB with 1,479 files including hidden Git
+  state. All six solve trajectories and all three reflection audits are present.
+- The sanitizer manifest validates 45 changed files, including runtime-to-
+  delivered hash mappings for four T2 audit files. A whole-output scan found no
+  live platform/model/OSS secrets, signed URLs, ephemeral sentinels, or private
+  keys inside `artifacts/output/`.
+- AP CLI `0.1.16` initially failed platform-log export because it requested
+  1,000 entries while the service maximum is 500. Logs were re-exported with
+  pagination and independently verified: 3,273 entries across five containers,
+  with terminal `next_offset=null` recorded in
+  `logs/pagination_manifest.json`. Benchmark trajectories in `result.tgz` were
+  already complete and unaffected.
 
-## Gate status and next steps
+## Validation results
 
-- [x] Gate 0: local/static validation and deterministic packaging.
-- [x] Gate 1: safe one-task submission dry run with endpoint/model validation.
-- [x] Gate 2: immutable `v1@3` publication and exact six-instance discovery.
-- [x] Gate 3: current OpenCode template passed the shared-workspace probe plus
-  host- and DinD-container model probes.
-- [x] Gate 4: accepted fail-closed, verifier-backed one-task OpenCode smoke,
-  job `ap-skillevolbench-8a619e8ee39d4949-o4`.
-- [ ] Gate 5: run and inspect one complete 30-primary-task environment episode.
-- [ ] Gate 6: run all six environments and validate retry-safe aggregation.
-- [ ] Replace the bootstrap-built `agent-runtime:latest` with a pinned registry
-  image if repeatability or runtime cost requires it.
+- SkillEvolBench: 144 tests passed at runtime revision `a0972c3`.
+- Agent-Hub: 11 template/group tests passed at `1e10fc0`; `bash -n`, Ruff,
+  whitespace, and targeted path-migration lint passed.
+- Dataset `v1@7`: deterministic two-build comparison and all 13 remote-object
+  checks passed; AP enumerated exactly six instances.
+- Family artifact audit: passed task count/order, verifier bundles, replay and
+  injection evidence, same-session proof, sanitizer hash mapping, single
+  freeze/unfreeze, frozen Git tree, and secret scan.
+- Reusable `ap-benchmark-onboarding` skill: package validation passed after
+  adding the same-session, sanitizer-manifest, no-auth sentinel, and AP log
+  pagination lessons.
 
-Gate 4 was accepted from the exact template and dataset revisions, successful
-bidirectional workspace and model probes, pinned Harbor provenance, one
-verifier-backed trial, reward/logs, trajectory evidence, the complete artifact
-run tree, and a non-empty AP metrics callback. Its benchmark status remains
-`partial` and `scoreable=false` because the smoke is truncated.
+Local strict preflight is not an authoritative runtime gate on this machine
+because it has no usable Docker daemon. The AP DinD run is the live acceptance
+surface.
 
-## Open risks
+## Gate status
 
-- The model endpoint can be temporarily overloaded; such a call must remain an
-  unscoreable infrastructure/model failure and must not update skill state.
-- Bootstrapping `agent-runtime` in DinD depends on package mirrors and costs
-  several minutes per cold run; a pinned prebuilt image would reduce drift.
-- AP timeout and ephemeral storage must cover 30 or 45 sequential Harbor trials
-  plus Docker build cache for a full environment.
-- Gate 5 and Gate 6 have not run, so complete-episode timing, storage, and group
-  aggregation remain unverified operationally.
-- Logs and artifacts must continue to mask all model and platform credentials
-  on both successful and failed exits.
+- [x] Gate 0: local/static checks and deterministic packaging.
+- [x] Gate 1: safe dry-run submission with endpoint/model validation.
+- [x] Gate 2: immutable `v1@7` publication and six-instance discovery.
+- [x] Gate 3: shared-workspace plus host and DinD model probes.
+- [x] Gate 4: one-task fail-closed, verifier-backed, explicitly unscoreable
+  smoke.
+- [x] Diagnostic Gate 4.5: explicit non-canonical T1-T6 family with same-session
+  reflection, freeze boundary, complete trajectories, and artifact-integrity
+  audit.
+- [ ] Gate 5: one canonical 30-primary-task environment episode.
+- [ ] Gate 6: all six environments with retry-safe aggregation.
+- [ ] Optional hardening: replace the bootstrap-built
+  `agent-runtime:latest` with a pinned registry image.
+
+## Next commands
+
+Re-run the same family only for a controlled replication or paired baseline,
+not as an immediate same-input retry:
+
+```bash
+python scripts/ap/submit.py \
+  --scope family \
+  --environment-id E1 \
+  --family-id E1-LS1 \
+  --split 'v1@7' \
+  --agenthub-ref 1e10fc0cf557d1c74e3b6dda13f4ac6001c225ad \
+  --harbor-agent opencode \
+  --model serve-3.8-maxp-cpt-s1-0715-fable-1ep \
+  --model-base-url http://10.101.224.230:22001/v1 \
+  --concurrency 1
+```
+
+The command reads AP/model credentials from the environment; never place them
+on the command line or in this document. Add `--dry-run` before any new live
+configuration. For the next operational gate, replace `--scope family` and the
+family selector with `--scope environment` after re-probing the endpoint and
+confirming timeout/storage budget.
+
+For the user's causal question, first run matched family pairs across multiple
+families and seeds: `selfgen_in_session_always` versus a no-reflection setting,
+with identical tasks/order/model. Compare official strict results and
+outcome-only results separately. This is more informative than repeatedly
+running the same input, and is required before attributing success or harm to a
+generated skill.
+
+## Remaining risks
+
+- The endpoint may be overloaded or replaced; such failures must remain
+  unscoreable and non-mutating.
+- Runtime image bootstrapping depends on package mirrors and consumes several
+  minutes; a pinned image would reduce drift.
+- Gate 5/6 timing, storage, retry de-duplication, and group scoring have not yet
+  been observed live.
+- One of three reflection candidates was lost to malformed YAML. A bounded
+  schema-repair retry would improve author reliability, but adding it changes
+  the experimental setting and must be treated as an explicit variant.
+- The audited E1-LS1 evaluation verifiers are implementation-specific: T4
+  requires an undocumented helper and golden test-edit strategy, T5 searches
+  for one source substring, and T6 requires `quote_plus` over an equivalent
+  tested encoding. Preserve official scores, but correct these verifiers and
+  report functional/process/contract-audit outcomes separately before drawing
+  model-capability conclusions.
+- The final library manifest's evidence counters remain zero even though replay
+  records, trajectories, and `full_report.json` record five real uses. Treat the
+  replay-derived evidence as authoritative for this run and wire or remove the
+  stale manifest counters before relying on them downstream.
+- The top-level AP export transport metadata is outside the sanitized benchmark
+  tree and may contain expiring artifact URLs. Do not publish it; hand off
+  `artifacts/output/` instead.
