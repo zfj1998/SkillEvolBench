@@ -39,6 +39,7 @@ def test_default_submission_is_one_task_e1_smoke() -> None:
     assert submission.command[submission.command.index("--instance-id") + 1] == "E1"
     assert submission.command[submission.command.index("--concurrency") + 1] == "1"
     assert "--dataset" not in submission.command
+    assert "--suite-name" not in submission.command
     params = _params(submission.command)
     assert params["dataset"] == "skillevolbench/skillevolbench"
     assert params["split"] == "v1@0"
@@ -63,6 +64,7 @@ def test_full_submission_uses_dataset_and_no_smoke_truncation() -> None:
     assert submission.command[submission.command.index("--concurrency") + 1] == "4"
     assert "--instance-id" not in submission.command
     assert "--enable-post-process" in submission.command
+    assert "--suite-name" in submission.command
     assert "smoke_max_tasks" not in _params(submission.command)
     assert "--dry-run" not in submission.command
 

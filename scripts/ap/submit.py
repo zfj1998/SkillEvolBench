@@ -175,13 +175,12 @@ def build_submission(
         agenthub_ref,
         "-p",
         json.dumps(params, ensure_ascii=False, separators=(",", ":")),
-        "--suite-name",
-        args.suite_name,
-        "--format",
-        "json",
     ]
 
     if args.scope == "full":
+        # AP accepts suite_name only for a batch/group submission.  A smoke or
+        # one-environment episode is a single job and must omit it.
+        command.extend(["--suite-name", args.suite_name])
         command.extend(
             ["--dataset", dataset_version, "--concurrency", str(args.concurrency)]
         )
@@ -197,6 +196,8 @@ def build_submission(
             )
         else:
             description = f"complete {environment_id} environment episode"
+
+    command.extend(["--format", "json"])
 
     if args.queue:
         command.extend(["--queue", args.queue])
