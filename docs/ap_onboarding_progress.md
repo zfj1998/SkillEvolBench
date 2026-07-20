@@ -93,6 +93,13 @@ directory. Its benchmark-owned
 | Harbor | official Git revision | `071281b3d931aafd6a5375fa7d5933e23054d784` (`0.20.0`) | installed and provenance-recorded by the AP template |
 | OpenCode | npm runtime | `1.18.3` | pinned in template and Harbor fallback |
 
+After the live group was pinned, Agent-Hub received a local-only hardening
+commit `b9b50e1ac`: group post-processing now prefers the newest complete-valid
+candidate for each environment, so a newer partial retry cannot mask an older
+complete result. Its 26 template tests pass. This commit is intentionally not
+pushed and does not alter the active group, which remains on `1e10fc0cf` and is
+therefore checked by the independent artifact auditor.
+
 The Agent-Hub work started from
 `b7a94cadec1258f41774b454a546258ea14781e5`. Existing untracked inputs
 `ap_dev_docs/` and `docs/task_tiering_in_paper.md` predate this work and must be
