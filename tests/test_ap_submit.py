@@ -42,7 +42,7 @@ def test_default_submission_is_one_task_e1_smoke() -> None:
     assert "--suite-name" not in submission.command
     params = _params(submission.command)
     assert params["dataset"] == "skillevolbench/skillevolbench"
-    assert params["split"] == "v1@5"
+    assert params["split"] == "v1@6"
     assert params["smoke_max_tasks"] == 1
     assert params["harbor_agent"] == "opencode"
     assert params["agent_cli_set"] == "opencode"
@@ -63,7 +63,7 @@ def test_full_submission_uses_dataset_and_no_smoke_truncation() -> None:
     submission = submit.build_submission(args, _environment())
 
     assert submission.command[submission.command.index("--dataset") + 1] == (
-        "skillevolbench/skillevolbench/v1@5"
+        "skillevolbench/skillevolbench/v1@6"
     )
     assert submission.command[submission.command.index("--concurrency") + 1] == "4"
     assert "--instance-id" not in submission.command

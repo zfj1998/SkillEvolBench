@@ -326,6 +326,82 @@ def test_post_verifier_resume_is_host_audited_and_continuous(
     assert any(kind == "reflection_completed" for kind, _ in events.items)
 
 
+def test_continuity_accepts_exact_pinned_cli_prompt_rendering() -> None:
+    prompt = '# Reflect\n\nFeedback: {"passed": true}\nPath: C:\\work\n'
+    cli_rendered = '"' + prompt.replace('"', r'\"') + '"'
+    solve_trajectory = _trajectory(
+        [("user", "solve prompt"), ("agent", "solve answer")]
+    )
+    full_trajectory = _trajectory(
+        [
+            ("user", "solve prompt"),
+            ("agent", "solve answer"),
+            ("user", cli_rendered),
+            ("agent", "reflection answer"),
+        ]
+    )
+    solve_export = _solve_export()
+    full_export = {
+        "info": {"id": SESSION_ID},
+        "messages": [
+            *_solve_export()["messages"],
+            _export_message("user", cli_rendered),
+            _export_message("assistant", "reflection answer"),
+        ],
+    }
+
+    assert (
+        SkillEvolBenchHooks._verify_trajectory_continuity(
+            solve_trajectory,
+            full_trajectory,
+            prompt=prompt,
+            task_id=TASK.task_id,
+        )
+        == SESSION_ID
+    )
+    assert (
+        SkillEvolBenchHooks._verify_export_continuity(
+            solve_export,
+            full_export,
+            prompt=prompt,
+            task_id=TASK.task_id,
+        )
+        == SESSION_ID
+    )
+
+
+@pytest.mark.parametrize(
+    "near_miss",
+    [
+        '"# Reflect\\nFeedback: {\\"passed\\": true}',
+        '"# Reflect\nFeedback: {"passed\\": true}\n"',
+        'prefix "# Reflect\nFeedback: {\\"passed\\": true}\n"',
+        json.dumps('# Reflect\nFeedback: {"passed": true}\n'),
+    ],
+)
+def test_continuity_rejects_near_miss_prompt_rendering(near_miss: str) -> None:
+    prompt = '# Reflect\nFeedback: {"passed": true}\n'
+    solve = _trajectory([("user", "solve"), ("agent", "answer")])
+    full = _trajectory(
+        [
+            ("user", "solve"),
+            ("agent", "answer"),
+            ("user", near_miss),
+            ("agent", "reflection"),
+        ]
+    )
+
+    with pytest.raises(UnscoreableTrialError) as error:
+        SkillEvolBenchHooks._verify_trajectory_continuity(
+            solve,
+            full,
+            prompt=prompt,
+            task_id=TASK.task_id,
+        )
+
+    assert error.value.reason == "reflection-trajectory-tail-invalid"
+
+
 def test_candidate_symlink_is_rejected_without_following_it(tmp_path: Path) -> None:
     hooks, trial, events = _build(tmp_path, candidate_kind="symlink")
 

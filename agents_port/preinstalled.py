@@ -380,6 +380,23 @@ class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
         )
 
     @staticmethod
+    def _decode_cli_user_message(text: str) -> str:
+        """Undo OpenCode 1.18.3's argv rendering for exported user turns.
+
+        The pinned CLI stores a prompt passed as one positional argument as a
+        double-quoted string, escaping embedded double quotes but retaining
+        literal newlines. This is not JSON because the newlines remain raw.
+        Decode only when a round trip reproduces the export byte-for-byte so a
+        genuinely quoted user message cannot be changed accidentally.
+        """
+
+        if len(text) < 2 or not text.startswith('"') or not text.endswith('"'):
+            return text
+        candidate = text[1:-1].replace(r'\"', '"')
+        rendered = '"' + candidate.replace('"', r'\"') + '"'
+        return candidate if rendered == text else text
+
+    @staticmethod
     def _observation_content(state: dict[str, Any]) -> str | None:
         if "output" in state and state["output"] is not None:
             output = state["output"]
@@ -462,7 +479,9 @@ class OpenCodePreinstalled(_PreinstalledMixin, OpenCode):
                 step: dict[str, Any] = {
                     "step_id": len(steps) + 1,
                     "source": "user",
-                    "message": self._text_parts(parts, "text"),
+                    "message": self._decode_cli_user_message(
+                        self._text_parts(parts, "text")
+                    ),
                 }
                 if timestamp:
                     step["timestamp"] = timestamp

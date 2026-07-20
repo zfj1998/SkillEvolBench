@@ -465,6 +465,37 @@ def test_export_is_canonical_complete_trajectory_and_populates_context(
     assert context.n_cache_tokens == 8
 
 
+def test_export_normalizes_pinned_cli_user_prompt_rendering(
+    tmp_path: Path,
+    preinstalled_module,
+) -> None:
+    agent = preinstalled_module.OpenCodePreinstalled(logs_dir=tmp_path)
+    agent._opencode_session_id = SESSION_ID
+    prompt = '# Reflect\n\nFeedback: {"passed": true}\nPath: C:\\work\n'
+    cli_rendered = '"' + prompt.replace('"', r'\"') + '"'
+    export = _export(include_reflection=False)
+    export["messages"][0]["parts"][0]["text"] = cli_rendered
+
+    trajectory = agent._convert_export_to_trajectory(export)
+
+    assert trajectory["steps"][0]["message"] == prompt
+
+
+def test_export_does_not_guess_at_near_miss_cli_rendering(
+    tmp_path: Path,
+    preinstalled_module,
+) -> None:
+    agent = preinstalled_module.OpenCodePreinstalled(logs_dir=tmp_path)
+    agent._opencode_session_id = SESSION_ID
+    near_miss = '"quoted but has an unescaped " interior"'
+    export = _export(include_reflection=False)
+    export["messages"][0]["parts"][0]["text"] = near_miss
+
+    trajectory = agent._convert_export_to_trajectory(export)
+
+    assert trajectory["steps"][0]["message"] == near_miss
+
+
 def test_resume_fails_closed_when_stream_switches_session(
     tmp_path: Path,
     preinstalled_module,

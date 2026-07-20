@@ -886,6 +886,19 @@ class SkillEvolBenchHooks:
             )
         return next(iter(session_ids))
 
+    @staticmethod
+    def _opencode_exported_prompt_matches(message: str, prompt: str) -> bool:
+        """Match the exact prompt or OpenCode 1.18.3's argv representation.
+
+        The pinned CLI exports positional user prompts wrapped in double
+        quotes with embedded double quotes backslash-escaped, while leaving
+        newlines literal. Keep this an exact two-value allowlist: continuity
+        must never degrade into whitespace or substring matching.
+        """
+
+        cli_rendered = '"' + prompt.replace('"', r'\"') + '"'
+        return message == prompt or message == cli_rendered
+
     @classmethod
     def _verify_trajectory_continuity(
         cls,
@@ -914,7 +927,10 @@ class SkillEvolBenchHooks:
             len(tail) >= 2
             and isinstance(tail[0], dict)
             and tail[0].get("source") == "user"
-            and tail[0].get("message") == prompt
+            and isinstance(tail[0].get("message"), str)
+            and cls._opencode_exported_prompt_matches(
+                tail[0]["message"], prompt
+            )
             and all(
                 isinstance(step, dict) and step.get("source") == "agent"
                 for step in tail[1:]
@@ -966,7 +982,9 @@ class SkillEvolBenchHooks:
             and isinstance(tail[0], dict)
             and isinstance(tail[0].get("info"), dict)
             and tail[0]["info"].get("role") == "user"
-            and cls._export_message_text(tail[0]) == prompt
+            and cls._opencode_exported_prompt_matches(
+                cls._export_message_text(tail[0]), prompt
+            )
             and all(
                 isinstance(message, dict)
                 and isinstance(message.get("info"), dict)
