@@ -212,7 +212,6 @@ def _validate_task_snapshot(trial: Any) -> Path:
     entry = matches[0]
     expected = {
         "destination": "artifacts/root/task",
-        "type": "directory",
         "status": "ok",
     }
     mismatches = {
@@ -220,6 +219,16 @@ def _validate_task_snapshot(trial: Any) -> Path:
         for key, value in expected.items()
         if entry.get(key) != value
     }
+    # Harbor 0.20 determines this field with ``service_is_dir`` before the
+    # transfer.  Once the main container is stopped that exec-based probe
+    # returns false, while ``docker compose cp`` still copies /root/task as a
+    # directory.  Treat the field as a transfer-branch marker and the
+    # no-follow host check below as the authoritative object type.
+    if entry.get("type") not in ("directory", "file"):
+        mismatches["type"] = (
+            entry.get("type"),
+            "'directory' or stopped-container fallback 'file'",
+        )
     if entry.get("service") not in (None, "main"):
         mismatches["service"] = (entry.get("service"), None)
     if mismatches:

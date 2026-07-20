@@ -385,6 +385,19 @@ def test_private_api_rejects_signature_drift(
                 {
                     "source": "/root/task",
                     "destination": "artifacts/root/task",
+                    "type": "archive",
+                    "status": "ok",
+                    "service": None,
+                }
+            ],
+            True,
+            "type='archive'",
+        ),
+        (
+            [
+                {
+                    "source": "/root/task",
+                    "destination": "artifacts/root/task",
                     "type": "directory",
                     "status": "failed",
                     "service": None,
@@ -470,6 +483,69 @@ def test_task_snapshot_validation_rejects_empty_directory(tmp_path: Path) -> Non
 
     with pytest.raises(RuntimeError, match="snapshot is empty"):
         _patches._validate_task_snapshot(trial)
+
+
+@pytest.mark.parametrize("manifest_type", ["directory", "file"])
+def test_task_snapshot_validation_uses_materialized_directory_type(
+    tmp_path: Path,
+    manifest_type: str,
+) -> None:
+    artifacts_dir = tmp_path / "artifacts"
+    snapshot = artifacts_dir / "root" / "task"
+    snapshot.mkdir(parents=True)
+    (snapshot / "answer.txt").write_text("answer")
+    (artifacts_dir / "manifest.json").write_text(
+        json.dumps(
+            [
+                {
+                    "source": "/root/task",
+                    "destination": "artifacts/root/task",
+                    "type": manifest_type,
+                    "status": "ok",
+                    "service": None,
+                }
+            ]
+        )
+    )
+    trial = SimpleNamespace(paths=SimpleNamespace(artifacts_dir=artifacts_dir))
+
+    assert _patches._validate_task_snapshot(trial) == snapshot
+    assert trial._sevb_task_snapshot_path == snapshot
+
+
+@pytest.mark.parametrize("snapshot_kind", ["file", "symlink"])
+def test_task_snapshot_validation_rejects_non_directory_materialization(
+    tmp_path: Path,
+    snapshot_kind: str,
+) -> None:
+    artifacts_dir = tmp_path / "artifacts"
+    snapshot = artifacts_dir / "root" / "task"
+    snapshot.parent.mkdir(parents=True)
+    if snapshot_kind == "file":
+        snapshot.write_text("not a directory")
+    else:
+        target = tmp_path / "outside"
+        target.mkdir()
+        (target / "answer.txt").write_text("answer")
+        snapshot.symlink_to(target, target_is_directory=True)
+    (artifacts_dir / "manifest.json").write_text(
+        json.dumps(
+            [
+                {
+                    "source": "/root/task",
+                    "destination": "artifacts/root/task",
+                    "type": "file",
+                    "status": "ok",
+                    "service": None,
+                }
+            ]
+        )
+    )
+    trial = SimpleNamespace(paths=SimpleNamespace(artifacts_dir=artifacts_dir))
+
+    with pytest.raises(RuntimeError, match="missing or not a real directory"):
+        _patches._validate_task_snapshot(trial)
+    assert not hasattr(trial, "_sevb_task_snapshot_path")
 
 
 def test_cleanup_fails_if_harbor_swallow_leaves_main_running() -> None:

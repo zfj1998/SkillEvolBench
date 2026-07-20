@@ -87,8 +87,8 @@ def test_package_is_deterministic_complete_and_secret_free(tmp_path: Path) -> No
 
     content_hashes: set[str] = set()
     for environment_id in ENVIRONMENT_IDS:
-        instance_rel = Path("v1@4") / f"{environment_id}.json"
-        content_rel = Path("v1@4-assets") / environment_id / "content.tgz"
+        instance_rel = Path("v1@5") / f"{environment_id}.json"
+        content_rel = Path("v1@5-assets") / environment_id / "content.tgz"
         instance_path = output_one / instance_rel
         content_path = output_one / content_rel
         assert instance_path.is_file()
@@ -159,7 +159,7 @@ def test_dirty_tracked_files_are_rejected_unless_explicitly_allowed(
         allow_dirty=True,
     )
     outer_files, _ = _outer_members(
-        tmp_path / "allowed" / "v1@4-assets" / "E1" / "content.tgz"
+        tmp_path / "allowed" / "v1@5-assets" / "E1" / "content.tgz"
     )
     with tarfile.open(
         fileobj=io.BytesIO(outer_files["source.tar.gz"]), mode="r:gz"
