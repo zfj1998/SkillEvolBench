@@ -8,12 +8,12 @@ intentionally cover all 30 families and 180 tasks.
 Output layout (``--output-root`` is the dataset-name directory)::
 
     <output-root>/
-      v1@6/E1.json
+      v1@7/E1.json
       ...
-      v1@6/E6.json
-      v1@6-assets/E1/content.tgz
+      v1@7/E6.json
+      v1@7-assets/E1/content.tgz
       ...
-      v1@6-assets/E6/content.tgz
+      v1@7-assets/E6/content.tgz
       package-manifest.json
 
 Each outer ``content.tgz`` contains ``source.tar.gz``, ``episode.json``, and
@@ -44,7 +44,7 @@ from typing import Any, Iterable
 
 ENVIRONMENT_IDS = tuple(f"E{i}" for i in range(1, 7))
 DEFAULT_DATASET = "skillevolbench/skillevolbench"
-DEFAULT_SPLIT = "v1@6"
+DEFAULT_SPLIT = "v1@7"
 ARCHIVE_ROOT = "skillevolbench"
 REVISION_FILE = ".skillevolbench-revision"
 SAFE_ENV_SUFFIXES = {".dist", ".example", ".sample", ".template"}

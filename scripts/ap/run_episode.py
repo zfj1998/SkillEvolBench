@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import secrets
 import subprocess
 import sys
 import traceback
@@ -33,6 +34,11 @@ from skillevolbench.schemas import (  # noqa: E402
 )
 
 
+_NO_AUTH_PLACEHOLDERS = frozenset(
+    {"DUMMY", "EMPTY", "NONE", "NOT-REQUIRED", "NOT_REQUIRED", "NULL"}
+)
+
+
 def _env_bool(name: str, default: bool) -> bool:
     raw = os.environ.get(name)
     if raw is None or raw == "":
@@ -49,6 +55,21 @@ def _required_env(name: str) -> str:
     value = os.environ.get(name, "").strip()
     if not value:
         raise ValueError(f"Required environment variable {name} is empty")
+    return value
+
+
+def _runtime_model_api_key(value: str) -> str:
+    """Replace no-auth sentinels with a collision-resistant runtime value.
+
+    Harbor scrubs resolved sensitive environment values from every text file in
+    a trial directory. A generic sentinel such as ``EMPTY`` can therefore
+    corrupt ordinary source identifiers and trajectory text. The local SGLang
+    endpoint does not authenticate, but the client still requires a non-empty
+    key, so use an ephemeral high-entropy value that Harbor can safely scrub.
+    """
+
+    if value.strip().upper() in _NO_AUTH_PLACEHOLDERS:
+        return f"sevb-no-auth-{secrets.token_hex(24)}"
     return value
 
 
@@ -113,7 +134,7 @@ def _actionable_exception(exc: BaseException) -> BaseException:
 def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
     model = _required_env("MODEL")
     model_base_url = _required_env("MODEL_BASE_URL").rstrip("/")
-    model_api_key = _required_env("MODEL_API_KEY")
+    model_api_key = _runtime_model_api_key(_required_env("MODEL_API_KEY"))
     harbor_agent = os.environ.get("HARBOR_AGENT", "opencode").strip() or "opencode"
     provider = os.environ.get("MODEL_PROVIDER", "sglang").strip() or "sglang"
     if harbor_agent not in {"codex", "opencode"}:
@@ -127,6 +148,7 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
     )
 
     os.environ["OPENAI_BASE_URL"] = model_base_url
+    os.environ["MODEL_API_KEY"] = model_api_key
     os.environ["OPENAI_API_KEY"] = model_api_key
     if harbor_agent == "codex":
         os.environ["CODEX_MODEL_PROVIDER"] = provider

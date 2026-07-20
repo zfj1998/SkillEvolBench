@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import json
 import builtins
+import hashlib
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from scripts.ap import run_episode
-from scripts.ap.mask_secrets import mask_tree
+from scripts.ap.mask_secrets import SANITIZATION_MANIFEST, mask_tree
 from skillevolbench.baselines import load_baseline
 from skillevolbench.components import UnscoreableTrialError
 from skillevolbench.schemas import RunConfig, StrategyConfig
@@ -265,6 +266,24 @@ def test_build_config_routes_opencode_via_chat_completions_without_secret(
     assert run_episode.os.environ["OPENAI_BASE_URL"] == "http://model.example/v1"
 
 
+def test_build_config_replaces_generic_no_auth_placeholder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("INSTANCE_ID", "E1")
+    monkeypatch.setenv("MODEL", "served-model")
+    monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1")
+    monkeypatch.setenv("MODEL_API_KEY", "EMPTY")
+    monkeypatch.setattr(run_episode.secrets, "token_hex", lambda size: "ab" * size)
+
+    config = run_episode._build_config(tmp_path)
+
+    runtime_key = "sevb-no-auth-" + "ab" * 24
+    assert run_episode.os.environ["MODEL_API_KEY"] == runtime_key
+    assert run_episode.os.environ["OPENAI_API_KEY"] == runtime_key
+    assert runtime_key not in json.dumps(config.baseline.agent_kwargs)
+
+
 def test_build_config_uses_absolute_dind_shared_workspace(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -369,7 +388,11 @@ def test_mask_tree_redacts_env_values_and_keyed_credentials(
         "export AWS_SECRET_ACCESS_KEY=shell-secret\n"
     )
     ignored_path = tmp_path / "binary.bin"
-    ignored_path.write_bytes(b"model-secret-123")
+    ignored_path.write_bytes(b"\x00\xff")
+    runtime_digests = {
+        "episode.log": hashlib.sha256(log_path.read_bytes()).hexdigest(),
+        "metrics.json": hashlib.sha256(json_path.read_bytes()).hexdigest(),
+    }
 
     assert mask_tree(tmp_path) == 2
 
@@ -383,7 +406,261 @@ def test_mask_tree_redacts_env_values_and_keyed_credentials(
         "Authorization: Bearer [REDACTED]\n"
         "export AWS_SECRET_ACCESS_KEY=[REDACTED]\n"
     )
-    assert ignored_path.read_bytes() == b"model-secret-123"
+    assert ignored_path.read_bytes() == b"\x00\xff"
+
+    manifest = json.loads((tmp_path / SANITIZATION_MANIFEST).read_text())
+    assert manifest["schema_version"] == 1
+    assert manifest["hash_algorithm"] == "sha256"
+    assert manifest["scope"] == "changed-utf8-regular-files"
+    assert manifest["excluded_mutable_paths"] == ["logs/main.log"]
+    assert manifest["changed_file_count"] == 2
+    assert [entry["path"] for entry in manifest["changed_files"]] == [
+        "episode.log",
+        "metrics.json",
+    ]
+    for entry in manifest["changed_files"]:
+        delivered = (tmp_path / entry["path"]).read_bytes()
+        assert entry["runtime_sha256"] == runtime_digests[entry["path"]]
+        assert entry["delivered_sha256"] == hashlib.sha256(delivered).hexdigest()
+        assert entry["runtime_size"] > entry["delivered_size"]
+        assert entry["delivered_size"] == len(delivered)
+
+
+def test_mask_tree_does_not_globally_replace_safe_placeholder_and_is_idempotent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "EMPTY")
+    source = tmp_path / "trace.json"
+    source.write_text(
+        json.dumps(
+            {
+                "source": 'LEGACY_EMPTY_REGION = "EMPTY"',
+                "api_key": "EMPTY",
+            }
+        )
+    )
+    before_sha256 = hashlib.sha256(source.read_bytes()).hexdigest()
+
+    assert mask_tree(tmp_path) == 1
+    assert json.loads(source.read_text()) == {
+        "source": 'LEGACY_EMPTY_REGION = "EMPTY"',
+        "api_key": "[REDACTED]",
+    }
+
+    manifest_path = tmp_path / SANITIZATION_MANIFEST
+    manifest = json.loads(manifest_path.read_text())
+    assert manifest["changed_file_count"] == 1
+    assert manifest["changed_files"] == [
+        {
+            "path": "trace.json",
+            "runtime_sha256": before_sha256,
+            "delivered_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+            "runtime_size": len(
+                json.dumps(
+                    {
+                        "source": 'LEGACY_EMPTY_REGION = "EMPTY"',
+                        "api_key": "EMPTY",
+                    }
+                ).encode()
+            ),
+            "delivered_size": len(source.read_bytes()),
+        }
+    ]
+    manifest_bytes = manifest_path.read_bytes()
+
+    assert mask_tree(tmp_path) == 0
+    assert manifest_path.read_bytes() == manifest_bytes
+
+
+def test_mask_tree_rejects_symlinks_outside_artifact_root(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "model-secret-123")
+    outside = tmp_path.parent / "outside.log"
+    outside.write_text("model-secret-123\n")
+    (tmp_path / "linked.log").symlink_to(outside)
+
+    with pytest.raises(RuntimeError, match="symlink outside output root"):
+        mask_tree(tmp_path)
+    assert outside.read_text() == "model-secret-123\n"
+
+
+def test_mask_tree_rejects_secret_in_symlink_target(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "model-secret-123")
+    (tmp_path / "harmless-link").symlink_to("model-secret-123")
+
+    with pytest.raises(RuntimeError, match="symlink target contains"):
+        mask_tree(tmp_path)
+
+
+def test_mask_tree_allows_internal_symlinks_without_following_them(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "model-secret-123")
+    target = tmp_path / "target.log"
+    target.write_text("model-secret-123\n")
+    (tmp_path / "linked.log").symlink_to(target.name)
+
+    assert mask_tree(tmp_path) == 1
+    assert target.read_text() == "[REDACTED]\n"
+    assert (tmp_path / "linked.log").is_symlink()
+
+
+def test_mask_tree_manifest_seals_tree_against_later_changes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "model-secret-123")
+    first = tmp_path / "first.log"
+    first.write_text("model-secret-123\n")
+
+    assert mask_tree(tmp_path) == 1
+    manifest_path = tmp_path / SANITIZATION_MANIFEST
+    manifest_bytes = manifest_path.read_bytes()
+
+    second = tmp_path / "second.log"
+    second.write_text("model-secret-123\n")
+    with pytest.raises(RuntimeError, match="already seals"):
+        mask_tree(tmp_path)
+
+    assert manifest_path.read_bytes() == manifest_bytes
+    assert second.read_text() == "model-secret-123\n"
+
+
+def test_mask_tree_excludes_active_platform_log_from_digest_inventory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "model-secret-123")
+    main_log = tmp_path / "logs" / "main.log"
+    main_log.parent.mkdir()
+    main_log.write_text("model-secret-123\n")
+    active_writer = main_log.open("a")
+    original_inode = main_log.stat().st_ino
+
+    try:
+        assert mask_tree(tmp_path) == 1
+        assert main_log.stat().st_ino != original_inode
+        active_writer.write("model-secret-123 appended after snapshot\n")
+        active_writer.flush()
+    finally:
+        active_writer.close()
+    assert main_log.read_text() == "[REDACTED]\n"
+    manifest = json.loads((tmp_path / SANITIZATION_MANIFEST).read_text())
+    assert manifest["changed_file_count"] == 0
+    assert manifest["changed_files"] == []
+
+    with main_log.open("a") as stream:
+        stream.write("finalizer completed\n")
+    assert mask_tree(tmp_path) == 0
+
+
+def test_mask_tree_rejects_manifest_with_tampered_size(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "model-secret-123")
+    artifact = tmp_path / "trace.json"
+    artifact.write_text('{"api_key":"model-secret-123"}\n')
+    assert mask_tree(tmp_path) == 1
+
+    manifest_path = tmp_path / SANITIZATION_MANIFEST
+    manifest = json.loads(manifest_path.read_text())
+    manifest["changed_files"][0]["delivered_size"] += 1
+    manifest_path.write_text(json.dumps(manifest))
+
+    with pytest.raises(RuntimeError, match="digest mismatch"):
+        mask_tree(tmp_path)
+
+
+def test_mask_tree_rejects_non_utf8_supported_artifact(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "broken.log").write_bytes(b"\xff")
+
+    with pytest.raises(RuntimeError, match="cannot sanitize text artifact"):
+        mask_tree(tmp_path)
+    assert not (tmp_path / SANITIZATION_MANIFEST).exists()
+
+
+def test_mask_tree_rejects_symlinked_root(tmp_path: Path) -> None:
+    real_root = tmp_path / "real"
+    real_root.mkdir()
+    linked_root = tmp_path / "linked"
+    linked_root.symlink_to(real_root, target_is_directory=True)
+
+    with pytest.raises(RuntimeError, match="must be a real directory"):
+        mask_tree(linked_root)
+
+
+def test_mask_tree_replacements_do_not_cascade(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "long-secret")
+    monkeypatch.setenv("OPENAI_API_KEY", "DACT")
+    artifact = tmp_path / "trace.log"
+    artifact.write_text("long-secret DACT\n")
+
+    assert mask_tree(tmp_path) == 1
+    assert artifact.read_text() == "[REDACTED] [REDACTED]\n"
+
+
+def test_mask_tree_rejects_short_non_placeholder_secret(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "abc")
+    artifact = tmp_path / "trace.log"
+    artifact.write_text("abc\n")
+
+    with pytest.raises(RuntimeError, match="MODEL_API_KEY"):
+        mask_tree(tmp_path)
+    assert artifact.read_text() == "abc\n"
+    assert not (tmp_path / SANITIZATION_MANIFEST).exists()
+
+
+def test_mask_tree_masks_exact_secret_in_source_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "model-secret-123")
+    source = tmp_path / "example.py"
+    source.write_text('TOKEN = "model-secret-123"\n')
+
+    assert mask_tree(tmp_path) == 1
+    assert source.read_text() == 'TOKEN = "[REDACTED]"\n'
+    manifest = json.loads((tmp_path / SANITIZATION_MANIFEST).read_text())
+    assert [entry["path"] for entry in manifest["changed_files"]] == ["example.py"]
+
+
+def test_mask_tree_rejects_secret_in_non_utf8_artifact(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "model-secret-123")
+    binary = tmp_path / "payload.bin"
+    binary.write_bytes(b"\xffmodel-secret-123\x00")
+
+    with pytest.raises(RuntimeError, match="non-UTF-8 artifact"):
+        mask_tree(tmp_path)
+    assert not (tmp_path / SANITIZATION_MANIFEST).exists()
+
+
+def test_mask_tree_rejects_nested_manifest_name(tmp_path: Path) -> None:
+    nested = tmp_path / "nested" / SANITIZATION_MANIFEST
+    nested.parent.mkdir()
+    nested.write_text("not the root manifest\n")
+
+    with pytest.raises(RuntimeError, match="nested sanitization manifest"):
+        mask_tree(tmp_path)
+    assert not (tmp_path / SANITIZATION_MANIFEST).exists()
 
 
 def test_sanitize_error_redacts_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
