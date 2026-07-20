@@ -15,6 +15,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 : "${CODEX_CLI_VERSION:=latest}"
 : "${KIMI_CLI_VERSION:=latest}"
 : "${OPENCLAW_VERSION:=latest}"
+: "${APT_MIRROR:=http://us-east-1.ec2.archive.ubuntu.com/ubuntu}"
+: "${AGENT_CLI_SET:=all}"
 
 sanitize_tag_part() {
   printf '%s' "$1" | tr '/:@+' '----' | tr -cd '[:alnum:]_.-'
@@ -32,6 +34,8 @@ read -r -a CONTAINER_BUILD_ARGS_ARRAY <<< "$CONTAINER_BUILD_ARGS"
   --build-arg "CODEX_CLI_VERSION=$CODEX_CLI_VERSION" \
   --build-arg "KIMI_CLI_VERSION=$KIMI_CLI_VERSION" \
   --build-arg "OPENCLAW_VERSION=$OPENCLAW_VERSION" \
+  --build-arg "APT_MIRROR=$APT_MIRROR" \
+  --build-arg "AGENT_CLI_SET=$AGENT_CLI_SET" \
   -f "$SCRIPT_DIR/Dockerfile" \
   -t "$IMAGE_NAME:$IMAGE_TAG" \
   "$SCRIPT_DIR"
@@ -42,6 +46,7 @@ VERSION_TAG="$VERSION_TAG-gemini-$(sanitize_tag_part "$GEMINI_CLI_VERSION")"
 VERSION_TAG="$VERSION_TAG-codex-$(sanitize_tag_part "$CODEX_CLI_VERSION")"
 VERSION_TAG="$VERSION_TAG-kimi-$(sanitize_tag_part "$KIMI_CLI_VERSION")"
 VERSION_TAG="$VERSION_TAG-openclaw-$(sanitize_tag_part "$OPENCLAW_VERSION")"
+VERSION_TAG="$VERSION_TAG-clis-$(sanitize_tag_part "$AGENT_CLI_SET")"
 
 "$CONTAINER_BUILDER" "${CONTAINER_BUILDER_ARGS_ARRAY[@]}" tag "$IMAGE_NAME:$IMAGE_TAG" "$IMAGE_NAME:$VERSION_TAG"
 

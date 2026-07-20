@@ -21,6 +21,7 @@ from skillevolbench.metrics.composition import (
     compute_t6_composition,
 )
 from skillevolbench.metrics.cost import CostReport, compute_cost
+from skillevolbench.metrics.evolution_replay import compute_evolution_replay
 from skillevolbench.metrics.library_health import (
     LibraryHealthReport,
     compute_library_health,
@@ -42,7 +43,6 @@ from skillevolbench.schemas import RunConfig
 from skillevolbench.stores import (
     EventStore,
     LibraryStore,
-    NullLibrary,
     ReplayStore,
     RetrievalStore,
 )
@@ -97,7 +97,11 @@ class FullReport(BaseModel):
     baseline_name: str
     strategy_name: str
     order_seed: str
+    environment_id: Optional[str] = None
     n_tasks_attempted: int = 0
+    n_primary_trials: int = 0
+    n_replay_trials: int = 0
+    n_shadow_trials: int = 0
 
     # Metric sections (stored as dicts so the schema doesn't need to track
     # every dataclass; loaders can re-parse via the dataclass functions).
@@ -107,6 +111,7 @@ class FullReport(BaseModel):
     retrieval: dict[str, Any] = Field(default_factory=dict)
     t6_composition: dict[str, Any] = Field(default_factory=dict)
     transfer: dict[str, Any] = Field(default_factory=dict)
+    evolution_replay: dict[str, Any] = Field(default_factory=dict)
     cost: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -140,20 +145,43 @@ class ReportGenerator:
     # Main entry
     # ------------------------------------------------------------------
 
+    def _load_manifest_skills(self) -> list[Any]:
+        """Load final skills from global or per-environment libraries.
+
+        ``library_scope=environment`` stores independent repositories at
+        ``library/E1`` ... ``library/E6``. The parent directory is not itself
+        a ``LibraryStore`` and has no manifest, so treating it as one makes
+        report generation fail after an otherwise successful run.
+        """
+        if not self.run_config.baseline.use_skill_library:
+            return []
+
+        lib_dir = self.run_root / "library"
+        if not lib_dir.exists():
+            return []
+
+        scope = getattr(self.run_config.baseline, "library_scope", "global")
+        if scope == "environment":
+            roots = sorted(
+                path
+                for path in lib_dir.iterdir()
+                if path.is_dir() and (path / "manifest.yaml").is_file()
+            )
+        else:
+            roots = [lib_dir] if (lib_dir / "manifest.yaml").is_file() else []
+
+        manifest_skills: list[Any] = []
+        for root in roots:
+            manifest_skills.extend(LibraryStore(root).list_all())
+        return manifest_skills
+
     def generate(self) -> FullReport:
         replay = ReplayStore(self.run_root / "stores" / "replay")
         events = EventStore(self.run_root / "stores" / "events")
 
-        # Library: real or absent (control baselines).
-        lib_dir = self.run_root / "library"
-        if lib_dir.exists():
-            library = LibraryStore(lib_dir)
-            manifest_skills = list(library.list_all())
-            library_skill_ids = {s.skill_id for s in manifest_skills}
-        else:
-            library = NullLibrary()
-            manifest_skills = []
-            library_skill_ids = set()
+        # Library: aggregate all environment-scoped manifests when needed.
+        manifest_skills = self._load_manifest_skills()
+        library_skill_ids = {s.skill_id for s in manifest_skills}
 
         retrieval_dir = self.run_root / "stores" / "retrieval"
         retrieval = (
@@ -161,6 +189,18 @@ class ReportGenerator:
         )
 
         records = replay.all_records()
+        primary_records = [
+            record for record in records
+            if getattr(record, "replay_mode", "primary") == "primary"
+        ]
+        replay_records = [
+            record for record in records
+            if getattr(record, "replay_mode", "primary") == "within_env_replay"
+        ]
+        shadow_records = [
+            record for record in records
+            if getattr(record, "replay_mode", "primary") == "shadow_oracle"
+        ]
         retrieval_events = retrieval.all_events() if retrieval else []
 
         # 1. Task success
@@ -185,7 +225,7 @@ class ReportGenerator:
         # 3. Revision safety
         rev_section = compute_revision_safety(
             patch_events=events.all_events(channel="patches"),
-            replay_records=records,
+            replay_records=primary_records,
         )
 
         # 4. Retrieval
@@ -207,22 +247,31 @@ class ReportGenerator:
             task_specs = {}
             task_orders = {}
         comp_section = compute_t6_composition(
-            replay_records=records,
+            replay_records=primary_records,
             retrieval_events=retrieval_events,
             library_skill_ids=library_skill_ids,
             task_specs=task_specs,
             task_compose_orders=task_orders,
+            oracle_records=shadow_records or None,
         )
 
         # 6. Transfer
-        original_records_by_task = {r.task_id: r for r in records}
+        original_records_by_task = {r.task_id: r for r in primary_records}
+        retention_records = (
+            self.retention_replay_records
+            if self.retention_replay_records is not None
+            else (replay_records or None)
+        )
         transfer_section = compute_transfer(
-            replay_records=records,
-            retention_replay_records=self.retention_replay_records,
+            replay_records=primary_records,
+            retention_replay_records=retention_records,
             original_records_by_task=original_records_by_task,
         )
 
-        # 7. Cost
+        # 7. Paired original -> within-environment replay outcomes.
+        evolution_section = compute_evolution_replay(records)
+
+        # 8. Cost
         n_passed = sum(1 for r in records if r.outcome.verifier_passed)
         cost_section = compute_cost(
             event_counts=event_counts,
@@ -238,13 +287,18 @@ class ReportGenerator:
             baseline_name=self.run_config.baseline.name,
             strategy_name=self.run_config.strategy.name,
             order_seed=self.run_config.order_seed,
+            environment_id=self.run_config.environment_id,
             n_tasks_attempted=len(records),
+            n_primary_trials=len(primary_records),
+            n_replay_trials=len(replay_records),
+            n_shadow_trials=len(shadow_records),
             task_success=_to_dict(task_section),
             library_health=_to_dict(lib_section),
             revision_safety=_to_dict(rev_section),
             retrieval=_to_dict(retr_section),
             t6_composition=_to_dict(comp_section),
             transfer=_to_dict(transfer_section),
+            evolution_replay=_to_dict(evolution_section),
             cost=_to_dict(cost_section),
         )
 

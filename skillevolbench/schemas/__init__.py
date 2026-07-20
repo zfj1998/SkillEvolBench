@@ -34,6 +34,7 @@ from skillevolbench.schemas.run import (
     LLMDefaults,
     HarborOrchestratorType,
     OrderSeed,
+    EnvironmentId,
 )
 
 # Part 5 (skill / replay / event / retrieval)
@@ -98,6 +99,7 @@ __all__ = [
     "LLMDefaults",
     "HarborOrchestratorType",
     "OrderSeed",
+    "EnvironmentId",
     # Part 5: skill
     "SkillStatus",
     "OperationType",

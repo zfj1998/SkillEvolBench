@@ -8,6 +8,8 @@ set -euo pipefail
 : "${CODEX_CLI_VERSION:=latest}"
 : "${KIMI_CLI_VERSION:=latest}"
 : "${OPENCLAW_VERSION:=latest}"
+: "${APT_MIRROR:=http://us-east-1.ec2.archive.ubuntu.com/ubuntu}"
+: "${AGENT_CLI_SET:=all}"
 
 export HOME="${HOME:-/root}"
 export DEBIAN_FRONTEND="${DEBIAN_FRONTEND:-noninteractive}"
@@ -17,14 +19,25 @@ export PIP_DISABLE_PIP_VERSION_CHECK="${PIP_DISABLE_PIP_VERSION_CHECK:-1}"
 export PIP_NO_CACHE_DIR="${PIP_NO_CACHE_DIR:-1}"
 export OPENCLAW_PLUGIN_STAGE_DIR="${OPENCLAW_PLUGIN_STAGE_DIR:-/opt/openclaw-plugin-stage}"
 
+agent_cli_enabled() {
+  local requested normalized
+  requested="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+  normalized=",$(printf '%s' "$AGENT_CLI_SET" \
+    | tr '[:upper:] ' '[:lower:],' \
+    | tr -s ','),"
+  case "$normalized" in
+    *,all,*|*,"$requested",*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 configure_apt_mirror() {
-  # Switch to the EC2-internal Ubuntu mirror in us-east-1 -- archive.ubuntu.com
-  # routes over the public internet and frequently times out from AWS, which
-  # made `apt-get install nodejs npm` in per-task Dockerfiles hang for 10+ min.
-  # ec2.archive.ubuntu.com is on the AWS backbone (no egress charge, ~100MB/s).
+  # Use a deployment-local mirror. The AWS default avoids public egress for
+  # the original benchmark environment; AP builds can override APT_MIRROR
+  # with a mirror reachable from their cluster (for example an Aliyun mirror).
   # Ubuntu 24.04 (noble) uses the new deb822 format under
   # /etc/apt/sources.list.d/ubuntu.sources; older releases keep sources.list.
-  local mirror="http://us-east-1.ec2.archive.ubuntu.com/ubuntu"
+  local mirror="$APT_MIRROR"
   if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
     sed -i \
       -e "s|http://archive.ubuntu.com/ubuntu|$mirror|g" \
@@ -229,31 +242,40 @@ cleanup_caches() {
 verify_installations() {
   node --version
   npm --version
-  claude --version
-  gemini --version
-  codex --version
-  kimi --version
-  openclaw --version
+  if agent_cli_enabled claude-code; then claude --version; fi
+  if agent_cli_enabled gemini-cli; then gemini --version; fi
+  if agent_cli_enabled codex; then codex --version; fi
+  if agent_cli_enabled kimi-cli; then kimi --version; fi
+  if agent_cli_enabled openclaw; then openclaw --version; fi
 }
 
 install_system_packages
 ensure_nvm
 
-npm_install_global "@anthropic-ai/claude-code" "$CLAUDE_CODE_VERSION"
-npm_install_global "@google/gemini-cli" "$GEMINI_CLI_VERSION"
-npm_install_global "@openai/codex" "$CODEX_CLI_VERSION"
-npm_install_global "openclaw" "$OPENCLAW_VERSION"
+if agent_cli_enabled claude-code; then
+  npm_install_global "@anthropic-ai/claude-code" "$CLAUDE_CODE_VERSION"
+fi
+if agent_cli_enabled gemini-cli; then
+  npm_install_global "@google/gemini-cli" "$GEMINI_CLI_VERSION"
+  configure_gemini_settings
+fi
+if agent_cli_enabled codex; then
+  npm_install_global "@openai/codex" "$CODEX_CLI_VERSION"
+fi
+if agent_cli_enabled openclaw; then
+  npm_install_global "openclaw" "$OPENCLAW_VERSION"
+fi
 
-configure_gemini_settings
 link_binary node
 link_binary npm
 link_binary npx
-link_binary claude
-link_binary gemini
-link_binary codex
-link_binary openclaw
-
-prewarm_openclaw
-install_kimi_cli
+if agent_cli_enabled claude-code; then link_binary claude; fi
+if agent_cli_enabled gemini-cli; then link_binary gemini; fi
+if agent_cli_enabled codex; then link_binary codex; fi
+if agent_cli_enabled openclaw; then
+  link_binary openclaw
+  prewarm_openclaw
+fi
+if agent_cli_enabled kimi-cli; then install_kimi_cli; fi
 cleanup_caches
 verify_installations

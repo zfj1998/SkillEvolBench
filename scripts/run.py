@@ -149,22 +149,25 @@ def _build_run_config(args: argparse.Namespace) -> RunConfig:
         run_id = RunConfig.make_run_id(
             baseline.name, strategy.name, args.order_seed,
         )
-        if model_short_id:
-            # Insert model token before the timestamp:
+        run_tokens = [token for token in (model_short_id, args.environment_id) if token]
+        if run_tokens:
+            # Insert model/environment tokens before the seed + timestamp:
             #   selfgen__chain__seedA__20260501_2030
-            #   -> selfgen__chain__sonnet-4-6__seedA__20260501_2030
+            #   -> selfgen__chain__model-id__E1__seedA__20260501_2030
             parts = run_id.split("__")
             # parts = [baseline, strategy, "seedX", timestamp]
-            run_id = "__".join(parts[:2] + [model_short_id] + parts[2:])
+            run_id = "__".join(parts[:2] + run_tokens + parts[2:])
     return RunConfig(
         run_id=run_id,
         baseline=baseline,
         strategy=strategy,
         order_seed=args.order_seed,
+        environment_id=args.environment_id,
         workspace_root=Path(args.workspace_root),
         api_base=args.api_base,
         api_key_env_var=args.api_key_env_var,
         dry_run=args.dry_run,
+        max_tasks=args.max_tasks,
     )
 
 
@@ -180,6 +183,12 @@ def main(argv: list[str] | None = None) -> int:
                         "Overrides baseline.harbor_agent_name + baseline.model_name "
                         "and exports agent_env vars.")
     p.add_argument("--order-seed", default="A", choices=["A", "B", "C"])
+    p.add_argument(
+        "--environment-id",
+        choices=[f"E{i}" for i in range(1, 7)],
+        default=None,
+        help="run one complete environment episode (AP execution unit)",
+    )
     p.add_argument("--run-id", help="override the auto-generated run_id")
     p.add_argument("--workspace-root", default="workspace/runs",
                    help="parent directory for run artifacts (default: workspace/runs)")
@@ -187,6 +196,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--api-key-env-var", default="ANTHROPIC_API_KEY")
     p.add_argument("--dry-run", action="store_true",
                    help="run preflight + scheduler only; no Harbor")
+    p.add_argument(
+        "--max-tasks",
+        type=int,
+        default=None,
+        help="truncate to N trials for infrastructure smoke only; not scoreable",
+    )
     p.add_argument("-v", "--verbose", action="store_true")
     args = p.parse_args(argv)
 
@@ -199,7 +214,7 @@ def main(argv: list[str] | None = None) -> int:
         runtime, ordered_tasks, _ = runner.prepare()
         print(f"Dry-run OK: run_id={config.run_id}")
         print(f"  baseline={config.baseline.name} strategy={config.strategy.name} "
-              f"seed={config.order_seed}")
+              f"seed={config.order_seed} environment={config.environment_id or 'all'}")
         print(f"  run_root={runtime.run_root}")
         print(f"  scheduled {len(ordered_tasks)} tasks")
         print(f"  first 3: {[r.spec.task_id for r in ordered_tasks[:3]]}")

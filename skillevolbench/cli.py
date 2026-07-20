@@ -77,9 +77,12 @@ def validate_configs_cmd(configs_root):
 
 @cli.command(name="dry-run-schedule")
 @click.option("--order-seed", default="A", type=click.Choice(["A", "B", "C"]))
+@click.option("--environment-id", default=None,
+              type=click.Choice([f"E{i}" for i in range(1, 7)]),
+              help="show one complete environment episode")
 @click.option("--show", default=10, type=int,
               help="how many head + tail tasks to display")
-def dry_run_schedule_cmd(order_seed, show):
+def dry_run_schedule_cmd(order_seed, environment_id, show):
     """Print the canonical task execution order."""
     from skillevolbench.discovery import (
         TaskRegistry, default_skills_root, default_tasks_root,
@@ -90,10 +93,16 @@ def dry_run_schedule_cmd(order_seed, show):
     repo_root = Path(__file__).resolve().parent.parent
     registry = TaskRegistry.from_disk(default_skills_root(), default_tasks_root())
     env_orders = EnvOrders.from_yaml(repo_root / "configs" / "env_orders.yaml")
-    order = compute_task_order(registry, env_orders, order_seed)
-    assert_order_invariants(order)
+    order = compute_task_order(
+        registry, env_orders, order_seed, environment_id=environment_id,
+    )
+    assert_order_invariants(
+        order,
+        expected_environment_ids=[environment_id] if environment_id else None,
+    )
 
     click.echo(f"Order seed: {order_seed}")
+    click.echo(f"Environment: {environment_id or 'all'}")
     click.echo(f"Total: {len(order)} tasks")
     click.echo()
     click.echo("Head:")
@@ -116,6 +125,9 @@ def dry_run_schedule_cmd(order_seed, show):
 @click.option("--model-yaml", type=click.Path(path_type=Path), default=None,
               help="optional configs/models/*.yaml preset")
 @click.option("--order-seed", default="A", type=click.Choice(["A", "B", "C"]))
+@click.option("--environment-id", default=None,
+              type=click.Choice([f"E{i}" for i in range(1, 7)]),
+              help="run one complete environment episode (AP execution unit)")
 @click.option("--run-id", default=None, help="override the auto-generated run_id")
 @click.option("--workspace-root", type=click.Path(path_type=Path),
               default="workspace/runs",
@@ -124,9 +136,12 @@ def dry_run_schedule_cmd(order_seed, show):
 @click.option("--api-key-env-var", default="ANTHROPIC_API_KEY")
 @click.option("--dry-run", is_flag=True,
               help="run preflight + scheduler only")
+@click.option("--max-tasks", default=None, type=click.IntRange(min=1),
+              help="truncate to N trials for infrastructure smoke only")
 @click.option("-v", "--verbose", is_flag=True)
-def run_cmd(baseline, baseline_name, strategy, model_yaml, order_seed, run_id,
-            workspace_root, api_base, api_key_env_var, dry_run, verbose):
+def run_cmd(baseline, baseline_name, strategy, model_yaml, order_seed,
+            environment_id, run_id, workspace_root, api_base,
+            api_key_env_var, dry_run, max_tasks, verbose):
     """Launch one lifelong benchmark run."""
     from scripts.run import main as _main
 
@@ -140,6 +155,8 @@ def run_cmd(baseline, baseline_name, strategy, model_yaml, order_seed, run_id,
     if model_yaml:
         args += ["--model-yaml", str(model_yaml)]
     args += ["--order-seed", order_seed]
+    if environment_id:
+        args += ["--environment-id", environment_id]
     if run_id:
         args += ["--run-id", run_id]
     args += ["--workspace-root", str(workspace_root)]
@@ -148,6 +165,8 @@ def run_cmd(baseline, baseline_name, strategy, model_yaml, order_seed, run_id,
     args += ["--api-key-env-var", api_key_env_var]
     if dry_run:
         args.append("--dry-run")
+    if max_tasks is not None:
+        args += ["--max-tasks", str(max_tasks)]
     if verbose:
         args.append("-v")
     raise SystemExit(_main(args))

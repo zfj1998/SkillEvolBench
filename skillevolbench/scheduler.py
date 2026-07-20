@@ -13,10 +13,11 @@ Produces the canonical global execution order::
                 yield task                          # 3 tasks
         # OPTIONAL within-env replay block (when ``within_env_replay``):
         for family in families_in_env(env):
-            for role in all 6 roles:
+            for role in [canonical, enriched, variant]:
                 yield task as REPLAY (TaskRecord.is_replay=True)
 
-= 180 tasks total per run (or 360 when ``within_env_replay=True``).
+= 180 tasks total per run (270 with the default learning replay, or 360 when
+``replay_eval=True`` also replays T4-T6).
 Deterministic given ``(registry, env_orders, seed, within_env_replay)``.
 
 The "learning block runs before eval block" structure is the
@@ -26,15 +27,16 @@ means T1-T3 of every same-env family must have run first.
 
 Replay block (when enabled) runs LAST within each env: library is at its
 post-evolution state, frozen since T4 began; replays observe that state
-and never mutate it. Replays cover all 6 roles (T1-T6) so we can compare
-T1 replay (against the evolved library) to T1 original (against the
-empty / v0 library) -- the evolution-lift signal.
+and never mutate it. Replays cover T1-T3 by default so we can compare T1
+replay (against the evolved library) to T1 original (against the empty / v0
+library) -- the evolution-lift signal. ``replay_eval=True`` adds T4-T6 for
+variance-focused ablations.
 """
 
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Iterator, Optional
+from typing import Iterable, Iterator, Optional
 
 from skillevolbench.discovery import TaskRegistry, TaskRecord
 from skillevolbench.schemas import EnvOrders, OrderSeed, TaskRole
@@ -62,6 +64,7 @@ def compute_task_order(
     order_seed: OrderSeed,
     within_env_replay: bool = False,
     replay_eval: bool = False,
+    environment_id: Optional[str] = None,
 ) -> list[TaskRecord]:
     """Build the ordered list of TaskRecords for a run.
 
@@ -74,15 +77,28 @@ def compute_task_order(
     order_seed
         ``"A" | "B" | "C"``.
     within_env_replay
-        When True, after each env's 30 tasks the same 30 are emitted again
-        as replay records (``is_replay=True``). Total = 360 instead of 180.
+        When True, after each env's 30 tasks the 15 learning tasks are emitted
+        again as replay records (``is_replay=True``). ``replay_eval=True``
+        expands that replay block to all 30 tasks.
+    environment_id
+        Optional ``E1`` ... ``E6`` selector. When set, emit one complete,
+        stateful environment episode while preserving its canonical internal
+        order. This is the execution unit used by Agent Platform.
 
     Returns
     -------
-    A list of TaskRecords in canonical execution order. Length is 180
-    when ``within_env_replay=False`` else 360.
+    A list of TaskRecords in canonical execution order. For a full six-env
+    run the length is 180 without replay, 270 with learning replay, or 360
+    with evaluation replay too. A single environment has 30, 45, or 60.
     """
     env_sequence = env_orders.for_seed(order_seed)
+    if environment_id is not None:
+        if environment_id not in env_sequence:
+            raise ValueError(
+                f"environment_id must be one of {sorted(env_sequence)}; "
+                f"got {environment_id!r}"
+            )
+        env_sequence = [environment_id]
     return list(_iter_tasks(registry, env_sequence, within_env_replay, replay_eval))
 
 
@@ -137,19 +153,37 @@ def _resolve_task(
 # ---------------------------------------------------------------------------
 
 
-def assert_order_invariants(records: list[TaskRecord]) -> None:
+def assert_order_invariants(
+    records: list[TaskRecord],
+    *,
+    expected_environment_ids: Optional[Iterable[str]] = None,
+) -> None:
     """Re-check schedule invariants on a computed order.
 
     Engineering Design §2.4 -- the learning block of an env precedes its
     eval block. We verify by walking the list and checking that within each
     env, all learning-role records come before all eval-role records.
 
-    Total length depends on within_env_replay + replay_eval flags:
-      - replay off:                       180 (30/env x 6 envs)
-      - replay on, replay_eval=False:     270 (45/env -- 30 orig + 15 learning replays)
-      - replay on, replay_eval=True:      360 (60/env -- 30 orig + 30 replays)
+    By default all six environments are required. AP episode callers pass one
+    selected environment through ``expected_environment_ids``. Total length
+    is therefore ``N environments * {30, 45, 60}``, depending on replay mode.
     Original tasks must precede their replays within each env.
     """
+    expected_envs = list(
+        expected_environment_ids
+        if expected_environment_ids is not None
+        else (f"E{i}" for i in range(1, 7))
+    )
+    if not expected_envs or len(expected_envs) != len(set(expected_envs)):
+        raise AssertionError(
+            "expected_environment_ids must contain unique environment ids"
+        )
+    invalid_envs = set(expected_envs) - {f"E{i}" for i in range(1, 7)}
+    if invalid_envs:
+        raise AssertionError(
+            f"Invalid expected environment ids: {sorted(invalid_envs)}"
+        )
+
     # Defensive ``getattr``: legacy fixtures and ad-hoc test stubs may
     # pass record-shaped objects without the ``is_replay`` field. Default
     # to False so existing 180-task invariant checks still work for them.
@@ -160,18 +194,16 @@ def assert_order_invariants(records: list[TaskRecord]) -> None:
         r.spec.role.value in _EVAL_ROLES for r in replays
     )
     if not has_replay:
-        expected_total = 180
         expected_per_env = 30
         expected_replays_per_env = 0
     elif replays_include_eval:
-        expected_total = 360
         expected_per_env = 60
         expected_replays_per_env = 30
     else:
         # Learning-only replay (the recommended/cheaper default).
-        expected_total = 270
         expected_per_env = 45
         expected_replays_per_env = 15
+    expected_total = expected_per_env * len(expected_envs)
     if len(records) != expected_total:
         raise AssertionError(
             f"Expected {expected_total} tasks, got {len(records)}"
@@ -187,9 +219,10 @@ def assert_order_invariants(records: list[TaskRecord]) -> None:
             seen_envs.append(env_id)
         env_groups[env_id].append(r)
 
-    if len(env_groups) != 6:
+    if set(env_groups) != set(expected_envs):
         raise AssertionError(
-            f"Expected 6 environments, got {sorted(env_groups)}"
+            f"Expected environments {sorted(expected_envs)}, "
+            f"got {sorted(env_groups)}"
         )
 
     for env_id, group in env_groups.items():

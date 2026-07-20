@@ -1,0 +1,311 @@
+"""Run one SkillEvolBench environment episode under Agent Platform.
+
+AP injects template parameters as environment variables. This entrypoint turns
+those values into a validated RunConfig, keeps all generated state under
+``OUTPUT_DIR``, and always writes the AP ``metrics.json`` contract. It never
+persists model or platform credentials in the run manifest.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+import subprocess
+import sys
+import traceback
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from skillevolbench.baselines import load_baseline
+from skillevolbench.orchestration import LifelongRunner
+from skillevolbench.schemas import BaselineConfig, RunConfig, StrategyConfig
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.environ.get(name)
+    if raw is None or raw == "":
+        return default
+    normalized = raw.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"{name} must be a boolean, got {raw!r}")
+
+
+def _required_env(name: str) -> str:
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise ValueError(f"Required environment variable {name} is empty")
+    return value
+
+
+def _safe_git_revision() -> str:
+    revision_file = REPO_ROOT / ".skillevolbench-revision"
+    if revision_file.is_file():
+        revision = revision_file.read_text().strip()
+        if revision:
+            return revision
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=REPO_ROOT,
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except Exception:
+        return "unknown"
+
+
+def _sanitize_error(message: str) -> str:
+    sanitized = message
+    for env_name in (
+        "MODEL_API_KEY",
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "AP_API_KEY",
+        "OSS_ACCESS_KEY_ID",
+        "OSS_ACCESS_KEY_SECRET",
+    ):
+        value = os.environ.get(env_name, "")
+        if value:
+            sanitized = sanitized.replace(value, "[REDACTED]")
+    return sanitized[:2000]
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+
+def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
+    model = _required_env("MODEL")
+    model_base_url = _required_env("MODEL_BASE_URL").rstrip("/")
+    model_api_key = _required_env("MODEL_API_KEY")
+    harbor_agent = os.environ.get("HARBOR_AGENT", "codex").strip() or "codex"
+    provider = os.environ.get("MODEL_PROVIDER", "sglang").strip() or "sglang"
+    if harbor_agent != "codex":
+        raise ValueError(
+            "The AP OpenAI-compatible runner currently supports only "
+            f"HARBOR_AGENT='codex'; got {harbor_agent!r}"
+        )
+
+    wire_api = (
+        os.environ.get("CODEX_WIRE_API", "responses").strip() or "responses"
+    )
+
+    os.environ["OPENAI_BASE_URL"] = model_base_url
+    os.environ["OPENAI_API_KEY"] = model_api_key
+    os.environ["CODEX_MODEL_PROVIDER"] = provider
+    os.environ["CODEX_PROVIDER_ENV_KEY"] = "OPENAI_API_KEY"
+    os.environ["CODEX_WIRE_API"] = wire_api
+
+    # SkillAuthor/Judge/LLMSelfRetriever run in the AP main container rather
+    # than the Harbor task container. Route them to the same model endpoint.
+    os.environ["SEVB_HOST_LITELLM_MODEL"] = (
+        model if "/" in model else f"openai/{model}"
+    )
+    os.environ["SEVB_HOST_LITELLM_API_BASE"] = model_base_url
+    os.environ["SEVB_HOST_LITELLM_API_KEY"] = model_api_key
+
+    baseline_data = baseline.model_dump()
+    baseline_data["harbor_agent_name"] = harbor_agent
+    baseline_data["model_name"] = (
+        model if "/" in model else f"openai/{model}"
+    )
+    agent_kwargs = dict(baseline_data.get("agent_kwargs") or {})
+    # CodexPreinstalled consumes ``base_url``. Do not also populate
+    # RunConfig.api_base: job_builder would add a second ``api_base`` kwarg,
+    # which the adapter passes to Harbor's Codex constructor unchanged.
+    agent_kwargs.pop("api_base", None)
+    agent_kwargs.update(
+        {
+            "base_url": model_base_url,
+            "provider": provider,
+            "env_key": "OPENAI_API_KEY",
+            "wire_api": wire_api,
+        }
+    )
+    baseline_data["agent_kwargs"] = agent_kwargs
+
+    if "WITHIN_ENV_REPLAY" in os.environ:
+        baseline_data["within_env_replay"] = _env_bool(
+            "WITHIN_ENV_REPLAY", baseline.within_env_replay
+        )
+    if "REPLAY_EVAL" in os.environ:
+        baseline_data["replay_eval"] = _env_bool(
+            "REPLAY_EVAL", baseline.replay_eval
+        )
+    return BaselineConfig.model_validate(baseline_data)
+
+
+def _build_config(output_dir: Path) -> RunConfig:
+    environment_id = _required_env("INSTANCE_ID")
+    if environment_id not in {f"E{i}" for i in range(1, 7)}:
+        raise ValueError(
+            f"INSTANCE_ID must select one environment E1..E6, got {environment_id!r}"
+        )
+
+    baseline_name = os.environ.get(
+        "BASELINE_NAME", "selfgen_experience_always"
+    )
+    baseline = _configure_model(load_baseline(baseline_name))
+    strategy_name = os.environ.get("STRATEGY_NAME", baseline.default_strategy)
+    if strategy_name == "none":
+        strategy_name = "chain"
+    strategy = StrategyConfig.from_yaml(
+        REPO_ROOT / "configs" / "strategies" / f"{strategy_name}.yaml"
+    )
+
+    max_tasks_raw = os.environ.get("SMOKE_MAX_TASKS", "").strip()
+    max_tasks = int(max_tasks_raw) if max_tasks_raw else None
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    run_id = os.environ.get(
+        "RUN_ID",
+        f"ap__{baseline.name}__{environment_id}__{timestamp}",
+    )
+    return RunConfig(
+        run_id=run_id,
+        baseline=baseline,
+        strategy=strategy,
+        order_seed=os.environ.get("ORDER_SEED", "A"),
+        environment_id=environment_id,
+        workspace_root=output_dir / "runs",
+        # Host-side calls are routed by SEVB_HOST_LITELLM_* above, while the
+        # Harbor agent receives its endpoint through agent_kwargs.base_url.
+        # Keeping this unset avoids duplicate base_url/api_base constructor
+        # kwargs in skillevolbench.harbor_ext.job_builder.
+        api_base=None,
+        api_key_env_var="MODEL_API_KEY",
+        max_tasks=max_tasks,
+    )
+
+
+def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
+    task_success = report.task_success
+    evolution = report.evolution_replay
+    revision_safety = getattr(report, "revision_safety", {})
+    expected_replays = 0
+    if config.baseline.within_env_replay:
+        expected_replays = 30 if config.baseline.replay_eval else 15
+    expected_shadows = 5 if config.baseline.dual_t6_retrieval else 0
+    complete = (
+        config.max_tasks is None
+        and report.n_primary_trials == 30
+        and report.n_replay_trials == expected_replays
+        and report.n_shadow_trials == expected_shadows
+    )
+    evaluation_sr = float(task_success.get("evaluation_sr", 0.0))
+    metrics: dict[str, Any] = {
+        "task_score": evaluation_sr if complete else 0.0,
+        "passed": bool(complete and evaluation_sr == 1.0),
+        "status": "completed" if complete else "partial",
+        "scoreable": complete,
+        "environment_id": config.environment_id,
+        "run_id": config.run_id,
+        "baseline_name": config.baseline.name,
+        "evaluation_sr": evaluation_sr,
+        "learning_sr": float(task_success.get("learning_sr", 0.0)),
+        "t4_transfer": float(task_success.get("t4_transfer", 0.0)),
+        "t5_trap_resistance": float(
+            task_success.get("t5_trap_resistance", 0.0)
+        ),
+        "t6_composition_rate": float(
+            task_success.get("t6_composition_rate", 0.0)
+        ),
+        "n_primary_trials": report.n_primary_trials,
+        "n_replay_trials": report.n_replay_trials,
+        "n_shadow_trials": report.n_shadow_trials,
+        "evolution_lift": evolution.get("evolution_lift"),
+        "recovery_rate": evolution.get("recovery_rate"),
+        "regression_rate": evolution.get("regression_rate"),
+        "fail_to_success_count": evolution.get("fail_to_success_count", 0),
+        "success_to_fail_count": evolution.get("success_to_fail_count", 0),
+        "cross_task_revision_pairs": revision_safety.get(
+            "n_cross_task_revision_pairs", 0
+        ),
+        "cross_task_fail_to_success_count": revision_safety.get(
+            "fail_to_success_count", 0
+        ),
+        "cross_task_fail_to_fail_count": revision_safety.get(
+            "fail_to_fail_count", 0
+        ),
+        "cross_task_success_to_success_count": revision_safety.get(
+            "success_to_success_count", 0
+        ),
+        "cross_task_success_to_fail_count": revision_safety.get(
+            "success_to_fail_count", 0
+        ),
+        "cross_task_failure_recovery_rate": revision_safety.get(
+            "failure_recovery_rate"
+        ),
+        "cross_task_success_regression_rate": revision_safety.get(
+            "success_regression_rate"
+        ),
+    }
+    if not complete:
+        metrics["message"] = (
+            "Partial infrastructure smoke; task_score is intentionally zero "
+            "and must not be aggregated as a benchmark result."
+        )
+    return metrics
+
+
+def main() -> int:
+    output_dir = Path(os.environ.get("OUTPUT_DIR", "/tmp/output")).resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    metrics_path = output_dir / "metrics.json"
+
+    try:
+        config = _build_config(output_dir)
+        _write_json(
+            output_dir / "ap_run_manifest.json",
+            {
+                "schema_version": "1.0",
+                "benchmark_revision": _safe_git_revision(),
+                "run_id": config.run_id,
+                "environment_id": config.environment_id,
+                "baseline_name": config.baseline.name,
+                "strategy_name": config.strategy.name,
+                "order_seed": config.order_seed,
+                "model": os.environ["MODEL"],
+                "model_base_url": os.environ["MODEL_BASE_URL"],
+                "harbor_agent": config.baseline.harbor_agent_name,
+                "within_env_replay": config.baseline.within_env_replay,
+                "replay_eval": config.baseline.replay_eval,
+                "smoke_max_tasks": config.max_tasks,
+                "started_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
+        report = asyncio.run(LifelongRunner(config).run())
+        _write_json(metrics_path, _success_metrics(config, report))
+        return 0
+    except Exception as exc:
+        _write_json(
+            metrics_path,
+            {
+                "task_score": 0.0,
+                "passed": False,
+                "status": "failed",
+                "scoreable": False,
+                "environment_id": os.environ.get("INSTANCE_ID"),
+                "error_type": type(exc).__name__,
+                "message": _sanitize_error(str(exc)),
+            },
+        )
+        # Never emit the raw exception traceback: SDK errors often include
+        # request headers or URLs containing credentials. Keep the traceback
+        # useful for AP debugging, but apply the same credential redaction as
+        # the persisted failure metric first.
+        print(_sanitize_error(traceback.format_exc()), file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

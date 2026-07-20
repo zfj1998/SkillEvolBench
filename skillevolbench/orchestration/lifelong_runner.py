@@ -13,7 +13,6 @@ accidental asset drift.
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import json
 import logging
@@ -79,16 +78,7 @@ class LifelongRunner:
         self._preflight()
         registry = TaskRegistry.from_disk(self.skills_root, self.tasks_root)
         env_orders = EnvOrders.from_yaml(self.env_orders_path)
-        ordered_tasks = compute_task_order(registry, env_orders, self.config.order_seed, within_env_replay=getattr(self.config.baseline, "within_env_replay", False), replay_eval=getattr(self.config.baseline, "replay_eval", False))
-        if self.config.max_tasks is None:
-            assert_order_invariants(ordered_tasks)
-        else:
-            ordered_tasks = ordered_tasks[: self.config.max_tasks]
-            _LOG.warning(
-                "Truncated run: using the first %d task(s); "
-                "skipping the full-benchmark order invariant.",
-                len(ordered_tasks),
-            )
+        ordered_tasks = self._compute_ordered_tasks(registry, env_orders)
 
         # 2. Build runtime
         runtime = BaselineRuntime.build(
@@ -149,7 +139,7 @@ class LifelongRunner:
         finally:
             # 6. Finalise: clean up the last env (post-eval maintenance)
             #    + tag final library + assert benchmark unchanged.
-            self._finalise(runtime, hooks, benchmark_hash)
+            await self._finalise(runtime, hooks, benchmark_hash)
 
         # 7. Generate report (Part 10 schema 1.0; sections are dicts).
         report_gen = ReportGenerator(
@@ -184,11 +174,7 @@ class LifelongRunner:
         self._preflight()
         registry = TaskRegistry.from_disk(self.skills_root, self.tasks_root)
         env_orders = EnvOrders.from_yaml(self.env_orders_path)
-        ordered_tasks = compute_task_order(registry, env_orders, self.config.order_seed, within_env_replay=getattr(self.config.baseline, "within_env_replay", False), replay_eval=getattr(self.config.baseline, "replay_eval", False))
-        if self.config.max_tasks is None:
-            assert_order_invariants(ordered_tasks)
-        else:
-            ordered_tasks = ordered_tasks[: self.config.max_tasks]
+        ordered_tasks = self._compute_ordered_tasks(registry, env_orders)
         runtime = BaselineRuntime.build(
             self.config,
             llm_author_call=self.llm_author_call,
@@ -198,6 +184,42 @@ class LifelongRunner:
         self._persist_run_config(runtime.run_root)
         self._snapshot_benchmark_hash(runtime.run_root)
         return runtime, ordered_tasks, registry
+
+    def _compute_ordered_tasks(
+        self,
+        registry: TaskRegistry,
+        env_orders: EnvOrders,
+    ) -> list[Any]:
+        """Compute and validate the full benchmark or one AP episode."""
+        ordered_tasks = compute_task_order(
+            registry,
+            env_orders,
+            self.config.order_seed,
+            within_env_replay=getattr(
+                self.config.baseline, "within_env_replay", False
+            ),
+            replay_eval=getattr(self.config.baseline, "replay_eval", False),
+            environment_id=self.config.environment_id,
+        )
+        if self.config.max_tasks is None:
+            expected_envs = (
+                [self.config.environment_id]
+                if self.config.environment_id is not None
+                else None
+            )
+            assert_order_invariants(
+                ordered_tasks,
+                expected_environment_ids=expected_envs,
+            )
+            return ordered_tasks
+
+        truncated = ordered_tasks[: self.config.max_tasks]
+        _LOG.warning(
+            "Truncated run: using the first %d task(s); skipping the "
+            "complete-episode order invariant.",
+            len(truncated),
+        )
+        return truncated
 
     # ------------------------------------------------------------------
     # Internals
@@ -261,7 +283,7 @@ class LifelongRunner:
         target.write_text(digest + "\n")
         return digest
 
-    def _finalise(
+    async def _finalise(
         self,
         runtime: BaselineRuntime,
         hooks: Any,
@@ -270,17 +292,15 @@ class LifelongRunner:
         # 1. Final env transition (if a partial env was last)
         try:
             if hooks._current_env is not None:
-                # Use asyncio.run only when not already in an event loop.
-                try:
-                    loop = asyncio.get_running_loop()
-                    asyncio.ensure_future(
-                        hooks._handle_env_transition(hooks._current_env, "END")
-                    )
-                except RuntimeError:
-                    asyncio.run(
-                        hooks._handle_env_transition(hooks._current_env, "END")
-                    )
-        except Exception as exc:  # never let cleanup crash the report.
+                # Final maintenance and snapshotting must finish before report
+                # generation. Scheduling a background task here races the
+                # reporter and can silently omit the last environment's state.
+                await hooks._handle_env_transition(hooks._current_env, "END")
+        except AssertionError:
+            # Freeze/hash protocol violations invalidate the run. Never turn
+            # them into a nominally successful AP score.
+            raise
+        except Exception as exc:  # best-effort cleanup for non-protocol errors.
             _LOG.warning("LifelongRunner finalise: env_transition failed: %s", exc)
 
         # 2. Tag final snapshot

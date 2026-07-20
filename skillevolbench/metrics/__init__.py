@@ -11,6 +11,10 @@ from skillevolbench.metrics.composition import (
     compute_t6_composition,
 )
 from skillevolbench.metrics.cost import CostReport, compute_cost
+from skillevolbench.metrics.evolution_replay import (
+    EvolutionReplayReport,
+    compute_evolution_replay,
+)
 from skillevolbench.metrics.library_health import (
     LibraryHealthReport,
     compute_library_health,
@@ -42,6 +46,7 @@ __all__ = [
     "T6FailureTaxonomy",
     "TransferReport",
     "CostReport",
+    "EvolutionReplayReport",
     "compute_task_success",
     "compute_library_health",
     "compute_revision_safety",
@@ -49,4 +54,5 @@ __all__ = [
     "compute_t6_composition",
     "compute_transfer",
     "compute_cost",
+    "compute_evolution_replay",
 ]

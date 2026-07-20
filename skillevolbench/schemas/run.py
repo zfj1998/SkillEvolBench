@@ -35,6 +35,7 @@ from skillevolbench.schemas.strategy import StrategyConfig
 
 HarborOrchestratorType = Literal["local", "daytona", "modal", "e2b"]
 OrderSeed = Literal["A", "B", "C"]
+EnvironmentId = Literal["E1", "E2", "E3", "E4", "E5", "E6"]
 
 
 # ---------------------------------------------------------------------------
@@ -136,6 +137,10 @@ class RunConfig(BaseModel):
 
     # ===== Run params =====
     order_seed: OrderSeed = "A"
+    # Run one self-contained environment episode instead of the six-environment
+    # benchmark. This is the AP execution unit: the selected environment keeps
+    # all of its trials in one process so the skill library remains stateful.
+    environment_id: Optional[EnvironmentId] = None
     workspace_root: Path = Path("workspace/runs")
 
     # ===== Execution =====
@@ -193,6 +198,21 @@ class RunConfig(BaseModel):
                 f"protocol; got {self.harbor_n_concurrent_trials}"
             )
 
+        # An AP environment episode is semantically equivalent only for the
+        # default environment-scoped protocol. A global library intentionally
+        # transfers state across E1..E6 and must run as one full sequential
+        # job instead of six isolated pods.
+        if (
+            self.environment_id is not None
+            and self.baseline.use_skill_library
+            and self.baseline.library_scope != "environment"
+        ):
+            raise ValueError(
+                "environment_id cannot be combined with "
+                f"library_scope={self.baseline.library_scope!r}; global-scope "
+                "baselines must run all six environments in one process"
+            )
+
         # ---- 2. baseline.default_strategy <-> strategy.name ----
         # The baseline's "default_strategy" lives in its yaml as a hint about
         # which strategy yaml is expected to be paired with it. RunConfig's
@@ -248,10 +268,12 @@ class RunConfig(BaseModel):
         baseline_yaml: Path | str,
         strategy_yaml: Path | str,
         order_seed: OrderSeed = "A",
+        environment_id: Optional[EnvironmentId] = None,
         workspace_root: Path | str = "workspace/runs",
         api_base: Optional[str] = None,
         api_key_env_var: str = "ANTHROPIC_API_KEY",
         dry_run: bool = False,
+        max_tasks: Optional[int] = None,
     ) -> "RunConfig":
         """Compose a RunConfig from yaml file paths."""
         baseline = BaselineConfig.from_yaml(baseline_yaml)
@@ -261,10 +283,12 @@ class RunConfig(BaseModel):
             baseline=baseline,
             strategy=strategy,
             order_seed=order_seed,
+            environment_id=environment_id,
             workspace_root=Path(workspace_root),
             api_base=api_base,
             api_key_env_var=api_key_env_var,
             dry_run=dry_run,
+            max_tasks=max_tasks,
         )
 
     @staticmethod
@@ -280,6 +304,7 @@ class RunConfig(BaseModel):
 __all__ = [
     "HarborOrchestratorType",
     "OrderSeed",
+    "EnvironmentId",
     "EnvOrders",
     "LLMDefaults",
     "RunConfig",

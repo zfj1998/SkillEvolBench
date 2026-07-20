@@ -105,7 +105,8 @@ def compute_transfer(
                 forgot = 0
                 counted = 0
                 for r in replay_list:
-                    orig = original_records_by_task.get(r.task_id)
+                    canonical_task_id = r.task_id.removesuffix("__replay")
+                    orig = original_records_by_task.get(canonical_task_id)
                     if orig is None:
                         continue
                     if orig.outcome.verifier_passed and not r.outcome.verifier_passed:

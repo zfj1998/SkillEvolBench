@@ -32,6 +32,20 @@ class RevisionSafetyReport:
     revision_help_rate: float = 0.0
     revision_hurt_rate: float = 0.0
 
+    # Outcome transition after an applied revision, paired to the next
+    # *different* task in the same family. These are the direct diagnostic
+    # for failure-summary recovery and success-summary regression. They are
+    # observational unless compared against a no-revision control because
+    # the two tasks intentionally use different inputs and may differ in
+    # difficulty.
+    n_cross_task_revision_pairs: int = 0
+    fail_to_success_count: int = 0
+    fail_to_fail_count: int = 0
+    success_to_success_count: int = 0
+    success_to_fail_count: int = 0
+    failure_recovery_rate: Optional[float] = None
+    success_regression_rate: Optional[float] = None
+
     # Patch overfitting: revision fixes T2/T3 fail but T4-T6 of same family later regress.
     patch_overfitting_rate: float = 0.0
 
@@ -97,6 +111,10 @@ def compute_revision_safety(
     # patch (triggered_by_task), compare verifier_passed of the *next*
     # same-family task vs its predecessor.
     rep.revision_help_rate, rep.revision_hurt_rate = _help_hurt(applied, records)
+
+    transitions = _cross_task_transitions(applied, records)
+    for field_name, value in transitions.items():
+        setattr(rep, field_name, value)
 
     # Patch overfitting: revision triggered by a T2/T3 fail; check if any
     # T4-T6 of the same family later fail.
@@ -194,6 +212,71 @@ def _patch_overfitting(
     if counted == 0:
         return 0.0
     return overfit / counted
+
+
+def _cross_task_transitions(
+    applied: list[dict], records: Iterable[ReplayRecord]
+) -> dict[str, int | float | None]:
+    """Pair each revised task with the next distinct same-family task.
+
+    A task may emit more than one low-level ``patch_applied`` event. Such
+    events represent one post-task revision boundary for this diagnostic, so
+    ``triggered_by_task`` is de-duplicated before pairing.
+    """
+    records_sorted = sorted(records, key=lambda record: record.timestamp)
+    by_family: dict[str, list[ReplayRecord]] = defaultdict(list)
+    for record in records_sorted:
+        by_family[record.family_id].append(record)
+
+    counts = {
+        "fail_to_success_count": 0,
+        "fail_to_fail_count": 0,
+        "success_to_success_count": 0,
+        "success_to_fail_count": 0,
+    }
+    seen_triggers: set[str] = set()
+    n_pairs = 0
+    for event in applied:
+        triggered = event.get("triggered_by_task", "")
+        if not triggered or triggered in seen_triggers:
+            continue
+        seen_triggers.add(triggered)
+        family_id = "-".join(triggered.split("-")[:2])
+        family = by_family.get(family_id, [])
+        try:
+            index = next(
+                i for i, record in enumerate(family)
+                if record.task_id == triggered
+            )
+        except StopIteration:
+            continue
+        if index + 1 >= len(family):
+            continue
+
+        before = family[index].outcome.verifier_passed
+        after = family[index + 1].outcome.verifier_passed
+        if not before and after:
+            counts["fail_to_success_count"] += 1
+        elif not before and not after:
+            counts["fail_to_fail_count"] += 1
+        elif before and after:
+            counts["success_to_success_count"] += 1
+        else:
+            counts["success_to_fail_count"] += 1
+        n_pairs += 1
+
+    n_failure = counts["fail_to_success_count"] + counts["fail_to_fail_count"]
+    n_success = counts["success_to_success_count"] + counts["success_to_fail_count"]
+    return {
+        "n_cross_task_revision_pairs": n_pairs,
+        **counts,
+        "failure_recovery_rate": (
+            counts["fail_to_success_count"] / n_failure if n_failure else None
+        ),
+        "success_regression_rate": (
+            counts["success_to_fail_count"] / n_success if n_success else None
+        ),
+    }
 
 
 __all__ = ["RevisionSafetyReport", "compute_revision_safety"]

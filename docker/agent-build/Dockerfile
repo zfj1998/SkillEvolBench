@@ -7,6 +7,8 @@ ARG GEMINI_CLI_VERSION=latest
 ARG CODEX_CLI_VERSION=latest
 ARG KIMI_CLI_VERSION=latest
 ARG OPENCLAW_VERSION=latest
+ARG APT_MIRROR=http://us-east-1.ec2.archive.ubuntu.com/ubuntu
+ARG AGENT_CLI_SET=all
 
 ENV DEBIAN_FRONTEND=noninteractive \
     HOME=/root \
@@ -33,6 +35,8 @@ RUN chmod +x /tmp/install-agent-runtime.sh \
        CODEX_CLI_VERSION="$CODEX_CLI_VERSION" \
        KIMI_CLI_VERSION="$KIMI_CLI_VERSION" \
        OPENCLAW_VERSION="$OPENCLAW_VERSION" \
+       APT_MIRROR="$APT_MIRROR" \
+       AGENT_CLI_SET="$AGENT_CLI_SET" \
        /tmp/install-agent-runtime.sh \
     && rm -f /tmp/install-agent-runtime.sh
 

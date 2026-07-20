@@ -15,6 +15,12 @@ linked into `/usr/local/bin` for Harbor to invoke directly.
 OpenClaw runtime dependencies are prewarmed under `/opt/openclaw-plugin-stage`
 to avoid repeated per-task plugin staging during Harbor runs.
 
+`AGENT_CLI_SET` can restrict the image to a comma- or space-separated subset
+of `claude-code`, `gemini-cli`, `codex`, `kimi-cli`, and `openclaw`. Its default
+is `all`; AP's Codex-only smoke uses `codex` to avoid downloading unrelated
+agent runtimes. `APT_MIRROR` is also configurable because the AWS-local default
+is not reachable efficiently from every execution cluster.
+
 Build with Docker:
 
 ```bash
@@ -36,6 +42,8 @@ GEMINI_CLI_VERSION=latest \
 CODEX_CLI_VERSION=latest \
 KIMI_CLI_VERSION=latest \
 OPENCLAW_VERSION=latest \
+AGENT_CLI_SET=codex \
+APT_MIRROR=http://mirrors.aliyun.com/ubuntu \
 docker/agent-build/build.sh
 ```
 
