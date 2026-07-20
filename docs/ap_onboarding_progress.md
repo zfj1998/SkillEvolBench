@@ -56,6 +56,34 @@ submitted, zero failed. A stable UUID4 was supplied because AP CLI 0.1.16 does
 not retry POST automatically; reuse this exact key after an ambiguous transport
 failure rather than issuing an unkeyed duplicate submission.
 
+The six jobs passed asset download, host and DinD model probes, shared-mount
+probe, strict preflight, and entered their stateful 30-task episodes. They are
+still running; no retry has been issued. Full artifacts will be preserved under
+`/cpfs02/user/zhangfengji.zfj/workspace/skillevolbench_ap_results/` because the
+`/cpfs01` filesystem currently reports no available capacity.
+
+## Full-run acceptance tooling
+
+Three read-only helpers make the final decision reproducible:
+
+- `scripts/ap/audit_full_group.py` verifies exact E1-E6 completeness, 180
+  primary trials, zero replay, 90 terminal same-session reflections, task
+  order/roles, freeze boundaries, verifier evidence, trajectories, provenance,
+  sanitizer digests, and the raw group post-process result. It recomputes group
+  `evaluation_sr`, `task_score`, and `passed` from the six environment metrics.
+- `scripts/audit_skill_utility.py` links every reflection result and applied
+  skill version to the next different input, retrieval/use evidence, and its
+  verifier outcome. Its transition results are explicitly observational; a
+  matched control is still required for a causal skill-effect claim.
+- `scripts/ap/export_platform_logs.py` works around the AP CLI 0.1.16 log export
+  bug by using the server's 500-entry page limit through terminal
+  `next_offset=null`, followed by a second API pass and local hash/size checks.
+
+The post-process job must be exported into the group's `jobs/<job-id>/`
+directory. Its benchmark-owned
+`artifacts/output/metrics.json` is authoritative; the adjacent AP wrapper
+`metrics.json` is transport metadata and must not shadow it.
+
 ## Repositories and pinned runtime
 
 | Component | Branch or source | Accepted revision | Publication status |
@@ -273,6 +301,8 @@ moving Agent-Hub branch previously resolved to stale template code.
 - Reusable `ap-benchmark-onboarding` skill: package validation passed after
   adding the same-session, sanitizer-manifest, no-auth sentinel, and AP log
   pagination lessons.
+- Current branch after adding the three reusable acceptance helpers: 163 tests
+  passed, plus Ruff, formatting, byte-code compilation, and whitespace checks.
 
 Local strict preflight is not an authoritative runtime gate on this machine
 because it has no usable Docker daemon. The AP DinD run is the live acceptance
