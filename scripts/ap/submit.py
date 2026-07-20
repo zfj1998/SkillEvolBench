@@ -24,6 +24,7 @@ import subprocess
 import sys
 import urllib.error
 import urllib.request
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Mapping
@@ -59,6 +60,17 @@ def _env_optional_bool(name: str) -> bool | None:
     if raw is None or not raw.strip():
         return None
     return _env_bool(name, False)
+
+
+def _uuid4(raw: str) -> str:
+    """Normalize an explicit AP idempotency key and require UUID4."""
+    try:
+        value = uuid.UUID(raw)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be a valid UUID4") from exc
+    if value.version != 4:
+        raise argparse.ArgumentTypeError("must be a UUID4")
+    return str(value)
 
 
 def _models_url(base_url: str) -> str:
@@ -233,6 +245,9 @@ def build_submission(
 
     command.extend(["--format", "json"])
 
+    if args.idempotency_key:
+        command.extend(["--idempotency-key", args.idempotency_key])
+
     if args.queue:
         command.extend(["--queue", args.queue])
     if args.runner_image:
@@ -332,6 +347,16 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--suite-name",
         default=f"skillevolbench-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}",
+    )
+    parser.add_argument(
+        "--idempotency-key",
+        type=_uuid4,
+        default=None,
+        help=(
+            "Stable UUID4 for retrying one logical AP submission without "
+            "duplicating jobs. Reuse the same value after an ambiguous "
+            "transport failure."
+        ),
     )
     return parser
 

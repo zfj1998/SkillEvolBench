@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import subprocess
 from typing import Any
+import uuid
 
 import pytest
 
@@ -57,8 +58,18 @@ def test_default_submission_is_one_task_e1_smoke() -> None:
 
 
 def test_full_submission_uses_dataset_and_no_smoke_truncation() -> None:
+    idempotency_key = str(uuid.uuid4())
     args = submit._parser().parse_args(
-        ["--scope", "full", "--concurrency", "4", "--cluster", "benchmark-dev"]
+        [
+            "--scope",
+            "full",
+            "--concurrency",
+            "4",
+            "--cluster",
+            "benchmark-dev",
+            "--idempotency-key",
+            idempotency_key,
+        ]
     )
     submission = submit.build_submission(args, _environment())
 
@@ -69,8 +80,18 @@ def test_full_submission_uses_dataset_and_no_smoke_truncation() -> None:
     assert "--instance-id" not in submission.command
     assert "--enable-post-process" in submission.command
     assert "--suite-name" in submission.command
+    assert submission.command[submission.command.index("--idempotency-key") + 1] == (
+        idempotency_key
+    )
     assert "smoke_max_tasks" not in _params(submission.command)
     assert "--dry-run" not in submission.command
+
+
+def test_submission_rejects_non_uuid4_idempotency_key() -> None:
+    with pytest.raises(SystemExit):
+        submit._parser().parse_args(
+            ["--idempotency-key", "00000000-0000-5000-8000-000000000000"]
+        )
 
 
 def test_family_submission_selects_exact_family_without_max_tasks_or_replay() -> None:
