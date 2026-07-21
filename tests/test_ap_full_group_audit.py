@@ -24,7 +24,14 @@ from scripts.ap.compose_standalone_full import (
     CompositionError,
     compose_standalone_full,
 )
-from skillevolbench.opencode_continuity import opencode_synthetic_continue
+from skillevolbench.opencode_continuity import (
+    OPENCODE_AUTO_COMPACTION_KIND,
+    OPENCODE_COMPACTION_CONTINUE_KIND,
+    OPENCODE_COMPACTION_SUMMARY_KIND,
+    OPENCODE_EVENT_KEY,
+    OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
+    opencode_synthetic_continue,
+)
 
 
 BENCHMARK_REVISION = "a" * 40
@@ -422,11 +429,12 @@ def _make_environment(output: Path, environment_id: str) -> dict[str, object]:
             {"event_type": "trial_started", "task_id": task_id, "role": role}
         )
         reflection: dict[str, object] = {}
+        reflection_audit: Path | None = None
         if index < 15:
-            audit = trial / "self-reflection-audit"
-            audit.mkdir(parents=True, exist_ok=True)
-            reflection = _reflection_result(audit, task_id)
-            _write_json(audit / "self_reflection_result.json", reflection)
+            reflection_audit = trial / "self-reflection-audit"
+            reflection_audit.mkdir(parents=True, exist_ok=True)
+            reflection = _reflection_result(reflection_audit, task_id)
+            _write_json(reflection_audit / "self_reflection_result.json", reflection)
             lifecycle.append({"event_type": "reflection_noop", **reflection})
         lifecycle.append(
             {
@@ -441,10 +449,25 @@ def _make_environment(output: Path, environment_id: str) -> dict[str, object]:
         (trial / "verifier" / "reward.txt").write_text("1.000000\n", encoding="ascii")
         for name in ("outcome_report.json", "process_report.json", "score_report.json"):
             _write_json(trial / "verifier" / name, {})
-        _write_json(
-            trial / "agent" / "trajectory.solve.json",
-            {"session_id": f"session-{task_id}", "steps": [{"kind": "solve"}]},
-        )
+        if reflection_audit is not None:
+            agent_dir = trial / "agent"
+            agent_dir.mkdir(parents=True, exist_ok=True)
+            for source_name, destination_name in (
+                ("trajectory.solve.json", "trajectory.solve.json"),
+                ("trajectory.full.json", "trajectory.json"),
+                ("opencode.session.full.json", "opencode.session.json"),
+                ("opencode.solve.jsonl", "opencode.solve.jsonl"),
+                ("opencode.reflection.jsonl", "opencode.reflection.jsonl"),
+            ):
+                (agent_dir / destination_name).write_bytes(
+                    (reflection_audit / source_name).read_bytes()
+                )
+        else:
+            canonical_solve = {
+                "session_id": f"session-{task_id}",
+                "steps": [{"kind": "solve"}],
+            }
+            _write_json(trial / "agent" / "trajectory.solve.json", canonical_solve)
         task_spec = {
             "schema_version": "1.0",
             "task_id": task_id,
@@ -655,12 +678,74 @@ def _sync_reflection_fields(
     )
 
 
-def _export_compaction(
-    session_id: str, *, auto: bool = True
+def _trajectory_compaction(
+    index: int,
+    *,
+    overflow: bool,
 ) -> list[dict[str, object]]:
-    compaction_id = "compaction"
-    summary_id = "compaction-summary"
-    continue_id = "compaction-continue"
+    compaction_id = f"compaction-{index}"
+    summary_id = f"compaction-summary-{index}"
+    continue_id = f"compaction-continue-{index}"
+    return [
+        {
+            "source": "user",
+            "message": "",
+            OPENCODE_EVENT_KEY: {
+                "kind": OPENCODE_AUTO_COMPACTION_KIND,
+                "auto": True,
+                "overflow": overflow,
+                "exclusive": True,
+                "message_id": compaction_id,
+                "part_message_id": compaction_id,
+            },
+        },
+        {
+            "source": "agent",
+            "message": "bounded summary",
+            OPENCODE_EVENT_KEY: {
+                "kind": OPENCODE_COMPACTION_SUMMARY_KIND,
+                "summary": True,
+                "mode": "compaction",
+                "agent": "compaction",
+                "message_id": summary_id,
+                "parent_id": compaction_id,
+            },
+        },
+        {
+            "source": "user",
+            "message": opencode_synthetic_continue(overflow=overflow),
+            OPENCODE_EVENT_KEY: {
+                "kind": OPENCODE_COMPACTION_CONTINUE_KIND,
+                "synthetic": True,
+                "metadata": {"compaction_continue": True},
+                "exclusive": True,
+                "message_id": continue_id,
+                "part_message_id": continue_id,
+            },
+        },
+        {
+            "source": "agent",
+            "message": "continued reflection",
+            OPENCODE_EVENT_KEY: {
+                "kind": OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
+                "ordinary": True,
+                "continue_message_id": continue_id,
+                "parent_id": continue_id,
+            },
+        },
+    ]
+
+
+def _export_compaction(
+    session_id: str,
+    index: int,
+    *,
+    overflow: bool,
+    auto: bool = True,
+) -> list[dict[str, object]]:
+    compaction_id = f"compaction-{index}"
+    summary_id = f"compaction-summary-{index}"
+    continue_id = f"compaction-continue-{index}"
     return [
         {
             "info": {
@@ -672,7 +757,7 @@ def _export_compaction(
                 {
                     "type": "compaction",
                     "auto": auto,
-                    "overflow": False,
+                    "overflow": overflow,
                     "messageID": compaction_id,
                     "sessionID": session_id,
                 }
@@ -706,7 +791,7 @@ def _export_compaction(
             "parts": [
                 {
                     "type": "text",
-                    "text": opencode_synthetic_continue(overflow=False),
+                    "text": opencode_synthetic_continue(overflow=overflow),
                     "synthetic": True,
                     "metadata": {"compaction_continue": True},
                     "messageID": continue_id,
@@ -716,12 +801,54 @@ def _export_compaction(
         },
         _export_message(
             session_id=session_id,
-            message_id="post-compaction-assistant",
+            message_id=f"post-compaction-assistant-{index}",
             role="assistant",
             text="continued reflection",
             parent_id=continue_id,
         ),
     ]
+
+
+def _add_compactions(
+    root: Path,
+    task_id: str,
+    *,
+    overflows: tuple[bool, ...],
+    trajectory: bool = True,
+    export: bool = True,
+) -> None:
+    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    fields: dict[str, object] = {}
+    if trajectory:
+        trajectory_path = audit / "trajectory.full.json"
+        payload = json.loads(trajectory_path.read_text(encoding="utf-8"))
+        for index, overflow in enumerate(overflows):
+            payload["steps"].extend(_trajectory_compaction(index, overflow=overflow))
+        for index, step in enumerate(payload["steps"], start=1):
+            step["step_id"] = index
+        _write_json(trajectory_path, payload)
+        (audit.parent / "agent" / "trajectory.json").write_bytes(
+            trajectory_path.read_bytes()
+        )
+        fields["full_session_trajectory_sha256"] = _sha256(trajectory_path)
+    if export:
+        export_path = audit / "opencode.session.full.json"
+        payload = json.loads(export_path.read_text(encoding="utf-8"))
+        session_id = payload["info"]["id"]
+        for index, overflow in enumerate(overflows):
+            payload["messages"].extend(
+                _export_compaction(
+                    session_id,
+                    index,
+                    overflow=overflow,
+                )
+            )
+        _write_json(export_path, payload)
+        (audit.parent / "agent" / "opencode.session.json").write_bytes(
+            export_path.read_bytes()
+        )
+        fields["full_session_export_sha256"] = _sha256(export_path)
+    _sync_reflection_fields(root, task_id, fields)
 
 
 def _make_standalone_exports(tmp_path: Path) -> dict[str, Path]:
@@ -834,21 +961,13 @@ def test_delivered_reflection_extra_user_fails_strict_continuity(
     assert ("reflection_runtime_delivered_hash_invalid", task_id) not in errors
 
 
-def test_delivered_reflection_valid_compaction_passes_strict_continuity(
+def test_delivered_reflection_valid_repeated_overflow_compaction_passes(
     tmp_path: Path,
 ) -> None:
     root = _make_group(tmp_path)
     task_id = "E1-LS1-T1"
-    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
-    full_path = audit / "opencode.session.full.json"
-    full = json.loads(full_path.read_text(encoding="utf-8"))
-    session_id = full["info"]["id"]
-    full["messages"].extend(_export_compaction(session_id))
-    _write_json(full_path, full)
-    _sync_reflection_fields(
-        root,
-        task_id,
-        {"full_session_export_sha256": _sha256(full_path)},
+    _add_compactions(
+        root, task_id, overflows=(False, True), trajectory=True, export=True
     )
 
     report = audit_full_group(root)
@@ -865,7 +984,9 @@ def test_delivered_reflection_compaction_near_miss_fails_strict_continuity(
     full_path = audit / "opencode.session.full.json"
     full = json.loads(full_path.read_text(encoding="utf-8"))
     session_id = full["info"]["id"]
-    full["messages"].extend(_export_compaction(session_id, auto=False))
+    full["messages"].extend(
+        _export_compaction(session_id, 0, overflow=False, auto=False)
+    )
     _write_json(full_path, full)
     _sync_reflection_fields(
         root,
@@ -880,6 +1001,297 @@ def test_delivered_reflection_compaction_near_miss_fails_strict_continuity(
     assert ("reflection_export_continuity_invalid", task_id) in errors
     assert ("reflection_prefix_flags_invalid", task_id) not in errors
     assert ("reflection_runtime_delivered_hash_invalid", task_id) not in errors
+
+
+@pytest.mark.parametrize(
+    ("trajectory", "export"),
+    [(True, False), (False, True)],
+)
+def test_delivered_reflection_one_sided_compaction_evidence_fails(
+    tmp_path: Path,
+    trajectory: bool,
+    export: bool,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    _add_compactions(
+        root,
+        task_id,
+        overflows=(False,),
+        trajectory=trajectory,
+        export=export,
+    )
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert ("reflection_trajectory_export_evidence_mismatch", task_id) in errors
+
+
+@pytest.mark.parametrize("source", ["trajectory", "export"])
+def test_delivered_reflection_message_spine_divergence_fails(
+    tmp_path: Path,
+    source: str,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    if source == "trajectory":
+        solve_path = audit / "trajectory.solve.json"
+        full_path = audit / "trajectory.full.json"
+        solve = json.loads(solve_path.read_text(encoding="utf-8"))
+        full = json.loads(full_path.read_text(encoding="utf-8"))
+        solve["steps"][1]["message"] = "different canonical solve text"
+        full["steps"][1]["message"] = "different canonical solve text"
+        _write_json(solve_path, solve)
+        _write_json(full_path, full)
+        (audit.parent / "agent" / "trajectory.solve.json").write_bytes(
+            solve_path.read_bytes()
+        )
+        (audit.parent / "agent" / "trajectory.json").write_bytes(full_path.read_bytes())
+        fields = {
+            "solve_trajectory_sha256": _sha256(solve_path),
+            "full_session_trajectory_sha256": _sha256(full_path),
+        }
+    else:
+        solve_path = audit / "opencode.session.solve.json"
+        full_path = audit / "opencode.session.full.json"
+        solve = json.loads(solve_path.read_text(encoding="utf-8"))
+        full = json.loads(full_path.read_text(encoding="utf-8"))
+        solve["messages"][1]["parts"][0]["text"] = "different raw solve text"
+        full["messages"][1]["parts"][0]["text"] = "different raw solve text"
+        _write_json(solve_path, solve)
+        _write_json(full_path, full)
+        (audit.parent / "agent" / "opencode.session.json").write_bytes(
+            full_path.read_bytes()
+        )
+        fields = {
+            "solve_session_export_sha256": _sha256(solve_path),
+            "full_session_export_sha256": _sha256(full_path),
+        }
+    _sync_reflection_fields(root, task_id, fields)
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert ("reflection_trajectory_export_evidence_mismatch", task_id) in errors
+    assert ("reflection_trajectory_continuity_invalid", task_id) not in errors
+    assert ("reflection_export_continuity_invalid", task_id) not in errors
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["message_session", "part_session", "part_message", "assistant_parent"],
+)
+def test_delivered_reflection_raw_export_identity_tamper_fails(
+    tmp_path: Path,
+    field: str,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    full_path = audit / "opencode.session.full.json"
+    full = json.loads(full_path.read_text(encoding="utf-8"))
+    assistant = full["messages"][-1]
+    if field == "message_session":
+        assistant["info"]["sessionID"] = "different-session"
+    elif field == "part_session":
+        assistant["parts"][0]["sessionID"] = "different-session"
+    elif field == "part_message":
+        assistant["parts"][0]["messageID"] = "different-message"
+    elif field == "assistant_parent":
+        assistant["info"]["parentID"] = "different-parent"
+    else:  # pragma: no cover - guarded by the parameter list
+        raise AssertionError(field)
+    _write_json(full_path, full)
+    _sync_reflection_fields(
+        root,
+        task_id,
+        {"full_session_export_sha256": _sha256(full_path)},
+    )
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert ("reflection_export_full_structure_invalid", task_id) in errors
+    assert ("reflection_runtime_delivered_hash_invalid", task_id) not in errors
+
+
+@pytest.mark.parametrize(
+    ("counterpart", "code"),
+    [
+        (
+            "trajectory.json",
+            "reflection_agent_full_trajectory_binding_mismatch",
+        ),
+        (
+            "opencode.session.json",
+            "reflection_agent_full_export_binding_mismatch",
+        ),
+        (
+            "opencode.solve.jsonl",
+            "reflection_agent_solve_stream_binding_mismatch",
+        ),
+        (
+            "opencode.reflection.jsonl",
+            "reflection_agent_reflection_stream_binding_mismatch",
+        ),
+    ],
+)
+def test_delivered_reflection_agent_copy_binding_is_byte_exact(
+    tmp_path: Path,
+    counterpart: str,
+    code: str,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    path = audit.parent / "agent" / counterpart
+    path.write_bytes(path.read_bytes() + b"\n")
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert (code, task_id) in errors
+
+
+def test_delivered_reflection_solve_export_inner_session_tamper_fails(
+    tmp_path: Path,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    solve_path = audit / "opencode.session.solve.json"
+    full_path = audit / "opencode.session.full.json"
+    for path in (solve_path, full_path):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["messages"][0]["info"]["sessionID"] = "different-session"
+        _write_json(path, payload)
+    _sync_reflection_fields(
+        root,
+        task_id,
+        {
+            "solve_session_export_sha256": _sha256(solve_path),
+            "full_session_export_sha256": _sha256(full_path),
+        },
+    )
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert ("reflection_export_solve_structure_invalid", task_id) in errors
+    assert ("reflection_export_full_structure_invalid", task_id) in errors
+
+
+@pytest.mark.parametrize("evidence", ["trajectory", "export"])
+def test_delivered_reflection_empty_solve_history_fails(
+    tmp_path: Path,
+    evidence: str,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    fields: dict[str, object]
+    if evidence == "trajectory":
+        solve_path = audit / "trajectory.solve.json"
+        full_path = audit / "trajectory.full.json"
+        solve = json.loads(solve_path.read_text(encoding="utf-8"))
+        full = json.loads(full_path.read_text(encoding="utf-8"))
+        prefix_length = len(solve["steps"])
+        solve["steps"] = []
+        full["steps"] = full["steps"][prefix_length:]
+        _write_json(solve_path, solve)
+        _write_json(full_path, full)
+        canonical_path = audit.parent / "agent" / "trajectory.solve.json"
+        _write_json(canonical_path, solve)
+        fields = {
+            "solve_trajectory_sha256": _sha256(solve_path),
+            "full_session_trajectory_sha256": _sha256(full_path),
+        }
+        expected_code = "reflection_trajectory_solve_history_invalid"
+    else:
+        solve_path = audit / "opencode.session.solve.json"
+        full_path = audit / "opencode.session.full.json"
+        solve = json.loads(solve_path.read_text(encoding="utf-8"))
+        full = json.loads(full_path.read_text(encoding="utf-8"))
+        prefix_length = len(solve["messages"])
+        solve["messages"] = []
+        full["messages"] = full["messages"][prefix_length:]
+        _write_json(solve_path, solve)
+        _write_json(full_path, full)
+        fields = {
+            "solve_session_export_sha256": _sha256(solve_path),
+            "full_session_export_sha256": _sha256(full_path),
+        }
+        expected_code = "reflection_export_solve_structure_invalid"
+    _sync_reflection_fields(root, task_id, fields)
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert (expected_code, task_id) in errors
+
+
+def test_delivered_reflection_solve_copy_must_match_agent_canonical(
+    tmp_path: Path,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    solve_path = audit / "trajectory.solve.json"
+    full_path = audit / "trajectory.full.json"
+    solve = json.loads(solve_path.read_text(encoding="utf-8"))
+    full = json.loads(full_path.read_text(encoding="utf-8"))
+    solve["steps"][1]["message"] = "tampered solve answer"
+    full["steps"][1]["message"] = "tampered solve answer"
+    _write_json(solve_path, solve)
+    _write_json(full_path, full)
+    _sync_reflection_fields(
+        root,
+        task_id,
+        {
+            "solve_trajectory_sha256": _sha256(solve_path),
+            "full_session_trajectory_sha256": _sha256(full_path),
+        },
+    )
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert (
+        "reflection_agent_solve_trajectory_binding_mismatch",
+        task_id,
+    ) in errors
+    assert ("reflection_trajectory_continuity_invalid", task_id) not in errors
+
+
+def test_delivered_reflection_prompt_tamper_fails_continuity(
+    tmp_path: Path,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    audit, _record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    prompt_path = audit / "self_reflection_prompt.md"
+    prompt_path.write_text("different reflection prompt\n", encoding="utf-8")
+    _sync_reflection_fields(
+        root,
+        task_id,
+        {"prompt_sha256": _sha256(prompt_path)},
+    )
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert ("reflection_trajectory_continuity_invalid", task_id) in errors
+    assert ("reflection_export_continuity_invalid", task_id) in errors
 
 
 def test_delivered_reflection_validator_session_must_match_result(

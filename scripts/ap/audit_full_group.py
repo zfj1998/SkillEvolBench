@@ -64,6 +64,13 @@ from skillevolbench.components.verifier_adapter import (  # noqa: E402
     UnscoreableTrialError,
 )
 from skillevolbench.harbor_ext.hooks import SkillEvolBenchHooks  # noqa: E402
+from skillevolbench.opencode_continuity import (  # noqa: E402
+    OPENCODE_AUTO_COMPACTION_KIND,
+    OPENCODE_COMPACTION_CONTINUE_KIND,
+    OPENCODE_COMPACTION_SUMMARY_KIND,
+    OPENCODE_EVENT_KEY,
+    OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
+)
 
 
 EXPECTED_ENVIRONMENTS = tuple(f"E{i}" for i in range(1, 7))
@@ -651,9 +658,410 @@ def _stream_session_ids(
     return ids
 
 
+def _canonical_trajectory_structure_valid(
+    payload: dict[str, Any],
+    *,
+    require_solve_history: bool,
+) -> bool:
+    """Validate a pinned ATIF trajectory and optionally a complete solve."""
+
+    steps = payload.get("steps")
+    if not (
+        payload.get("schema_version") == "ATIF-v1.7"
+        and isinstance(payload.get("session_id"), str)
+        and payload["session_id"]
+        and isinstance(payload.get("agent"), dict)
+        and isinstance(payload.get("final_metrics"), dict)
+        and isinstance(steps, list)
+        and steps
+        and all(
+            isinstance(step, dict)
+            and step.get("step_id") == index
+            and step.get("source") in {"user", "agent"}
+            and isinstance(step.get("message"), str)
+            for index, step in enumerate(steps, start=1)
+        )
+    ):
+        return False
+    if not require_solve_history:
+        return True
+    return bool(
+        len(steps) >= 2
+        and isinstance(steps[0], dict)
+        and steps[0].get("source") == "user"
+        and isinstance(steps[-1], dict)
+        and steps[-1].get("source") == "agent"
+    )
+
+
+def _opencode_export_structure_valid(
+    payload: dict[str, Any],
+    *,
+    require_solve_history: bool,
+) -> bool:
+    """Recheck pinned OpenCode export identity and parent-link invariants.
+
+    ``OpenCodePreinstalled`` validates the session fields before conversion,
+    but those checks are not part of ``SkillEvolBenchHooks``' prefix helper.
+    The downloadable audit must therefore repeat them instead of trusting the
+    runtime's boolean result.  In OpenCode 1.18.3 every assistant generated for
+    one user turn points to that most recent user message; successive tool-loop
+    assistant records do not point to one another.
+    """
+
+    info = payload.get("info")
+    session_id = info.get("id") if isinstance(info, dict) else None
+    messages = payload.get("messages")
+    if (
+        not isinstance(session_id, str)
+        or not session_id
+        or not isinstance(messages, list)
+        or not messages
+    ):
+        return False
+
+    message_ids: set[str] = set()
+    active_user_id: str | None = None
+    saw_user = False
+    saw_assistant = False
+    for message in messages:
+        if not isinstance(message, dict):
+            return False
+        message_info = message.get("info")
+        parts = message.get("parts")
+        if (
+            not isinstance(message_info, dict)
+            or not isinstance(parts, list)
+            or not parts
+        ):
+            return False
+        message_id = message_info.get("id")
+        role = message_info.get("role")
+        if (
+            not isinstance(message_id, str)
+            or not message_id
+            or message_id in message_ids
+            or message_info.get("sessionID") != session_id
+            or role not in {"user", "assistant"}
+        ):
+            return False
+        message_ids.add(message_id)
+        if any(
+            not isinstance(part, dict)
+            or part.get("sessionID") != session_id
+            or part.get("messageID") != message_id
+            for part in parts
+        ):
+            return False
+
+        if role == "user":
+            active_user_id = message_id
+            saw_user = True
+        else:
+            saw_assistant = True
+            if active_user_id is None or message_info.get("parentID") != active_user_id:
+                return False
+
+    if require_solve_history:
+        first_info = messages[0].get("info")
+        last_info = messages[-1].get("info")
+        return bool(
+            len(messages) >= 2
+            and isinstance(first_info, dict)
+            and first_info.get("role") == "user"
+            and isinstance(last_info, dict)
+            and last_info.get("role") == "assistant"
+            and saw_user
+            and saw_assistant
+        )
+    return True
+
+
+def _trajectory_sequence_signature(
+    steps: Any,
+) -> list[tuple[Any, ...]] | None:
+    """Project canonical steps onto role order and compaction controls."""
+
+    if not isinstance(steps, list):
+        return None
+    signature: list[tuple[Any, ...]] = []
+    for step in steps:
+        if not isinstance(step, dict):
+            return None
+        event = step.get(OPENCODE_EVENT_KEY)
+        if event is None:
+            source = step.get("source")
+            if source not in {"user", "agent"}:
+                return None
+            signature.append((source,))
+            continue
+        if not isinstance(event, dict):
+            return None
+        kind = event.get("kind")
+        if kind == OPENCODE_AUTO_COMPACTION_KIND:
+            signature.append(
+                (
+                    kind,
+                    event.get("auto"),
+                    event.get("overflow"),
+                    event.get("exclusive"),
+                    event.get("message_id"),
+                    event.get("part_message_id"),
+                )
+            )
+        elif kind == OPENCODE_COMPACTION_SUMMARY_KIND:
+            signature.append(
+                (
+                    kind,
+                    event.get("summary"),
+                    event.get("mode"),
+                    event.get("agent"),
+                    event.get("message_id"),
+                    event.get("parent_id"),
+                )
+            )
+        elif kind == OPENCODE_COMPACTION_CONTINUE_KIND:
+            signature.append(
+                (
+                    kind,
+                    event.get("synthetic"),
+                    event.get("metadata"),
+                    event.get("exclusive"),
+                    event.get("message_id"),
+                    event.get("part_message_id"),
+                )
+            )
+        elif kind == OPENCODE_POST_COMPACTION_ASSISTANT_KIND:
+            signature.append(
+                (
+                    kind,
+                    event.get("ordinary"),
+                    event.get("continue_message_id"),
+                    event.get("parent_id"),
+                )
+            )
+        else:
+            return None
+    return signature
+
+
+def _text_sha256(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        return hashlib.sha256(value.encode("utf-8")).hexdigest()
+    except UnicodeEncodeError:
+        return None
+
+
+def _decode_opencode_cli_user_message(value: str) -> str:
+    """Apply the pinned adapter's exact, round-trip-safe argv decoding."""
+
+    if len(value) < 2 or not value.startswith('"') or not value.endswith('"'):
+        return value
+    candidate = value[1:-1].replace(r"\"", '"')
+    rendered = '"' + candidate.replace('"', r"\"") + '"'
+    return candidate if rendered == value else value
+
+
+def _trajectory_message_spine(steps: Any) -> list[tuple[str, str]] | None:
+    if not isinstance(steps, list):
+        return None
+    spine: list[tuple[str, str]] = []
+    for step in steps:
+        if not isinstance(step, dict) or step.get("source") not in {"user", "agent"}:
+            return None
+        digest = _text_sha256(step.get("message"))
+        if digest is None:
+            return None
+        spine.append((str(step["source"]), digest))
+    return spine
+
+
+def _export_message_spine(messages: Any) -> list[tuple[str, str]] | None:
+    if not isinstance(messages, list):
+        return None
+    spine: list[tuple[str, str]] = []
+    for message in messages:
+        if not isinstance(message, dict):
+            return None
+        info = message.get("info")
+        parts = message.get("parts")
+        if not isinstance(info, dict) or not isinstance(parts, list):
+            return None
+        role = info.get("role")
+        if role not in {"user", "assistant"}:
+            return None
+        text = "\n".join(
+            part["text"]
+            for part in parts
+            if isinstance(part, dict)
+            and part.get("type") == "text"
+            and isinstance(part.get("text"), str)
+        )
+        if role == "user":
+            text = _decode_opencode_cli_user_message(text)
+        digest = _text_sha256(text)
+        if digest is None:
+            return None
+        spine.append(("user" if role == "user" else "agent", digest))
+    return spine
+
+
+def _export_sequence_signature(messages: Any) -> list[tuple[Any, ...]] | None:
+    """Project raw OpenCode messages like the pinned converter does."""
+
+    if not isinstance(messages, list):
+        return None
+    signature: list[tuple[Any, ...]] = []
+    previous_continue_id: str | None = None
+    for message in messages:
+        if not isinstance(message, dict):
+            return None
+        info = message.get("info")
+        parts = message.get("parts")
+        if not isinstance(info, dict) or not isinstance(parts, list):
+            return None
+        role = info.get("role")
+        message_id = info.get("id")
+        compaction_parts = [
+            part
+            for part in parts
+            if isinstance(part, dict) and part.get("type") == "compaction"
+        ]
+        synthetic_parts = [
+            part
+            for part in parts
+            if isinstance(part, dict)
+            and part.get("type") == "text"
+            and (
+                "synthetic" in part
+                or (
+                    isinstance(part.get("metadata"), dict)
+                    and "compaction_continue" in part["metadata"]
+                )
+            )
+        ]
+        if role == "user" and compaction_parts:
+            part = compaction_parts[0] if len(compaction_parts) == 1 else {}
+            signature.append(
+                (
+                    OPENCODE_AUTO_COMPACTION_KIND,
+                    part.get("auto"),
+                    part.get("overflow"),
+                    len(parts) == len(compaction_parts) == 1,
+                    message_id,
+                    part.get("messageID"),
+                )
+            )
+            previous_continue_id = None
+        elif role == "assistant" and "summary" in info:
+            signature.append(
+                (
+                    OPENCODE_COMPACTION_SUMMARY_KIND,
+                    info.get("summary"),
+                    info.get("mode"),
+                    info.get("agent"),
+                    message_id,
+                    info.get("parentID"),
+                )
+            )
+            previous_continue_id = None
+        elif role == "user" and synthetic_parts:
+            part = synthetic_parts[0] if len(synthetic_parts) == 1 else {}
+            signature.append(
+                (
+                    OPENCODE_COMPACTION_CONTINUE_KIND,
+                    part.get("synthetic"),
+                    part.get("metadata"),
+                    len(parts) == len(synthetic_parts) == 1,
+                    message_id,
+                    part.get("messageID"),
+                )
+            )
+            previous_continue_id = message_id if isinstance(message_id, str) else None
+        elif role == "assistant" and previous_continue_id is not None:
+            signature.append(
+                (
+                    OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
+                    "summary" not in info,
+                    previous_continue_id,
+                    info.get("parentID"),
+                )
+            )
+            previous_continue_id = None
+        elif role == "user":
+            signature.append(("user",))
+            previous_continue_id = None
+        elif role == "assistant":
+            signature.append(("agent",))
+            previous_continue_id = None
+        else:
+            return None
+    return signature
+
+
+def _trajectory_and_export_sequences_match(
+    solve_trajectory: dict[str, Any],
+    full_trajectory: dict[str, Any],
+    solve_export: dict[str, Any],
+    full_export: dict[str, Any],
+) -> bool:
+    """Bind role ordinals and control evidence in solve and reflection phases."""
+
+    solve_steps = solve_trajectory.get("steps")
+    full_steps = full_trajectory.get("steps")
+    solve_messages = solve_export.get("messages")
+    full_messages = full_export.get("messages")
+    if not all(
+        isinstance(items, list)
+        for items in (solve_steps, full_steps, solve_messages, full_messages)
+    ):
+        return False
+    trajectory_solve = _trajectory_sequence_signature(solve_steps)
+    export_solve = _export_sequence_signature(solve_messages)
+    trajectory_tail = _trajectory_sequence_signature(full_steps[len(solve_steps) :])
+    export_tail = _export_sequence_signature(full_messages[len(solve_messages) :])
+    trajectory_solve_spine = _trajectory_message_spine(solve_steps)
+    export_solve_spine = _export_message_spine(solve_messages)
+    trajectory_tail_spine = _trajectory_message_spine(full_steps[len(solve_steps) :])
+    export_tail_spine = _export_message_spine(full_messages[len(solve_messages) :])
+    return bool(
+        trajectory_solve is not None
+        and trajectory_solve == export_solve
+        and trajectory_tail is not None
+        and trajectory_tail == export_tail
+        and trajectory_solve_spine is not None
+        and trajectory_solve_spine == export_solve_spine
+        and trajectory_tail_spine is not None
+        and trajectory_tail_spine == export_tail_spine
+    )
+
+
+def _validate_byte_binding(
+    source: Path,
+    counterpart: Path,
+    *,
+    code: str,
+    scope: str,
+    context: AuditContext,
+) -> None:
+    if (
+        source.is_symlink()
+        or not source.is_file()
+        or counterpart.is_symlink()
+        or not counterpart.is_file()
+    ):
+        context.error(f"{code}_missing", scope)
+        return
+    if _sha256_file(source) != _sha256_file(counterpart):
+        context.error(f"{code}_mismatch", scope)
+
+
 def _validate_delivered_reflection_continuity(
     *,
     audit: Path,
+    trial_root: Path,
     task_id: str,
     result_session: Any,
     context: AuditContext,
@@ -690,36 +1098,134 @@ def _validate_delivered_reflection_continuity(
         code="reflection_export_full",
         scope=task_id,
     )
+    agent_root = trial_root / "agent"
+    for source_name, counterpart_name, code in (
+        (
+            "trajectory.solve.json",
+            "trajectory.solve.json",
+            "reflection_agent_solve_trajectory_binding",
+        ),
+        (
+            "trajectory.full.json",
+            "trajectory.json",
+            "reflection_agent_full_trajectory_binding",
+        ),
+        (
+            "opencode.session.full.json",
+            "opencode.session.json",
+            "reflection_agent_full_export_binding",
+        ),
+        (
+            "opencode.solve.jsonl",
+            "opencode.solve.jsonl",
+            "reflection_agent_solve_stream_binding",
+        ),
+        (
+            "opencode.reflection.jsonl",
+            "opencode.reflection.jsonl",
+            "reflection_agent_reflection_stream_binding",
+        ),
+    ):
+        _validate_byte_binding(
+            audit / source_name,
+            agent_root / counterpart_name,
+            code=code,
+            scope=task_id,
+            context=context,
+        )
+
+    solve_trajectory_structure_valid = False
+    if solve_trajectory is not None:
+        solve_trajectory_structure_valid = _canonical_trajectory_structure_valid(
+            solve_trajectory,
+            require_solve_history=True,
+        )
+        if not solve_trajectory_structure_valid:
+            context.error("reflection_trajectory_solve_history_invalid", task_id)
+    full_trajectory_structure_valid = False
+    if full_trajectory is not None:
+        full_trajectory_structure_valid = _canonical_trajectory_structure_valid(
+            full_trajectory,
+            require_solve_history=False,
+        )
+        if not full_trajectory_structure_valid:
+            context.error("reflection_trajectory_full_structure_invalid", task_id)
+    if (
+        solve_trajectory is not None
+        and full_trajectory is not None
+        and solve_trajectory.get("agent") != full_trajectory.get("agent")
+    ):
+        context.error("reflection_trajectory_agent_mismatch", task_id)
+
+    solve_export_structure_valid = False
+    if solve_export is not None:
+        solve_export_structure_valid = _opencode_export_structure_valid(
+            solve_export,
+            require_solve_history=True,
+        )
+        if not solve_export_structure_valid:
+            context.error("reflection_export_solve_structure_invalid", task_id)
+    full_export_structure_valid = False
+    if full_export is not None:
+        full_export_structure_valid = _opencode_export_structure_valid(
+            full_export,
+            require_solve_history=True,
+        )
+        if not full_export_structure_valid:
+            context.error("reflection_export_full_structure_invalid", task_id)
+
     if prompt is None:
         return
 
+    trajectory_continuity_valid = False
     if solve_trajectory is not None and full_trajectory is not None:
-        try:
-            trajectory_session = SkillEvolBenchHooks._verify_trajectory_continuity(
-                solve_trajectory,
-                full_trajectory,
-                prompt=prompt,
-                task_id=task_id,
-            )
-        except UnscoreableTrialError:
-            context.error("reflection_trajectory_continuity_invalid", task_id)
-        else:
-            if trajectory_session != result_session:
-                context.error("reflection_trajectory_session_mismatch", task_id)
+        if solve_trajectory_structure_valid and full_trajectory_structure_valid:
+            try:
+                trajectory_session = SkillEvolBenchHooks._verify_trajectory_continuity(
+                    solve_trajectory,
+                    full_trajectory,
+                    prompt=prompt,
+                    task_id=task_id,
+                )
+            except UnscoreableTrialError:
+                context.error("reflection_trajectory_continuity_invalid", task_id)
+            else:
+                trajectory_continuity_valid = True
+                if trajectory_session != result_session:
+                    context.error("reflection_trajectory_session_mismatch", task_id)
 
+    export_continuity_valid = False
     if solve_export is not None and full_export is not None:
-        try:
-            export_session = SkillEvolBenchHooks._verify_export_continuity(
-                solve_export,
-                full_export,
-                prompt=prompt,
-                task_id=task_id,
-            )
-        except UnscoreableTrialError:
-            context.error("reflection_export_continuity_invalid", task_id)
-        else:
-            if export_session != result_session:
-                context.error("reflection_export_session_mismatch", task_id)
+        if solve_export_structure_valid and full_export_structure_valid:
+            try:
+                export_session = SkillEvolBenchHooks._verify_export_continuity(
+                    solve_export,
+                    full_export,
+                    prompt=prompt,
+                    task_id=task_id,
+                )
+            except UnscoreableTrialError:
+                context.error("reflection_export_continuity_invalid", task_id)
+            else:
+                export_continuity_valid = True
+                if export_session != result_session:
+                    context.error("reflection_export_session_mismatch", task_id)
+
+    if (
+        trajectory_continuity_valid
+        and export_continuity_valid
+        and solve_trajectory is not None
+        and full_trajectory is not None
+        and solve_export is not None
+        and full_export is not None
+        and not _trajectory_and_export_sequences_match(
+            solve_trajectory,
+            full_trajectory,
+            solve_export,
+            full_export,
+        )
+    ):
+        context.error("reflection_trajectory_export_evidence_mismatch", task_id)
 
 
 def _validate_reflection(
@@ -827,6 +1333,7 @@ def _validate_reflection(
 
     _validate_delivered_reflection_continuity(
         audit=audit,
+        trial_root=trial_root,
         task_id=task_id,
         result_session=session,
         context=context,
