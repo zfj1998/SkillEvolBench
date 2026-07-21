@@ -117,6 +117,105 @@ def test_generic_assignment_ignores_placeholders_and_references(tmp_path: Path) 
     assert report["category_counts"]["credential_assignment"] == 0  # type: ignore[index]
 
 
+@pytest.mark.parametrize(
+    ("token", "payload"),
+    (
+        (
+            "token-e2-ls4-t1",
+            'access_token = "token-e2-ls4-t1"',
+        ),
+        (
+            "token-e2-ls4-t1",
+            'authorization = "Bearer token-e2-ls4-t1\\\\"',
+        ),
+        (
+            "token-e2-ls4-t6",
+            'authorization = "Bearer token-e2-ls4-t6\\\\\\""',
+        ),
+        (
+            "token-e2-ls4-t1",
+            "authorization: Bearer token-e2-ls4-t1`.",
+        ),
+    ),
+)
+def test_exact_committed_mock_bearer_tokens_are_clean_through_serialization(
+    tmp_path: Path,
+    token: str,
+    payload: str,
+) -> None:
+    root = tmp_path / "export"
+    root.mkdir()
+    (root / "event.bin").write_bytes(payload.encode())
+
+    report = scanner.scan_tree(root, environment={})
+
+    assert token.encode() in scanner.SKILLEVOLBENCH_MOCK_BEARER_TOKENS
+    assert report["clean"] is True
+    assert report["category_counts"]["credential_assignment"] == 0  # type: ignore[index]
+
+
+def test_mock_bearer_allowlist_matches_committed_e2_fixtures() -> None:
+    repository = Path(__file__).resolve().parents[1]
+    fixtures = {
+        "benchmark/tasks/auth-list-detail-save-4-step/environment/mock_api.py": (
+            "token-e2-ls4-t1"
+        ),
+        "benchmark/tasks/full-orchestration-retry-validate/environment/mock_api.py": (
+            "token-e2-ls4-t6"
+        ),
+    }
+
+    for relative_path, token in fixtures.items():
+        source = (repository / relative_path).read_text(encoding="utf-8")
+        assert f"TOKEN = '{token}'" in source
+    assert scanner.SKILLEVOLBENCH_MOCK_BEARER_TOKENS == frozenset(
+        token.encode() for token in fixtures.values()
+    )
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        "Bearer token-e2-ls4-t1-suffix",
+        "Bearer token-e2-ls4-t6x",
+        "Bearer unrelated-production-shaped-token-123456",
+    ),
+)
+def test_mock_bearer_near_misses_and_unrelated_values_remain_findings(
+    tmp_path: Path,
+    value: str,
+) -> None:
+    root = tmp_path / "export"
+    root.mkdir()
+    (root / "event.json").write_text(
+        f'authorization = "{value}\\\\"',
+        encoding="utf-8",
+    )
+
+    report = scanner.scan_tree(root, environment={})
+
+    assert report["clean"] is False
+    assert report["category_counts"]["credential_assignment"] == 1  # type: ignore[index]
+
+
+def test_exact_environment_secret_wins_over_mock_fixture_exception(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "export"
+    root.mkdir()
+    fixture = "token-e2-ls4-t1"
+    (root / "event.json").write_text(
+        f'authorization = "Bearer {fixture}\\\\"',
+        encoding="utf-8",
+    )
+
+    report = scanner.scan_tree(root, environment={"OPENAI_API_KEY": fixture})
+
+    assert report["clean"] is False
+    assert report["category_counts"]["credential_assignment"] == 0  # type: ignore[index]
+    assert report["category_counts"]["exact_secret_value"] == 1  # type: ignore[index]
+
+
 def test_prefixed_key_and_chunk_boundary_are_detected(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

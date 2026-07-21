@@ -186,6 +186,17 @@ SAFE_EXACT_VALUES = frozenset(
     }
 )
 
+# These are committed, local-only bearer values exposed by two E2 mock APIs.
+# OpenCode may preserve them with JSON/SQLite quote escaping in its audit DB.
+# Keep this exception exact and benchmark-specific; arbitrary bearer values
+# must continue through the credential-assignment heuristic below.
+SKILLEVOLBENCH_MOCK_BEARER_TOKENS = frozenset(
+    {
+        b"token-e2-ls4-t1",
+        b"token-e2-ls4-t6",
+    }
+)
+
 
 class ScanError(RuntimeError):
     """A safe, non-content-bearing scanner configuration error."""
@@ -224,12 +235,25 @@ class ScanStats:
     scan_complete: bool = True
 
 
+def _is_skillevolbench_mock_bearer_token(value: bytes) -> bool:
+    """Recognize only committed E2 mock tokens through audit-text wrappers."""
+
+    # OpenCode's SQLite event text can retain JSON quote escapes plus Markdown
+    # code-span and sentence punctuation around an otherwise exact fixture.
+    normalized = value.strip().strip(b"\\\"'`.")
+    if normalized.lower().startswith(b"bearer "):
+        normalized = normalized[7:].strip().strip(b"\\\"'`.")
+    return normalized in SKILLEVOLBENCH_MOCK_BEARER_TOKENS
+
+
 def _is_suspicious_assignment_value(value: bytes) -> bool:
     value = value.strip()
     lowered = value.lower()
     if len(value) < 8 or len(value) > 512:
         return False
     if not value.strip(b"*xX-_.[]"):
+        return False
+    if _is_skillevolbench_mock_bearer_token(value):
         return False
     normalized = lowered.strip(b"[]()")
     if normalized in SAFE_EXACT_VALUES:
