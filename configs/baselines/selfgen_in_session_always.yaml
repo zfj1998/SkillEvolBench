@@ -30,6 +30,9 @@ default_strategy: chain
 revision_trigger: always
 max_revisions_per_skill: 5
 skill_update_source: same_agent_session
+# Local/canonical default preserves the original one-shot protocol. AP may
+# override this bounded learning-only repair budget (default AP setting: 3).
+learning_max_attempts: 1
 
 library_scope: environment
 # Different T1/T2/T3 inputs already test forward transfer. Do not immediately

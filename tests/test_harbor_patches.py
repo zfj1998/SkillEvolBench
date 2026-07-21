@@ -51,6 +51,7 @@ def _install_fake_harbor(
     monkeypatch.setattr(_patches, "_PATCHED", False)
     monkeypatch.setattr(_patches, "_POST_VERIFIER_PATCHED", False)
     monkeypatch.setattr(_patches, "_POST_VERIFIER_CALLBACK", None)
+    monkeypatch.setattr(_patches, "_POST_VERIFIER_REPAIR_CALLBACK", None)
 
 
 def _task(instruction_path: Path, *, cached: str = "stale") -> SimpleNamespace:
@@ -338,6 +339,60 @@ def test_post_verifier_lifecycle_validates_snapshot_and_cleans_up(
     assert trial.events[-3:] == ["stop-main", "harbor-cleanup", "stop-main"]
 
 
+def test_post_verifier_lifecycle_repeats_verifier_in_one_trial(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    exact_trial, exact_single_step = _exact_trial_classes()
+    _install_fake_harbor(
+        monkeypatch,
+        exact_trial,
+        single_step_class=exact_single_step,
+    )
+
+    async def isolated_verifier(trial: Any) -> None:
+        trial.events.append("verifier")
+
+    monkeypatch.setattr(_patches, "_run_isolated_verifier", isolated_verifier)
+    _patches.apply_harbor_patches()
+
+    async def repair_callback(trial: Any, attempt: int) -> bool:
+        trial.events.append(f"repair-check-{attempt}")
+        return attempt < 3
+
+    async def reflection_callback(trial: Any) -> None:
+        trial.events.append("reflection")
+
+    _patches.register_post_verifier_callback(
+        reflection_callback,
+        repair_callback=repair_callback,
+    )
+    trial = exact_single_step()
+    trial.events = []
+    trial.agent_environment = _FakeAgentEnvironment(trial.events)
+    trial.paths = SimpleNamespace(artifacts_dir=tmp_path / "artifacts")
+    trial.task = SimpleNamespace(
+        has_steps=False,
+        config=SimpleNamespace(artifacts=[]),
+    )
+    trial.config = SimpleNamespace(artifacts=["/root/task"])
+    trial.logger = logging.getLogger("test-harbor-repair-loop")
+
+    asyncio.run(trial._run())
+    _patches.clear_post_verifier_callback()
+
+    assert trial._sevb_learning_attempt_count == 3
+    assert trial.events[4:11] == [
+        "verifier",
+        "repair-check-1",
+        "verifier",
+        "repair-check-2",
+        "verifier",
+        "repair-check-3",
+        "reflection",
+    ]
+
+
 def test_private_api_rejects_wrong_harbor_version(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -359,7 +414,9 @@ def test_private_api_rejects_signature_drift(
 ) -> None:
     exact_trial, exact_single_step = _exact_trial_classes()
 
-    async def drifted_collect(self: Any, stop_main_before_sidecars: bool = False) -> None:
+    async def drifted_collect(
+        self: Any, stop_main_before_sidecars: bool = False
+    ) -> None:
         del self, stop_main_before_sidecars
 
     exact_single_step._collect_artifacts = drifted_collect

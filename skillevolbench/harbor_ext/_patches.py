@@ -35,12 +35,15 @@ _LOG = logging.getLogger(__name__)
 _PATCHED: bool = False
 _POST_VERIFIER_PATCHED: bool = False
 _POST_VERIFIER_CALLBACK: Callable[[Any], Awaitable[None]] | None = None
+_POST_VERIFIER_REPAIR_CALLBACK: Callable[[Any, int], Awaitable[bool]] | None = None
 
 _SUPPORTED_HARBOR_VERSION = "0.20.0"
 _PINNED_HARBOR_REVISION = "071281b3d931aafd6a5375fa7d5933e23054d784"
 
 
-def _parameter_shape(callable_obj: Callable[..., Any]) -> tuple[tuple[str, str, str], ...]:
+def _parameter_shape(
+    callable_obj: Callable[..., Any],
+) -> tuple[tuple[str, str, str], ...]:
     """Return the annotation-independent shape of one private callable."""
     shape: list[tuple[str, str, str]] = []
     for parameter in inspect.signature(callable_obj).parameters.values():
@@ -63,12 +66,8 @@ _EXPECTED_PRIVATE_SIGNATURES: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("step_cfg", "KEYWORD_ONLY", "None"),
         ("resume", "KEYWORD_ONLY", "False"),
     ),
-    "SingleStepTrial._run": (
-        ("self", "POSITIONAL_OR_KEYWORD", "<required>"),
-    ),
-    "SingleStepTrial._run_agent": (
-        ("self", "POSITIONAL_OR_KEYWORD", "<required>"),
-    ),
+    "SingleStepTrial._run": (("self", "POSITIONAL_OR_KEYWORD", "<required>"),),
+    "SingleStepTrial._run_agent": (("self", "POSITIONAL_OR_KEYWORD", "<required>"),),
     "SingleStepTrial._upload_agent_logs": (
         ("self", "POSITIONAL_OR_KEYWORD", "<required>"),
     ),
@@ -253,9 +252,7 @@ def _validate_task_snapshot(trial: Any) -> Path:
             f"cannot inspect isolated verifier task snapshot: {snapshot}"
         ) from exc
     if not has_contents:
-        raise RuntimeError(
-            f"isolated verifier task snapshot is empty: {snapshot}"
-        )
+        raise RuntimeError(f"isolated verifier task snapshot is empty: {snapshot}")
     trial._sevb_task_snapshot_path = snapshot
     return snapshot
 
@@ -388,8 +385,8 @@ async def _run_isolated_verifier(trial: Any) -> None:
     # then let Verifier upload tests to /tests after /root/task is restored.
     had_override = "_verifier_env_build_context" in trial.__dict__
     previous_override = trial.__dict__.get("_verifier_env_build_context")
-    trial._verifier_env_build_context = (
-        lambda _step_cfg: trial.task.paths.environment_dir
+    trial._verifier_env_build_context = lambda _step_cfg: (
+        trial.task.paths.environment_dir
     )
     try:
         env_config = trial.task.config.environment.model_copy(deep=True)
@@ -433,8 +430,7 @@ async def _run_isolated_verifier(trial: Any) -> None:
                         )
     except asyncio.TimeoutError as exc:
         raise VerifierTimeoutError(
-            "Verifier execution timed out after "
-            f"{trial._verifier_timeout_sec} seconds"
+            f"Verifier execution timed out after {trial._verifier_timeout_sec} seconds"
         ) from exc
     finally:
         if had_override:
@@ -578,6 +574,7 @@ def apply_harbor_patches() -> None:
 
             async def _run_with_isolated_reflection(self: Any) -> None:
                 callback = _POST_VERIFIER_CALLBACK
+                repair_callback = _POST_VERIFIER_REPAIR_CALLBACK
                 if callback is None:
                     await original_single_step_run(self)
                     return
@@ -634,11 +631,15 @@ def apply_harbor_patches() -> None:
                     # docker cp works for a stopped container, so this is an
                     # immutable grading snapshot even if the solve spawned a
                     # background writer.
-                    await self._collect_artifacts(
-                        stop_main_before_sidecars=False
-                    )
+                    await self._collect_artifacts(stop_main_before_sidecars=False)
                     _validate_task_snapshot(self)
                     await isolated_verifier_runner(self)
+                    attempt = 1
+                    if repair_callback is not None:
+                        while await repair_callback(self, attempt):
+                            await isolated_verifier_runner(self)
+                            attempt += 1
+                    self._sevb_learning_attempt_count = attempt
                     await callback(self)
                 finally:
                     await _secure_stop_agent_environment(self)
@@ -655,9 +656,11 @@ def apply_harbor_patches() -> None:
 
 def register_post_verifier_callback(
     callback: Callable[[Any], Awaitable[None]],
+    *,
+    repair_callback: Callable[[Any, int], Awaitable[bool]] | None = None,
 ) -> None:
     """Register the one benchmark callback used by the current Harbor job."""
-    global _POST_VERIFIER_CALLBACK
+    global _POST_VERIFIER_CALLBACK, _POST_VERIFIER_REPAIR_CALLBACK
     if not _POST_VERIFIER_PATCHED:
         raise RuntimeError(
             "Pinned Harbor does not expose the post-verifier single-step seam; "
@@ -666,12 +669,14 @@ def register_post_verifier_callback(
     if _POST_VERIFIER_CALLBACK is not None:
         raise RuntimeError("a post-verifier callback is already registered")
     _POST_VERIFIER_CALLBACK = callback
+    _POST_VERIFIER_REPAIR_CALLBACK = repair_callback
 
 
 def clear_post_verifier_callback() -> None:
     """Remove job-owned state while leaving the process-level patch installed."""
-    global _POST_VERIFIER_CALLBACK
+    global _POST_VERIFIER_CALLBACK, _POST_VERIFIER_REPAIR_CALLBACK
     _POST_VERIFIER_CALLBACK = None
+    _POST_VERIFIER_REPAIR_CALLBACK = None
 
 
 __all__ = [

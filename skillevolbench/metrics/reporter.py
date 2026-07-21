@@ -62,8 +62,7 @@ def _to_dict(obj: Any) -> dict[str, Any]:
                 out[name] = _to_dict(v)
             elif isinstance(v, (list, tuple)):
                 out[name] = [
-                    _to_dict(x) if hasattr(x, "__dataclass_fields__") else x
-                    for x in v
+                    _to_dict(x) if hasattr(x, "__dataclass_fields__") else x for x in v
                 ]
             elif isinstance(v, dict):
                 out[name] = {
@@ -177,21 +176,22 @@ class ReportGenerator:
         library_skill_ids = {s.skill_id for s in manifest_skills}
 
         retrieval_dir = self.run_root / "stores" / "retrieval"
-        retrieval = (
-            RetrievalStore(retrieval_dir) if retrieval_dir.exists() else None
-        )
+        retrieval = RetrievalStore(retrieval_dir) if retrieval_dir.exists() else None
 
         records = replay.all_records()
         primary_records = [
-            record for record in records
+            record
+            for record in records
             if getattr(record, "replay_mode", "primary") == "primary"
         ]
         replay_records = [
-            record for record in records
+            record
+            for record in records
             if getattr(record, "replay_mode", "primary") == "within_env_replay"
         ]
         shadow_records = [
-            record for record in records
+            record
+            for record in records
             if getattr(record, "replay_mode", "primary") == "shadow_oracle"
         ]
         retrieval_events = retrieval.all_events() if retrieval else []
@@ -203,9 +203,12 @@ class ReportGenerator:
         event_counts = {
             t: len(events.events_of_type(t))
             for t in (
-                "patch_proposed", "patch_applied", "patch_rejected",
+                "patch_proposed",
+                "patch_applied",
+                "patch_rejected",
                 "rollback_decision",
-                "trial_ended_learning", "trial_ended_eval",
+                "trial_ended_learning",
+                "trial_ended_eval",
             )
         }
         lib_section = compute_library_health(
@@ -294,6 +297,30 @@ class ReportGenerator:
                 ).items()
             )
         )
+        learning_attempts_total = sum(
+            int(event.get("learning_attempts", 1) or 1) for event in terminal_events
+        )
+        repair_attempts_total = sum(
+            int(event.get("repair_attempts", 0) or 0) for event in terminal_events
+        )
+        initial_learning_pass_count = sum(
+            1
+            for event in terminal_events
+            if event.get("initial_verifier_passed") is True
+        )
+        terminal_learning_pass_count = sum(
+            1
+            for event in terminal_events
+            if event.get("terminal_verifier_passed") is True
+        )
+        repaired_to_pass_count = sum(
+            1 for event in terminal_events if event.get("repaired_to_pass") is True
+        )
+        initially_failed_count = sum(
+            1
+            for event in terminal_events
+            if event.get("initial_verifier_passed") is False
+        )
 
         def _same_session_verified(event: dict[str, Any]) -> bool:
             """Require the explicit host verdict and three matching IDs."""
@@ -313,8 +340,7 @@ class ReportGenerator:
 
         reflection_section = {
             "enabled": (
-                self.run_config.baseline.skill_update_source
-                == "same_agent_session"
+                self.run_config.baseline.skill_update_source == "same_agent_session"
             ),
             "n_terminal": len(terminal_events),
             "n_attempted": n_attempted,
@@ -329,30 +355,39 @@ class ReportGenerator:
             "n_same_session_verified": sum(
                 1 for event in attempted_events if _same_session_verified(event)
             ),
+            "learning_max_attempts": (self.run_config.baseline.learning_max_attempts),
+            "learning_attempts_total": learning_attempts_total,
+            "repair_attempts_total": repair_attempts_total,
+            "initial_learning_pass_count": initial_learning_pass_count,
+            "terminal_learning_pass_count": terminal_learning_pass_count,
+            "repaired_to_pass_count": repaired_to_pass_count,
+            "same_task_repair_success_rate": (
+                repaired_to_pass_count / initially_failed_count
+                if initially_failed_count
+                else None
+            ),
+            "n_all_attempts_same_session_verified": sum(
+                1
+                for event in terminal_events
+                if event.get("all_attempts_same_session_verified") is True
+            ),
             # A deliberate no-op is a valid, parseable model output even
             # though it does not propose a patch. Keep output validity and
             # actionable patch production as separate metrics.
             "valid_output_rate": (
-                (n_completed + n_noop) / n_attempted
-                if n_attempted else None
+                (n_completed + n_noop) / n_attempted if n_attempted else None
             ),
             "patch_candidate_rate": (
                 n_completed / n_attempted if n_attempted else None
             ),
-            "noop_rate": (
-                n_noop / n_attempted if n_attempted else None
-            ),
-            "rejection_rate": (
-                n_rejected / n_attempted if n_attempted else None
-            ),
+            "noop_rate": (n_noop / n_attempted if n_attempted else None),
+            "rejection_rate": (n_rejected / n_attempted if n_attempted else None),
         }
 
         # 9. Cross-task transfer after every terminal reflection outcome,
         # including no-op/rejected/skipped. This intentionally does not
         # condition on patch_applied.
-        reflection_transfer_section = compute_reflection_transfer(
-            primary_records
-        )
+        reflection_transfer_section = compute_reflection_transfer(primary_records)
 
         # 10. Cost
         n_passed = sum(1 for r in records if r.outcome.verifier_passed)

@@ -48,6 +48,7 @@ def test_default_submission_is_one_task_e1_smoke() -> None:
     assert params["harbor_agent"] == "opencode"
     assert params["agent_cli_set"] == "opencode"
     assert params["opencode_version"] == "1.18.3"
+    assert params["learning_max_attempts"] == 3
     assert "codex_wire_api" not in params
     assert "within_env_replay" not in params
     assert "replay_eval" not in params
@@ -96,7 +97,15 @@ def test_submission_rejects_non_uuid4_idempotency_key() -> None:
 
 def test_family_submission_selects_exact_family_without_max_tasks_or_replay() -> None:
     args = submit._parser().parse_args(
-        ["--scope", "family", "--family-id", "E2-LS3", "--dry-run"]
+        [
+            "--scope",
+            "family",
+            "--family-id",
+            "E2-LS3",
+            "--learning-max-attempts",
+            "4",
+            "--dry-run",
+        ]
     )
     submission = submit.build_submission(args, _environment())
     params = _params(submission.command)
@@ -107,22 +116,19 @@ def test_family_submission_selects_exact_family_without_max_tasks_or_replay() ->
     assert "smoke_max_tasks" not in params
     assert "within_env_replay" not in params
     assert "replay_eval" not in params
+    assert params["learning_max_attempts"] == 4
     assert "non-scoreable E2-LS3 T1-T6" in submission.description
 
 
 def test_family_submission_rejects_explicit_replay() -> None:
-    args = submit._parser().parse_args(
-        ["--scope", "family", "--within-env-replay"]
-    )
+    args = submit._parser().parse_args(["--scope", "family", "--within-env-replay"])
 
     with pytest.raises(ValueError, match="requires replay disabled"):
         submit.build_submission(args, _environment())
 
 
 def test_submission_only_overrides_replay_when_user_explicitly_requests_it() -> None:
-    args = submit._parser().parse_args(
-        ["--within-env-replay", "--no-replay-eval"]
-    )
+    args = submit._parser().parse_args(["--within-env-replay", "--no-replay-eval"])
     params = _params(submit.build_submission(args, _environment()).command)
 
     assert params["within_env_replay"] is True
@@ -154,7 +160,7 @@ def test_credentials_are_required_and_sanitized() -> None:
     )
     assert submit._sanitize(
         raw, ["sk-model-secret-for-test", "ap-secret-for-test"]
-    ) == ('api_key="[REDACTED]" model_api_key="[REDACTED]" ' "Authorization=[REDACTED]")
+    ) == ('api_key="[REDACTED]" model_api_key="[REDACTED]" Authorization=[REDACTED]')
 
 
 def test_sanitize_preserves_non_secret_ap_identifiers() -> None:

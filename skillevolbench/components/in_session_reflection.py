@@ -31,6 +31,7 @@ REFLECTION_FEEDBACK_FILENAME = "self_reflection_feedback.json"
 REFLECTION_PROMPT_FILENAME = "self_reflection_prompt.md"
 REFLECTION_RESULT_FILENAME = "self_reflection_result.json"
 REFLECTION_AGENT_TIMEOUT_REASON = "reflection_agent_timeout"
+REPAIR_AUDIT_DIRNAME = "same-session-attempts"
 
 _LEARNING_ROLES = frozenset({"canonical", "enriched", "variant"})
 _SAFE_SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -96,6 +97,13 @@ class ReflectionRecord:
     task_workspace_hash_after: str | None = None
     trajectory_prefix_verified: bool = False
     export_prefix_verified: bool = False
+    learning_attempts: int = 1
+    repair_attempts: int = 0
+    initial_verifier_passed: bool | None = None
+    terminal_verifier_passed: bool | None = None
+    repaired_to_pass: bool = False
+    all_attempts_same_session_verified: bool = True
+    attempt_audit_dir: Path | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -109,16 +117,12 @@ class ReflectionRecord:
             "patch_id": self.patch.patch_id if self.patch else None,
             "reason": self.reason,
             "prompt_path": str(self.prompt_path) if self.prompt_path else None,
-            "feedback_path": (
-                str(self.feedback_path) if self.feedback_path else None
-            ),
+            "feedback_path": (str(self.feedback_path) if self.feedback_path else None),
             "candidate_path": (
                 str(self.candidate_path) if self.candidate_path else None
             ),
             "solve_trajectory_path": (
-                str(self.solve_trajectory_path)
-                if self.solve_trajectory_path
-                else None
+                str(self.solve_trajectory_path) if self.solve_trajectory_path else None
             ),
             "full_session_trajectory_path": (
                 str(self.full_session_trajectory_path)
@@ -137,15 +141,24 @@ class ReflectionRecord:
             ),
             "prompt_sha256": self.prompt_sha256,
             "solve_trajectory_sha256": self.solve_trajectory_sha256,
-            "full_session_trajectory_sha256": (
-                self.full_session_trajectory_sha256
-            ),
+            "full_session_trajectory_sha256": (self.full_session_trajectory_sha256),
             "solve_session_export_sha256": self.solve_session_export_sha256,
             "full_session_export_sha256": self.full_session_export_sha256,
             "task_workspace_hash_before": self.task_workspace_hash_before,
             "task_workspace_hash_after": self.task_workspace_hash_after,
             "trajectory_prefix_verified": self.trajectory_prefix_verified,
             "export_prefix_verified": self.export_prefix_verified,
+            "learning_attempts": self.learning_attempts,
+            "repair_attempts": self.repair_attempts,
+            "initial_verifier_passed": self.initial_verifier_passed,
+            "terminal_verifier_passed": self.terminal_verifier_passed,
+            "repaired_to_pass": self.repaired_to_pass,
+            "all_attempts_same_session_verified": (
+                self.all_attempts_same_session_verified
+            ),
+            "attempt_audit_dir": (
+                str(self.attempt_audit_dir) if self.attempt_audit_dir else None
+            ),
         }
 
 
@@ -230,7 +243,9 @@ class InSessionSkillReflection:
             ]
         return payload
 
-    def build_prompt(self, task: Any, outcome: Any, *, mode: str) -> tuple[str, dict[str, Any]]:
+    def build_prompt(
+        self, task: Any, outcome: Any, *, mode: str
+    ) -> tuple[str, dict[str, Any]]:
         """Build the verifier-feedback turn sent to the original session."""
         feedback = self.feedback_payload(task, outcome, mode=mode)
         primary_id = str(task.primary_skill)
@@ -264,9 +279,10 @@ class InSessionSkillReflection:
 
 You are continuing the exact same session in which you just attempted task
 `{task.task_id}`. The official verifier has now run. Reflect on your actual
-approach in the preceding turn together with the bounded verifier feedback
-below, then distill a reusable skill update that should help on related but
-different future inputs. Do not merely memorize this task's literal answer.
+approach across all preceding solve and repair turns together with the bounded
+terminal verifier feedback below, then distill a reusable skill update that
+should help on related but different future inputs. Do not merely memorize
+this task's literal answer.
 
 {operation}
 
@@ -298,7 +314,7 @@ Write exactly one UTF-8 JSON object to that file using this shape:
 ```json
 {{
   "summary": "one-line reusable lesson",
-  "operation_type": "{('create' if mode == 'induction' else 'revise')}",
+  "operation_type": "{("create" if mode == "induction" else "revise")}",
   "upsert_files": {{
     "{primary_slug}/SKILL.md": "---\\nname: ...\\ndescription: ...\\n---\\n\\n# ...\\n"
   }},
@@ -309,6 +325,49 @@ Write exactly one UTF-8 JSON object to that file using this shape:
 JSON must parse without fences or comments. After writing it, read the file
 back once to check it. Your final response should briefly state what reusable
 lesson you encoded; do not include another copy of the JSON.
+"""
+        return prompt, feedback
+
+    def build_repair_prompt(
+        self,
+        task: Any,
+        outcome: Any,
+        *,
+        failed_attempt: int,
+        max_attempts: int,
+    ) -> tuple[str, dict[str, Any]]:
+        """Build one bounded-feedback task-repair turn for the same session."""
+
+        feedback = self.feedback_payload(task, outcome, mode="task_repair")
+        next_attempt = failed_attempt + 1
+        prompt = f"""# Verifier-guided task repair
+
+You are continuing the exact same OpenCode session for task `{task.task_id}`.
+Attempt {failed_attempt} of at most {max_attempts} did not pass the official
+verifier. Analyze the bounded feedback below and repair your implementation in
+`/root/task` for attempt {next_attempt}. Preserve useful parts of your existing
+work; make concrete code or configuration changes that address the failure.
+
+Verifier feedback:
+
+```json
+{json.dumps(feedback, indent=2, ensure_ascii=False)}
+```
+
+Security and state boundary:
+
+- Hidden verifier tests, `/tests`, and raw verifier logs are intentionally
+  unavailable. Do not look for them or try to reconstruct hidden test sources.
+- You may inspect and modify `/root/task` only. Do not modify `/skills`,
+  `/workspace`, `/context`, or files under `/logs/agent`.
+- You may run ordinary visible checks that already belong to the task, but do
+  not invoke the official verifier.
+- Do not generate a skill candidate yet. Skill reflection happens only after
+  the task passes or the attempt budget is exhausted.
+
+Finish the repair in this turn. Your final response should briefly summarize
+the implementation changes; the host will snapshot `/root/task` and run the
+official verifier in a fresh isolated container.
 """
         return prompt, feedback
 
@@ -332,9 +391,7 @@ lesson you encoded; do not include another copy of the JSON.
             raise ReflectionCandidateError("candidate_json_invalid") from exc
         if not isinstance(data, dict):
             raise ReflectionCandidateError("candidate_must_be_object")
-        return self._parse_candidate_data(
-            data, task=task, outcome=outcome, mode=mode
-        )
+        return self._parse_candidate_data(data, task=task, outcome=outcome, mode=mode)
 
     def parse_candidate_bytes(
         self,
@@ -353,9 +410,7 @@ lesson you encoded; do not include another copy of the JSON.
             raise ReflectionCandidateError("candidate_json_invalid") from exc
         if not isinstance(data, dict):
             raise ReflectionCandidateError("candidate_must_be_object")
-        return self._parse_candidate_data(
-            data, task=task, outcome=outcome, mode=mode
-        )
+        return self._parse_candidate_data(data, task=task, outcome=outcome, mode=mode)
 
     def _parse_candidate_data(
         self,
@@ -369,26 +424,31 @@ lesson you encoded; do not include another copy of the JSON.
         for name in _SECRET_ENV_NAMES:
             secret = os.environ.get(name, "")
             if len(secret) >= 4 and secret in serialized_candidate:
-                raise ReflectionCandidateError(
-                    f"candidate_contains_secret:{name}"
-                )
+                raise ReflectionCandidateError(f"candidate_contains_secret:{name}")
         if data.get("action") == "noop":
             return None
 
         upserts = data.get("upsert_files")
         if not isinstance(upserts, dict) or not upserts:
             raise ReflectionCandidateError("candidate_upserts_missing")
-        if not all(isinstance(key, str) and isinstance(value, str) for key, value in upserts.items()):
+        if not all(
+            isinstance(key, str) and isinstance(value, str)
+            for key, value in upserts.items()
+        ):
             raise ReflectionCandidateError("candidate_upserts_must_be_strings")
         total_size = sum(len(value.encode("utf-8")) for value in upserts.values())
         if total_size > _MAX_TOTAL_CONTENT_BYTES:
             raise ReflectionCandidateError("candidate_content_too_large")
-        if any(len(value.encode("utf-8")) > _MAX_FILE_BYTES for value in upserts.values()):
+        if any(
+            len(value.encode("utf-8")) > _MAX_FILE_BYTES for value in upserts.values()
+        ):
             raise ReflectionCandidateError("candidate_file_content_too_large")
         deletes = data.get("delete_paths", []) or []
         if deletes and not getattr(self.baseline, "allow_retirement", False):
             raise ReflectionCandidateError("delete_not_allowed_by_baseline")
-        if not isinstance(deletes, list) or not all(isinstance(item, str) for item in deletes):
+        if not isinstance(deletes, list) or not all(
+            isinstance(item, str) for item in deletes
+        ):
             raise ReflectionCandidateError("delete_paths_must_be_strings")
 
         family_id = str(task.family_id)
@@ -447,9 +507,7 @@ lesson you encoded; do not include another copy of the JSON.
         if mode == "induction" and f"{primary_slug}/SKILL.md" not in upserts:
             raise ReflectionCandidateError("induction_missing_skill_md")
 
-        touched_slugs = {
-            raw_path.split("/", 1)[0] for raw_path in [*upserts, *deletes]
-        }
+        touched_slugs = {raw_path.split("/", 1)[0] for raw_path in [*upserts, *deletes]}
         if mode == "induction":
             target_skill_ids = [primary_id]
             operation_type = OperationType.CREATE
@@ -473,9 +531,7 @@ lesson you encoded; do not include another copy of the JSON.
             target_skill_ids = touched_existing_ids + [
                 f"{family_id}.{slug}" for slug in new_slugs
             ]
-            operation_type = (
-                OperationType.CREATE if new_slugs else OperationType.REVISE
-            )
+            operation_type = OperationType.CREATE if new_slugs else OperationType.REVISE
 
         patch = SkillPatch(
             patch_id=str(uuid.uuid4()),
@@ -492,7 +548,10 @@ lesson you encoded; do not include another copy of the JSON.
             attempt_count=1,
         )
 
-        if any(not skill_id.startswith(f"{family_id}.") for skill_id in patch.target_skill_ids):
+        if any(
+            not skill_id.startswith(f"{family_id}.")
+            for skill_id in patch.target_skill_ids
+        ):
             raise ReflectionCandidateError("candidate_cross_family_target")
         if patch.operation_type not in {
             OperationType.CREATE.value,
@@ -544,10 +603,7 @@ lesson you encoded; do not include another copy of the JSON.
             return rel
         if tail[0] not in {"scripts", "references", "assets"} or len(tail) < 2:
             raise ReflectionCandidateError("candidate_path_outside_skill_layout")
-        if any(
-            part in {"", ".", ".."} or "\x00" in part
-            for part in tail
-        ):
+        if any(part in {"", ".", ".."} or "\x00" in part for part in tail):
             raise ReflectionCandidateError("candidate_path_unsafe")
         return rel
 

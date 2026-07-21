@@ -39,16 +39,13 @@ def _record(
     replay_mode: str = "primary",
 ) -> ReplayRecord:
     tier = task_id.split("__", 1)[0].rsplit("-", 1)[-1]
-    reflection = (
-        {"status": reflection_status} if reflection_status is not None else {}
-    )
+    reflection = {"status": reflection_status} if reflection_status is not None else {}
     return ReplayRecord(
         task_id=task_id,
         family_id="-".join(task_id.split("-")[:2]),
         env_id=task_id.split("-", 1)[0],
         task_role=ROLE_BY_TIER[tier],
-        timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc)
-        + timedelta(seconds=offset),
+        timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=offset),
         outcome=TrialOutcome(task_id=task_id, verifier_passed=passed),
         reflection=reflection,
         replay_mode=replay_mode,
@@ -58,25 +55,36 @@ def _record(
 def test_reflection_transfer_counts_every_terminal_status() -> None:
     records = [
         _record(
-            "E1-LS1-T1", passed=False, offset=1,
+            "E1-LS1-T1",
+            passed=False,
+            offset=1,
             reflection_status="completed",
         ),
         _record(
-            "E1-LS1-T2", passed=True, offset=2,
+            "E1-LS1-T2",
+            passed=True,
+            offset=2,
             reflection_status="noop",
         ),
         # A replay between T2 and T3 must never become the transfer target.
         _record(
-            "E1-LS1-T2__replay", passed=True, offset=3,
-            reflection_status="completed", replay_mode="within_env_replay",
+            "E1-LS1-T2__replay",
+            passed=True,
+            offset=3,
+            reflection_status="completed",
+            replay_mode="within_env_replay",
         ),
         _record(
-            "E1-LS1-T3", passed=False, offset=4,
+            "E1-LS1-T3",
+            passed=False,
+            offset=4,
             reflection_status="rejected",
         ),
         _record("E1-LS1-T4", passed=False, offset=5),
         _record(
-            "E1-LS2-T1", passed=True, offset=6,
+            "E1-LS2-T1",
+            passed=True,
+            offset=6,
             reflection_status="skipped",
         ),
         _record("E1-LS2-T2", passed=True, offset=7),
@@ -112,7 +120,9 @@ def test_reflection_transfer_rates_are_none_without_matching_source_class() -> N
     report = compute_reflection_transfer(
         [
             _record(
-                "E1-LS1-T1", passed=False, offset=1,
+                "E1-LS1-T1",
+                passed=False,
+                offset=1,
                 reflection_status="noop",
             ),
             _record("E1-LS1-T2", passed=True, offset=2),
@@ -122,9 +132,7 @@ def test_reflection_transfer_rates_are_none_without_matching_source_class() -> N
     assert report.failure_recovery_rate == 1.0
     assert report.success_regression_rate is None
     assert report.by_reflection_status["completed"].n_pairs == 0
-    assert (
-        report.by_reflection_status["completed"].failure_recovery_rate is None
-    )
+    assert report.by_reflection_status["completed"].failure_recovery_rate is None
 
 
 def test_reporter_strictly_verifies_sessions_and_treats_noop_as_valid(
@@ -143,15 +151,21 @@ def test_reporter_strictly_verifies_sessions_and_treats_noop_as_valid(
     replay = ReplayStore(run_root / "stores" / "replay")
     for record in (
         _record(
-            "E1-LS1-T1", passed=False, offset=1,
+            "E1-LS1-T1",
+            passed=False,
+            offset=1,
             reflection_status="completed",
         ),
         _record(
-            "E1-LS1-T2", passed=True, offset=2,
+            "E1-LS1-T2",
+            passed=True,
+            offset=2,
             reflection_status="noop",
         ),
         _record(
-            "E1-LS1-T3", passed=True, offset=3,
+            "E1-LS1-T3",
+            passed=True,
+            offset=3,
             reflection_status="rejected",
         ),
         _record("E1-LS1-T4", passed=False, offset=4),
@@ -167,6 +181,12 @@ def test_reporter_strictly_verifies_sessions_and_treats_noop_as_valid(
             "session_id": "ses-1",
             "solve_session_id": "ses-1",
             "reflection_session_id": "ses-1",
+            "learning_attempts": 3,
+            "repair_attempts": 2,
+            "initial_verifier_passed": False,
+            "terminal_verifier_passed": True,
+            "repaired_to_pass": True,
+            "all_attempts_same_session_verified": True,
         },
     )
     events.record(
@@ -177,6 +197,12 @@ def test_reporter_strictly_verifies_sessions_and_treats_noop_as_valid(
             "session_id": "ses-2",
             "solve_session_id": "ses-2",
             "reflection_session_id": "ses-mismatch",
+            "learning_attempts": 1,
+            "repair_attempts": 0,
+            "initial_verifier_passed": True,
+            "terminal_verifier_passed": True,
+            "repaired_to_pass": False,
+            "all_attempts_same_session_verified": True,
         },
     )
     events.record(
@@ -188,9 +214,26 @@ def test_reporter_strictly_verifies_sessions_and_treats_noop_as_valid(
             "session_id": "ses-3",
             "solve_session_id": "ses-3",
             "reflection_session_id": "ses-3",
+            "learning_attempts": 2,
+            "repair_attempts": 1,
+            "initial_verifier_passed": False,
+            "terminal_verifier_passed": False,
+            "repaired_to_pass": False,
+            "all_attempts_same_session_verified": True,
         },
     )
-    events.record("reflection_skipped", {"task_id": "E1-LS2-T1"})
+    events.record(
+        "reflection_skipped",
+        {
+            "task_id": "E1-LS2-T1",
+            "learning_attempts": 1,
+            "repair_attempts": 0,
+            "initial_verifier_passed": False,
+            "terminal_verifier_passed": False,
+            "repaired_to_pass": False,
+            "all_attempts_same_session_verified": True,
+        },
+    )
 
     report = ReportGenerator(run_root, config).generate()
 
@@ -201,9 +244,14 @@ def test_reporter_strictly_verifies_sessions_and_treats_noop_as_valid(
     assert report.reflection["noop_rate"] == pytest.approx(1 / 3)
     assert report.reflection["rejection_rate"] == pytest.approx(1 / 3)
     assert report.reflection["n_agent_timeouts"] == 1
-    assert report.reflection["rejection_reasons"] == {
-        "reflection_agent_timeout": 1
-    }
+    assert report.reflection["learning_attempts_total"] == 7
+    assert report.reflection["repair_attempts_total"] == 3
+    assert report.reflection["initial_learning_pass_count"] == 1
+    assert report.reflection["terminal_learning_pass_count"] == 2
+    assert report.reflection["repaired_to_pass_count"] == 1
+    assert report.reflection["same_task_repair_success_rate"] == pytest.approx(1 / 3)
+    assert report.reflection["n_all_attempts_same_session_verified"] == 4
+    assert report.reflection["rejection_reasons"] == {"reflection_agent_timeout": 1}
     assert "valid_candidate_rate" not in report.reflection
     assert report.reflection_transfer["n_pairs"] == 3
     assert report.reflection_transfer["fail_to_success_count"] == 1

@@ -164,7 +164,10 @@ class LifelongRunner:
             # Register only after every fallible pre-run bookkeeping step so
             # a setup failure cannot leak a process-global callback into the
             # next job in the same AP worker.
-            register_post_verifier_callback(hooks.on_post_verifier)
+            register_post_verifier_callback(
+                hooks.on_post_verifier,
+                repair_callback=hooks.on_post_verifier_repair,
+            )
         try:
             await job.run()
         except BaseException:

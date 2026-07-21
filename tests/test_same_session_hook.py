@@ -457,7 +457,10 @@ class _Trial:
             self.paths.verifier_dir.iterdir()
         )
         self.reflection_instruction = instruction
-        solve_messages = list(_solve_export()["messages"])
+        current_export = json.loads(
+            (self.paths.agent_dir / "opencode.session.json").read_text()
+        )
+        solve_messages = list(current_export["messages"])
         if self.bad_prefix:
             solve_messages[1] = _export_message("assistant", "tampered solve")
         solve_messages.extend(
@@ -581,6 +584,69 @@ def test_post_verifier_resume_is_host_audited_and_continuous(
     assert record.full_session_trajectory_path == audit / "trajectory.full.json"
     assert len(record.solve_trajectory_sha256 or "") == 64
     assert any(kind == "reflection_completed" for kind, _ in events.items)
+
+
+def test_failed_learning_attempt_repairs_same_session_before_reverify(
+    tmp_path: Path,
+) -> None:
+    hooks, trial, events = _build(tmp_path, mutate_task=True)
+    hooks.runtime.baseline.learning_max_attempts = 3
+
+    should_reverify = asyncio.run(hooks.on_post_verifier_repair(trial, 1))
+
+    assert should_reverify is True
+    assert trial.agent.opencode_session_id == SESSION_ID
+    assert trial.agent_environment.restart_calls == 1
+    assert trial.agent_environment.stop_calls == 1
+    assert trial.verifier_was_hidden_during_resume is True
+    assert not any(trial.paths.verifier_dir.iterdir())
+    assert (
+        trial.paths.artifacts_dir / "root" / "task" / "answer.txt"
+    ).read_text() == "reflection mutation\n"
+
+    attempt = tmp_path / "same-session-attempts" / "attempt-01"
+    assert (attempt / "official-verifier" / "reward.txt").read_text() == "0.0\n"
+    assert (attempt / "repair_prompt.md").is_file()
+    assert (attempt / "trajectory.before-repair.json").is_file()
+    assert (attempt / "trajectory.after-repair.json").is_file()
+    assert (attempt / "opencode.repair.jsonl").is_file()
+    result = json.loads((attempt / "repair_result.json").read_text())
+    assert result["session_id"] == SESSION_ID
+    assert result["same_session_verified"] is True
+    assert result["task_hash_before"] != result["task_hash_after"]
+    assert any(kind == "same_session_repair_completed" for kind, _ in events.items)
+
+
+def test_two_repairs_extend_one_session_monotonically(tmp_path: Path) -> None:
+    hooks, trial, _events = _build(tmp_path, mutate_task=True)
+    hooks.runtime.baseline.learning_max_attempts = 3
+
+    assert asyncio.run(hooks.on_post_verifier_repair(trial, 1)) is True
+    (trial.paths.verifier_dir / "reward.txt").write_text("0.0\n")
+    (trial.paths.verifier_dir / "hidden-detail.json").write_text('{"secret": true}')
+    assert asyncio.run(hooks.on_post_verifier_repair(trial, 2)) is True
+
+    records = trial._sevb_repair_records
+    assert len(records) == 2
+    assert {record["session_id"] for record in records} == {SESSION_ID}
+    assert all(record["same_session_verified"] is True for record in records)
+    first_after = json.loads(
+        (
+            tmp_path
+            / "same-session-attempts"
+            / "attempt-01"
+            / "trajectory.after-repair.json"
+        ).read_text()
+    )
+    second_before = json.loads(
+        (
+            tmp_path
+            / "same-session-attempts"
+            / "attempt-02"
+            / "trajectory.before-repair.json"
+        ).read_text()
+    )
+    assert first_after == second_before
 
 
 def test_continuity_accepts_exact_pinned_cli_prompt_rendering() -> None:

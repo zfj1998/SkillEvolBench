@@ -51,6 +51,19 @@ def _env_bool(name: str, default: bool) -> bool:
     raise ValueError(f"{name} must be a boolean, got {raw!r}")
 
 
+def _env_int(name: str, default: int, *, minimum: int, maximum: int) -> int:
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an integer, got {raw!r}") from exc
+    if not minimum <= value <= maximum:
+        raise ValueError(f"{name} must be between {minimum} and {maximum}, got {value}")
+    return value
+
+
 def _required_env(name: str) -> str:
     value = os.environ.get(name, "").strip()
     if not value:
@@ -143,9 +156,7 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
             f"or 'opencode'; got {harbor_agent!r}"
         )
 
-    wire_api = (
-        os.environ.get("CODEX_WIRE_API", "responses").strip() or "responses"
-    )
+    wire_api = os.environ.get("CODEX_WIRE_API", "responses").strip() or "responses"
 
     os.environ["OPENAI_BASE_URL"] = model_base_url
     os.environ["MODEL_API_KEY"] = model_api_key
@@ -159,9 +170,7 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
     # container rather than the Harbor task container. Same-session reflection
     # does not construct SkillAuthor; these variables remain useful for other
     # baselines and retrievers.
-    os.environ["SEVB_HOST_LITELLM_MODEL"] = (
-        model if "/" in model else f"openai/{model}"
-    )
+    os.environ["SEVB_HOST_LITELLM_MODEL"] = model if "/" in model else f"openai/{model}"
     os.environ["SEVB_HOST_LITELLM_API_BASE"] = model_base_url
     os.environ["SEVB_HOST_LITELLM_API_KEY"] = model_api_key
 
@@ -246,8 +255,13 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
             "WITHIN_ENV_REPLAY", baseline.within_env_replay
         )
     if "REPLAY_EVAL" in os.environ:
-        baseline_data["replay_eval"] = _env_bool(
-            "REPLAY_EVAL", baseline.replay_eval
+        baseline_data["replay_eval"] = _env_bool("REPLAY_EVAL", baseline.replay_eval)
+    if "LEARNING_MAX_ATTEMPTS" in os.environ:
+        baseline_data["learning_max_attempts"] = _env_int(
+            "LEARNING_MAX_ATTEMPTS",
+            baseline.learning_max_attempts,
+            minimum=1,
+            maximum=5,
         )
     return BaselineConfig.model_validate(baseline_data)
 
@@ -259,9 +273,7 @@ def _build_config(output_dir: Path) -> RunConfig:
             f"INSTANCE_ID must select one environment E1..E6, got {environment_id!r}"
         )
 
-    baseline_name = os.environ.get(
-        "BASELINE_NAME", "selfgen_in_session_always"
-    )
+    baseline_name = os.environ.get("BASELINE_NAME", "selfgen_in_session_always")
     baseline = _configure_model(load_baseline(baseline_name))
     strategy_name = os.environ.get("STRATEGY_NAME", baseline.default_strategy)
     if strategy_name == "none":
@@ -315,9 +327,7 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
     if not family_smoke and config.baseline.within_env_replay:
         expected_replays = 30 if config.baseline.replay_eval else 15
     expected_shadows = (
-        (1 if family_smoke else 5)
-        if config.baseline.dual_t6_retrieval
-        else 0
+        (1 if family_smoke else 5) if config.baseline.dual_t6_retrieval else 0
     )
     n_verifier_backed_trials = (
         report.n_primary_trials + report.n_replay_trials + report.n_shadow_trials
@@ -336,12 +346,14 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
         # primary trial before the execution unit is considered complete.
         expected_reflections = 3 if family_smoke else 15
         unit_complete = (
-            unit_complete
-            and reflection.get("n_terminal") == expected_reflections
+            unit_complete and reflection.get("n_terminal") == expected_reflections
         )
         unit_complete = unit_complete and (
-            reflection.get("n_same_session_verified")
-            == reflection.get("n_attempted")
+            reflection.get("n_same_session_verified") == reflection.get("n_attempted")
+        )
+        unit_complete = unit_complete and (
+            reflection.get("n_all_attempts_same_session_verified")
+            == reflection.get("n_terminal")
         )
     canonical_complete = bool(unit_complete and not family_smoke)
     evaluation_sr = float(task_success.get("evaluation_sr", 0.0))
@@ -367,12 +379,8 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
         "evaluation_sr": evaluation_sr,
         "learning_sr": float(task_success.get("learning_sr", 0.0)),
         "t4_transfer": float(task_success.get("t4_transfer", 0.0)),
-        "t5_trap_resistance": float(
-            task_success.get("t5_trap_resistance", 0.0)
-        ),
-        "t6_composition_rate": float(
-            task_success.get("t6_composition_rate", 0.0)
-        ),
+        "t5_trap_resistance": float(task_success.get("t5_trap_resistance", 0.0)),
+        "t6_composition_rate": float(task_success.get("t6_composition_rate", 0.0)),
         "n_primary_trials": report.n_primary_trials,
         "expected_primary_trials": expected_primary,
         "n_replay_trials": report.n_replay_trials,
@@ -394,9 +402,7 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
         "cross_task_fail_to_success_count": revision_safety.get(
             "fail_to_success_count", 0
         ),
-        "cross_task_fail_to_fail_count": revision_safety.get(
-            "fail_to_fail_count", 0
-        ),
+        "cross_task_fail_to_fail_count": revision_safety.get("fail_to_fail_count", 0),
         "cross_task_success_to_success_count": revision_safety.get(
             "success_to_success_count", 0
         ),
@@ -404,6 +410,17 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
             "success_to_fail_count", 0
         ),
         "reflection_enabled": bool(reflection.get("enabled", False)),
+        "learning_max_attempts": config.baseline.learning_max_attempts,
+        "learning_attempts_total": reflection.get("learning_attempts_total", 0),
+        "repair_attempts_total": reflection.get("repair_attempts_total", 0),
+        "initial_learning_pass_count": reflection.get("initial_learning_pass_count", 0),
+        "terminal_learning_pass_count": reflection.get(
+            "terminal_learning_pass_count", 0
+        ),
+        "repaired_to_pass_count": reflection.get("repaired_to_pass_count", 0),
+        "same_task_repair_success_rate": reflection.get(
+            "same_task_repair_success_rate"
+        ),
         "n_reflection_expected": expected_reflections,
         "n_reflection_terminal": reflection.get("n_terminal", 0),
         "n_reflection_attempted": reflection.get("n_attempted", 0),
@@ -411,13 +428,12 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
         "n_reflection_noop": reflection.get("n_noop", 0),
         "n_reflection_rejected": reflection.get("n_rejected", 0),
         "n_reflection_agent_timeouts": reflection.get("n_agent_timeouts", 0),
-        "n_same_session_verified": reflection.get(
-            "n_same_session_verified", 0
+        "n_same_session_verified": reflection.get("n_same_session_verified", 0),
+        "n_all_attempts_same_session_verified": reflection.get(
+            "n_all_attempts_same_session_verified", 0
         ),
         "reflection_valid_output_rate": reflection.get("valid_output_rate"),
-        "reflection_patch_candidate_rate": reflection.get(
-            "patch_candidate_rate"
-        ),
+        "reflection_patch_candidate_rate": reflection.get("patch_candidate_rate"),
         "reflection_noop_rate": reflection.get("noop_rate"),
         "reflection_rejection_rate": reflection.get("rejection_rate"),
         "reflection_transfer_pairs": reflection_transfer.get("n_pairs", 0),
@@ -494,6 +510,7 @@ def main() -> int:
                 "harbor_agent": config.baseline.harbor_agent_name,
                 "within_env_replay": config.baseline.within_env_replay,
                 "replay_eval": config.baseline.replay_eval,
+                "learning_max_attempts": config.baseline.learning_max_attempts,
                 "smoke_max_tasks": config.max_tasks,
                 "workspace_root": str(config.workspace_root),
                 "started_at": datetime.now(timezone.utc).isoformat(),

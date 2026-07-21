@@ -40,6 +40,7 @@ from skillevolbench.components.in_session_reflection import (
     REFLECTION_FEEDBACK_FILENAME,
     REFLECTION_PROMPT_FILENAME,
     REFLECTION_RESULT_FILENAME,
+    REPAIR_AUDIT_DIRNAME,
     ReflectionCandidateError,
     ReflectionRecord,
 )
@@ -318,6 +319,339 @@ class SkillEvolBenchHooks:
     # POST-VERIFIER SEAM (before Harbor stops the shared environment)
     # ==================================================================
 
+    async def on_post_verifier_repair(self, trial: Any, failed_attempt: int) -> bool:
+        """Run one bounded-feedback repair turn after a failed learning attempt.
+
+        Return ``True`` only after the exact solve session has completed a
+        repair turn and a new immutable /root/task snapshot is ready for a
+        fresh isolated verifier. The Harbor compatibility seam owns the outer
+        loop and calls this method after every verifier invocation.
+        """
+
+        if self.runtime.baseline.skill_update_source != "same_agent_session":
+            return False
+
+        event = SimpleNamespace(
+            task_name=getattr(getattr(trial, "task", None), "name", ""),
+            config=getattr(trial, "config", None),
+            result=getattr(trial, "result", None),
+        )
+        task = self._resolve_task(event)
+        runtime_basename = self._runtime_basename(event)
+        if (
+            _is_shadow_trial_name(runtime_basename)
+            or _is_replay_trial_name(runtime_basename)
+            or task.role in {r.value for r in _EVAL_ROLES}
+        ):
+            return False
+
+        if failed_attempt < 1:
+            raise UnscoreableTrialError(
+                "repair-attempt-index-invalid", task_id=task.task_id
+            )
+        max_attempts = int(self.runtime.baseline.learning_max_attempts)
+        outcome = self.runtime.verifier_adapter.parse(trial.result)
+        if failed_attempt == 1:
+            trial._sevb_initial_verifier_passed = bool(outcome.verifier_passed)
+        trial._sevb_terminal_verifier_passed = bool(outcome.verifier_passed)
+        trial._sevb_learning_attempt_count = failed_attempt
+
+        if bool(outcome.verifier_passed) or failed_attempt >= max_attempts:
+            self.runtime.event_store.record(
+                "same_session_attempt_terminal",
+                {
+                    "task_id": task.task_id,
+                    "learning_attempts": failed_attempt,
+                    "verifier_passed": bool(outcome.verifier_passed),
+                    "max_attempts": max_attempts,
+                },
+            )
+            return False
+
+        if getattr(trial, "_is_agent_environment_stopped", False):
+            raise UnscoreableTrialError(
+                "repair-environment-already-stopped", task_id=task.task_id
+            )
+        if not getattr(trial.agent_environment.capabilities, "mounted", False):
+            raise UnscoreableTrialError(
+                "repair-requires-mounted-agent-logs", task_id=task.task_id
+            )
+        if not getattr(trial, "_sevb_agent_main_stopped", False):
+            raise UnscoreableTrialError(
+                "repair-requires-stopped-container", task_id=task.task_id
+            )
+
+        agent_dir = Path(trial.paths.agent_dir)
+        canonical_trajectory = agent_dir / "trajectory.json"
+        session_export = agent_dir / "opencode.session.json"
+        repair_stream = agent_dir / "opencode.reflection.jsonl"
+        task_snapshot = Path(trial.paths.artifacts_dir) / "root" / "task"
+
+        audit_root = Path(trial.paths.trial_dir) / REPAIR_AUDIT_DIRNAME
+        if failed_attempt == 1:
+            if os.path.lexists(audit_root):
+                raise UnscoreableTrialError(
+                    "repair-audit-dir-preexists", task_id=task.task_id
+                )
+            audit_root.mkdir(mode=0o700)
+        elif not audit_root.is_dir() or audit_root.is_symlink():
+            raise UnscoreableTrialError(
+                "repair-audit-dir-missing", task_id=task.task_id
+            )
+        attempt_dir = audit_root / f"attempt-{failed_attempt:02d}"
+        if os.path.lexists(attempt_dir):
+            raise UnscoreableTrialError(
+                "repair-attempt-audit-preexists", task_id=task.task_id
+            )
+        attempt_dir.mkdir(mode=0o700)
+
+        repair = InSessionSkillReflection(
+            baseline=self.runtime.baseline,
+            library=self.runtime.library,
+        )
+        prompt, feedback = repair.build_repair_prompt(
+            task,
+            outcome,
+            failed_attempt=failed_attempt,
+            max_attempts=max_attempts,
+        )
+        self._write_new_regular(
+            attempt_dir / "repair_prompt.md", prompt.encode("utf-8"), task.task_id
+        )
+        self._write_new_regular(
+            attempt_dir / "repair_feedback.json",
+            (json.dumps(feedback, indent=2, ensure_ascii=False) + "\n").encode(),
+            task.task_id,
+        )
+        self._write_new_regular(
+            attempt_dir / "outcome.json",
+            (
+                json.dumps(
+                    {
+                        "attempt": failed_attempt,
+                        "verifier_passed": bool(outcome.verifier_passed),
+                        "reward": float(outcome.reward),
+                    },
+                    indent=2,
+                )
+                + "\n"
+            ).encode(),
+            task.task_id,
+        )
+
+        await self._require_main_not_running(trial, task_id=task.task_id)
+        prefix_trajectory, prefix_trajectory_raw = self._capture_agent_file(
+            canonical_trajectory,
+            attempt_dir / "trajectory.before-repair.json",
+            task_id=task.task_id,
+            reason="repair-missing-prefix-trajectory",
+        )
+        prefix_export, prefix_export_raw = self._capture_agent_file(
+            session_export,
+            attempt_dir / "opencode.session.before-repair.json",
+            task_id=task.task_id,
+            reason="repair-missing-prefix-session-export",
+        )
+        prefix_payload = self._json_object(
+            prefix_trajectory_raw,
+            reason="repair-prefix-trajectory-invalid",
+            task_id=task.task_id,
+        )
+        prefix_export_payload = self._json_object(
+            prefix_export_raw,
+            reason="repair-prefix-session-export-invalid",
+            task_id=task.task_id,
+        )
+        prefix_session_id = self._session_id_from_trajectory(
+            prefix_payload, task_id=task.task_id
+        )
+        prefix_export_session_id = self._session_id_from_export(
+            prefix_export_payload, task_id=task.task_id
+        )
+        adapter_session_id = getattr(trial.agent, "opencode_session_id", None)
+        if not (
+            isinstance(adapter_session_id, str)
+            and adapter_session_id
+            and adapter_session_id == prefix_session_id == prefix_export_session_id
+        ):
+            raise UnscoreableTrialError(
+                "repair-prefix-session-mismatch", task_id=task.task_id
+            )
+
+        self._copy_task_tree_nofollow(
+            task_snapshot,
+            attempt_dir / "task.before-repair",
+            task_id=task.task_id,
+        )
+        task_hash_before = self._hash_tree_nofollow(task_snapshot, task_id=task.task_id)
+        verifier_snapshot = attempt_dir / "official-verifier"
+        self._copy_tree_nofollow(
+            Path(trial.paths.verifier_dir),
+            verifier_snapshot,
+            task_id=task.task_id,
+        )
+        self._empty_directory(Path(trial.paths.verifier_dir))
+
+        main_stopped_proven = True
+        pending_error: BaseException | None = None
+        try:
+            main_stopped_proven = False
+            await self._restart_main_and_prove(trial, task_id=task.task_id)
+            await trial.agent_environment.empty_dirs(
+                [trial.agent_env_paths.tests_dir], chmod=False
+            )
+            target = SimpleNamespace(agent_result=None, agent_execution=None)
+            phase_error: BaseException | None = None
+            try:
+                await trial._run_agent_phase(
+                    target=target,
+                    instruction=prompt,
+                    timeout_sec=trial._agent_timeout_sec,
+                    user=trial.task.config.agent.user,
+                    resume=True,
+                )
+            except BaseException as exc:
+                phase_error = exc
+            finally:
+                await self._stop_main_and_prove(trial, task_id=task.task_id)
+                main_stopped_proven = True
+            if phase_error is not None:
+                raise phase_error
+            if target.agent_result is None:
+                raise UnscoreableTrialError(
+                    "repair-missing-agent-context", task_id=task.task_id
+                )
+
+            full_export_raw = self._read_regular_nofollow(
+                session_export,
+                max_bytes=_MAX_AUDIT_FILE_BYTES,
+                task_id=task.task_id,
+                reason="repair-full-session-export-invalid",
+            )
+            self._replace_with_regular(
+                session_export, full_export_raw, task_id=task.task_id
+            )
+            self._replace_with_regular(canonical_trajectory, b"", task_id=task.task_id)
+            trial.agent.populate_context_post_run(target.agent_result)
+            trial.result.agent_result = target.agent_result
+
+            _, full_trajectory_raw = self._capture_agent_file(
+                canonical_trajectory,
+                attempt_dir / "trajectory.after-repair.json",
+                task_id=task.task_id,
+                reason="repair-full-trajectory-invalid",
+            )
+            self._write_new_regular(
+                attempt_dir / "opencode.session.after-repair.json",
+                full_export_raw,
+                task.task_id,
+            )
+            _, repair_stream_raw = self._capture_agent_file(
+                repair_stream,
+                attempt_dir / "opencode.repair.jsonl",
+                task_id=task.task_id,
+                reason="repair-missing-stream",
+            )
+            full_payload = self._json_object(
+                full_trajectory_raw,
+                reason="repair-full-trajectory-invalid",
+                task_id=task.task_id,
+            )
+            full_export_payload = self._json_object(
+                full_export_raw,
+                reason="repair-full-session-export-invalid",
+                task_id=task.task_id,
+            )
+            full_session_id = self._verify_trajectory_continuity(
+                prefix_payload,
+                full_payload,
+                prompt=prompt,
+                task_id=task.task_id,
+            )
+            full_export_session_id = self._verify_export_continuity(
+                prefix_export_payload,
+                full_export_payload,
+                prompt=prompt,
+                task_id=task.task_id,
+            )
+            repair_stream_session_id = self._session_id_from_stream(
+                repair_stream_raw,
+                task_id=task.task_id,
+                phase=f"repair-{failed_attempt}",
+            )
+            if not (
+                adapter_session_id
+                == getattr(trial.agent, "opencode_session_id", None)
+                == full_session_id
+                == full_export_session_id
+                == repair_stream_session_id
+            ):
+                raise UnscoreableTrialError(
+                    "repair-session-identity-mismatch", task_id=task.task_id
+                )
+
+            repaired_task = attempt_dir / "task.after-repair"
+            repaired_task.mkdir(mode=0o700)
+            await trial.agent_environment.service_download_dir(
+                "/root/task", repaired_task, service="main"
+            )
+            task_hash_after = self._hash_tree_nofollow(
+                repaired_task, task_id=task.task_id
+            )
+            if task_snapshot.is_symlink() or not task_snapshot.is_dir():
+                raise UnscoreableTrialError(
+                    "repair-task-snapshot-invalid", task_id=task.task_id
+                )
+            shutil.rmtree(task_snapshot)
+            self._copy_task_tree_nofollow(
+                repaired_task, task_snapshot, task_id=task.task_id
+            )
+            if (
+                self._hash_tree_nofollow(task_snapshot, task_id=task.task_id)
+                != task_hash_after
+            ):
+                raise UnscoreableTrialError(
+                    "repair-task-snapshot-copy-mismatch", task_id=task.task_id
+                )
+
+            record = {
+                "failed_attempt": failed_attempt,
+                "next_attempt": failed_attempt + 1,
+                "session_id": adapter_session_id,
+                "same_session_verified": True,
+                "task_hash_before": task_hash_before,
+                "task_hash_after": task_hash_after,
+                "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
+            }
+            self._write_new_regular(
+                attempt_dir / "repair_result.json",
+                (json.dumps(record, indent=2) + "\n").encode(),
+                task.task_id,
+            )
+            trial._sevb_repair_records = [
+                *list(getattr(trial, "_sevb_repair_records", [])),
+                record,
+            ]
+            self.runtime.event_store.record(
+                "same_session_repair_completed",
+                {
+                    "task_id": task.task_id,
+                    **record,
+                },
+            )
+        except BaseException as exc:
+            pending_error = exc
+        finally:
+            if not main_stopped_proven:
+                try:
+                    await self._stop_main_and_prove(trial, task_id=task.task_id)
+                except BaseException as exc:
+                    pending_error = pending_error or exc
+
+        if pending_error is not None:
+            raise pending_error
+        return True
+
     async def on_post_verifier(self, trial: Any) -> None:
         """Resume the original OpenCode session for one reflection turn.
 
@@ -360,6 +694,26 @@ class SkillEvolBenchHooks:
         # Fail closed against missing/contradictory official verifier state
         # before the model sees any feedback or a library candidate is cached.
         outcome = self.runtime.verifier_adapter.parse(trial.result)
+        learning_attempts = int(getattr(trial, "_sevb_learning_attempt_count", 1) or 1)
+        repair_records = list(getattr(trial, "_sevb_repair_records", []))
+        initial_verifier_passed = bool(
+            getattr(
+                trial,
+                "_sevb_initial_verifier_passed",
+                outcome.verifier_passed,
+            )
+        )
+        terminal_verifier_passed = bool(outcome.verifier_passed)
+        all_attempts_same_session_verified = len(repair_records) == max(
+            0, learning_attempts - 1
+        ) and all(
+            item.get("same_session_verified") is True
+            for item in repair_records
+            if isinstance(item, dict)
+        )
+        attempt_audit_dir = Path(trial.paths.trial_dir) / REPAIR_AUDIT_DIRNAME
+        if not attempt_audit_dir.is_dir() or attempt_audit_dir.is_symlink():
+            attempt_audit_dir = None
         reflection = InSessionSkillReflection(
             baseline=self.runtime.baseline,
             # Always take the current runtime library: environment-scoped runs
@@ -372,6 +726,15 @@ class SkillEvolBenchHooks:
                 status="skipped",
                 task_id=task.task_id,
                 reason=mode_or_reason,
+                learning_attempts=learning_attempts,
+                repair_attempts=max(0, learning_attempts - 1),
+                initial_verifier_passed=initial_verifier_passed,
+                terminal_verifier_passed=terminal_verifier_passed,
+                repaired_to_pass=(
+                    not initial_verifier_passed and terminal_verifier_passed
+                ),
+                all_attempts_same_session_verified=(all_attempts_same_session_verified),
+                attempt_audit_dir=attempt_audit_dir,
             )
             self._reflection_cache[cache_key] = record
             self.runtime.event_store.record("reflection_skipped", record.to_dict())
@@ -783,6 +1146,15 @@ class SkillEvolBenchHooks:
         if pending_error is not None:
             raise pending_error
         assert record is not None
+        record.learning_attempts = learning_attempts
+        record.repair_attempts = max(0, learning_attempts - 1)
+        record.initial_verifier_passed = initial_verifier_passed
+        record.terminal_verifier_passed = terminal_verifier_passed
+        record.repaired_to_pass = (
+            not initial_verifier_passed and terminal_verifier_passed
+        )
+        record.all_attempts_same_session_verified = all_attempts_same_session_verified
+        record.attempt_audit_dir = attempt_audit_dir
         self._write_new_regular(
             result_path,
             (
@@ -1474,6 +1846,56 @@ class SkillEvolBenchHooks:
             else:
                 raise UnscoreableTrialError(
                     "reflection-verifier-snapshot-special-file", task_id=task_id
+                )
+
+    @classmethod
+    def _copy_task_tree_nofollow(
+        cls, source: Path, destination: Path, *, task_id: str
+    ) -> None:
+        """Copy a task snapshot without following agent-authored symlinks."""
+
+        if not source.is_dir() or source.is_symlink() or os.path.lexists(destination):
+            raise UnscoreableTrialError("repair-task-snapshot-invalid", task_id=task_id)
+        destination.mkdir(mode=0o700)
+        for entry in sorted(os.scandir(source), key=lambda item: item.name):
+            src = Path(entry.path)
+            dst = destination / entry.name
+            metadata = entry.stat(follow_symlinks=False)
+            if stat.S_ISDIR(metadata.st_mode):
+                cls._copy_task_tree_nofollow(src, dst, task_id=task_id)
+            elif stat.S_ISREG(metadata.st_mode):
+                flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+                try:
+                    fd = os.open(src, flags)
+                    try:
+                        opened = os.fstat(fd)
+                        if not stat.S_ISREG(opened.st_mode):
+                            raise OSError("task file changed type while copying")
+                        raw_chunks: list[bytes] = []
+                        while chunk := os.read(fd, 1024 * 1024):
+                            raw_chunks.append(chunk)
+                    finally:
+                        os.close(fd)
+                except OSError as exc:
+                    raise UnscoreableTrialError(
+                        "repair-task-snapshot-invalid",
+                        task_id=task_id,
+                        exception_type=type(exc).__name__,
+                    ) from exc
+                cls._write_new_regular(dst, b"".join(raw_chunks), task_id)
+                os.chmod(dst, stat.S_IMODE(metadata.st_mode))
+            elif stat.S_ISLNK(metadata.st_mode):
+                try:
+                    os.symlink(os.readlink(src), dst)
+                except OSError as exc:
+                    raise UnscoreableTrialError(
+                        "repair-task-snapshot-invalid",
+                        task_id=task_id,
+                        exception_type=type(exc).__name__,
+                    ) from exc
+            else:
+                raise UnscoreableTrialError(
+                    "repair-task-snapshot-special-file", task_id=task_id
                 )
 
     @staticmethod

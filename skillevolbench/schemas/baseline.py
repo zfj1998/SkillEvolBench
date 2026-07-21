@@ -32,19 +32,19 @@ class Track(str, Enum):
     The track groups baselines and enforces protocol-specific invariants.
     """
 
-    NONE = "none"          # No-Skill (lower bound)
-    CONTROL = "control"    # Raw-Trajectory-RAG / History-Context-Control
-    PATH_A = "path-a"      # Self-Gen-* (self-generated track)
-    PATH_B = "path-b"      # Curated-* (curated revision track)
+    NONE = "none"  # No-Skill (lower bound)
+    CONTROL = "control"  # Raw-Trajectory-RAG / History-Context-Control
+    PATH_A = "path-a"  # Self-Gen-* (self-generated track)
+    PATH_B = "path-b"  # Curated-* (curated revision track)
 
 
 class FeedbackLevel(str, Enum):
     """How rich the failure-feedback signal is on T2/T3 fail."""
 
-    NONE = "none"          # no feedback consumed
-    BINARY = "binary"      # only pass/fail
-    RICH = "rich"          # full ctrf-equivalent: failed test ids + messages
-    PROCESS = "process"    # rich + trajectory step-level annotations
+    NONE = "none"  # no feedback consumed
+    BINARY = "binary"  # only pass/fail
+    RICH = "rich"  # full ctrf-equivalent: failed test ids + messages
+    PROCESS = "process"  # rich + trajectory step-level annotations
 
 
 SkillInit = Literal["empty", "curated", "zero_shot"]
@@ -92,14 +92,16 @@ class BaselineConfig(BaseModel):
 
     # ===== Identity =====
     name: str = Field(..., description="Unique baseline name (matches yaml stem)")
-    description: str = Field(..., description="One-sentence description for tables/plots")
+    description: str = Field(
+        ..., description="One-sentence description for tables/plots"
+    )
     track: Track
 
     # ===== Skill source =====
     skill_init: SkillInit = "empty"
-    allow_self_gen_induction: bool = False    # T1 induce skill from execution trace
-    allow_zero_shot_creation: bool = False    # T1-pre induce from family label only
-    allow_curated_inject: bool = False        # inject curated v0 on family arrival
+    allow_self_gen_induction: bool = False  # T1 induce skill from execution trace
+    allow_zero_shot_creation: bool = False  # T1-pre induce from family label only
+    allow_curated_inject: bool = False  # inject curated v0 on family arrival
 
     # ===== Skill mutation permissions =====
     allow_revision: bool = False
@@ -232,8 +234,8 @@ class BaselineConfig(BaseModel):
 
     # ===== Feedback =====
     feedback_level: FeedbackLevel = FeedbackLevel.NONE
-    feedback_to_skill_text: bool = False     # rewrite skill content
-    feedback_to_memory: bool = False         # store as feedback memory entry
+    feedback_to_skill_text: bool = False  # rewrite skill content
+    feedback_to_memory: bool = False  # store as feedback memory entry
 
     # ===== Lifecycle =====
     allow_post_eval_maintenance: bool = False
@@ -250,6 +252,14 @@ class BaselineConfig(BaseModel):
     #   ask that exact session to emit a candidate patch.  The host still
     #   validates/applies it, so the agent never writes the shared library.
     skill_update_source: SkillUpdateSource = "host_skill_author"
+
+    # Maximum number of verifier-backed solution attempts for each T1-T3
+    # learning task.  Values above one are meaningful only for the
+    # same-agent-session protocol: after a failed attempt, the exact OpenCode
+    # session receives bounded verifier feedback, may repair /root/task, and
+    # is graded again.  Passing stops the loop early.  T4-T6, replay, and
+    # shadow trials always remain single-attempt observers.
+    learning_max_attempts: int = Field(default=1, ge=1, le=5)
 
     # ===== Harbor agent =====
     harbor_agent_name: str = "claude-code"
@@ -288,8 +298,11 @@ class BaselineConfig(BaseModel):
                     "No-Skill baseline must have all use_*_library/rag/context/memory "
                     f"flags False; got {mem_flags}"
                 )
-            if (self.allow_self_gen_induction or self.allow_zero_shot_creation
-                    or self.allow_curated_inject):
+            if (
+                self.allow_self_gen_induction
+                or self.allow_zero_shot_creation
+                or self.allow_curated_inject
+            ):
                 raise ValueError("No-Skill must not allow any skill creation")
             if self.allow_revision or self.allow_retirement:
                 raise ValueError("No-Skill must not allow revision or retirement")
@@ -304,9 +317,7 @@ class BaselineConfig(BaseModel):
                     "(would leak curated SKILL.md into a self-generated track)"
                 )
             if self.allow_curated_inject:
-                raise ValueError(
-                    "Path-A baseline must have allow_curated_inject=False"
-                )
+                raise ValueError("Path-A baseline must have allow_curated_inject=False")
 
         # ---- 3. Path-B track: must inject curated v0 ----
         if self.track == Track.PATH_B:
@@ -316,9 +327,7 @@ class BaselineConfig(BaseModel):
                     f"{self.skill_init!r}"
                 )
             if not self.allow_curated_inject:
-                raise ValueError(
-                    "Path-B baseline must have allow_curated_inject=True"
-                )
+                raise ValueError("Path-B baseline must have allow_curated_inject=True")
 
         # ---- 4. Control track: skill library disabled ----
         # The point of Raw-Trajectory-RAG / History-Context-Control is to
@@ -344,9 +353,7 @@ class BaselineConfig(BaseModel):
                 "allow_zero_shot_creation=True requires skill_init='zero_shot'"
             )
         if self.skill_init == "curated" and not self.allow_curated_inject:
-            raise ValueError(
-                "skill_init='curated' requires allow_curated_inject=True"
-            )
+            raise ValueError("skill_init='curated' requires allow_curated_inject=True")
 
         # ---- 6. Revision trigger consistency ----
         if self.revision_trigger != "never" and not self.allow_revision:
@@ -355,9 +362,7 @@ class BaselineConfig(BaseModel):
                 "allow_revision=True"
             )
         if self.allow_revision and self.revision_trigger == "never":
-            raise ValueError(
-                "allow_revision=True requires revision_trigger != 'never'"
-            )
+            raise ValueError("allow_revision=True requires revision_trigger != 'never'")
 
         # ---- 7. Post-eval maintenance requires retirement OR quarantine ----
         # Engineering Design §6.6 LifecycleMaintainer
@@ -397,13 +402,16 @@ class BaselineConfig(BaseModel):
                     "same-session skill updates are post-verifier; zero-shot "
                     "pre-task creation must use a separate setting"
                 )
+        elif self.learning_max_attempts != 1:
+            raise ValueError(
+                "learning_max_attempts > 1 requires "
+                "skill_update_source='same_agent_session'"
+            )
 
         # ---- 10. Strategy must be 'none' iff no revision/induction ----
         # A strategy only does work in the learning block (T1 induction +
         # T2/T3 revision). If both are off, the strategy will never be invoked.
-        does_anything = (
-            self.allow_self_gen_induction or self.allow_revision
-        )
+        does_anything = self.allow_self_gen_induction or self.allow_revision
         if not does_anything and self.default_strategy != "none":
             raise ValueError(
                 f"default_strategy={self.default_strategy!r} requires "

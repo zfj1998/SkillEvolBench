@@ -173,6 +173,7 @@ def build_submission(
         "baseline_name": args.baseline_name,
         "strategy_name": args.strategy_name,
         "order_seed": args.order_seed,
+        "learning_max_attempts": args.learning_max_attempts,
         "runtime_timeout_sec": args.runtime_timeout_sec,
     }
     # Tri-state CLI flags: omission means "use the selected baseline's yaml".
@@ -232,8 +233,7 @@ def build_submission(
         command.extend(["--instance-id", environment_id, "--concurrency", "1"])
         if args.scope == "smoke":
             description = (
-                f"non-scoreable {environment_id} smoke "
-                f"({args.smoke_max_tasks} task(s))"
+                f"non-scoreable {environment_id} smoke ({args.smoke_max_tasks} task(s))"
             )
         elif args.scope == "family":
             description = (
@@ -293,7 +293,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--smoke-max-tasks", type=int, default=1)
     parser.add_argument(
         "--family-id",
-        choices=tuple(f"E{env}-LS{family}" for env in range(1, 7) for family in range(1, 6)),
+        choices=tuple(
+            f"E{env}-LS{family}" for env in range(1, 7) for family in range(1, 6)
+        ),
         default="E1-LS1",
         help="single family selected by --scope family (default: E1-LS1)",
     )
@@ -326,6 +328,15 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--baseline-name", default="selfgen_in_session_always")
     parser.add_argument("--strategy-name", default="chain")
     parser.add_argument("--order-seed", choices=("A", "B", "C"), default="A")
+    parser.add_argument(
+        "--learning-max-attempts",
+        type=int,
+        default=3,
+        help=(
+            "maximum same-session verifier-backed attempts for each T1-T3 "
+            "task (1-5; T4-T6 remain one-shot)"
+        ),
+    )
     parser.add_argument(
         "--within-env-replay",
         action=argparse.BooleanOptionalAction,
@@ -372,6 +383,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--concurrency must be >= 1")
     if args.runtime_timeout_sec < 1:
         parser.error("--runtime-timeout-sec must be >= 1")
+    if not 1 <= args.learning_max_attempts <= 5:
+        parser.error("--learning-max-attempts must be between 1 and 5")
     if args.probe_timeout <= 0:
         parser.error("--probe-timeout must be > 0")
 
@@ -392,8 +405,7 @@ def main(argv: list[str] | None = None) -> int:
             timeout=args.probe_timeout,
         )
         print(
-            f"Model probe OK: {model.split('/', 1)[-1]} "
-            f"({len(available)} model id(s))"
+            f"Model probe OK: {model.split('/', 1)[-1]} ({len(available)} model id(s))"
         )
         mode = "AP dry-run" if args.dry_run else "AP submission"
         print(f"Starting {mode}: {submission.description}")

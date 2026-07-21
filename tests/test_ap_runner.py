@@ -123,6 +123,13 @@ def test_complete_family_smoke_is_explicitly_noncanonical_and_unscoreable(
                 "n_rejected": 1,
                 "n_agent_timeouts": 1,
                 "n_same_session_verified": 3,
+                "n_all_attempts_same_session_verified": 3,
+                "learning_attempts_total": 7,
+                "repair_attempts_total": 4,
+                "initial_learning_pass_count": 1,
+                "terminal_learning_pass_count": 2,
+                "repaired_to_pass_count": 1,
+                "same_task_repair_success_rate": 0.5,
                 "valid_output_rate": 2 / 3,
                 "patch_candidate_rate": 1 / 3,
                 "noop_rate": 1 / 3,
@@ -146,6 +153,10 @@ def test_complete_family_smoke_is_explicitly_noncanonical_and_unscoreable(
     assert metrics["reflection_valid_output_rate"] == pytest.approx(2 / 3)
     assert metrics["reflection_patch_candidate_rate"] == pytest.approx(1 / 3)
     assert metrics["n_reflection_agent_timeouts"] == 1
+    assert metrics["learning_attempts_total"] == 7
+    assert metrics["repair_attempts_total"] == 4
+    assert metrics["repaired_to_pass_count"] == 1
+    assert metrics["same_task_repair_success_rate"] == 0.5
     assert "single-family smoke" in metrics["message"]
 
 
@@ -324,6 +335,38 @@ def test_build_config_selects_explicit_t1_t6_family_smoke(
     assert config.baseline.replay_eval is False
 
 
+def test_build_config_applies_bounded_same_session_attempt_budget(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("INSTANCE_ID", "E1")
+    monkeypatch.setenv("MODEL", "served-model")
+    monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1")
+    monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("LEARNING_MAX_ATTEMPTS", "3")
+
+    config = run_episode._build_config(tmp_path)
+
+    assert config.baseline.skill_update_source == "same_agent_session"
+    assert config.baseline.learning_max_attempts == 3
+
+
+@pytest.mark.parametrize("value", ["0", "6", "not-an-int"])
+def test_build_config_rejects_invalid_learning_attempt_budget(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    value: str,
+) -> None:
+    monkeypatch.setenv("INSTANCE_ID", "E1")
+    monkeypatch.setenv("MODEL", "served-model")
+    monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1")
+    monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("LEARNING_MAX_ATTEMPTS", value)
+
+    with pytest.raises(ValueError, match="LEARNING_MAX_ATTEMPTS"):
+        run_episode._build_config(tmp_path)
+
+
 def test_build_config_rejects_relative_dind_shared_workspace(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -405,8 +448,7 @@ def test_mask_tree_redacts_env_values_and_keyed_credentials(
         "safe": "unchanged",
     }
     assert log_path.read_text() == (
-        "Authorization: Bearer [REDACTED]\n"
-        "export AWS_SECRET_ACCESS_KEY=[REDACTED]\n"
+        "Authorization: Bearer [REDACTED]\nexport AWS_SECRET_ACCESS_KEY=[REDACTED]\n"
     )
     assert ignored_path.read_bytes() == b"\x00\xff"
 
