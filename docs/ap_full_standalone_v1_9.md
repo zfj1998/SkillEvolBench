@@ -229,6 +229,10 @@ outcomes can be measured end to end; they do not prove that a generated skill
 caused the next outcome.  A matched no-reflection or retrieval-ablation arm is
 still required for that causal claim.
 
+The full manual skill and trajectory review, including exact candidate,
+`SKILL.md`, and next-solve paths, is in
+[ap_full_standalone_v1_9_quality_review.md](ap_full_standalone_v1_9_quality_review.md).
+
 Accepted self-contained result root:
 
 ```text
