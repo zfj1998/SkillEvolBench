@@ -87,15 +87,22 @@ Validation before publication:
 - 224 repository tests passed;
 - targeted Ruff, format, byte-code compilation, and whitespace checks passed.
 
-After submission, local commit `7a20508` hardened the composition auditor.  It
-does not change the packaged `v1@9` runtime: it makes the auditor reopen every
-delivered reflection prompt, solve/full ATIF trajectory, and solve/full raw
-OpenCode export; rerun the pinned strict continuity validators; and require the
-two independently stored session results to match `self_reflection_result.json`.
-The integration fixtures cover an accepted automatic compaction, an arbitrary
-extra user turn, a compaction near-miss, and a session mismatch.  The resulting
-repository suite has 228 passing tests, with targeted Ruff, format, byte-code,
-and whitespace checks also passing.
+After submission, local auditor commits `7a20508` and `aece200` hardened the
+composition audit without changing the packaged `v1@9` runtime.  The auditor
+now reopens every delivered reflection prompt, solve/full ATIF trajectory, and
+solve/full raw OpenCode export; reruns the pinned strict continuity validators;
+and requires every session result to match `self_reflection_result.json`.
+It also byte-binds the audit copies to the agent's canonical trajectories, raw
+full export, and solve/reflection streams; validates all raw message/part IDs,
+session IDs, and parent links; and compares the full canonical/raw role,
+normalized-message, and compaction-control spine.
+
+The integration fixtures cover accepted repeated automatic compaction with
+both overflow modes, arbitrary extra user turns, compaction near-misses,
+one-sided control evidence, empty solve histories, divergent message content,
+inner session/part/parent tampering, copy tampering, and result-session
+mismatch.  The resulting repository suite has 245 passing tests, with targeted
+Ruff, format, byte-code compilation, and whitespace checks also passing.
 
 This remains a structural integrity check rather than a semantic or causal
 quality judgment.  It also assumes the auditor's continuity implementation is
