@@ -1856,6 +1856,7 @@ class SkillEvolBenchHooks:
 
         if not source.is_dir() or source.is_symlink() or os.path.lexists(destination):
             raise UnscoreableTrialError("repair-task-snapshot-invalid", task_id=task_id)
+        source_mode = stat.S_IMODE(source.stat(follow_symlinks=False).st_mode)
         destination.mkdir(mode=0o700)
         for entry in sorted(os.scandir(source), key=lambda item: item.name):
             src = Path(entry.path)
@@ -1897,6 +1898,12 @@ class SkillEvolBenchHooks:
                 raise UnscoreableTrialError(
                     "repair-task-snapshot-special-file", task_id=task_id
                 )
+        # The audit hash intentionally covers permission bits as well as file
+        # contents.  ``mkdir(mode=0o700)`` keeps a partially copied tree private,
+        # then the final chmod faithfully restores the source directory mode.
+        # Without this, nested task directories such as ``middleware/`` (0775)
+        # are silently changed to 0700 and the post-copy integrity check fails.
+        os.chmod(destination, source_mode)
 
     @staticmethod
     def _empty_directory(path: Path) -> None:

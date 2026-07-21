@@ -4,6 +4,7 @@ import asyncio
 import copy
 import json
 import shutil
+import stat
 from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
@@ -1013,6 +1014,28 @@ def test_agent_timeout_with_complete_evidence_is_terminal_rejected(
     assert not (audit / "self_reflection_patch.json").exists()
     assert not (trial.paths.agent_dir / "self_reflection_patch.json").exists()
     assert any(kind == "reflection_rejected" for kind, _ in events.items)
+
+
+def test_task_snapshot_copy_preserves_nested_directory_modes(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    nested = source / "middleware"
+    nested.mkdir(parents=True)
+    nested.chmod(0o775)
+    (nested / "tokenValidator.js").write_text("module.exports = {};\n")
+    destination = tmp_path / "destination"
+
+    SkillEvolBenchHooks._copy_task_tree_nofollow(
+        source,
+        destination,
+        task_id="E1-LS1-T2",
+    )
+
+    assert stat.S_IMODE(nested.stat().st_mode) == stat.S_IMODE(
+        (destination / "middleware").stat().st_mode
+    )
+    assert SkillEvolBenchHooks._hash_tree_nofollow(
+        source, task_id="E1-LS1-T2"
+    ) == SkillEvolBenchHooks._hash_tree_nofollow(destination, task_id="E1-LS1-T2")
 
 
 def test_agent_timeout_missing_stream_remains_unscoreable(
