@@ -57,11 +57,11 @@ _LOG = logging.getLogger(__name__)
 # agent-runtime:latest is the base image.
 _AGENT_IMPORT_PATHS: dict[str, str] = {
     "claude-code": "agents_port.preinstalled:ClaudeCodePreinstalled",
-    "codex":       "agents_port.preinstalled:CodexPreinstalled",
-    "gemini-cli":  "agents_port.preinstalled:GeminiCliPreinstalled",
-    "kimi-cli":    "agents_port.preinstalled:KimiCliPreinstalled",
-    "opencode":    "agents_port.preinstalled:OpenCodePreinstalled",
-    "openclaw":    "agents_port.openclaw:OpenClaw",
+    "codex": "agents_port.preinstalled:CodexPreinstalled",
+    "gemini-cli": "agents_port.preinstalled:GeminiCliPreinstalled",
+    "kimi-cli": "agents_port.preinstalled:KimiCliPreinstalled",
+    "opencode": "agents_port.preinstalled:OpenCodePreinstalled",
+    "openclaw": "agents_port.openclaw:OpenClaw",
 }
 
 
@@ -161,9 +161,7 @@ def build_job_config(
         # leaves us with an unpopulated entry and the trial-end hook
         # crashes with ``IndexError: list index out of range`` when it
         # tries ``self._metrics[dataset_name][0].compute(rewards)``.
-        task_configs.append(
-            TaskConfig(path=str(runtime_task_dir))
-        )
+        task_configs.append(TaskConfig(path=str(runtime_task_dir)))
 
         # Dual-T6: for every composition (T6) task, immediately schedule
         # a SHADOW trial that uses OracleRetriever. Library is frozen at
@@ -174,9 +172,7 @@ def build_job_config(
             shadow_task_id = f"{record.spec.task_id}{SHADOW_T6_SUFFIX}"
             shadow_task_dir = runtime_root / shadow_task_id
             _copy_task_skeleton(src=record.folder, dst=shadow_task_dir)
-            task_configs.append(
-                TaskConfig(path=str(shadow_task_dir))
-            )
+            task_configs.append(TaskConfig(path=str(shadow_task_dir)))
 
     # ---- 2. Resolve agent adapter ----
     agent_name = config.baseline.harbor_agent_name
@@ -225,7 +221,7 @@ def build_job_config(
         job_name=config.run_id,
         jobs_dir=str(run_dir / "harbor-job"),
         tasks=task_configs,
-        datasets=[],   # explicit task list -- no dataset auto-expansion.
+        datasets=[],  # explicit task list -- no dataset auto-expansion.
         agents=[AgentConfig(**agent_cfg_kwargs)],
         environment=EnvironmentConfig(
             type=EnvironmentType.DOCKER,
@@ -243,6 +239,7 @@ def build_job_config(
         # fields directly to JobConfig.
         n_concurrent_trials=config.harbor_n_concurrent_trials,  # ★ must be 1
         n_attempts=1,
+        agent_timeout_multiplier=config.harbor_agent_timeout_multiplier,
         # ``artifacts`` is a flat list of container paths Harbor will copy
         # to ``<trial_dir>/artifacts/<basename>`` after the trial. Note:
         # ``/logs/agent/`` and ``/logs/verifier/`` are ALREADY bind-mounted

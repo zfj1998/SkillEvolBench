@@ -64,6 +64,19 @@ def _env_int(name: str, default: int, *, minimum: int, maximum: int) -> int:
     return value
 
 
+def _env_float(name: str, default: float, *, minimum: float, maximum: float) -> float:
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        value = float(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a number, got {raw!r}") from exc
+    if not minimum <= value <= maximum:
+        raise ValueError(f"{name} must be between {minimum} and {maximum}, got {value}")
+    return value
+
+
 def _required_env(name: str) -> str:
     value = os.environ.get(name, "").strip()
     if not value:
@@ -312,6 +325,12 @@ def _build_config(output_dir: Path) -> RunConfig:
         # kwargs in skillevolbench.harbor_ext.job_builder.
         api_base=None,
         api_key_env_var="MODEL_API_KEY",
+        harbor_agent_timeout_multiplier=_env_float(
+            "HARBOR_AGENT_TIMEOUT_MULTIPLIER",
+            1.0,
+            minimum=1.0,
+            maximum=4.0,
+        ),
         max_tasks=max_tasks,
     )
 
@@ -511,6 +530,9 @@ def main() -> int:
                 "within_env_replay": config.baseline.within_env_replay,
                 "replay_eval": config.baseline.replay_eval,
                 "learning_max_attempts": config.baseline.learning_max_attempts,
+                "harbor_agent_timeout_multiplier": (
+                    config.harbor_agent_timeout_multiplier
+                ),
                 "smoke_max_tasks": config.max_tasks,
                 "workspace_root": str(config.workspace_root),
                 "started_at": datetime.now(timezone.utc).isoformat(),

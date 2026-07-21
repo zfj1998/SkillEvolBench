@@ -56,9 +56,7 @@ class EnvOrders(BaseModel):
     def _check_envs(cls, v: list[str]) -> list[str]:
         expected = {f"E{i}" for i in range(1, 7)}
         if set(v) != expected:
-            raise ValueError(
-                f"each seed must be a permutation of E1..E6; got {v}"
-            )
+            raise ValueError(f"each seed must be a permutation of E1..E6; got {v}")
         if len(v) != len(set(v)):
             raise ValueError(f"seed has duplicates: {v}")
         return v
@@ -156,6 +154,10 @@ class RunConfig(BaseModel):
     # global skill library is consistent across trials. Any value other than 1
     # breaks the score-before-maintain rule.
     harbor_n_concurrent_trials: int = Field(default=1, ge=1)
+    # Diagnostic escape hatch for slow model/tool loops. Canonical runs keep
+    # 1.0; AP family smokes may raise this without changing task contents,
+    # verifier logic, or the same-session attempt protocol.
+    harbor_agent_timeout_multiplier: float = Field(default=1.0, ge=1.0, le=4.0)
 
     # ===== LLM endpoints =====
     api_base: Optional[str] = None
@@ -195,10 +197,7 @@ class RunConfig(BaseModel):
     @classmethod
     def _check_family_smoke_id(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and not re.fullmatch(r"E[1-6]-LS[1-5]", v):
-            raise ValueError(
-                "family_smoke_id must match E[1-6]-LS[1-5], "
-                f"got {v!r}"
-            )
+            raise ValueError(f"family_smoke_id must match E[1-6]-LS[1-5], got {v!r}")
         return v
 
     # -----------------------------------------------------------------
@@ -336,7 +335,9 @@ class RunConfig(BaseModel):
 
     @staticmethod
     def make_run_id(
-        baseline_name: str, strategy_name: str, order_seed: str = "A",
+        baseline_name: str,
+        strategy_name: str,
+        order_seed: str = "A",
         timestamp: Optional[datetime] = None,
     ) -> str:
         """Canonical run_id format used by every script in scripts/."""

@@ -174,6 +174,7 @@ def build_submission(
         "strategy_name": args.strategy_name,
         "order_seed": args.order_seed,
         "learning_max_attempts": args.learning_max_attempts,
+        "harbor_agent_timeout_multiplier": args.harbor_agent_timeout_multiplier,
         "runtime_timeout_sec": args.runtime_timeout_sec,
     }
     # Tri-state CLI flags: omission means "use the selected baseline's yaml".
@@ -338,6 +339,15 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--harbor-agent-timeout-multiplier",
+        type=float,
+        default=1.0,
+        help=(
+            "Harbor agent timeout multiplier (1-4); canonical runs use 1, "
+            "slow non-canonical smokes may use a larger value"
+        ),
+    )
+    parser.add_argument(
         "--within-env-replay",
         action=argparse.BooleanOptionalAction,
         default=_env_optional_bool("WITHIN_ENV_REPLAY"),
@@ -385,6 +395,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--runtime-timeout-sec must be >= 1")
     if not 1 <= args.learning_max_attempts <= 5:
         parser.error("--learning-max-attempts must be between 1 and 5")
+    if not 1.0 <= args.harbor_agent_timeout_multiplier <= 4.0:
+        parser.error("--harbor-agent-timeout-multiplier must be between 1 and 4")
     if args.probe_timeout <= 0:
         parser.error("--probe-timeout must be > 0")
 

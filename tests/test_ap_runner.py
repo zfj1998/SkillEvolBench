@@ -351,6 +351,37 @@ def test_build_config_applies_bounded_same_session_attempt_budget(
     assert config.baseline.learning_max_attempts == 3
 
 
+def test_build_config_applies_bounded_agent_timeout_multiplier(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("INSTANCE_ID", "E1")
+    monkeypatch.setenv("MODEL", "served-model")
+    monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1")
+    monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("HARBOR_AGENT_TIMEOUT_MULTIPLIER", "2")
+
+    config = run_episode._build_config(tmp_path)
+
+    assert config.harbor_agent_timeout_multiplier == 2.0
+
+
+@pytest.mark.parametrize("value", ["0.5", "5", "not-a-number"])
+def test_build_config_rejects_invalid_agent_timeout_multiplier(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    value: str,
+) -> None:
+    monkeypatch.setenv("INSTANCE_ID", "E1")
+    monkeypatch.setenv("MODEL", "served-model")
+    monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1")
+    monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("HARBOR_AGENT_TIMEOUT_MULTIPLIER", value)
+
+    with pytest.raises(ValueError, match="HARBOR_AGENT_TIMEOUT_MULTIPLIER"):
+        run_episode._build_config(tmp_path)
+
+
 @pytest.mark.parametrize("value", ["0", "6", "not-an-int"])
 def test_build_config_rejects_invalid_learning_attempt_budget(
     tmp_path: Path,

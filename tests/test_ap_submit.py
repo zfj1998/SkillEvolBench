@@ -49,6 +49,7 @@ def test_default_submission_is_one_task_e1_smoke() -> None:
     assert params["agent_cli_set"] == "opencode"
     assert params["opencode_version"] == "1.18.3"
     assert params["learning_max_attempts"] == 3
+    assert params["harbor_agent_timeout_multiplier"] == 1.0
     assert "codex_wire_api" not in params
     assert "within_env_replay" not in params
     assert "replay_eval" not in params
@@ -104,6 +105,8 @@ def test_family_submission_selects_exact_family_without_max_tasks_or_replay() ->
             "E2-LS3",
             "--learning-max-attempts",
             "4",
+            "--harbor-agent-timeout-multiplier",
+            "2",
             "--dry-run",
         ]
     )
@@ -117,6 +120,7 @@ def test_family_submission_selects_exact_family_without_max_tasks_or_replay() ->
     assert "within_env_replay" not in params
     assert "replay_eval" not in params
     assert params["learning_max_attempts"] == 4
+    assert params["harbor_agent_timeout_multiplier"] == 2.0
     assert "non-scoreable E2-LS3 T1-T6" in submission.description
 
 
