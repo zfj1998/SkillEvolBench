@@ -101,6 +101,13 @@ TRANSITION_KEYS = (
 REFLECTION_EVENT_TYPES = frozenset(
     {"reflection_completed", "reflection_noop", "reflection_rejected"}
 )
+VERIFIER_CORE_FILES = (
+    "reward.txt",
+    "outcome_report.json",
+    "process_report.json",
+    "score_report.json",
+)
+VERIFIER_OPTIONAL_FILES = ("reward.json",)
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.@+-]{0,199}$")
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
@@ -113,6 +120,14 @@ class Finding:
 
     code: str
     scope: str
+
+
+@dataclass(frozen=True)
+class VerifierEvidence:
+    """Canonical and rubric-derived scores reconstructed from verifier files."""
+
+    canonical_reward: float
+    normalized_score: float
 
 
 @dataclass
@@ -1234,7 +1249,6 @@ def _validate_reflection(
     trial_root: Path,
     record: dict[str, Any],
     event: dict[str, Any] | None,
-    verifier_reward: dict[str, Any],
     output_root: Path,
     manifest: dict[str, dict[str, str | int]],
     context: AuditContext,
@@ -1339,32 +1353,53 @@ def _validate_reflection(
         context=context,
     )
 
-    required = [
-        audit / "self_reflection_feedback.json",
-        audit / "official-verifier" / "reward.json",
-    ]
+    official_verifier = audit / "official-verifier"
+    required = [audit / "self_reflection_feedback.json"]
+    required.extend(official_verifier / name for name in VERIFIER_CORE_FILES)
     if status == "completed":
         required.append(audit / "self_reflection_patch.json")
     if any(path.is_symlink() or not path.is_file() for path in required):
         context.error("reflection_required_artifact_missing", scope)
 
-    official = _load_json_object(
-        audit / "official-verifier" / "reward.json",
-        context=context,
-        code="reflection_official_verifier",
-        scope=scope,
-    )
-    if official is not None:
-        for key in (
-            "normalized_score",
-            "total_score",
-            "max_score",
-            "outcome_passed",
-            "process_passed",
+    verifier = trial_root / "verifier"
+    snapshot_mismatch = False
+    for name in VERIFIER_CORE_FILES:
+        source = verifier / name
+        snapshot = official_verifier / name
+        if snapshot.is_symlink() or not snapshot.is_file():
+            snapshot_mismatch = True
+            continue
+        try:
+            if _sha256_file(source) != _sha256_file(snapshot):
+                snapshot_mismatch = True
+        except OSError:
+            snapshot_mismatch = True
+
+    for name in VERIFIER_OPTIONAL_FILES:
+        source = verifier / name
+        snapshot = official_verifier / name
+        source_present = source.exists() or source.is_symlink()
+        snapshot_present = snapshot.exists() or snapshot.is_symlink()
+        if source_present != snapshot_present:
+            snapshot_mismatch = True
+            continue
+        if not source_present:
+            continue
+        if (
+            source.is_symlink()
+            or snapshot.is_symlink()
+            or not source.is_file()
+            or not snapshot.is_file()
         ):
-            if official.get(key) != verifier_reward.get(key):
-                context.error("reflection_verifier_snapshot_mismatch", scope)
-                break
+            snapshot_mismatch = True
+            continue
+        try:
+            if _sha256_file(source) != _sha256_file(snapshot):
+                snapshot_mismatch = True
+        except OSError:
+            snapshot_mismatch = True
+    if snapshot_mismatch:
+        context.error("reflection_verifier_snapshot_mismatch", scope)
 
 
 def _validate_lifecycle(
@@ -1468,60 +1503,119 @@ def _validate_verifier_bundle(
     trial_root: Path,
     record: dict[str, Any],
     context: AuditContext,
-) -> dict[str, Any] | None:
+) -> VerifierEvidence | None:
     verifier = trial_root / "verifier"
-    required = (
-        "reward.json",
-        "reward.txt",
-        "outcome_report.json",
-        "process_report.json",
-        "score_report.json",
-    )
     if any(
         (verifier / name).is_symlink() or not (verifier / name).is_file()
-        for name in required
+        for name in VERIFIER_CORE_FILES
     ):
         context.error("verifier_bundle_incomplete", task_id)
         return None
-    reward = _load_json_object(
-        verifier / "reward.json",
+
+    score_report = _load_json_object(
+        verifier / "score_report.json",
         context=context,
-        code="verifier_reward",
+        code="verifier_score_report",
         scope=task_id,
     )
-    if reward is None:
+    outcome_report = _load_json_object(
+        verifier / "outcome_report.json",
+        context=context,
+        code="verifier_outcome_report",
+        scope=task_id,
+    )
+    process_report = _load_json_object(
+        verifier / "process_report.json",
+        context=context,
+        code="verifier_process_report",
+        scope=task_id,
+    )
+    if score_report is None or outcome_report is None or process_report is None:
         return None
-    normalized = reward.get("normalized_score")
-    if not (
-        _is_number(normalized)
-        and math.isfinite(float(normalized))
-        and 0.0 <= float(normalized) <= 1.0
-    ):
-        context.error("verifier_score_invalid", task_id)
+
     try:
-        reward_text = float(
+        canonical_reward = float(
             (verifier / "reward.txt").read_text(encoding="utf-8").strip()
         )
     except (OSError, UnicodeDecodeError, ValueError):
         context.error("verifier_reward_text_invalid", task_id)
-    else:
-        if not _same_number(normalized, reward_text):
-            context.error("verifier_reward_text_mismatch", task_id)
+        return None
+    if not math.isfinite(canonical_reward) or not 0.0 <= canonical_reward <= 1.0:
+        context.error("verifier_score_invalid", task_id)
+        return None
+
+    try:
+        max_score = float(score_report.get("max_score", 100.0)) or 100.0
+        total_score = float(
+            score_report.get("total_score", canonical_reward * max_score)
+        )
+    except (TypeError, ValueError):
+        context.error("verifier_score_report_values_invalid", task_id)
+        return None
+    normalized_score = total_score / max_score if max_score else 0.0
+    if not (
+        math.isfinite(max_score)
+        and max_score > 0.0
+        and math.isfinite(total_score)
+        and math.isfinite(normalized_score)
+        and 0.0 <= normalized_score <= 1.0
+    ):
+        context.error("verifier_score_report_values_invalid", task_id)
+        return None
+
+    optional_reward_path = verifier / "reward.json"
+    if optional_reward_path.exists() or optional_reward_path.is_symlink():
+        if optional_reward_path.is_symlink() or not optional_reward_path.is_file():
+            context.error("verifier_optional_reward_invalid", task_id)
+            return None
+        optional_reward = _load_json_object(
+            optional_reward_path,
+            context=context,
+            code="verifier_optional_reward",
+            scope=task_id,
+        )
+        if optional_reward is None:
+            return None
+        result_reward: Any = None
+        for key in ("reward", "normalized_score"):
+            if key in optional_reward:
+                result_reward = optional_reward[key]
+                break
+        if not _unit_interval_number(result_reward):
+            context.error("verifier_optional_reward_invalid", task_id)
+            return None
+        if not math.isclose(
+            canonical_reward,
+            float(result_reward),
+            rel_tol=0.0,
+            abs_tol=1e-4,
+        ):
+            context.error("verifier_optional_reward_mismatch", task_id)
+            return None
+
+    evidence = VerifierEvidence(
+        canonical_reward=canonical_reward,
+        normalized_score=normalized_score,
+    )
     outcome = record.get("outcome")
     if not isinstance(outcome, dict):
-        context.error("replay_outcome_missing", task_id)
-        return reward
-    if not (
-        outcome.get("task_id") == task_id
-        and _same_number(outcome.get("normalized_score"), normalized)
-        and _same_number(outcome.get("reward"), normalized)
-        and bool(outcome.get("verifier_passed")) == (float(normalized) >= 1.0)
+        context.error("primary_record_outcome_missing", task_id)
+        return evidence
+    if outcome.get("task_id") != task_id:
+        context.error("primary_record_outcome_identity_invalid", task_id)
+    if not _same_number(outcome.get("reward"), canonical_reward):
+        context.error("primary_record_reward_disagreement", task_id)
+    if not _same_number(outcome.get("normalized_score"), normalized_score):
+        context.error("primary_record_normalized_score_disagreement", task_id)
+    verifier_passed = outcome.get("verifier_passed")
+    if type(verifier_passed) is not bool or verifier_passed != (
+        canonical_reward >= 1.0
     ):
-        context.error("replay_verifier_disagreement", task_id)
+        context.error("primary_record_verifier_pass_disagreement", task_id)
     trajectory = trial_root / "agent" / "trajectory.solve.json"
     if trajectory.is_symlink() or not trajectory.is_file():
         context.error("solve_trajectory_missing", task_id)
-    return reward
+    return evidence
 
 
 def _validate_task_records(
@@ -1606,13 +1700,13 @@ def _validate_task_records(
                 continue
             trial_root = matches[0]
 
-        reward = _validate_verifier_bundle(
+        verifier_evidence = _validate_verifier_bundle(
             task_id=task_id,
             trial_root=trial_root,
             record=record,
             context=context,
         )
-        if reward is None:
+        if verifier_evidence is None:
             continue
         if index < REFLECTIONS_PER_ENVIRONMENT:
             _validate_reflection(
@@ -1620,7 +1714,6 @@ def _validate_task_records(
                 trial_root=trial_root,
                 record=record,
                 event=reflection_events.get(task_id),
-                verifier_reward=reward,
                 output_root=output_root,
                 manifest=manifest,
                 context=context,

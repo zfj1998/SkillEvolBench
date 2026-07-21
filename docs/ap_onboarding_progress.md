@@ -8,7 +8,24 @@ credentials, signed artifact URLs, or raw transport metadata to this file.
 
 ## Current status
 
-The AP runtime now passes a complete ordered T1-T6 family diagnostic with:
+SkillEvolBench is now accepted on AP through the documented standalone-job
+route.  Six fresh `v1@9` environment episodes completed on attempt zero and
+were exported, safety-scanned, composed locally, and independently audited:
+
+- exact E1-E6 coverage;
+- 180/180 verifier-backed primary trials and zero replay trials;
+- 90/90 terminal, same-session learning reflections;
+- verified ordering, freeze boundaries, provenance, sanitizer hashes,
+  delivered trajectories/raw exports, verifier snapshots, and aggregate
+  metrics;
+- zero findings in the final strict audit.
+
+The accepted self-contained result and reports are under
+`/mnt/workspace/zhangfengji.zfj/skillevolbench_ap_results/`; the detailed run
+record is [ap_full_standalone_v1_9.md](ap_full_standalone_v1_9.md).
+
+The earlier AP runtime milestone was a complete ordered T1-T6 family
+diagnostic with:
 
 - six verifier-backed primary trials in one stateful AP job;
 - same-agent, same-session solve and reflection for T1-T3;
@@ -21,13 +38,12 @@ The AP runtime now passes a complete ordered T1-T6 family diagnostic with:
 Accepted family job: `ap-skillevolbench-8199e9ce930845fb-o4`. Its detailed
 model and verifier analysis is in [ap_family_smoke_v1_7.md](ap_family_smoke_v1_7.md).
 
-This is a non-canonical `family_smoke`, so its correct benchmark status is
+That is a non-canonical `family_smoke`, so its correct benchmark status is
 `completed_noncanonical`, `scoreable=false`, `passed=false`, and
-`task_score=0`. It is stronger than a one-task bootstrap smoke, but is not a
-canonical 30-primary-task environment. Canonical one-environment and
-six-environment validation remain open.
+`task_score=0`. It remains useful as the cheap pre-submission smoke, but the
+canonical six-environment validation is now complete through `v1@9`.
 
-## Active canonical full run
+## Superseded v1@7 group submission
 
 The six-environment canonical run was submitted on 2026-07-21 at 02:20 CST:
 
@@ -56,11 +72,8 @@ submitted, zero failed. A stable UUID4 was supplied because AP CLI 0.1.16 does
 not retry POST automatically; reuse this exact key after an ambiguous transport
 failure rather than issuing an unkeyed duplicate submission.
 
-The six jobs passed asset download, host and DinD model probes, shared-mount
-probe, strict preflight, and entered their stateful 30-task episodes. They are
-still running; no retry has been issued. Full artifacts will be preserved under
-`/mnt/workspace/zhangfengji.zfj/skillevolbench_ap_results/` on the persistent
-NAS because both CPFS mounts currently report no available capacity.
+This group predates the accepted standalone `v1@9` route and is retained as
+historical submission evidence.  It is not the final acceptance surface.
 
 ## Full-run acceptance tooling
 
@@ -88,7 +101,7 @@ directory. Its benchmark-owned
 
 | Component | Branch or source | Accepted revision | Publication status |
 | --- | --- | --- | --- |
-| SkillEvolBench runtime | `feat/ap-skillevolbench` | `a0972c3b98f724e6b89e35ac974c142368a0c6d0` | packaged in immutable dataset `v1@7`; benchmark branch intentionally not pushed |
+| SkillEvolBench runtime | `feat/ap-skillevolbench` | `8c7889349ca277af2a53f47411f70a06d63a3007` | packaged in immutable dataset `v1@9`; benchmark branch intentionally not pushed |
 | Agent-Hub template | `feat/skillevolbench` | `1e10fc0cf557d1c74e3b6dda13f4ac6001c225ad` | pushed; remote branch resolves to this exact revision |
 | Harbor | official Git revision | `071281b3d931aafd6a5375fa7d5933e23054d784` (`0.20.0`) | installed and provenance-recorded by the AP template |
 | OpenCode | npm runtime | `1.18.3` | pinned in template and Harbor fallback |
@@ -193,6 +206,8 @@ committed source only. Releases are immutable and never overwritten.
 | `v1@5` | `5eae7a574006fd0303b5181a9b9ee3216b67c4cd` | stopped-container fix; exposed OpenCode session-export compatibility issue |
 | `v1@6` | `322225dba44a668a36e6ead9b22f5836a494218f` | first completed family run; artifact redaction corrupted ordinary `EMPTY` identifiers and audit hashes |
 | `v1@7` | `a0972c3b98f724e6b89e35ac974c142368a0c6d0` | accepted family diagnostic with fail-closed, manifest-backed sanitization |
+| `v1@8` | `94a496a3dee225d7d9f27ab5ba4801b652a93021` | reflection-timeout hardening; full attempt exposed one solve timeout and strict OpenCode compaction incompatibility |
+| `v1@9` | `8c7889349ca277af2a53f47411f70a06d63a3007` | accepted six-environment standalone composition with strict zero-finding audit |
 
 For `v1@7`, two independent builds produced the same 13 files byte for byte.
 The release-manifest SHA-256 is

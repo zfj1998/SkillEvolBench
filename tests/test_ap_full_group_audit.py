@@ -193,6 +193,11 @@ def _reflection_result(audit: Path, task_id: str) -> dict[str, object]:
     )
     _write_json(audit / "self_reflection_feedback.json", {"task_id": task_id})
     _write_json(audit / "official-verifier" / "reward.json", _reward())
+    (audit / "official-verifier" / "reward.txt").write_text(
+        "1.000000\n", encoding="ascii"
+    )
+    for name in ("outcome_report.json", "process_report.json", "score_report.json"):
+        _write_json(audit / "official-verifier" / name, {})
     workspace_hash = "3" * 64
     return {
         "status": "noop",
@@ -644,6 +649,11 @@ def _reflection_fixture_paths(
     return audit, record, lifecycle
 
 
+def _verifier_fixture_paths(root: Path, task_id: str) -> tuple[Path, Path, Path]:
+    audit, record, _lifecycle = _reflection_fixture_paths(root, task_id)
+    return audit.parent / "verifier", audit / "official-verifier", record
+
+
 def _sync_reflection_fields(
     root: Path,
     task_id: str,
@@ -928,6 +938,77 @@ def test_complete_group_passes_and_reports_observational_transitions(
     assert exit_code == 0
     assert SIGNED_URL_MARKER not in captured.out
     assert json.loads(captured.out)["passed"] is True
+
+
+def test_reward_json_is_optional_when_canonical_bundle_and_snapshot_match(
+    tmp_path: Path,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    verifier, snapshot, _record = _verifier_fixture_paths(root, task_id)
+    (verifier / "reward.json").unlink()
+    (snapshot / "reward.json").unlink()
+
+    report = audit_full_group(root)
+
+    assert report.passed is True
+
+
+def test_record_normalized_score_is_derived_from_score_report(
+    tmp_path: Path,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    verifier, snapshot, record_path = _verifier_fixture_paths(root, task_id)
+    score_report = {"total_score": 99.99, "max_score": 100.0}
+    _write_json(verifier / "score_report.json", score_report)
+    _write_json(snapshot / "score_report.json", score_report)
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    record["outcome"]["normalized_score"] = 0.9999
+    _write_json(record_path, record)
+
+    report = audit_full_group(root)
+
+    assert report.passed is True
+
+
+def test_missing_canonical_reward_fails_verifier_bundle(tmp_path: Path) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    verifier, _snapshot, _record = _verifier_fixture_paths(root, task_id)
+    (verifier / "reward.txt").unlink()
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert ("verifier_bundle_incomplete", task_id) in errors
+
+
+def test_optional_reward_must_match_canonical_reward(tmp_path: Path) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    verifier, _snapshot, _record = _verifier_fixture_paths(root, task_id)
+    _write_json(verifier / "reward.json", {"normalized_score": 0.5})
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert ("verifier_optional_reward_mismatch", task_id) in errors
+
+
+def test_reflection_verifier_snapshot_is_byte_exact(tmp_path: Path) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    _verifier, snapshot, _record = _verifier_fixture_paths(root, task_id)
+    _write_json(snapshot / "score_report.json", {"total_score": 50.0})
+
+    report = audit_full_group(root)
+    errors = {(item.code, item.scope) for item in report.errors}
+
+    assert report.passed is False
+    assert ("reflection_verifier_snapshot_mismatch", task_id) in errors
 
 
 def test_delivered_reflection_extra_user_fails_strict_continuity(

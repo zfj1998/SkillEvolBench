@@ -104,6 +104,25 @@ inner session/part/parent tampering, copy tampering, and result-session
 mismatch.  The resulting repository suite has 245 passing tests, with targeted
 Ruff, format, byte-code compilation, and whitespace checks also passing.
 
+The final artifact audit exposed two verifier-contract mistakes in the local
+auditor, not in the immutable runtime results:
+
+- E5 and E6 correctly emitted the four files consumed by
+  `VerifierAdapter`, with `reward.txt` as the canonical reward, but no optional
+  `reward.json`.  The auditor had incorrectly required the optional file.
+- E2-LS4-T4 had canonical reward `1.0` while its rubric-derived normalized
+  score was `99.99 / 100`.  The runtime intentionally records those two values
+  from `reward.txt` and `score_report.json` respectively, but the auditor had
+  incorrectly required both record fields to equal the canonical reward.
+
+The corrected auditor requires and validates the canonical four-file bundle,
+treats `reward.json` as an optional Harbor cross-check, independently binds the
+record reward and normalized score to their actual sources, and byte-compares
+each reflection's official-verifier snapshot to the trial verifier bundle.
+Six focused regression tests, including positive variants for both real
+contracts and fail-closed tamper cases, passed.  The corrected auditor then
+passed the real 180-task composition with zero findings.
+
 This remains a structural integrity check rather than a semantic or causal
 quality judgment.  It also assumes the auditor's continuity implementation is
 kept aligned with the benchmark revision being audited; the final report must
@@ -151,7 +170,66 @@ Submission evidence:
   transition, rejected/no-op reflection, applied-but-not-retrieved skill, and
   final generated `SKILL.md`.
 
-Planned self-contained result root:
+## Final acceptance
+
+All six jobs completed on attempt zero and were exported with events and
+independently paginated platform logs.  Every per-job safety scan passed.  The
+six standalone exports were copied into a self-contained local composition;
+no AP `artifacts.json` download-link metadata was copied.
+
+```text
+/mnt/workspace/zhangfengji.zfj/skillevolbench_ap_results/
+  standalone-v1-9-exports/
+  standalone-full-v1-9-20260721/
+  standalone-full-v1-9-20260721-audit-after-verifier-contract-fix.json
+  standalone-full-v1-9-20260721-audit-before-verifier-contract-fix.json
+  standalone-full-v1-9-20260721-skill-utility.json
+```
+
+The accepted strict audit reports:
+
+| Check | Result |
+| --- | ---: |
+| Environments | 6/6 |
+| Verifier-backed primary trials | 180/180 |
+| Replay trials | 0 |
+| Terminal reflections | 90/90 |
+| Same-session reflections | 90/90 |
+| Reflection-to-next-input chains | 90/90 |
+| Group post-process recomputation | passed |
+| Audit findings | 0 |
+
+The aggregate evaluation score is `0.37777777777777777`; this is a model
+result, not an integration failure.  Per-environment evaluation success rates
+are E1 `0.4667`, E2 `0.4667`, E3 `0.2667`, E4 `0.4667`, E5 `0.4667`, and E6
+`0.1333` (rounded to four decimals).
+
+## Skill-utility evidence
+
+The read-only utility report linked every learning reflection to the next
+different input:
+
+| Evidence | Count |
+| --- | ---: |
+| Completed reflections / rejected reflections | 77 / 13 |
+| Preserved and applied candidates | 77 |
+| Applied patches with a version record | 77 |
+| Applied patches retrieved on the next input | 77 |
+| Applied patches listed in `skills_actually_used` next | 70 |
+| Fail-to-success transitions | 18 |
+| Fail-to-fail transitions | 31 |
+| Success-to-success transitions | 25 |
+| Success-to-fail transitions | 16 |
+
+Among the 77 applied-patch chains, the transition counts are 15
+fail-to-success, 27 fail-to-fail, 20 success-to-success, and 15
+success-to-fail.  These are observational outcomes on different next inputs.
+They prove that skill state, retrieval, trajectory-use evidence, and verifier
+outcomes can be measured end to end; they do not prove that a generated skill
+caused the next outcome.  A matched no-reflection or retrieval-ablation arm is
+still required for that causal claim.
+
+Accepted self-contained result root:
 
 ```text
 /mnt/workspace/zhangfengji.zfj/skillevolbench_ap_results/
