@@ -397,6 +397,45 @@ def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path)
         "exponential backoff",
         "jitter",
     ]
+    assert result["concept_visibility"] == {
+        "task_count": 1,
+        "tasks_with_controlled_concepts": 1,
+        "concept_instances": 2,
+        "instruction_explicit_instances": 2,
+        "verifier_only_instances": 0,
+        "tasks_with_verifier_only_concepts": 0,
+    }
+
+
+def test_oracle_scope_separates_instruction_from_verifier_only_concepts(
+    tmp_path: Path,
+) -> None:
+    tasks_root = tmp_path / "benchmark/tasks"
+    skill_root = tmp_path / "benchmark/skills/retry"
+    tasks_root.mkdir(parents=True)
+    skill_root.mkdir(parents=True)
+    (skill_root / "SKILL.md").write_text("# Retry\n", encoding="utf-8")
+    audit = {
+        "tasks_root": str(tasks_root),
+        "tasks": [{
+            "task_id": "E2-LS2-T5",
+            "environment_id": "E2",
+            "tier": 5,
+            "task_slug": "hidden-token-refresh",
+            "primary_skill": "E2-LS2.retry",
+            "required_skills": [],
+            "instruction": "Handle an expired authentication response.",
+            "process": {"check_names": ["checks_token_expired_reason"]},
+            "outcome": {"check_names": []},
+        }],
+    }
+
+    result = REPORT.oracle_scope_analysis(audit)
+
+    row = result["rows"][0]
+    assert row["instruction_concepts"] == []
+    assert row["verifier_only_concepts"] == ["token refresh"]
+    assert result["concept_visibility"]["verifier_only_instances"] == 1
 
 
 def test_derivability_analysis_keeps_all_three_sources_distinct() -> None:
