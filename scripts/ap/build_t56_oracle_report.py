@@ -422,6 +422,25 @@ CASE_DEFINITIONS = {
             "output.json",
         ],
     },
+    "E4-LS3-T5": {
+        "title": "模型使用题面明确允许的 MISSING，却被 verifier 的另一套 marker 白名单拒绝",
+        "kind": "题面与 verifier 的缺失值集合冲突（强任务缺陷）",
+        "interpretation": (
+            "题面明确写出缺失字段可用 UNKNOWN、MISSING、空字符串或 null。Qwen 保留通用 label"
+            "解析器，把 emergency_contact、blood_type、allergies 统一写成 MISSING；五个 present fields"
+            "全部正确，process 三项全过，new patient 泛化也只因同一 marker 被拒绝。隐藏 outcome"
+            "verifier 的 MISSING_MARKERS 却只有 N/A、字符串 null 和 TODO，并用 str(value) 比较："
+            "这不仅拒绝题面示例 UNKNOWN、MISSING、空字符串，连真正 JSON null 读成 Python None 后"
+            "也不等于字符串 null。官方 reference 只是把常量换成 N/A 来迎合隐藏白名单。该题仍能测试"
+            "不幻觉与字段抽取，但当前 outcome 失败主要是合同自相矛盾，不能算 generated skill 未学会"
+            "missing-value policy。"
+        ),
+        "files": [
+            "fill_patient_form.py",
+            "missing_policy.py",
+            "intake_extractor.py",
+        ],
+    },
     "E5-LS5-T6": {
         "title": "矛盾集合完全正确，但类型、provenance 形态与 grounding 调用仍不完整",
         "kind": "高语义完成度 + 实质与形态混合 gap",
@@ -633,10 +652,12 @@ ENVIRONMENT_PROFILES = {
         "name": "文档抽取、格式迁移与版本比较",
         "capability": "结构化抽取、跨格式保真、上下文填表、多版本 diff 与冲突保留。",
         "provisional_read": (
-            "已审计的 Qwen run 中，T5/T6 outcome 都是 3/5，但至少 E4-LS1-T5 不是文档语义失败："
+            "已审计的 Qwen run 中，T5/T6 outcome 都是 3/5，但两项 T5 失败都是明确 benchmark 合同问题。"
+            "E4-LS1-T5 不是文档语义失败："
             "模型已正确输出两笔 revenue、source 与 conflict，三项 process 也全过，只因题面要求的输出路径"
-            "与 verifier 实际父目录合同冲突而被判 0/5 outcome。其余失败仍涉及缺失字段、PDF→DOCX 数值保真"
-            "和多轮版本覆盖。E4 必须先剔除该强假阴性，再比较 Fable 与四条件。"
+            "与 verifier 实际父目录合同冲突而被判 0/5 outcome；E4-LS3-T5 则使用题面明确允许的 MISSING，"
+            "隐藏 verifier 却只接受 N/A、字符串 null 或 TODO，甚至拒绝真正 JSON null。T6 的 PDF→DOCX"
+            "数值保真和多轮版本覆盖仍是模型真实 gap。E4 必须先剔除这两项强假阴性，再比较 Fable 与四条件。"
         ),
     },
     "E5": {
@@ -655,9 +676,12 @@ ENVIRONMENT_PROFILES = {
         "capability": "优先级判断、上下文回复、行动项抽取、时区排期以及 thread 级综合。",
         "provisional_read": (
             "两模型 T6 outcome 都是 0/5，且失败横跨优先级、必含内容、隐式行动、DST 排期和状态汇总。"
-            "generated skills 往往已经写到这些概念，但执行产物仍不符合契约；同时 E6-LS4-T6 已核实为"
-            "欠规定题：四人工作时段无共同正长度交集，官方 verifier 却要求未声明的固定日期、时间和数组顺序。"
-            "因此 E6 的 0/5 不能全部归给模型或 skill；需要 exact/no-skill 对照并单独剔除任务合同缺陷。"
+            "generated skills 往往已经写到这些概念，但执行产物仍不符合契约。逐代码后，至少两题的 raw"
+            "0/5 被 benchmark 明显放大：E6-LS3-T6 中两模型都抽出 8/8 actions，核心字段分别命中"
+            "23/24 与 22/24，却因题面未公开的 action ID 名称被报大量 missing；E6-LS4-T6 则是"
+            "欠规定题，四人工作时段无共同正长度交集，verifier 仍要求未声明的固定日期、时间和数组顺序。"
+            "其余优先级、回复内容与 thread parsing 仍有真实执行 gap。因此 E6 的 0/5 既不是纯模型失败，"
+            "也不是纯坏题；需在 exact/no-skill 到齐后按题剔除合同缺陷再估计 skill 效应。"
         ),
     },
 }
@@ -1576,6 +1600,69 @@ def reproduce_e6_ls3_action_identity(
     }
 
 
+def reproduce_e4_ls3_missing_markers(
+    task_root: Path, artifact_task_root: Path
+) -> dict[str, Any]:
+    """Compare prompt-authorized missing values with the hidden whitelist."""
+
+    import ast
+
+    outcome_path = task_root / "tests" / "test_outcome.py"
+    outcome_tree = ast.parse(outcome_path.read_text(encoding="utf-8"))
+    verifier_markers: set[Any] = set()
+    for node in outcome_tree.body:
+        if (
+            isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name)
+                and target.id == "MISSING_MARKERS"
+                for target in node.targets
+            )
+        ):
+            verifier_markers = set(ast.literal_eval(node.value))
+            break
+
+    policy_path = artifact_task_root / "missing_policy.py"
+    policy_tree = ast.parse(policy_path.read_text(encoding="utf-8"))
+    actual_marker: Any = None
+    for node in policy_tree.body:
+        if (
+            isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name)
+                and target.id == "DEFAULT_MISSING_MARKER"
+                for target in node.targets
+            )
+        ):
+            actual_marker = ast.literal_eval(node.value)
+            break
+
+    instruction_examples: list[Any] = ["UNKNOWN", "MISSING", "", None]
+    return {
+        "method": (
+            "Evaluate every missing-marker example explicitly allowed by the "
+            "instruction using the verifier's exact str(value) membership test."
+        ),
+        "instruction_examples": [
+            "UNKNOWN", "MISSING", "empty string", "JSON null"
+        ],
+        "verifier_accepted_strings": sorted(str(value) for value in verifier_markers),
+        "instruction_example_acceptance": {
+            (
+                "empty string" if value == ""
+                else "JSON null" if value is None
+                else str(value)
+            ): str(value) in verifier_markers
+            for value in instruction_examples
+        },
+        "model_marker": actual_marker,
+        "model_marker_accepted": str(actual_marker) in verifier_markers,
+        "verifier_uses_str_value_membership": True,
+        "outcome_verifier_path": str(outcome_path.resolve()),
+        "artifact_policy_path": str(policy_path.resolve()),
+    }
+
+
 def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Path) -> list[dict[str, Any]]:
     audit_by_id = {row["task_id"]: row for row in audit.get("tasks", [])}
     result = []
@@ -1697,6 +1784,24 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
         ):
             reproduction = reproduce_e3_ls3_category_order(
                 task_root, self_artifact_path
+            )
+        qwen_self_artifact_path = next(
+            (
+                Path(str(observation["artifact_task_path"]))
+                for observation in observations
+                if observation.get("condition") == "self_generated"
+                and observation.get("model") == "qwen3.7-max"
+                and observation.get("artifact_task_path")
+            ),
+            None,
+        )
+        if (
+            task_id == "E4-LS3-T5"
+            and task_root
+            and qwen_self_artifact_path
+        ):
+            reproduction = reproduce_e4_ls3_missing_markers(
+                task_root, qwen_self_artifact_path
             )
         if task_id == "E6-LS3-T6" and task_root:
             reproduction = reproduce_e6_ls3_action_identity(

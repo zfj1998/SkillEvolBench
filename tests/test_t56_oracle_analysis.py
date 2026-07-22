@@ -989,6 +989,32 @@ def test_e6_ls3_reproduction_aligns_semantic_actions_by_source(
     }]
 
 
+def test_e4_ls3_reproduction_exposes_missing_marker_contract_conflict(
+    tmp_path: Path,
+) -> None:
+    task_root = ROOT / "benchmark" / "tasks" / "hallucination-trap-3-missing-fields"
+    artifact_root = tmp_path / "task"
+    artifact_root.mkdir()
+    (artifact_root / "missing_policy.py").write_text(
+        'DEFAULT_MISSING_MARKER = "MISSING"\n', encoding="utf-8"
+    )
+
+    result = REPORT.reproduce_e4_ls3_missing_markers(
+        task_root, artifact_root
+    )
+
+    assert result["verifier_accepted_strings"] == ["N/A", "TODO", "null"]
+    assert result["instruction_example_acceptance"] == {
+        "UNKNOWN": False,
+        "MISSING": False,
+        "empty string": False,
+        "JSON null": False,
+    }
+    assert result["model_marker"] == "MISSING"
+    assert result["model_marker_accepted"] is False
+    assert result["verifier_uses_str_value_membership"] is True
+
+
 def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path) -> None:
     tasks_root = tmp_path / "benchmark/tasks"
     skill_root = tmp_path / "benchmark/skills/retry"
