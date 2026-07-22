@@ -12,6 +12,14 @@ assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
+WATCHER_PATH = REPO_ROOT / "scripts" / "ap" / "watch_reference_solution_audit.py"
+WATCHER_SPEC = importlib.util.spec_from_file_location(
+    "watch_reference_solution_audit", WATCHER_PATH
+)
+assert WATCHER_SPEC and WATCHER_SPEC.loader
+WATCHER = importlib.util.module_from_spec(WATCHER_SPEC)
+WATCHER_SPEC.loader.exec_module(WATCHER)
+
 
 def _write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -64,3 +72,51 @@ def test_collect_results_fails_closed_on_duplicate_or_missing_trials(tmp_path: P
     assert rows[0]["strict_pass"] is False
     assert rows[1]["trial_count"] == 0
     assert rows[1]["strict_pass"] is False
+
+
+def _audit_payload(environment_id: str, *, strict_pass: bool = True) -> dict:
+    rows = []
+    for task_id in sorted(WATCHER.expected_task_ids(environment_id)):
+        rows.append(
+            {
+                "task_id": task_id,
+                "environment_id": environment_id,
+                "tier": int(task_id[-1]),
+                "trial_count": 1,
+                "result_present": True,
+                "strict_pass": strict_pass,
+            }
+        )
+    return {
+        "audit_type": "official_reference_solution_via_harbor_oracle",
+        "environment_id": environment_id,
+        "benchmark_revision": WATCHER.BENCHMARK_REVISION,
+        "harbor": {"installed_git_commit": WATCHER.HARBOR_REVISION},
+        "execution": {"agent": "oracle"},
+        "tasks": rows,
+    }
+
+
+def test_reference_watcher_validates_exact_task_grid_and_provenance() -> None:
+    payload = _audit_payload("E2")
+    valid, errors = WATCHER.validate_audit(payload, "E2")
+    assert valid is True
+    assert errors == []
+
+    payload["tasks"].pop()
+    valid, errors = WATCHER.validate_audit(payload, "E2")
+    assert valid is False
+    assert "task row count is not 15" in errors
+    assert "T4-T6 task grid mismatch" in errors
+
+
+def test_reference_watcher_aggregates_all_90_tasks() -> None:
+    payloads = [
+        _audit_payload(f"E{index}", strict_pass=index != 3)
+        for index in range(1, 7)
+    ]
+    aggregate = WATCHER.aggregate_audits(payloads)
+    assert aggregate["summary"]["total"] == 90
+    assert aggregate["summary"]["passed"] == 75
+    assert aggregate["summary"]["all_reference_solutions_pass"] is False
+    assert aggregate["summary"]["by_environment"]["E3"]["passed"] == 0
