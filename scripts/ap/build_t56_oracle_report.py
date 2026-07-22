@@ -476,8 +476,11 @@ def causal_diagnosis(
         explanation = "无 skill 与 self-generated 失败，但 exact 和 curated-all 均通过；主要差距在生成 skill 内容。"
     elif exact_pass and not all_pass:
         category = "annotation_selection_prior"
-        label = "Gold skill 映射先验"
-        explanation = "只有 exact-oracle 通过；标注者提供的 task→skill 子集选择是关键增益。"
+        label = "Gold 子集选择/注意力优势"
+        explanation = (
+            "只有 exact-oracle 通过；gold task→skill 子集减少了选择与阅读负担。"
+            "该差值不能进一步区分标注映射信息和注意力/搜索成本。"
+        )
     elif all_pass:
         category = "all_library_helps_gold_subset_insufficient"
         label = "全库有益，Gold 子集不足"
@@ -1596,7 +1599,7 @@ def conclusions(
     result.append({
         "level": "info",
         "title": "Exact oracle 同时包含 annotation prior",
-        "body": "T4/T5 只暴露 primary skill、T6 只暴露 required skills，这不仅改变 skill 文本质量，也泄露了标注者的任务→skill 选择。本研究已加入 curated-all-library：内容相同，但不给 gold 子集，用 exact-oracle 与它的配对差拆分选择先验。",
+        "body": "T4/T5 只暴露 primary skill、T6 只暴露 required skills，这不仅改变 skill 文本质量，也提供了标注者的任务→skill 选择。本研究已加入 curated-all-library：skill 内容全集相同，但不给 gold 子集。两者配对差衡量 gold 子集带来的选择/注意力优势；它仍把标注映射信息与少读几个无关 skill 的搜索成本合在一起，不能继续细分。",
     })
     qwen_learning = learning.get("by_model", {}).get("qwen3.7-max", {})
     fable_learning = learning.get("by_model", {}).get("sig-fable", {})
@@ -1780,7 +1783,7 @@ def render_markdown(data: dict[str, Any]) -> str:
         "",
         "## 研究问题与判定口径",
         "",
-        "本报告比较同一模型、同一任务在 `self-generated`、`exact oracle`、`no skill`、`curated-all-library` 四个条件下的结果。后者与 exact oracle 使用相同 curated 内容，但不暴露任务→skill 的 gold 子集。官方 strict pass 要求 outcome 与 process 同时通过；为识别 verifier 假阴性，另行报告纯功能 outcome pass。Oracle 仍失败只能说明 oracle 对该模型不足，不能单独证明题目有问题。",
+        "本报告比较同一模型、同一任务在 `self-generated`、`exact oracle`、`no skill`、`curated-all-library` 四个条件下的结果。后者提供同一 Env 的 curated 内容全集，但不暴露任务→skill 的 gold 子集。官方 strict pass 要求 outcome 与 process 同时通过；为识别 verifier 假阴性，另行报告纯功能 outcome pass。Oracle 仍失败只能说明 oracle 对该模型不足，不能单独证明题目有问题。",
         "",
         "## ‘Oracle’ 的协议边界",
         "",
@@ -1883,7 +1886,7 @@ def render_markdown(data: dict[str, Any]) -> str:
         "| N=0，S=1 | 生成 skill 带来增益 | 直接支持模型从 T1–T3 总结的 skill 帮助迁移 |",
         "| N=1，S=0 | 生成 skill 造成干扰 | 直接说明 self-generated skill 发生负迁移 |",
         "| N=0，S=0，E=1，A=1 | Curated 内容有效，生成 skill 不足 | 差距主要来自 skill 内容质量 |",
-        "| N=0，S=0，E=1，A=0 | Gold skill 映射先验 | task→skill 标注选择本身带来关键帮助 |",
+        "| N=0，S=0，E=1，A=0 | Gold 子集选择/注意力优势 | gold 子集减少选择与阅读负担；不能拆分映射信息和搜索成本 |",
         "| N=0，E=0，A=1 | 全库有益，Gold 子集不足 | gold 子集遗漏有用 skill 或选择造成干扰 |",
         "| S=E=A=N=0 | 四种模型条件都失败 | 模型执行上限、oracle scope 或任务难度；reference 通过时不能直接判题目坏 |",
         "",
@@ -1897,7 +1900,8 @@ def render_markdown(data: dict[str, Any]) -> str:
         "`skills_actually_used` 则从真实工具调用判断模型是否打开 SKILL.md。"
         "前者是 treatment assignment，后者是 compliance，必须分开报告。"
         "No-skill 与 skill 条件的 prompt framing 也不同，因此两者差值是“提供并要求使用 skill library”的整体处理效应，"
-        "不是纯文本内容效应；Exact 与 Curated-all 的 framing 相同，可更干净地识别 gold 选择先验。",
+        "不是纯文本内容效应；Exact 与 Curated-all 的 framing 相同，可更干净地识别 gold 子集的选择/注意力优势。"
+        "但 Exact 只挂载相关子集、Curated-all 挂载全 Env 五个 skills，因此该差值仍同时包含标注映射信息和搜索/阅读负担。",
         "",
         "| 模型 | 条件 | Tier | n | 读取任意 skill | Exact 全部期望 skill 均读取 | 已读取时 Outcome | 未读取时 Outcome |",
         "|---|---|---:|---:|---:|---:|---:|---:|",
@@ -2026,7 +2030,7 @@ def render_markdown(data: dict[str, Any]) -> str:
         )
     lines += [
         "",
-        "关键解释：`exact oracle` 的内容可能部分由 T1–T3 归纳得到，但它额外给出了标注者指定的 task→skill 映射，尤其是 T6 的 required-skill 组合。`curated-all-library` 使用同一 Env 的全部 5 个 curated skills，但不暴露 gold 子集；它与 exact-oracle 的差值专门衡量选择先验。",
+        "关键解释：`exact oracle` 的内容可能部分由 T1–T3 归纳得到，但它额外给出了标注者指定的 task→skill 子集，尤其是 T6 的 required-skill 组合。`curated-all-library` 使用同一 Env 的全部 5 个 curated skills，但不暴露 gold 子集；它与 exact-oracle 的差值衡量 gold 子集的选择/注意力优势，但不能再区分映射信息和减少无关 skill 阅读量这两部分。",
         "",
         "### T5/T6 概念能否由 T1–T3 推出？",
         "",
@@ -2152,7 +2156,7 @@ def render_markdown(data: dict[str, Any]) -> str:
         "",
         "1. 每个 Env×Tier 只有 5 题，百分比必须连同分子/分母阅读。",
         "2. AP `Succeeded` 只表示平台执行结束，不能替代 verifier pass；本报告只从下载后的 replay records 与 verifier artifacts 计算。",
-        "3. exact oracle 暴露标注者选定的 skill 子集；已加入内容相同、不暴露 gold 子集的 curated-all-library 控制。",
+        "3. exact oracle 暴露标注者选定的 skill 子集；已加入同一内容全集、不暴露 gold 子集的 curated-all-library 控制。两者差值包含 gold 映射与搜索/注意力负担，不能进一步拆分。",
         "4. 最终结论必须在两个模型 × 六环境 × 四条件全部达到 15/15 后重算，并逐题审计 oracle 仍失败的轨迹。",
         "",
         "## 机器可复核证据",
@@ -2196,7 +2200,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>Pass rate 热力图</h2><div class="filters"><select id="hmModel"></select><select id="hmCond"></select><select id="hmMetric"><option value="strict">Strict</option><option value="outcome">Outcome</option><option value="process">Process</option></select><select id="hmTier"><option value="4">T4</option><option value="5" selected>T5</option><option value="6">T6</option></select></div><div class="heat" id="heatmap"></div><p class="small">每格最多 5 题；显示通过数/观测数，不能把小样本百分比当作稳定总体性能。</p></section>
 <section class="grid two"><div class="panel"><h2>Qwen vs Fable 配对比较</h2><div class="tablebox"><table><thead><tr><th>条件/Tier/指标</th><th>n</th><th>Qwen</th><th>Fable</th><th>only Q/F</th><th>p</th></tr></thead><tbody id="modelCmpRows"></tbody></table></div></div><div class="panel"><h2>Skill 条件配对效应</h2><div class="tablebox"><table><thead><tr><th>模型/Tier/指标</th><th>对照</th><th>n</th><th>Δ</th><th>救回/损害</th></tr></thead><tbody id="effectRows"></tbody></table></div></div></section>
 <section class="panel"><h2>四条件逐题因果判定</h2><p>每题同时看 Self-generated（S）、Exact oracle（E）、Curated-all（A）和 No-skill（N）的 outcome。四个条件不齐时保持“等待”，不把缺失记录当失败。</p><div id="causalDecision"></div></section>
-<section class="panel"><h2>Skill 有挂载，但模型真的读了吗？</h2><p>目录/hash 是 treatment assignment；轨迹中的 SKILL.md 工具读取是 compliance。No-skill 与 skill 条件还存在“要求使用 library”的 prompt framing 差异，因此 no-skill 对比衡量整体处理效应；Exact 与 Curated-all framing 相同，更适合识别 gold 选择先验。</p><div class="tablebox"><table><thead><tr><th>模型/条件/Tier</th><th>n</th><th>读取任意 skill</th><th>Exact 全部期望均读取</th><th>读取时 Outcome</th><th>未读取时 Outcome</th></tr></thead><tbody id="skillUseRows"></tbody></table></div></section>
+<section class="panel"><h2>Skill 有挂载，但模型真的读了吗？</h2><p>目录/hash 是 treatment assignment；轨迹中的 SKILL.md 工具读取是 compliance。No-skill 与 skill 条件还存在“要求使用 library”的 prompt framing 差异，因此 no-skill 对比衡量整体处理效应；Exact 与 Curated-all framing 相同，更适合识别 gold 子集的选择/注意力优势。但 Exact 只挂载相关子集，而 Curated-all 挂载全 Env 五个 skills，所以该差值仍同时包含映射信息与搜索/阅读负担。</p><div class="tablebox"><table><thead><tr><th>模型/条件/Tier</th><th>n</th><th>读取任意 skill</th><th>Exact 全部期望均读取</th><th>读取时 Outcome</th><th>未读取时 Outcome</th></tr></thead><tbody id="skillUseRows"></tbody></table></div></section>
 <section class="panel"><h2>六环境诊断总览</h2><p class="small">每张卡把 self-generated 的真实功能失败、process-only 噪声、双模型一致失败、官方标准解以及三组匹配对照放在一起。对照未齐的文字明确标为暂定。</p><div class="grid two" id="envCards"></div></section>
 <section class="panel"><h2>逐 Env 的 T5/T6 失败地图</h2><div class="tablebox"><table><thead><tr><th>Env / Tier</th><th>Qwen 3.7 Max</th><th>SIG Fable</th></tr></thead><tbody id="failureRows"></tbody></table></div></section>
 <section class="panel"><h2>失败归因总览</h2><p class="small">“已核实假阴性”要求逐代码证据；“形态敏感”只是筛查标签，仍需结合 exact-oracle/no-skill 与轨迹复核。</p><div class="tablebox"><table><thead><tr><th>Env/Tier</th><th>模型</th><th>覆盖/Strict</th><th>功能 gap</th><th>已核实假阴性</th><th>实质过程 gap</th><th>形态敏感</th><th>未决过程</th></tr></thead><tbody id="attributionRows"></tbody></table></div></section>
@@ -2206,7 +2210,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>逐题匹配对照</h2><div class="filters"><select id="taskModel"></select><select id="taskEnv"></select><select id="taskTier"><option value="all">T4–T6</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6</option></select><input id="taskSearch" placeholder="搜索 task / skill"></div><div class="tablebox"><table><thead><tr><th>Task</th><th>模型</th><th>Self-generated</th><th>Exact oracle</th><th>Curated all</th><th>No skill</th><th>判定</th></tr></thead><tbody id="taskRows"></tbody></table></div></section>
 <section class="grid two"><div class="panel"><h2>Verifier 质量</h2><div id="audit"></div></div><div class="panel"><h2>Generated vs Oracle skill</h2><div id="skills"></div></div></section>
 <section class="panel"><h2>逐代码案例</h2><p class="small">同一类 process-only failure 可能是真正缺少过程能力，也可能是 verifier 只接受某种源码形态；下面用真实 artifact 区分。</p><div id="cases"></div></section>
-<section class="panel"><h2>解释边界</h2><ol><li>Oracle 失败不等于题目必坏；它可能仍超出模型执行能力。</li><li>Exact oracle 暴露标注者选择的 skill 子集；curated-all-library 使用相同内容但不给 gold 子集，用于单独测 annotation prior。</li><li>最终结论要求两个模型、六环境、四条件全部 15/15，并审计每个 oracle 仍失败任务的轨迹。</li></ol></section>
+<section class="panel"><h2>解释边界</h2><ol><li>Oracle 失败不等于题目必坏；它可能仍超出模型执行能力。</li><li>Exact oracle 暴露标注者选择的 skill 子集；curated-all-library 提供同一 Env 的内容全集但不给 gold 子集。两者差值测的是选择/注意力优势，仍不能拆分映射信息与搜索成本。</li><li>最终结论要求两个模型、六环境、四条件全部 15/15，并审计每个 oracle 仍失败任务的轨迹。</li></ol></section>
 </div><aside class="drawer" id="drawer"><button class="close" onclick="drawer.classList.remove('open')">×</button><div id="drawerBody"></div></aside>
 <script>const D={blob};
 const zh={{self_generated:'模型自生成',exact_oracle:'精确 Curated 子集（Oracle）',no_skill:'无 skill',curated_all:'Env 全量 Curated'}};
@@ -2225,7 +2229,7 @@ options(hmModel,['qwen3.7-max','sig-fable']);options(hmCond,['self_generated','e
 function renderHeat(){{let m=hmModel.value,c=hmCond.value,k=hmMetric.value,t=+hmTier.value;let rows=['E1','E2','E3','E4','E5','E6'].map(e=>D.aggregates.find(x=>x.model===m&&x.condition===c&&x.environment_id===e&&x.tier===t));heatmap.innerHTML='<div class="head">'+m+' · '+zh[c]+'</div>'+['E1','E2','E3','E4','E5','E6'].map(x=>`<div class="head">${{x}}</div>`).join('')+`<div>T${{t}} · ${{k}}</div>`+rows.map(x=>{{if(!x)return '<div class="v none">—</div>';let p=x[k]/x.n,cl=p>=.8?'high':p>=.4?'mid':'low';return `<div class="v ${{cl}}">${{x[k]}}/${{x.n}}</div>`}}).join('')}};[hmModel,hmCond,hmMetric,hmTier].forEach(x=>x.onchange=renderHeat);renderHeat();
 modelCmpRows.innerHTML=D.model_comparisons.filter(x=>x.n).map(x=>`<tr><td>${{zh[x.condition]}} / T${{x.tier}} / ${{x.metric}}</td><td>${{x.n}}</td><td>${{x.qwen_pass}}</td><td>${{x.fable_pass}}</td><td>${{x.qwen_only}} / ${{x.fable_only}}</td><td>${{x.sign_test_p==null?'—':x.sign_test_p.toFixed(4)}}</td></tr>`).join('');
 effectRows.innerHTML=D.effects.filter(x=>x.n).map(x=>`<tr><td>${{x.model}} / T${{x.tier}} / ${{x.metric}}</td><td>${{zh[x.treatment]}} − ${{zh[x.reference]}}</td><td>${{x.n}}</td><td>${{(100*x.delta).toFixed(1)}}pp</td><td>${{x.rescued}} / ${{x.harmed}}</td></tr>`).join('')||'<tr><td colspan="5" class="small">等待 oracle/no-skill 匹配结果</td></tr>';
-let cd=D.causal_diagnosis;let cdCounts=Object.entries(cd.category_counts).map(([k,v])=>`<div class="case"><h3>${{esc(D.comparisons.find(x=>x.causal.category===k)?.causal.label||k)}}</h3><b style="font-size:24px">${{v}}</b><div class="small">个完整 T5/T6 模型×任务配对</div></div>`).join('');causalDecision.innerHTML=`<div class="grid cards"><div class="card"><span class="label">完整四条件</span><b>${{cd.complete}}/${{cd.expected}}</b></div><div class="card"><span class="label">已出现任务配对</span><b>${{cd.observed}}/${{cd.expected}}</b></div></div><div class="grid two">${{cdCounts||'<div class="case small">等待 matched controls</div>'}}</div><details><summary>判定规则</summary><div class="tablebox"><table><thead><tr><th>模式</th><th>解释</th></tr></thead><tbody><tr><td>N=1 且全部通过</td><td>无需 skill 也能做，skill 需求弱</td></tr><tr><td>N=0, S=1</td><td>生成 skill 带来直接正向迁移</td></tr><tr><td>N=1, S=0</td><td>生成 skill 造成负迁移</td></tr><tr><td>N=0, S=0, E=1, A=1</td><td>curated 内容有效，生成 skill 不足</td></tr><tr><td>N=0, S=0, E=1, A=0</td><td>gold task→skill 映射提供选择先验</td></tr><tr><td>S=E=A=N=0</td><td>模型执行上限、oracle scope 或难度；reference 通过时不能直接判题目坏</td></tr></tbody></table></div></details>`;
+let cd=D.causal_diagnosis;let cdCounts=Object.entries(cd.category_counts).map(([k,v])=>`<div class="case"><h3>${{esc(D.comparisons.find(x=>x.causal.category===k)?.causal.label||k)}}</h3><b style="font-size:24px">${{v}}</b><div class="small">个完整 T5/T6 模型×任务配对</div></div>`).join('');causalDecision.innerHTML=`<div class="grid cards"><div class="card"><span class="label">完整四条件</span><b>${{cd.complete}}/${{cd.expected}}</b></div><div class="card"><span class="label">已出现任务配对</span><b>${{cd.observed}}/${{cd.expected}}</b></div></div><div class="grid two">${{cdCounts||'<div class="case small">等待 matched controls</div>'}}</div><details><summary>判定规则</summary><div class="tablebox"><table><thead><tr><th>模式</th><th>解释</th></tr></thead><tbody><tr><td>N=1 且全部通过</td><td>无需 skill 也能做，skill 需求弱</td></tr><tr><td>N=0, S=1</td><td>生成 skill 带来直接正向迁移</td></tr><tr><td>N=1, S=0</td><td>生成 skill 造成负迁移</td></tr><tr><td>N=0, S=0, E=1, A=1</td><td>curated 内容有效，生成 skill 不足</td></tr><tr><td>N=0, S=0, E=1, A=0</td><td>gold 子集提供选择/注意力优势；映射信息和搜索成本不可再拆分</td></tr><tr><td>S=E=A=N=0</td><td>模型执行上限、oracle scope 或难度；reference 通过时不能直接判题目坏</td></tr></tbody></table></div></details>`;
 skillUseRows.innerHTML=D.skill_use_adherence.filter(x=>x.n).map(x=>`<tr><td>${{x.model}} / ${{zh[x.condition]}} / T${{x.tier}}</td><td>${{x.n}}</td><td>${{x.any_skill_used}}/${{x.n}}</td><td>${{x.exact_expected_skills_fully_used==null?'—':x.exact_expected_skills_fully_used+'/'+x.n}}</td><td>${{x.used_outcome_passed}}/${{x.used_n}}</td><td>${{x.unused_outcome_passed}}/${{x.unused_n}}</td></tr>`).join('')||'<tr><td colspan="6" class="small">等待轨迹数据</td></tr>';
 envCards.innerHTML=D.environment_diagnostics.map(x=>{{let m=Object.fromEntries(x.self_generated_by_model.map(y=>[y.model,y]));let ctrl=['exact_oracle','curated_all','no_skill'].map(c=>{{let y=x.controls[c];return `<span class="metric ${{y.observed===20?'pass':'missing'}}">${{zh[c]}} O ${{y.outcome_passed}}/${{y.observed}}</span>`}}).join(' ');return `<article class="case"><span class="kind">${{x.status==='matched_controls_complete'?'匹配对照完整':'暂定结论'}}</span><h3>${{x.environment_id}} · ${{esc(x.name)}}</h3><p>${{esc(x.capability)}}</p><div class="grid two"><div><b>Qwen</b><div class="small">覆盖 ${{m['qwen3.7-max'].observed}}/10 · Outcome ${{m['qwen3.7-max'].outcome_passed}} · Strict ${{m['qwen3.7-max'].strict_passed}} · Process-only ${{m['qwen3.7-max'].process_only_failures}}</div></div><div><b>Fable</b><div class="small">覆盖 ${{m['sig-fable'].observed}}/10 · Outcome ${{m['sig-fable'].outcome_passed}} · Strict ${{m['sig-fable'].strict_passed}} · Process-only ${{m['sig-fable'].process_only_failures}}</div></div></div><p class="small">双模型同题 outcome 失败 ${{x.both_models_outcome_fail}}/${{x.paired_task_count}} · reference ${{x.reference_strict_passed}}/${{x.reference_total}} · scope ${{esc(JSON.stringify(x.scope_risk_counts))}}</p><p>${{esc(x.current_read)}}</p><div>${{ctrl}}</div></article>`}}).join('');
 function failureCell(x){{if(!x.observed)return '<span class="metric missing">0/5 未完成</span>';let details=x.tasks.map(t=>`<div><b>${{t.task_id}}</b> · ${{esc(t.task_slug)}} · ${{esc(t.classification)}}<br><span class="small">Skill: ${{esc((t.required_skills.length?t.required_skills:[t.primary_skill]).join(', '))}}<br>O: ${{t.failed_outcome.map(z=>esc(z.name+': '+z.message)).join('; ')||'无'}}<br>P: ${{t.failed_process.map(z=>esc(z.name+': '+z.message)).join('; ')||'无'}}</span></div>`).join('');return `<span class="metric ${{x.strict_failures?'fail':'pass'}}">失败 ${{x.strict_failures}}/${{x.observed}}</span>${{details}}`}};
