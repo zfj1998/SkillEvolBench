@@ -1468,6 +1468,12 @@ def environment_diagnostics(
             for name in ("exact_oracle", "curated_all", "no_skill")
         )
         self_outcome_passed = sum(row["outcome_passed"] for row in by_model)
+        matched_exact = [
+            row
+            for row in env_comparisons
+            if row.get("conditions", {}).get("self_generated") is not None
+            and row.get("conditions", {}).get("exact_oracle") is not None
+        ]
         if control_complete:
             exact = controls["exact_oracle"]["outcome_passed"]
             curated = controls["curated_all"]["outcome_passed"]
@@ -1480,6 +1486,33 @@ def environment_diagnostics(
                 f"curated-all 相对 no-skill 效应 {curated - no_skill:+d} 题，"
                 f"exact 相对 curated-all 的选择先验效应 {exact - curated:+d} 题；"
                 f"exact-oracle 仍有 {20 - exact} 个功能失败。"
+            )
+        elif matched_exact:
+            paired_self = sum(
+                row["conditions"]["self_generated"].get("outcome") is True
+                for row in matched_exact
+            )
+            paired_exact = sum(
+                row["conditions"]["exact_oracle"].get("outcome") is True
+                for row in matched_exact
+            )
+            rescues = sum(
+                row["conditions"]["self_generated"].get("outcome") is not True
+                and row["conditions"]["exact_oracle"].get("outcome") is True
+                for row in matched_exact
+            )
+            regressions = sum(
+                row["conditions"]["self_generated"].get("outcome") is True
+                and row["conditions"]["exact_oracle"].get("outcome") is not True
+                for row in matched_exact
+            )
+            current_read = (
+                profile["provisional_read"]
+                + f" 当前已有 {len(matched_exact)} 个逐题匹配的 self/exact 样本："
+                f"self-generated outcome {paired_self}/{len(matched_exact)}，"
+                f"exact-oracle {paired_exact}/{len(matched_exact)}；"
+                f"oracle 救回 {rescues} 题、相对退化 {regressions} 题。"
+                "No-skill 与 curated-all 尚未齐全，不能把该差值解释为最终 skill 因果效应。"
             )
         else:
             current_read = profile["provisional_read"]

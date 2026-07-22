@@ -28,6 +28,10 @@ AGENTHUB_REF = "2dae59b5340774a528be443840b889452c78cfba"
 SELFGEN_AGENTHUB_REF = "a32ea0ecd2daf6661dd3212d973d0f8e222f3a77"
 FABLE_SMOKE_JOB_ID = "ap-skillevolbench-3be14e2ba69944b4-d2"
 FABLE_E4_LABEL = "sig-fable-e4-repair-v1-15"
+MAX_FABLE_E4_REPAIR_JOBS = 3
+FABLE_E4_RETRY_BACKOFF_SEC = 300
+MAX_STAGE_GROUP_JOBS = 3
+STAGE_RETRY_BACKOFF_SEC = 300
 STAGE_NAMES = (
     "fable_exact_oracle",
     "fable_no_skill",
@@ -148,22 +152,29 @@ class MatrixWatcher:
         if isinstance(state, dict) and state.get("schema_version") == 1:
             stages = state.setdefault("stages", {})
             for name in STAGE_NAMES:
-                stages.setdefault(
+                stage = stages.setdefault(
                     name,
                     {
                         "status": "pending",
                         "idempotency_key": str(uuid.uuid4()),
                         "group_id": None,
+                        "failed_groups": [],
                     },
                 )
+                stage.setdefault("failed_groups", [])
+                stage.setdefault("max_groups", MAX_STAGE_GROUP_JOBS)
             state.setdefault(
                 "fable_e4_repair",
                 {
                     "status": "pending",
                     "idempotency_key": str(uuid.uuid4()),
                     "job_id": None,
+                    "failed_jobs": [],
                 },
             )
+            repair = state["fable_e4_repair"]
+            repair.setdefault("failed_jobs", [])
+            repair.setdefault("max_jobs", MAX_FABLE_E4_REPAIR_JOBS)
             atomic_json(self.state_path, state)
             return state
         stages = {}
@@ -172,6 +183,8 @@ class MatrixWatcher:
                 "status": "pending",
                 "idempotency_key": str(uuid.uuid4()),
                 "group_id": None,
+                "failed_groups": [],
+                "max_groups": MAX_STAGE_GROUP_JOBS,
             }
         state = {
             "schema_version": 1,
@@ -180,6 +193,8 @@ class MatrixWatcher:
                 "status": "pending",
                 "idempotency_key": str(uuid.uuid4()),
                 "job_id": None,
+                "failed_jobs": [],
+                "max_jobs": MAX_FABLE_E4_REPAIR_JOBS,
             },
             "stages": stages,
         }
@@ -214,6 +229,9 @@ class MatrixWatcher:
                 "fable_e4_repair": {
                     "status": self.state["fable_e4_repair"].get("status"),
                     "job_id": self.state["fable_e4_repair"].get("job_id"),
+                    "failed_job_count": len(
+                        self.state["fable_e4_repair"].get("failed_jobs", [])
+                    ),
                 },
                 **fields,
             },
@@ -267,11 +285,73 @@ class MatrixWatcher:
             statuses = [str(job.get("status") or "Unknown") for job in jobs]
             stage["job_statuses"] = {status: statuses.count(status) for status in sorted(set(statuses))}
             if len(jobs) == 6 and all(status in TERMINAL for status in statuses):
-                next_status = "terminal_with_failures" if any(status != "Succeeded" for status in statuses) else "succeeded"
-                if stage.get("status") != next_status:
-                    stage["status"] = next_status
+                if all(status == "Succeeded" for status in statuses):
+                    if stage.get("status") != "succeeded":
+                        stage["status"] = "succeeded"
+                        stage["terminal_at_utc"] = utc_now()
+                        self.event(
+                            "group_terminal",
+                            stage=name,
+                            group_id=group_id,
+                            status="succeeded",
+                            job_statuses=stage["job_statuses"],
+                        )
+                    continue
+
+                failures = stage.setdefault("failed_groups", [])
+                if not isinstance(failures, list):
+                    failures = []
+                    stage["failed_groups"] = failures
+                known_ids = {
+                    str(item.get("group_id"))
+                    for item in failures
+                    if isinstance(item, dict) and item.get("group_id")
+                }
+                if str(group_id) not in known_ids:
+                    failures.append(
+                        {
+                            "group_id": str(group_id),
+                            "job_statuses": dict(stage["job_statuses"]),
+                            "observed_at_utc": utc_now(),
+                            "idempotency_key": stage.get("idempotency_key"),
+                        }
+                    )
+                if len(failures) >= MAX_STAGE_GROUP_JOBS:
+                    stage["status"] = "repair_exhausted"
+                    stage["repair_exhausted"] = True
                     stage["terminal_at_utc"] = utc_now()
-                    self.event("group_terminal", stage=name, group_id=group_id, status=next_status, job_statuses=stage["job_statuses"])
+                    self.event(
+                        "group_repair_exhausted",
+                        stage=name,
+                        group_id=group_id,
+                        failed_group_count=len(failures),
+                        job_statuses=stage["job_statuses"],
+                    )
+                    continue
+
+                stage.update(
+                    {
+                        "status": "retry_backoff",
+                        "group_id": None,
+                        "registered_with_evidence_watcher": False,
+                        "idempotency_key": str(uuid.uuid4()),
+                        "next_submit_attempt_epoch": (
+                            time.time() + STAGE_RETRY_BACKOFF_SEC
+                        ),
+                        "last_failed_group_id": str(group_id),
+                    }
+                )
+                stage.pop("submitted_at_utc", None)
+                stage.pop("terminal_at_utc", None)
+                self.event(
+                    "group_retry_scheduled",
+                    stage=name,
+                    group_id=group_id,
+                    failed_group_count=len(failures),
+                    next_group_number=len(failures) + 1,
+                    backoff_seconds=STAGE_RETRY_BACKOFF_SEC,
+                    job_statuses=stage["job_statuses"],
+                )
 
     def register_group(self, stage_name: str, group_id: str) -> None:
         label = f"{stage_name.replace('_', '-')}-v1-16"
@@ -402,13 +482,74 @@ class MatrixWatcher:
             job = self.get_job(str(job_id))
             status = str(job.get("status") or "Unknown")
             repair["job_status"] = status
-            if status in TERMINAL:
-                repair["status"] = (
-                    "succeeded" if status == "Succeeded" else "terminal_with_failure"
-                )
+            if status == "Succeeded":
+                repair["status"] = "succeeded"
                 repair.setdefault("terminal_at_utc", utc_now())
                 self.save()
                 return True, f"E4 repair terminal: {status}"
+            if status in {"Failed", "Cancelled"}:
+                failures = repair.setdefault("failed_jobs", [])
+                if not isinstance(failures, list):
+                    failures = []
+                    repair["failed_jobs"] = failures
+                known_ids = {
+                    str(item.get("job_id"))
+                    for item in failures
+                    if isinstance(item, dict) and item.get("job_id")
+                }
+                if str(job_id) not in known_ids:
+                    failures.append(
+                        {
+                            "job_id": str(job_id),
+                            "status": status,
+                            "observed_at_utc": utc_now(),
+                            "idempotency_key": repair.get("idempotency_key"),
+                        }
+                    )
+
+                if status == "Cancelled" or len(failures) >= MAX_FABLE_E4_REPAIR_JOBS:
+                    repair["status"] = "repair_exhausted"
+                    repair["repair_exhausted"] = True
+                    repair["terminal_at_utc"] = utc_now()
+                    self.save()
+                    self.event(
+                        "e4_repair_exhausted",
+                        job_id=job_id,
+                        job_status=status,
+                        failed_job_count=len(failures),
+                    )
+                    return True, (
+                        "Fable E4 repair needs manual review: "
+                        f"{status}, {len(failures)}/{MAX_FABLE_E4_REPAIR_JOBS} jobs"
+                    )
+
+                retry_at = time.time() + FABLE_E4_RETRY_BACKOFF_SEC
+                repair.update(
+                    {
+                        "status": "retry_backoff",
+                        "job_id": None,
+                        "job_status": status,
+                        "idempotency_key": str(uuid.uuid4()),
+                        "registered_with_evidence_watcher": False,
+                        "next_submit_attempt_epoch": retry_at,
+                        "last_failed_job_id": str(job_id),
+                    }
+                )
+                repair.pop("submitted_at_utc", None)
+                repair.pop("terminal_at_utc", None)
+                self.save()
+                self.event(
+                    "e4_repair_retry_scheduled",
+                    job_id=job_id,
+                    job_status=status,
+                    failed_job_count=len(failures),
+                    next_job_number=len(failures) + 1,
+                    backoff_seconds=FABLE_E4_RETRY_BACKOFF_SEC,
+                )
+                return False, (
+                    f"Fable E4 repair {job_id} failed; fresh job "
+                    f"{len(failures) + 1}/{MAX_FABLE_E4_REPAIR_JOBS} scheduled"
+                )
             self.save()
             return False, f"waiting for Fable E4 repair {job_id}: {status}"
 
@@ -416,6 +557,8 @@ class MatrixWatcher:
         smoke_status = str(smoke.get("status") or "Unknown")
         if smoke_status not in TERMINAL:
             return False, f"waiting for Fable exact-oracle smoke: {smoke_status}"
+        if repair.get("repair_exhausted") is True:
+            return True, "Fable E4 repair exhausted; manual review required"
         next_attempt = repair.get("next_submit_attempt_epoch", 0)
         if isinstance(next_attempt, (int, float)) and time.time() < next_attempt:
             remaining = int(next_attempt - time.time())
@@ -432,7 +575,6 @@ class MatrixWatcher:
         by_label = {str(job.get("label")): job for job in jobs if isinstance(job, dict)}
         fable_labels = (
             "sig-fable-e3-repair-v1-15",
-            FABLE_E4_LABEL,
             "sig-fable-selfgen-v1-13-E5",
         )
         if any(by_label.get(label, {}).get("status") not in TERMINAL for label in fable_labels):
@@ -471,6 +613,7 @@ class MatrixWatcher:
             "--no-within-env-replay",
             "--no-replay-eval",
             "--runtime-timeout-sec", "172800",
+            "--learning-max-attempts", "1",
             "--episode-retry-max-attempts", "2",
             "--episode-retry-backoff-sec", "30",
             "--harbor-agent-timeout-multiplier", "6",
@@ -519,13 +662,21 @@ class MatrixWatcher:
             return
         stage.update({"status": "submitted", "group_id": group_id, "submitted_at_utc": utc_now()})
         stage.pop("last_submit_error", None)
+        stage.pop("next_submit_attempt_epoch", None)
         self.save()
         self.register_group(stage_name, group_id)
         self.event("group_submitted", stage=stage_name, group_id=group_id, suite_name=suite)
 
     @staticmethod
-    def done(stage: dict[str, Any]) -> bool:
-        return stage.get("status") in {"succeeded", "terminal_with_failures"}
+    def settled(stage: dict[str, Any]) -> bool:
+        return stage.get("status") in {"succeeded", "repair_exhausted"}
+
+    @staticmethod
+    def ready_to_submit(stage: dict[str, Any]) -> bool:
+        if stage.get("status") not in {"pending", "retry_backoff"}:
+            return False
+        next_attempt = stage.get("next_submit_attempt_epoch", 0)
+        return not isinstance(next_attempt, (int, float)) or time.time() >= next_attempt
 
     def step(self) -> None:
         self.update_submitted_stages()
@@ -536,30 +687,32 @@ class MatrixWatcher:
         # must not idle Qwen once its own repairs are terminal.
         qwen_ready, qwen_reason = self.qwen_ready()
         if qwen_ready:
-            if stages["qwen_exact_oracle"]["status"] == "pending":
+            if self.ready_to_submit(stages["qwen_exact_oracle"]):
                 self.submit("qwen_exact_oracle")
-            elif self.done(stages["qwen_exact_oracle"]) and stages["qwen_no_skill"]["status"] == "pending":
+            elif self.settled(stages["qwen_exact_oracle"]) and self.ready_to_submit(stages["qwen_no_skill"]):
                 self.submit("qwen_no_skill")
-            elif self.done(stages["qwen_no_skill"]) and stages["qwen_curated_all"]["status"] == "pending":
+            elif self.settled(stages["qwen_no_skill"]) and self.ready_to_submit(stages["qwen_curated_all"]):
                 self.submit("qwen_curated_all")
 
-        e4_ready, e4_reason = self.advance_e4_repair()
-        fable_reason = e4_reason
-        if e4_ready:
-            fable_ready, fable_reason = self.prerequisites()
-            if fable_ready:
-                if stages["fable_exact_oracle"]["status"] == "pending":
-                    self.submit("fable_exact_oracle")
-                elif self.done(stages["fable_exact_oracle"]) and stages["fable_no_skill"]["status"] == "pending":
-                    self.submit("fable_no_skill")
-                elif self.done(stages["fable_no_skill"]) and stages["fable_curated_all"]["status"] == "pending":
-                    self.submit("fable_curated_all")
+        _, e4_reason = self.advance_e4_repair()
+        fable_ready, fable_reason = self.prerequisites()
+        if fable_ready:
+            if self.ready_to_submit(stages["fable_exact_oracle"]):
+                self.submit("fable_exact_oracle")
+            elif self.settled(stages["fable_exact_oracle"]) and self.ready_to_submit(stages["fable_no_skill"]):
+                self.submit("fable_no_skill")
+            elif self.settled(stages["fable_no_skill"]) and self.ready_to_submit(stages["fable_curated_all"]):
+                self.submit("fable_curated_all")
         self.save()
-        all_done = all(self.done(stage) for stage in stages.values())
+        all_done = (
+            all(stage.get("status") == "succeeded" for stage in stages.values())
+            and self.state["fable_e4_repair"].get("status") == "succeeded"
+        )
         self.heartbeat(
             "matrix_terminal" if all_done else "monitoring_matrix",
             qwen_gate=qwen_reason,
             fable_gate=fable_reason,
+            fable_e4_repair_reason=e4_reason,
         )
 
     def loop(self) -> int:

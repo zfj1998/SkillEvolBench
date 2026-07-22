@@ -58,6 +58,7 @@ def test_matrix_watcher_fable_gate_does_not_block_qwen_lane() -> None:
         False,
         "Fable exact-oracle smoke still running",
     )
+    watcher.prerequisites = lambda: (False, "Fable prerequisites still running")
     watcher.submit = submitted.append
     watcher.save = lambda: None
     watcher.heartbeat = lambda phase, **fields: heartbeats.append((phase, fields))
@@ -70,7 +71,10 @@ def test_matrix_watcher_fable_gate_does_not_block_qwen_lane() -> None:
             "monitoring_matrix",
             {
                 "qwen_gate": "Qwen repairs terminal",
-                "fable_gate": "Fable exact-oracle smoke still running",
+                "fable_gate": "Fable prerequisites still running",
+                "fable_e4_repair_reason": (
+                    "Fable exact-oracle smoke still running"
+                ),
             },
         )
     ]
@@ -619,7 +623,10 @@ def test_environment_diagnostics_keeps_reference_and_model_controls_distinct() -
         "environment_id": "E2",
         "tier": 5,
         "verdict": "oracle_rescues_outcome",
-        "conditions": {"exact_oracle": {"outcome": True}},
+        "conditions": {
+            "self_generated": {"outcome": False},
+            "exact_oracle": {"outcome": True},
+        },
     }]
     oracle_scope = {"rows": [{
         "environment_id": "E2",
@@ -652,6 +659,8 @@ def test_environment_diagnostics_keeps_reference_and_model_controls_distinct() -
     }
     assert e2["status"] == "provisional"
     assert e2["oracle_outcome_rescues"] == 1
+    assert "1 个逐题匹配的 self/exact 样本" in e2["current_read"]
+    assert "oracle 救回 1 题、相对退化 0 题" in e2["current_read"]
     assert REPORT.compact_message("a\n  b", limit=10) == "a b"
 
     complete_rows = [
