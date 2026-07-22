@@ -472,6 +472,10 @@ def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path)
         "# Retry\n\nScope: simple fixed-delay retry for synchronous HTTP calls.\n",
         encoding="utf-8",
     )
+    (skill_root / "meta.yaml").write_text(
+        "gap_1_summary: Add exponential backoff with jitter.\n",
+        encoding="utf-8",
+    )
     audit = {
         "tasks_root": str(tasks_root),
         "tasks": [{
@@ -494,6 +498,10 @@ def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path)
         "exponential backoff",
         "jitter",
     ]
+    assert result["rows"][0]["task_concepts_in_author_gaps"] == [
+        "exponential backoff",
+        "jitter",
+    ]
     assert result["concept_visibility"] == {
         "task_count": 1,
         "tasks_with_controlled_concepts": 1,
@@ -501,6 +509,8 @@ def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path)
         "instruction_explicit_instances": 2,
         "verifier_only_instances": 0,
         "tasks_with_verifier_only_concepts": 0,
+        "author_gap_metadata_instances": 2,
+        "tasks_with_author_gap_metadata_hits": 1,
     }
 
 
@@ -568,6 +578,7 @@ def test_derivability_analysis_keeps_all_three_sources_distinct() -> None:
             "environment_id": "E1",
             "tier": 5,
             "task_concepts": concepts,
+            "author_gap_concepts": ["unseen-oracle-only", "missing-everywhere"],
         }],
     }
 
@@ -589,3 +600,6 @@ def test_derivability_analysis_keeps_all_three_sources_distinct() -> None:
     )
     assert qwen["concept_instances"] == 7
     assert set(qwen["category_counts"].values()) == {1}
+    assert qwen["author_gap_metadata_hits"] == 2
+    assert qwen["author_gap_unseen_in_t1_t3"] == 2
+    assert qwen["author_gap_missing_from_all_model_visible_sources"] == 1

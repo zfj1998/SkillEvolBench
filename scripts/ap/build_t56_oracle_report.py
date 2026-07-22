@@ -14,6 +14,8 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
+import yaml
+
 
 MODELS = ("qwen3.7-max", "sig-fable")
 CONDITIONS = ("self_generated", "exact_oracle", "no_skill", "curated_all")
@@ -221,6 +223,13 @@ def load_json_optional(path: Path | None) -> dict[str, Any]:
     if path is None or not path.exists():
         return {}
     return load_json(path)
+
+
+def load_yaml_optional(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    value = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return value if isinstance(value, dict) else {}
 
 
 def rate(passed: int, total: int) -> float | None:
@@ -707,10 +716,12 @@ def derivability_analysis(
             learning_concepts = set(family.get("learning_concepts") or [])
             generated_concepts = set(family.get("generated_concepts") or [])
             curated_concepts = set(family.get("curated_concepts") or [])
+            author_gap_concepts = set(task.get("author_gap_concepts") or [])
             for concept in task.get("task_concepts") or []:
                 in_learning = concept in learning_concepts
                 in_generated = concept in generated_concepts
                 in_oracle = concept in curated_concepts
+                in_author_gap = concept in author_gap_concepts
                 if in_learning:
                     if in_generated:
                         category = "captured_from_visible_evidence"
@@ -737,6 +748,7 @@ def derivability_analysis(
                         "in_t1_t3_evidence": in_learning,
                         "in_generated_skill": in_generated,
                         "in_curated_oracle": in_oracle,
+                        "in_author_gap_metadata": in_author_gap,
                         "category": category,
                     }
                 )
@@ -748,6 +760,21 @@ def derivability_analysis(
                 "model": model,
                 "concept_instances": len(selected),
                 "category_counts": dict(Counter(row["category"] for row in selected)),
+                "author_gap_metadata_hits": sum(
+                    row["in_author_gap_metadata"] for row in selected
+                ),
+                "author_gap_unseen_in_t1_t3": sum(
+                    row["in_author_gap_metadata"]
+                    and not row["in_t1_t3_evidence"]
+                    for row in selected
+                ),
+                "author_gap_missing_from_all_model_visible_sources": sum(
+                    row["in_author_gap_metadata"]
+                    and not row["in_t1_t3_evidence"]
+                    and not row["in_generated_skill"]
+                    and not row["in_curated_oracle"]
+                    for row in selected
+                ),
             }
         )
     return {
@@ -774,13 +801,26 @@ def oracle_scope_analysis(audit: dict[str, Any]) -> dict[str, Any]:
         )
         oracle_parts = []
         oracle_paths = []
+        meta_gap_parts = []
+        meta_paths = []
         for skill_id in skill_ids:
             slug = skill_id.split(".", 1)[-1]
             path = skills_root / slug / "SKILL.md"
             if path.exists():
                 oracle_parts.append(path.read_text(encoding="utf-8"))
                 oracle_paths.append(str(path.resolve()))
+            meta_path = skills_root / slug / "meta.yaml"
+            meta = load_yaml_optional(meta_path)
+            gap_values = [
+                str(value)
+                for key, value in sorted(meta.items())
+                if str(key).startswith("gap_") and str(value).strip()
+            ]
+            if gap_values:
+                meta_gap_parts.extend(gap_values)
+                meta_paths.append(str(meta_path.resolve()))
         oracle_text = "\n\n".join(oracle_parts)
+        meta_gap_text = "\n\n".join(meta_gap_parts)
         check_names = [
             str(name)
             for key in ("process", "outcome")
@@ -808,6 +848,10 @@ def oracle_scope_analysis(audit: dict[str, Any]) -> dict[str, Any]:
             name for name, pattern in CONCEPT_PATTERNS.items()
             if re.search(pattern, oracle_text, re.IGNORECASE)
         ]
+        meta_gap_concepts = [
+            name for name, pattern in CONCEPT_PATTERNS.items()
+            if re.search(pattern, meta_gap_text, re.IGNORECASE)
+        ]
         missing = sorted(set(task_concepts) - set(oracle_concepts))
         scope_lines = [
             line.strip() for line in oracle_text.splitlines()
@@ -827,11 +871,16 @@ def oracle_scope_analysis(audit: dict[str, Any]) -> dict[str, Any]:
             "task_slug": task.get("task_slug"),
             "oracle_skill_ids": skill_ids,
             "oracle_paths": oracle_paths,
+            "author_meta_paths": meta_paths,
             "task_concepts": task_concepts,
             "instruction_concepts": instruction_concepts,
             "verifier_concepts": verifier_concepts,
             "verifier_only_concepts": verifier_only_concepts,
             "oracle_concepts": oracle_concepts,
+            "author_gap_concepts": meta_gap_concepts,
+            "task_concepts_in_author_gaps": sorted(
+                set(task_concepts) & set(meta_gap_concepts)
+            ),
             "missing_concepts": missing,
             "restrictive_scope_language": restrictive,
             "scope_lines": scope_lines,
@@ -861,6 +910,13 @@ def oracle_scope_analysis(audit: dict[str, Any]) -> dict[str, Any]:
             ),
             "tasks_with_verifier_only_concepts": sum(
                 bool(row["verifier_only_concepts"]) for row in rows
+            ),
+            "author_gap_metadata_instances": sum(
+                concept in row["author_gap_concepts"]
+                for row, concept in concept_rows
+            ),
+            "tasks_with_author_gap_metadata_hits": sum(
+                bool(row["task_concepts_in_author_gaps"]) for row in rows
             ),
         },
         "rows": rows,
@@ -1392,6 +1448,37 @@ def conclusions(
             "这是词表筛查而非完整语义证明，且仍需 curated-all 实验测选择先验。"
         ),
     })
+    author_gap_parts = []
+    for item in derivability.get("summaries", []):
+        author_gap_parts.append(
+            f"{item.get('model')}: meta-hit={item.get('author_gap_metadata_hits', 0)}, "
+            f"T1–T3-unseen={item.get('author_gap_unseen_in_t1_t3', 0)}, "
+            "missing-from-visible-sources="
+            f"{item.get('author_gap_missing_from_all_model_visible_sources', 0)}"
+        )
+    author_only_examples = sorted(
+        {
+            f"{row.get('task_id')}:{row.get('concept')}"
+            for row in derivability.get("records", [])
+            if row.get("in_author_gap_metadata")
+            and not row.get("in_t1_t3_evidence")
+            and not row.get("in_generated_skill")
+            and not row.get("in_curated_oracle")
+        }
+    )
+    result.append({
+        "level": "warn",
+        "title": "标注先验更多存在于 author-only gap metadata，而非 Oracle SKILL.md",
+        "body": (
+            "每个 family 的 meta.yaml 明确记录 curated skill 没覆盖的 gap；这些内容用于题目设计，"
+            "但不会作为 skill 注入模型。受控概念统计为 "
+            + "; ".join(author_gap_parts)
+            + "。因此如果某个 T5/T6 概念只在 meta gap 中出现，应该归为题目作者掌握但模型不可见的设计先验，"
+            "不能误称 oracle skill 向模型泄漏了知识。当前明确命中的例子："
+            + ("、".join(author_only_examples) if author_only_examples else "无")
+            + "。"
+        ),
+    })
     return result
 
 
@@ -1653,8 +1740,8 @@ def render_markdown(data: dict[str, Any]) -> str:
         "",
         "下面是受控概念词表的可推导性筛查。它分别检查 T5/T6 明示或 verifier 命名的高级概念，是否出现在 T1–T3 可见 instruction/失败反馈、generated skill 和 curated oracle 中。它能提供 annotation prior 的直接证据，但对未进入词表的语义仍需人工复核。",
         "",
-        "| 模型 | 概念实例 | 可见且 generated 捕获 | 可见、oracle 捕获 | 可见、两种 skill 都漏 | Oracle 独有未见补入 | 两种 skill 均补入 | Generated 独有补入 | 三处都缺 |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| 模型 | 概念实例 | 可见且 generated 捕获 | 可见、oracle 捕获 | 可见、两种 skill 都漏 | Oracle 独有未见补入 | 两种 skill 均补入 | Generated 独有补入 | 三处都缺 | Author gap 命中 / T1–T3 未见 |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for item in data["derivability"]["summaries"]:
         counts = item["category_counts"]
@@ -1666,14 +1753,16 @@ def render_markdown(data: dict[str, Any]) -> str:
             f"{counts.get('oracle_adds_unseen_concept', 0)} | "
             f"{counts.get('both_skills_add_unseen_concept', 0)} | "
             f"{counts.get('model_adds_beyond_visible_evidence', 0)} | "
-            f"{counts.get('missing_from_both_learning_and_oracle', 0)} |"
+            f"{counts.get('missing_from_both_learning_and_oracle', 0)} | "
+            f"{item.get('author_gap_metadata_hits', 0)} / "
+            f"{item.get('author_gap_unseen_in_t1_t3', 0)} |"
         )
     lines += [
         "",
         "需要人工复核的非平凡概念实例：",
         "",
-        "| 模型 | Task | 概念 | 分类 | T1–T3 | Generated | Oracle |",
-        "|---|---|---|---|---:|---:|---:|",
+        "| 模型 | Task | 概念 | 分类 | T1–T3 | Generated | Oracle | Author gap meta |",
+        "|---|---|---|---|---:|---:|---:|---:|",
     ]
     for item in data["derivability"]["records"]:
         if item["category"] == "captured_from_visible_evidence":
@@ -1683,7 +1772,8 @@ def render_markdown(data: dict[str, Any]) -> str:
             f"{DERIVABILITY_ZH[item['category']]} | "
             f"{'✓' if item['in_t1_t3_evidence'] else '✗'} | "
             f"{'✓' if item['in_generated_skill'] else '✗'} | "
-            f"{'✓' if item['in_curated_oracle'] else '✗'} |"
+            f"{'✓' if item['in_curated_oracle'] else '✗'} | "
+            f"{'✓' if item['in_author_gap_metadata'] else '✗'} |"
         )
     lines += [
         "",
@@ -1816,8 +1906,8 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>逐 Env 的 T5/T6 失败地图</h2><div class="tablebox"><table><thead><tr><th>Env / Tier</th><th>Qwen 3.7 Max</th><th>SIG Fable</th></tr></thead><tbody id="failureRows"></tbody></table></div></section>
 <section class="panel"><h2>失败归因总览</h2><p class="small">“已核实假阴性”要求逐代码证据；“形态敏感”只是筛查标签，仍需结合 exact-oracle/no-skill 与轨迹复核。</p><div class="tablebox"><table><thead><tr><th>Env/Tier</th><th>模型</th><th>覆盖/Strict</th><th>功能 gap</th><th>已核实假阴性</th><th>实质过程 gap</th><th>形态敏感</th><th>未决过程</th></tr></thead><tbody id="attributionRows"></tbody></table></div></section>
 <section class="panel"><h2>T1–T3 学习与 Skill 来源审计</h2><div class="grid two" id="learningCards"></div><div class="filters" style="margin-top:16px"><select id="skillModel"></select><select id="skillEnv"></select><input id="skillSearch" placeholder="搜索 family / skill"></div><div class="tablebox"><table><thead><tr><th>Family</th><th>学习结果</th><th>生成 skill</th><th>Best Jaccard</th><th>Oracle evidence recall</th><th>Verifier markers</th></tr></thead><tbody id="skillRows"></tbody></table></div><p class="small">Evidence recall 仅是词面覆盖率，不代表逻辑可推导性。点击 family 查看 T1–T3 证据摘录、generated skill 与 curated oracle 全文。</p></section>
-<section class="panel"><h2>T5/T6 概念可推导性与 Annotation Prior</h2><p>把每个高级概念分别放回 T1–T3 可见证据、generated skill、curated oracle 三个来源中检查。重点看“可见但没总结”“oracle 补入未见概念”“两边都缺”三类。</p><div class="grid two" id="derivabilityCards"></div><div class="filters" style="margin-top:16px"><select id="derivabilityModel"><option value="all">全部模型</option><option value="qwen3.7-max">qwen3.7-max</option><option value="sig-fable">sig-fable</option></select><select id="derivabilityCategory"><option value="all">全部非平凡分类</option></select><input id="derivabilitySearch" placeholder="搜索 task / concept"></div><div class="tablebox"><table><thead><tr><th>Task / Family</th><th>模型</th><th>高级概念</th><th>分类</th><th>T1–T3</th><th>Generated</th><th>Oracle</th></tr></thead><tbody id="derivabilityRows"></tbody></table></div><p class="small">这是受控词表筛查，不把词面缺失自动等同于逻辑不可推导；逐题轨迹与 skill 全文仍是最终证据。</p></section>
-<section class="panel"><h2>Curated Oracle 是否真的足以覆盖任务？</h2><p>仓库中的 curated skill 多数是基础工作流，不是 T5/T6 的 solution manual。Oracle 仍失败必须同时考虑 skill scope gap，不能直接判题目坏。</p><div id="scopeVisibility" class="grid cards"></div><div id="scopeCounts"></div><div class="tablebox"><table><thead><tr><th>Task</th><th>Oracle skills</th><th>风险</th><th>缺失概念</th><th>Verifier-only</th><th>Scope</th></tr></thead><tbody id="scopeRows"></tbody></table></div><h3 style="margin-top:16px">Oracle 结果按 scope risk 分层</h3><div id="scopeOutcomes" class="small"></div><p class="small">这是受控概念的启发式筛查。高风险项用于人工复核，不把词面缺失自动等同于语义缺失。</p></section>
+<section class="panel"><h2>T5/T6 概念可推导性与 Annotation Prior</h2><p>把每个高级概念分别放回 T1–T3 可见证据、generated skill、curated oracle 和仅题目作者可见的 gap metadata 中检查。重点看“可见但没总结”“oracle 补入未见概念”“两边都缺”三类。</p><div class="grid two" id="derivabilityCards"></div><div class="filters" style="margin-top:16px"><select id="derivabilityModel"><option value="all">全部模型</option><option value="qwen3.7-max">qwen3.7-max</option><option value="sig-fable">sig-fable</option></select><select id="derivabilityCategory"><option value="all">全部非平凡分类</option></select><input id="derivabilitySearch" placeholder="搜索 task / concept"></div><div class="tablebox"><table><thead><tr><th>Task / Family</th><th>模型</th><th>高级概念</th><th>分类</th><th>T1–T3</th><th>Generated</th><th>Oracle</th><th>Author gap meta</th></tr></thead><tbody id="derivabilityRows"></tbody></table></div><p class="small">Author gap meta 是 benchmark 作者的设计注释，不会注入模型。此处仍是受控词表筛查，不把词面缺失自动等同于逻辑不可推导。</p></section>
+<section class="panel"><h2>Curated Oracle 是否真的足以覆盖任务？</h2><p>仓库中的 curated skill 多数是基础工作流，不是 T5/T6 的 solution manual。Oracle 仍失败必须同时考虑 skill scope gap，不能直接判题目坏。</p><div id="scopeVisibility" class="grid cards"></div><div id="scopeCounts"></div><div class="tablebox"><table><thead><tr><th>Task</th><th>Oracle skills</th><th>风险</th><th>缺失概念</th><th>Author gap 命中</th><th>Verifier-only</th><th>Scope</th></tr></thead><tbody id="scopeRows"></tbody></table></div><h3 style="margin-top:16px">Oracle 结果按 scope risk 分层</h3><div id="scopeOutcomes" class="small"></div><p class="small">这是受控概念的启发式筛查。高风险项用于人工复核，不把词面缺失自动等同于语义缺失。</p></section>
 <section class="panel"><h2>逐题匹配对照</h2><div class="filters"><select id="taskModel"></select><select id="taskEnv"></select><select id="taskTier"><option value="all">T4–T6</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6</option></select><input id="taskSearch" placeholder="搜索 task / skill"></div><div class="tablebox"><table><thead><tr><th>Task</th><th>模型</th><th>Self-generated</th><th>Exact oracle</th><th>Curated all</th><th>No skill</th><th>判定</th></tr></thead><tbody id="taskRows"></tbody></table></div></section>
 <section class="grid two"><div class="panel"><h2>Verifier 质量</h2><div id="audit"></div></div><div class="panel"><h2>Generated vs Oracle skill</h2><div id="skills"></div></div></section>
 <section class="panel"><h2>逐代码案例</h2><p class="small">同一类 process-only failure 可能是真正缺少过程能力，也可能是 verifier 只接受某种源码形态；下面用真实 artifact 区分。</p><div id="cases"></div></section>
@@ -1847,11 +1937,11 @@ learningCards.innerHTML=Object.entries(D.learning.by_model).map(([m,x])=>`<div c
 options(skillModel,['qwen3.7-max','sig-fable'],null,true);options(skillEnv,['E1','E2','E3','E4','E5','E6'],null,true);
 function renderSkills(){{let q=skillSearch.value.toLowerCase(),rows=D.learning.families.filter(x=>(skillModel.value==='all'||x.model===skillModel.value)&&(skillEnv.value==='all'||x.environment_id===skillEnv.value)&&JSON.stringify(x).toLowerCase().includes(q));skillRows.innerHTML=rows.map(x=>`<tr class="click" data-key="${{x.model}}|${{x.family_id}}"><td><b>${{x.family_id}}</b><br><span class="small">${{x.model}} · ${{x.expected_oracle_slug}}</span></td><td>${{x.terminal_strict_passes}}/${{x.learning_task_count}} 通过 · ${{x.learning_attempts}} attempts</td><td>${{x.generated_skill_count}} · ${{x.generated_slugs.join(', ')}}</td><td>${{x.best_word_jaccard.toFixed(3)}}</td><td>${{x.oracle_token_recall_from_learning_evidence==null?'—':(100*x.oracle_token_recall_from_learning_evidence).toFixed(1)+'%'}}</td><td>${{x.generated_verifier_marker_hits}}</td></tr>`).join('');skillRows.querySelectorAll('tr').forEach(tr=>tr.onclick=()=>showFamily(...tr.dataset.key.split('|')))}};[skillModel,skillEnv].forEach(x=>x.onchange=renderSkills);skillSearch.oninput=renderSkills;renderSkills();
 function showFamily(model,id){{let x=D.learning.families.find(x=>x.model===model&&x.family_id===id);drawerBody.innerHTML=`<h2>${{x.family_id}} · ${{model}}</h2><p>学习任务 ${{x.learning_task_count}}/3 · 最终通过 ${{x.terminal_strict_passes}} · attempts ${{x.learning_attempts}} · generated skills ${{x.generated_skill_count}}</p><p>Best Jaccard ${{x.best_word_jaccard.toFixed(3)}} · Oracle evidence recall ${{x.oracle_token_recall_from_learning_evidence==null?'—':(100*x.oracle_token_recall_from_learning_evidence).toFixed(1)+'%'}} · verifier markers ${{x.generated_verifier_marker_hits}}</p><details open><summary>Generated skill 全文</summary><pre>${{esc(x.generated_text)}}</pre></details><details><summary>Curated oracle 全文</summary><pre>${{esc(x.curated_text)}}</pre></details><details><summary>T1–T3 可见证据摘录</summary><pre>${{esc(x.learning_evidence_excerpt)}}</pre></details>`;drawer.classList.add('open')}}
-derivabilityCards.innerHTML=D.derivability.summaries.map(x=>{{let c=x.category_counts;return `<div class="case"><h3>${{x.model}}</h3><p><b>${{x.concept_instances}}</b> 个 task-concept 实例</p><p class="small">可见且 Generated 捕获 ${{c.captured_from_visible_evidence||0}} · 可见、Oracle 捕获 ${{c.oracle_captures_visible_generated_misses||0}} · 可见、两种 skill 都漏 ${{c.visible_missing_from_both_skills||0}} · Oracle 独有未见补入 ${{c.oracle_adds_unseen_concept||0}} · 两种 skill 均补入 ${{c.both_skills_add_unseen_concept||0}} · Generated 独有补入 ${{c.model_adds_beyond_visible_evidence||0}} · 三处都缺 ${{c.missing_from_both_learning_and_oracle||0}}</p></div>`}}).join('');
+derivabilityCards.innerHTML=D.derivability.summaries.map(x=>{{let c=x.category_counts;return `<div class="case"><h3>${{x.model}}</h3><p><b>${{x.concept_instances}}</b> 个 task-concept 实例</p><p class="small">可见且 Generated 捕获 ${{c.captured_from_visible_evidence||0}} · 可见、Oracle 捕获 ${{c.oracle_captures_visible_generated_misses||0}} · 可见、两种 skill 都漏 ${{c.visible_missing_from_both_skills||0}} · Oracle 独有未见补入 ${{c.oracle_adds_unseen_concept||0}} · 两种 skill 均补入 ${{c.both_skills_add_unseen_concept||0}} · Generated 独有补入 ${{c.model_adds_beyond_visible_evidence||0}} · 三处都缺 ${{c.missing_from_both_learning_and_oracle||0}} · Author gap meta 命中 ${{x.author_gap_metadata_hits}}，其中 T1–T3 未见 ${{x.author_gap_unseen_in_t1_t3}}</p></div>`}}).join('');
 options(derivabilityCategory,Object.keys(derivabilityZh).filter(x=>x!=='captured_from_visible_evidence'),derivabilityZh,true);
-function renderDerivability(){{let q=derivabilitySearch.value.toLowerCase();let rows=D.derivability.records.filter(x=>x.category!=='captured_from_visible_evidence'&&(derivabilityModel.value==='all'||x.model===derivabilityModel.value)&&(derivabilityCategory.value==='all'||x.category===derivabilityCategory.value)&&JSON.stringify(x).toLowerCase().includes(q));derivabilityRows.innerHTML=rows.map(x=>`<tr><td><b>${{x.task_id}}</b><br><span class="small">${{x.family_id}} · T${{x.tier}}</span></td><td>${{x.model}}</td><td>${{esc(x.concept)}}</td><td>${{esc(derivabilityZh[x.category])}}</td><td>${{x.in_t1_t3_evidence?'✓':'✗'}}</td><td>${{x.in_generated_skill?'✓':'✗'}}</td><td>${{x.in_curated_oracle?'✓':'✗'}}</td></tr>`).join('')||'<tr><td colspan="7" class="small">当前过滤条件无记录</td></tr>'}};[derivabilityModel,derivabilityCategory].forEach(x=>x.onchange=renderDerivability);derivabilitySearch.oninput=renderDerivability;renderDerivability();
-let cv=D.oracle_scope.concept_visibility;scopeVisibility.innerHTML=[['受控概念实例',cv.concept_instances],['Instruction 明示',cv.instruction_explicit_instances],['Verifier-only',cv.verifier_only_instances],['涉及任务',cv.tasks_with_controlled_concepts+'/60']].map(x=>`<div class="card"><span class="label">${{x[0]}}</span><b>${{x[1]}}</b></div>`).join('');
-scopeCounts.innerHTML=Object.entries(D.oracle_scope.counts).map(([k,v])=>`<span class="metric ${{k==='high'?'fail':k==='medium'?'proc':'pass'}}">${{k}}: ${{v}}</span>`).join(' ');scopeRows.innerHTML=D.oracle_scope.rows.filter(x=>x.scope_risk!=='low'||x.verifier_only_concepts.length).map(x=>`<tr><td><b>${{x.task_id}}</b><br><span class="small">${{esc(x.task_slug)}}</span></td><td>${{esc(x.oracle_skill_ids.join(', '))}}</td><td><span class="metric ${{x.scope_risk==='high'?'fail':'proc'}}">${{x.scope_risk}}</span></td><td>${{esc(x.missing_concepts.join(', ')||'—')}}</td><td>${{esc(x.verifier_only_concepts.join(', ')||'—')}}</td><td>${{esc(x.scope_lines.join('; ')||'—')}}</td></tr>`).join('');
+function renderDerivability(){{let q=derivabilitySearch.value.toLowerCase();let rows=D.derivability.records.filter(x=>x.category!=='captured_from_visible_evidence'&&(derivabilityModel.value==='all'||x.model===derivabilityModel.value)&&(derivabilityCategory.value==='all'||x.category===derivabilityCategory.value)&&JSON.stringify(x).toLowerCase().includes(q));derivabilityRows.innerHTML=rows.map(x=>`<tr><td><b>${{x.task_id}}</b><br><span class="small">${{x.family_id}} · T${{x.tier}}</span></td><td>${{x.model}}</td><td>${{esc(x.concept)}}</td><td>${{esc(derivabilityZh[x.category])}}</td><td>${{x.in_t1_t3_evidence?'✓':'✗'}}</td><td>${{x.in_generated_skill?'✓':'✗'}}</td><td>${{x.in_curated_oracle?'✓':'✗'}}</td><td>${{x.in_author_gap_metadata?'✓':'✗'}}</td></tr>`).join('')||'<tr><td colspan="8" class="small">当前过滤条件无记录</td></tr>'}};[derivabilityModel,derivabilityCategory].forEach(x=>x.onchange=renderDerivability);derivabilitySearch.oninput=renderDerivability;renderDerivability();
+let cv=D.oracle_scope.concept_visibility;scopeVisibility.innerHTML=[['受控概念实例',cv.concept_instances],['Instruction 明示',cv.instruction_explicit_instances],['Verifier-only',cv.verifier_only_instances],['Author gap meta 命中',cv.author_gap_metadata_instances],['涉及任务',cv.tasks_with_controlled_concepts+'/60']].map(x=>`<div class="card"><span class="label">${{x[0]}}</span><b>${{x[1]}}</b></div>`).join('');
+scopeCounts.innerHTML=Object.entries(D.oracle_scope.counts).map(([k,v])=>`<span class="metric ${{k==='high'?'fail':k==='medium'?'proc':'pass'}}">${{k}}: ${{v}}</span>`).join(' ');scopeRows.innerHTML=D.oracle_scope.rows.filter(x=>x.scope_risk!=='low'||x.verifier_only_concepts.length).map(x=>`<tr><td><b>${{x.task_id}}</b><br><span class="small">${{esc(x.task_slug)}}</span></td><td>${{esc(x.oracle_skill_ids.join(', '))}}</td><td><span class="metric ${{x.scope_risk==='high'?'fail':'proc'}}">${{x.scope_risk}}</span></td><td>${{esc(x.missing_concepts.join(', ')||'—')}}</td><td>${{esc(x.task_concepts_in_author_gaps.join(', ')||'—')}}</td><td>${{esc(x.verifier_only_concepts.join(', ')||'—')}}</td><td>${{esc(x.scope_lines.join('; ')||'—')}}</td></tr>`).join('');
 scopeOutcomes.innerHTML=D.scope_condition_outcomes.filter(x=>x.n).map(x=>`<div>${{x.model}} · ${{x.scope_risk}} · n=${{x.n}} · strict ${{x.oracle_strict_passes}}/${{x.n}} · outcome ${{x.oracle_outcome_passes}}/${{x.n}} · process ${{x.oracle_process_passes}}/${{x.n}}</div>`).join('')||'等待 exact-oracle 结果';
 function renderTasks(){{let q=taskSearch.value.toLowerCase();let rows=D.comparisons.filter(x=>(taskModel.value==='all'||x.model===taskModel.value)&&(taskEnv.value==='all'||x.environment_id===taskEnv.value)&&(taskTier.value==='all'||x.tier==taskTier.value)&&JSON.stringify(x).toLowerCase().includes(q));taskRows.innerHTML=rows.map((x,i)=>`<tr class="click" data-key="${{x.model}}|${{x.task_id}}"><td><b>${{x.task_id}}</b><br><span class="small">${{esc(x.task_slug)}} · ${{esc(x.primary_skill)}}</span></td><td>${{x.model}}</td><td>${{status(x.conditions.self_generated)}}</td><td>${{status(x.conditions.exact_oracle)}}</td><td>${{status(x.conditions.curated_all)}}</td><td>${{status(x.conditions.no_skill)}}</td><td>${{verdict[x.verdict]}}</td></tr>`).join('');taskRows.querySelectorAll('tr').forEach(tr=>tr.onclick=()=>showTask(...tr.dataset.key.split('|')))}};[taskModel,taskEnv,taskTier].forEach(x=>x.onchange=renderTasks);taskSearch.oninput=renderTasks;renderTasks();
 function showTask(model,id){{let x=D.comparisons.find(x=>x.model===model&&x.task_id===id);let blocks=Object.entries(x.conditions).map(([name,c])=>`<h3>${{zh[name]}}</h3>${{c?`<p>${{status(c)}} score=${{c.score??'—'}} · job=${{esc(c.job_id)}}</p><p class="small">record: ${{esc(c.record_path)}}<br>trajectory: ${{esc(c.trajectory_path)}}</p><details><summary>失败测试 (${{c.failed_tests.length}})</summary><pre>${{esc(JSON.stringify(c.failed_tests,null,2))}}</pre></details>`:'<p class="small">尚无结果</p>'}}`).join('');drawerBody.innerHTML=`<h2>${{x.task_id}}</h2><p>${{esc(x.task_slug)}} · T${{x.tier}} · ${{x.environment_id}}</p><p><b>需要的 skills</b><br>${{esc(x.required_skills.join(', ')||x.primary_skill)}}</p>${{blocks}}`;drawer.classList.add('open')}}
