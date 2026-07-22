@@ -391,6 +391,7 @@ def task_comparisons(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     "classification": row.get("classification"),
                     "oracle_injection_exact": row.get("oracle_injection_exact"),
                     "oracle_skill_ids": row.get("oracle_skill_ids") or [],
+                    "skills_actually_used": row.get("skills_actually_used") or [],
                     "no_skill_empty": row.get("no_skill_empty"),
                     "curated_all_library_complete": row.get(
                         "curated_all_library_complete"
@@ -507,6 +508,50 @@ def causal_diagnosis_summary(
             Counter(row["causal"]["category"] for row in complete)
         ),
     }
+
+
+def skill_use_adherence(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for model in MODELS:
+        for condition in CONDITIONS:
+            for tier in TIERS:
+                group = [
+                    row
+                    for row in rows
+                    if row.get("model") == model
+                    and row.get("condition") == condition
+                    and int(row.get("tier", -1)) == tier
+                ]
+                any_use = [bool(row.get("skills_actually_used")) for row in group]
+                used_rows = [row for row, used in zip(group, any_use) if used]
+                unused_rows = [row for row, used in zip(group, any_use) if not used]
+                exact_full_use: int | None = None
+                if condition == "exact_oracle":
+                    exact_full_use = sum(
+                        set(row.get("oracle_skill_ids") or []).issubset(
+                            set(row.get("skills_actually_used") or [])
+                        )
+                        for row in group
+                    )
+                result.append(
+                    {
+                        "model": model,
+                        "condition": condition,
+                        "tier": tier,
+                        "n": len(group),
+                        "any_skill_used": sum(any_use),
+                        "exact_expected_skills_fully_used": exact_full_use,
+                        "used_outcome_passed": sum(
+                            row.get("outcome_pass") is True for row in used_rows
+                        ),
+                        "used_n": len(used_rows),
+                        "unused_outcome_passed": sum(
+                            row.get("outcome_pass") is True for row in unused_rows
+                        ),
+                        "unused_n": len(unused_rows),
+                    }
+                )
+    return result
 
 
 def matched_effects(comparisons: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1694,6 +1739,7 @@ def build_payload(
         "comparisons": comparisons,
         "protocol_design": protocol_design,
         "causal_diagnosis": causal_diagnosis_summary(comparisons),
+        "skill_use_adherence": skill_use_adherence(rows),
         "effects": matched_effects(comparisons),
         "model_comparisons": model_comparisons(rows),
         "failure_map": failure_map(rows),
@@ -1844,7 +1890,32 @@ def render_markdown(data: dict[str, Any]) -> str:
         "当前完整配对分类：`"
         + json.dumps(causal["category_counts"], ensure_ascii=False)
         + "`。",
+        "",
+        "## Skill 注入与实际读取是否一致",
+        "",
+        "`exact-oracle` 的目录/hash 审计证明 treatment 被正确挂载；"
+        "`skills_actually_used` 则从真实工具调用判断模型是否打开 SKILL.md。"
+        "前者是 treatment assignment，后者是 compliance，必须分开报告。"
+        "No-skill 与 skill 条件的 prompt framing 也不同，因此两者差值是“提供并要求使用 skill library”的整体处理效应，"
+        "不是纯文本内容效应；Exact 与 Curated-all 的 framing 相同，可更干净地识别 gold 选择先验。",
+        "",
+        "| 模型 | 条件 | Tier | n | 读取任意 skill | Exact 全部期望 skill 均读取 | 已读取时 Outcome | 未读取时 Outcome |",
+        "|---|---|---:|---:|---:|---:|---:|---:|",
     ]
+    for item in data["skill_use_adherence"]:
+        if not item["n"]:
+            continue
+        exact = (
+            "—"
+            if item["exact_expected_skills_fully_used"] is None
+            else f"{item['exact_expected_skills_fully_used']}/{item['n']}"
+        )
+        lines.append(
+            f"| {item['model']} | {CONDITION_ZH[item['condition']]} | T{item['tier']} | "
+            f"{item['n']} | {item['any_skill_used']}/{item['n']} | {exact} | "
+            f"{item['used_outcome_passed']}/{item['used_n']} | "
+            f"{item['unused_outcome_passed']}/{item['unused_n']} |"
+        )
     lines += [
         "",
         "## 六环境诊断总览",
@@ -2125,6 +2196,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>Pass rate 热力图</h2><div class="filters"><select id="hmModel"></select><select id="hmCond"></select><select id="hmMetric"><option value="strict">Strict</option><option value="outcome">Outcome</option><option value="process">Process</option></select><select id="hmTier"><option value="4">T4</option><option value="5" selected>T5</option><option value="6">T6</option></select></div><div class="heat" id="heatmap"></div><p class="small">每格最多 5 题；显示通过数/观测数，不能把小样本百分比当作稳定总体性能。</p></section>
 <section class="grid two"><div class="panel"><h2>Qwen vs Fable 配对比较</h2><div class="tablebox"><table><thead><tr><th>条件/Tier/指标</th><th>n</th><th>Qwen</th><th>Fable</th><th>only Q/F</th><th>p</th></tr></thead><tbody id="modelCmpRows"></tbody></table></div></div><div class="panel"><h2>Skill 条件配对效应</h2><div class="tablebox"><table><thead><tr><th>模型/Tier/指标</th><th>对照</th><th>n</th><th>Δ</th><th>救回/损害</th></tr></thead><tbody id="effectRows"></tbody></table></div></div></section>
 <section class="panel"><h2>四条件逐题因果判定</h2><p>每题同时看 Self-generated（S）、Exact oracle（E）、Curated-all（A）和 No-skill（N）的 outcome。四个条件不齐时保持“等待”，不把缺失记录当失败。</p><div id="causalDecision"></div></section>
+<section class="panel"><h2>Skill 有挂载，但模型真的读了吗？</h2><p>目录/hash 是 treatment assignment；轨迹中的 SKILL.md 工具读取是 compliance。No-skill 与 skill 条件还存在“要求使用 library”的 prompt framing 差异，因此 no-skill 对比衡量整体处理效应；Exact 与 Curated-all framing 相同，更适合识别 gold 选择先验。</p><div class="tablebox"><table><thead><tr><th>模型/条件/Tier</th><th>n</th><th>读取任意 skill</th><th>Exact 全部期望均读取</th><th>读取时 Outcome</th><th>未读取时 Outcome</th></tr></thead><tbody id="skillUseRows"></tbody></table></div></section>
 <section class="panel"><h2>六环境诊断总览</h2><p class="small">每张卡把 self-generated 的真实功能失败、process-only 噪声、双模型一致失败、官方标准解以及三组匹配对照放在一起。对照未齐的文字明确标为暂定。</p><div class="grid two" id="envCards"></div></section>
 <section class="panel"><h2>逐 Env 的 T5/T6 失败地图</h2><div class="tablebox"><table><thead><tr><th>Env / Tier</th><th>Qwen 3.7 Max</th><th>SIG Fable</th></tr></thead><tbody id="failureRows"></tbody></table></div></section>
 <section class="panel"><h2>失败归因总览</h2><p class="small">“已核实假阴性”要求逐代码证据；“形态敏感”只是筛查标签，仍需结合 exact-oracle/no-skill 与轨迹复核。</p><div class="tablebox"><table><thead><tr><th>Env/Tier</th><th>模型</th><th>覆盖/Strict</th><th>功能 gap</th><th>已核实假阴性</th><th>实质过程 gap</th><th>形态敏感</th><th>未决过程</th></tr></thead><tbody id="attributionRows"></tbody></table></div></section>
@@ -2154,6 +2226,7 @@ function renderHeat(){{let m=hmModel.value,c=hmCond.value,k=hmMetric.value,t=+hm
 modelCmpRows.innerHTML=D.model_comparisons.filter(x=>x.n).map(x=>`<tr><td>${{zh[x.condition]}} / T${{x.tier}} / ${{x.metric}}</td><td>${{x.n}}</td><td>${{x.qwen_pass}}</td><td>${{x.fable_pass}}</td><td>${{x.qwen_only}} / ${{x.fable_only}}</td><td>${{x.sign_test_p==null?'—':x.sign_test_p.toFixed(4)}}</td></tr>`).join('');
 effectRows.innerHTML=D.effects.filter(x=>x.n).map(x=>`<tr><td>${{x.model}} / T${{x.tier}} / ${{x.metric}}</td><td>${{zh[x.treatment]}} − ${{zh[x.reference]}}</td><td>${{x.n}}</td><td>${{(100*x.delta).toFixed(1)}}pp</td><td>${{x.rescued}} / ${{x.harmed}}</td></tr>`).join('')||'<tr><td colspan="5" class="small">等待 oracle/no-skill 匹配结果</td></tr>';
 let cd=D.causal_diagnosis;let cdCounts=Object.entries(cd.category_counts).map(([k,v])=>`<div class="case"><h3>${{esc(D.comparisons.find(x=>x.causal.category===k)?.causal.label||k)}}</h3><b style="font-size:24px">${{v}}</b><div class="small">个完整 T5/T6 模型×任务配对</div></div>`).join('');causalDecision.innerHTML=`<div class="grid cards"><div class="card"><span class="label">完整四条件</span><b>${{cd.complete}}/${{cd.expected}}</b></div><div class="card"><span class="label">已出现任务配对</span><b>${{cd.observed}}/${{cd.expected}}</b></div></div><div class="grid two">${{cdCounts||'<div class="case small">等待 matched controls</div>'}}</div><details><summary>判定规则</summary><div class="tablebox"><table><thead><tr><th>模式</th><th>解释</th></tr></thead><tbody><tr><td>N=1 且全部通过</td><td>无需 skill 也能做，skill 需求弱</td></tr><tr><td>N=0, S=1</td><td>生成 skill 带来直接正向迁移</td></tr><tr><td>N=1, S=0</td><td>生成 skill 造成负迁移</td></tr><tr><td>N=0, S=0, E=1, A=1</td><td>curated 内容有效，生成 skill 不足</td></tr><tr><td>N=0, S=0, E=1, A=0</td><td>gold task→skill 映射提供选择先验</td></tr><tr><td>S=E=A=N=0</td><td>模型执行上限、oracle scope 或难度；reference 通过时不能直接判题目坏</td></tr></tbody></table></div></details>`;
+skillUseRows.innerHTML=D.skill_use_adherence.filter(x=>x.n).map(x=>`<tr><td>${{x.model}} / ${{zh[x.condition]}} / T${{x.tier}}</td><td>${{x.n}}</td><td>${{x.any_skill_used}}/${{x.n}}</td><td>${{x.exact_expected_skills_fully_used==null?'—':x.exact_expected_skills_fully_used+'/'+x.n}}</td><td>${{x.used_outcome_passed}}/${{x.used_n}}</td><td>${{x.unused_outcome_passed}}/${{x.unused_n}}</td></tr>`).join('')||'<tr><td colspan="6" class="small">等待轨迹数据</td></tr>';
 envCards.innerHTML=D.environment_diagnostics.map(x=>{{let m=Object.fromEntries(x.self_generated_by_model.map(y=>[y.model,y]));let ctrl=['exact_oracle','curated_all','no_skill'].map(c=>{{let y=x.controls[c];return `<span class="metric ${{y.observed===20?'pass':'missing'}}">${{zh[c]}} O ${{y.outcome_passed}}/${{y.observed}}</span>`}}).join(' ');return `<article class="case"><span class="kind">${{x.status==='matched_controls_complete'?'匹配对照完整':'暂定结论'}}</span><h3>${{x.environment_id}} · ${{esc(x.name)}}</h3><p>${{esc(x.capability)}}</p><div class="grid two"><div><b>Qwen</b><div class="small">覆盖 ${{m['qwen3.7-max'].observed}}/10 · Outcome ${{m['qwen3.7-max'].outcome_passed}} · Strict ${{m['qwen3.7-max'].strict_passed}} · Process-only ${{m['qwen3.7-max'].process_only_failures}}</div></div><div><b>Fable</b><div class="small">覆盖 ${{m['sig-fable'].observed}}/10 · Outcome ${{m['sig-fable'].outcome_passed}} · Strict ${{m['sig-fable'].strict_passed}} · Process-only ${{m['sig-fable'].process_only_failures}}</div></div></div><p class="small">双模型同题 outcome 失败 ${{x.both_models_outcome_fail}}/${{x.paired_task_count}} · reference ${{x.reference_strict_passed}}/${{x.reference_total}} · scope ${{esc(JSON.stringify(x.scope_risk_counts))}}</p><p>${{esc(x.current_read)}}</p><div>${{ctrl}}</div></article>`}}).join('');
 function failureCell(x){{if(!x.observed)return '<span class="metric missing">0/5 未完成</span>';let details=x.tasks.map(t=>`<div><b>${{t.task_id}}</b> · ${{esc(t.task_slug)}} · ${{esc(t.classification)}}<br><span class="small">Skill: ${{esc((t.required_skills.length?t.required_skills:[t.primary_skill]).join(', '))}}<br>O: ${{t.failed_outcome.map(z=>esc(z.name+': '+z.message)).join('; ')||'无'}}<br>P: ${{t.failed_process.map(z=>esc(z.name+': '+z.message)).join('; ')||'无'}}</span></div>`).join('');return `<span class="metric ${{x.strict_failures?'fail':'pass'}}">失败 ${{x.strict_failures}}/${{x.observed}}</span>${{details}}`}};
 failureRows.innerHTML=['E1','E2','E3','E4','E5','E6'].flatMap(e=>[5,6].map(t=>{{let q=D.failure_map.find(x=>x.model==='qwen3.7-max'&&x.environment_id===e&&x.tier===t),f=D.failure_map.find(x=>x.model==='sig-fable'&&x.environment_id===e&&x.tier===t);return `<tr><td><b>${{e}} / T${{t}}</b></td><td>${{failureCell(q)}}</td><td>${{failureCell(f)}}</td></tr>`}})).join('');
@@ -2169,7 +2242,7 @@ let cv=D.oracle_scope.concept_visibility;scopeVisibility.innerHTML=[['受控概�
 scopeCounts.innerHTML=Object.entries(D.oracle_scope.counts).map(([k,v])=>`<span class="metric ${{k==='high'?'fail':k==='medium'?'proc':'pass'}}">${{k}}: ${{v}}</span>`).join(' ');scopeRows.innerHTML=D.oracle_scope.rows.filter(x=>x.scope_risk!=='low'||x.verifier_only_concepts.length).map(x=>`<tr><td><b>${{x.task_id}}</b><br><span class="small">${{esc(x.task_slug)}}</span></td><td>${{esc(x.oracle_skill_ids.join(', '))}}</td><td><span class="metric ${{x.scope_risk==='high'?'fail':'proc'}}">${{x.scope_risk}}</span></td><td>${{esc(x.missing_concepts.join(', ')||'—')}}</td><td>${{esc(x.task_concepts_in_author_gaps.join(', ')||'—')}}</td><td>${{esc(x.verifier_only_concepts.join(', ')||'—')}}</td><td>${{esc(x.scope_lines.join('; ')||'—')}}</td></tr>`).join('');
 scopeOutcomes.innerHTML=D.scope_condition_outcomes.filter(x=>x.n).map(x=>`<div>${{x.model}} · ${{x.scope_risk}} · n=${{x.n}} · strict ${{x.oracle_strict_passes}}/${{x.n}} · outcome ${{x.oracle_outcome_passes}}/${{x.n}} · process ${{x.oracle_process_passes}}/${{x.n}}</div>`).join('')||'等待 exact-oracle 结果';
 function renderTasks(){{let q=taskSearch.value.toLowerCase();let rows=D.comparisons.filter(x=>(taskModel.value==='all'||x.model===taskModel.value)&&(taskEnv.value==='all'||x.environment_id===taskEnv.value)&&(taskTier.value==='all'||x.tier==taskTier.value)&&JSON.stringify(x).toLowerCase().includes(q));taskRows.innerHTML=rows.map((x,i)=>`<tr class="click" data-key="${{x.model}}|${{x.task_id}}"><td><b>${{x.task_id}}</b><br><span class="small">${{esc(x.task_slug)}} · ${{esc(x.primary_skill)}}</span></td><td>${{x.model}}</td><td>${{status(x.conditions.self_generated)}}</td><td>${{status(x.conditions.exact_oracle)}}</td><td>${{status(x.conditions.curated_all)}}</td><td>${{status(x.conditions.no_skill)}}</td><td><b>${{esc(x.causal.label)}}</b><br><span class="small">${{esc(x.causal.pattern||verdict[x.verdict])}}</span></td></tr>`).join('');taskRows.querySelectorAll('tr').forEach(tr=>tr.onclick=()=>showTask(...tr.dataset.key.split('|')))}};[taskModel,taskEnv,taskTier].forEach(x=>x.onchange=renderTasks);taskSearch.oninput=renderTasks;renderTasks();
-function showTask(model,id){{let x=D.comparisons.find(x=>x.model===model&&x.task_id===id);let blocks=Object.entries(x.conditions).map(([name,c])=>`<h3>${{zh[name]}}</h3>${{c?`<p>${{status(c)}} score=${{c.score??'—'}} · job=${{esc(c.job_id)}}</p><p class="small">record: ${{esc(c.record_path)}}<br>trajectory: ${{esc(c.trajectory_path)}}</p><details><summary>失败测试 (${{c.failed_tests.length}})</summary><pre>${{esc(JSON.stringify(c.failed_tests,null,2))}}</pre></details>`:'<p class="small">尚无结果</p>'}}`).join('');drawerBody.innerHTML=`<h2>${{x.task_id}}</h2><p>${{esc(x.task_slug)}} · T${{x.tier}} · ${{x.environment_id}}</p><div class="conclusion ${{x.causal.complete?'good':'pending'}}"><h3>${{esc(x.causal.label)}} · ${{esc(x.causal.pattern||'')}}</h3>${{esc(x.causal.explanation)}}</div><p><b>需要的 skills</b><br>${{esc(x.required_skills.join(', ')||x.primary_skill)}}</p>${{blocks}}`;drawer.classList.add('open')}}
+function showTask(model,id){{let x=D.comparisons.find(x=>x.model===model&&x.task_id===id);let blocks=Object.entries(x.conditions).map(([name,c])=>`<h3>${{zh[name]}}</h3>${{c?`<p>${{status(c)}} score=${{c.score??'—'}} · job=${{esc(c.job_id)}}</p><p class="small">实际读取 skills: ${{esc(c.skills_actually_used.join(', ')||'none')}}<br>record: ${{esc(c.record_path)}}<br>trajectory: ${{esc(c.trajectory_path)}}</p><details><summary>失败测试 (${{c.failed_tests.length}})</summary><pre>${{esc(JSON.stringify(c.failed_tests,null,2))}}</pre></details>`:'<p class="small">尚无结果</p>'}}`).join('');drawerBody.innerHTML=`<h2>${{x.task_id}}</h2><p>${{esc(x.task_slug)}} · T${{x.tier}} · ${{x.environment_id}}</p><div class="conclusion ${{x.causal.complete?'good':'pending'}}"><h3>${{esc(x.causal.label)}} · ${{esc(x.causal.pattern||'')}}</h3>${{esc(x.causal.explanation)}}</div><p><b>需要的 skills</b><br>${{esc(x.required_skills.join(', ')||x.primary_skill)}}</p>${{blocks}}`;drawer.classList.add('open')}}
 let a=D.verifier_audit.summary;audit.innerHTML=`<div class="card"><span class="label">过程 / 功能 checks</span><b>${{a.process_checks_total}} / ${{a.outcome_checks_total}}</b></div><p><b>${{a.tasks_with_literal_or_regex_process_checks}}/90</b> 含源码字面量或正则检查；<b>${{a.tasks_with_effective_process_weight_50_percent}}/90</b> 的过程权重为 50%。</p><p>形态敏感度：${{Object.entries(a.process_shape_sensitivity).map(([k,v])=>`${{k}}=${{v}}`).join(' · ')}}</p><h3>Process-only 分层</h3>${{D.verifier_shape_outcomes.filter(x=>x.n).map(x=>`<div class="small">${{zh[x.condition]}} · ${{x.shape_risk}} · process-only ${{x.process_only_failures}}/${{x.n}} · outcome ${{x.outcome_passes}}/${{x.n}} · process ${{x.process_passes}}/${{x.n}}</div>`).join('')}}`;
 skills.innerHTML=Object.entries(D.skills.by_model).map(([m,x])=>`<div class="case"><h3>${{m}}</h3><p>skill 对数 <b>${{x.n}}</b> · 改名 ${{x.renamed}} · 完全相同 ${{x.exact_equal}}</p><div class="small">中位 word Jaccard ${{x.median_word_jaccard?.toFixed(3)??'—'}} · 长度比 ${{x.median_length_ratio?.toFixed(2)??'—'}}</div></div>`).join('')+'<p class="small">词面相似度低只说明表达和覆盖范围不同，不能单独证明 skill 质量差；最终要结合 matched oracle rescue。</p>';
 cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}} · ${{o.failed_process_tests.map(t=>t.name).join(', ')}}</p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}`).join('')}}<details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details></article>`).join('');

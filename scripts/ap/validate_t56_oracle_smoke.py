@@ -38,6 +38,50 @@ def require(condition: bool, message: str) -> None:
         raise ValueError(message)
 
 
+def oracle_skill_use_audit(
+    records: dict[str, dict[str, Any]],
+    specs: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = []
+    for task_id in sorted(records):
+        record = records[task_id]
+        spec = specs[task_id]
+        expected = (
+            list(spec.get("required_skills") or [])
+            if int(spec["task_index"]) == 6
+            else [str(spec["primary_skill"])]
+        )
+        actual_value = record.get("skills_actually_used")
+        require(
+            isinstance(actual_value, list),
+            f"skills_actually_used evidence is missing for {task_id}",
+        )
+        actual = sorted({str(item) for item in actual_value if item})
+        missing = sorted(set(expected) - set(actual))
+        unexpected = sorted(set(actual) - set(expected))
+        require(
+            not unexpected,
+            f"oracle view leaked or misattributed skills for {task_id}: {unexpected}",
+        )
+        rows.append(
+            {
+                "task_id": task_id,
+                "expected_skill_ids": expected,
+                "skills_actually_used": actual,
+                "missing_expected_skill_ids": missing,
+                "full_use": not missing,
+                "any_use": bool(actual),
+            }
+        )
+    return {
+        "task_count": len(rows),
+        "full_use_count": sum(row["full_use"] for row in rows),
+        "any_use_count": sum(row["any_use"] for row in rows),
+        "no_use_count": sum(not row["any_use"] for row in rows),
+        "rows": rows,
+    }
+
+
 def validate(export_root: Path, tasks_root: Path) -> dict[str, Any]:
     run_dirs = sorted(export_root.glob("artifacts/output/runs/*"))
     require(len(run_dirs) == 1, f"expected exactly one run directory, got {len(run_dirs)}")
@@ -74,6 +118,8 @@ def validate(export_root: Path, tasks_root: Path) -> dict[str, Any]:
     )
     require(task_ids == expected, "records are not exactly the 15 E2 T4-T6 tasks")
     require(not any("-T1" in task or "-T2" in task or "-T3" in task for task in task_ids), "learning task leaked into diagnostic")
+    records = {path.stem: load_json(path) for path in record_paths}
+    skill_use = oracle_skill_use_audit(records, specs)
 
     views_root = run_dir / "oracle-skill-views"
     audit_paths = sorted(views_root.glob("E2-LS*-T*.audit.json"))
@@ -111,6 +157,7 @@ def validate(export_root: Path, tasks_root: Path) -> dict[str, Any]:
         "scoreable": metrics.get("scoreable"),
         "task_score": metrics.get("task_score"),
         "verified_views": verified_views,
+        "oracle_skill_use": skill_use,
     }
 
 

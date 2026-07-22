@@ -22,6 +22,7 @@ AUDITOR = load_script("audit_t56_verifiers.py")
 REPORT = load_script("build_t56_oracle_report.py")
 MATRIX = load_script("watch_t56_oracle_matrix.py")
 QWEN_REPAIR = load_script("watch_qwen_e6_then_e1.py")
+ORACLE_VALIDATOR = load_script("validate_t56_oracle_smoke.py")
 
 
 def run(job: str, run_id: str, *, status: str, updated: str, env: str = "E1") -> dict:
@@ -229,6 +230,41 @@ def test_four_condition_causal_diagnosis_distinguishes_skill_effects() -> None:
         assert diagnosis["pattern"].startswith("S=")
 
 
+def test_skill_use_adherence_tracks_exact_oracle_compliance() -> None:
+    rows = [
+        {
+            "model": "qwen3.7-max",
+            "condition": "exact_oracle",
+            "tier": 6,
+            "oracle_skill_ids": ["a", "b"],
+            "skills_actually_used": ["a", "b"],
+            "outcome_pass": True,
+        },
+        {
+            "model": "qwen3.7-max",
+            "condition": "exact_oracle",
+            "tier": 6,
+            "oracle_skill_ids": ["a", "b"],
+            "skills_actually_used": ["a"],
+            "outcome_pass": False,
+        },
+    ]
+
+    result = next(
+        row
+        for row in REPORT.skill_use_adherence(rows)
+        if row["model"] == "qwen3.7-max"
+        and row["condition"] == "exact_oracle"
+        and row["tier"] == 6
+    )
+
+    assert result["n"] == 2
+    assert result["any_skill_used"] == 2
+    assert result["exact_expected_skills_fully_used"] == 1
+    assert result["used_outcome_passed"] == 1
+    assert result["unused_n"] == 0
+
+
 def test_coverage_is_fail_closed_for_missing_conditions() -> None:
     rows = [
         {
@@ -322,6 +358,35 @@ def test_oracle_injection_requires_exact_ids_dirs_and_hashes(tmp_path: Path) -> 
     assert evidence["oracle_injection_exact"] is False
     assert evidence["oracle_injection_errors"] == [
         "oracle content hash mismatch: pre-call-parameter-validation"
+    ]
+
+
+def test_oracle_skill_use_audit_separates_assignment_from_compliance() -> None:
+    specs = {
+        "E2-LS1-T5": {
+            "task_index": 5,
+            "primary_skill": "E2-LS1.validate",
+            "required_skills": [],
+        },
+        "E2-LS1-T6": {
+            "task_index": 6,
+            "primary_skill": "E2-LS1.validate",
+            "required_skills": ["E2-LS1.validate", "E2-LS5.fallback"],
+        },
+    }
+    records = {
+        "E2-LS1-T5": {"skills_actually_used": ["E2-LS1.validate"]},
+        "E2-LS1-T6": {"skills_actually_used": ["E2-LS1.validate"]},
+    }
+
+    result = ORACLE_VALIDATOR.oracle_skill_use_audit(records, specs)
+
+    assert result["task_count"] == 2
+    assert result["full_use_count"] == 1
+    assert result["any_use_count"] == 2
+    assert result["no_use_count"] == 0
+    assert result["rows"][1]["missing_expected_skill_ids"] == [
+        "E2-LS5.fallback"
     ]
 
 
