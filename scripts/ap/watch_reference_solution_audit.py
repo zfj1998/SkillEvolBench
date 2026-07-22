@@ -302,7 +302,8 @@ class Watcher:
                 result = self.run(
                     [
                         sys.executable,
-                        str(self.repo / "scripts/ap/run_reference_solution_audit.py"),
+                        "-m",
+                        "scripts.ap.run_reference_solution_audit",
                         "--repo-root",
                         str(self.repo),
                         "--environment-id",
