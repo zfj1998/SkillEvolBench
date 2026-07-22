@@ -50,11 +50,38 @@ CLASS_ZH = {
 }
 CAUSE_ZH = {
     "functional_gap": "功能实现错误或不完整",
+    "verified_benchmark_false_negative": "已核实的 outcome/verifier 假阴性",
+    "mixed_benchmark_and_model_gap": "题目缺陷与模型执行 gap 混合",
+    "invalid_or_underdetermined_task": "不可满足或欠规定题目",
     "verified_verifier_false_negative": "已核实的 process verifier 假阴性",
     "substantive_process_gap": "有实际泛化意义的过程约束缺失",
     "shape_sensitive_process_only": "源码形态敏感的 process-only 失败",
     "unresolved_process_only": "尚待人工复核的 process-only 失败",
 }
+
+# These labels are deliberately model-task specific. A hidden contract can be
+# the sole reason one output fails while another model genuinely computes the
+# wrong values on the same task.
+VERIFIED_OUTCOME_FALSE_NEGATIVE_PAIRS = frozenset({
+    ("qwen3.7-max", "E1-LS4-T5"),
+    ("sig-fable", "E1-LS4-T5"),
+    ("sig-fable", "E3-LS2-T6"),
+    ("sig-fable", "E3-LS3-T6"),
+    ("qwen3.7-max", "E3-LS4-T6"),
+    ("qwen3.7-max", "E4-LS1-T5"),
+    ("qwen3.7-max", "E4-LS3-T5"),
+    ("qwen3.7-max", "E4-LS4-T6"),
+    ("qwen3.7-max", "E6-LS2-T6"),
+    ("sig-fable", "E6-LS2-T6"),
+})
+MIXED_BENCHMARK_MODEL_GAP_PAIRS = frozenset({
+    ("qwen3.7-max", "E2-LS1-T6"),
+    ("sig-fable", "E2-LS1-T6"),
+    ("qwen3.7-max", "E5-LS5-T6"),
+    ("qwen3.7-max", "E6-LS3-T6"),
+    ("sig-fable", "E6-LS3-T6"),
+})
+INVALID_OR_UNDERDETERMINED_TASKS = frozenset({"E6-LS4-T6"})
 DERIVABILITY_ZH = {
     "captured_from_visible_evidence": "T1–T3 可见且 generated 捕获",
     "oracle_captures_visible_generated_misses": "T1–T3 可见，oracle 捕获但 generated 漏掉",
@@ -3230,9 +3257,17 @@ def failure_attribution(
         if row.get("strict_pass") is True:
             continue
         task_id = str(row["task_id"])
+        model_task = (str(row.get("model") or ""), task_id)
         shape = shape_by_task.get(task_id, "unknown")
         if row.get("outcome_pass") is not True:
-            cause = "functional_gap"
+            if model_task in VERIFIED_OUTCOME_FALSE_NEGATIVE_PAIRS:
+                cause = "verified_benchmark_false_negative"
+            elif task_id in INVALID_OR_UNDERDETERMINED_TASKS:
+                cause = "invalid_or_underdetermined_task"
+            elif model_task in MIXED_BENCHMARK_MODEL_GAP_PAIRS:
+                cause = "mixed_benchmark_and_model_gap"
+            else:
+                cause = "functional_gap"
         elif task_id in verified_false_negatives:
             cause = "verified_verifier_false_negative"
         elif task_id in substantive_process:
@@ -4629,16 +4664,19 @@ def render_markdown(data: dict[str, Any]) -> str:
     lines += [
         "## Self-generated 失败归因总览",
         "",
-        "该表先区分功能失败与 process-only 失败。`已核实假阴性`仅用于已经逐代码确认“功能测试全过、实现存在、verifier 只扫固定文件或字面量”的案例；其余源码形态敏感项仍标为待复核，不把启发式判断冒充结论。",
+        "该表先区分 outcome 与 process-only 失败。`Outcome 假阴性`只用于当前模型产物已经独立复算出任务核心语义正确的 model×task；`混合`表示 verifier/task 确有缺陷，但模型还留有真实字段或执行错误；`无效题`表示硬约束不可满足或题面没有唯一 tie-break。Process 假阴性则要求功能测试已过且逐代码确认仅固定文件/字面量扫描失败。其余源码形态敏感项仍标为待复核，不把启发式判断冒充结论。",
         "",
-        "| Env | Tier | 模型 | 覆盖 | Strict | 功能 gap | 已核实假阴性 | 实质过程 gap | 形态敏感 | 未决过程 |",
-        "|---|---:|---|---:|---:|---:|---:|---:|---:|---:|",
+        "| Env | Tier | 模型 | 覆盖 | Strict | 功能 gap | Outcome 假阴性 | 混合 | 无效题 | Process 假阴性 | 实质过程 gap | 形态敏感 | 未决过程 |",
+        "|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for item in data["failure_attribution"]["summaries"]:
         counts = item["cause_counts"]
         lines.append(
             f"| {item['environment_id']} | T{item['tier']} | {item['model']} | {item['observed']}/5 | "
             f"{item['strict_passed']}/{item['observed']} | {counts.get('functional_gap', 0)} | "
+            f"{counts.get('verified_benchmark_false_negative', 0)} | "
+            f"{counts.get('mixed_benchmark_and_model_gap', 0)} | "
+            f"{counts.get('invalid_or_underdetermined_task', 0)} | "
             f"{counts.get('verified_verifier_false_negative', 0)} | {counts.get('substantive_process_gap', 0)} | "
             f"{counts.get('shape_sensitive_process_only', 0)} | {counts.get('unresolved_process_only', 0)} |"
         )
@@ -5015,7 +5053,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>Skill 有挂载，但模型真的读了吗？</h2><p>目录/hash 是 treatment assignment；轨迹中的 SKILL.md 工具读取是 compliance。No-skill 与 skill 条件还存在“要求使用 library”的 prompt framing 差异，因此 no-skill 对比衡量整体处理效应；Exact 与 Curated-all framing 相同，更适合识别 gold 子集的选择/注意力优势。但 Exact 只挂载相关子集，而 Curated-all 挂载全 Env 五个 skills，所以该差值仍同时包含映射信息与搜索/阅读负担。</p><div class="tablebox"><table><thead><tr><th>模型/条件/Tier</th><th>n</th><th>读取任意 skill</th><th>Exact 全部期望均读取</th><th>读取时 Outcome</th><th>未读取时 Outcome</th></tr></thead><tbody id="skillUseRows"></tbody></table></div></section>
 <section class="panel"><h2>六环境诊断总览</h2><p class="small">每张卡把 self-generated 的真实功能失败、process-only 噪声、双模型一致失败、官方标准解以及三组匹配对照放在一起。对照未齐的文字明确标为暂定。</p><div class="grid two" id="envCards"></div></section>
 <section class="panel"><h2>逐 Env 的 T5/T6 失败地图</h2><div class="tablebox"><table><thead><tr><th>Env / Tier</th><th>Qwen 3.7 Max</th><th>SIG Fable</th></tr></thead><tbody id="failureRows"></tbody></table></div></section>
-<section class="panel"><h2>失败归因总览</h2><p class="small">“已核实假阴性”要求逐代码证据；“形态敏感”只是筛查标签，仍需结合 exact-oracle/no-skill 与轨迹复核。</p><div class="tablebox"><table><thead><tr><th>Env/Tier</th><th>模型</th><th>覆盖/Strict</th><th>功能 gap</th><th>已核实假阴性</th><th>实质过程 gap</th><th>形态敏感</th><th>未决过程</th></tr></thead><tbody id="attributionRows"></tbody></table></div></section>
+<section class="panel"><h2>失败归因总览</h2><p class="small">Outcome 假阴性要求该模型产物经独立复算后核心语义正确；“混合”保留模型真实缺口；“无效题”表示不可满足或欠规定。形态敏感仍只是筛查标签。</p><div class="tablebox"><table><thead><tr><th>Env/Tier</th><th>模型</th><th>覆盖/Strict</th><th>功能 gap</th><th>Outcome 假阴性</th><th>混合</th><th>无效题</th><th>Process 假阴性</th><th>实质过程 gap</th><th>形态敏感</th><th>未决过程</th></tr></thead><tbody id="attributionRows"></tbody></table></div></section>
 <section class="panel"><h2>T1–T3 学习与 Skill 来源审计</h2><div class="grid two" id="learningCards"></div><div class="filters" style="margin-top:16px"><select id="skillModel"></select><select id="skillEnv"></select><input id="skillSearch" placeholder="搜索 family / skill"></div><div class="tablebox"><table><thead><tr><th>Family</th><th>学习结果</th><th>生成 skill</th><th>Best Jaccard</th><th>Oracle evidence recall</th><th>Verifier markers</th></tr></thead><tbody id="skillRows"></tbody></table></div><p class="small">Evidence recall 仅是词面覆盖率，不代表逻辑可推导性。点击 family 查看 T1–T3 证据摘录、generated skill 与 curated oracle 全文。</p></section>
 <section class="panel"><h2>Skill 内容差异，是否真的改变同题行为？</h2><p>逐 model×Env 对齐 Self-generated 与 Exact oracle 的 T5/T6。向量相同要求逐题结果完全一致，不只是总分相同。</p><div class="tablebox"><table><thead><tr><th>模型 / Env</th><th>配对</th><th>Outcome S/E</th><th>Strict S/E</th><th>向量 O/S</th><th>Generated skills</th><th>Jaccard</th><th>长度 G/O</th><th>Verifier markers G/O</th><th>Exact 全读</th><th>No-skill O</th></tr></thead><tbody id="matchedSkillRows"></tbody></table></div><p class="small">内容距离只是描述性证据；同题行为是否变化看 matched vectors。No-skill 未齐时，不能把 self/exact 相同解释为“不需要 skill”。</p></section>
 <section class="panel"><h2>T1–T3 表现能预测 T5/T6 吗？</h2><p>这是 family-level 描述性关联，不是 skill 的因果效果：family 难度会同时影响 acquisition 与 transfer，最终仍要看同题 no-skill。</p><div class="grid two" id="learningTransferCards"></div><h3 style="margin-top:16px">按 T1–T3 最终 strict 通过数分层</h3><div class="tablebox"><table><thead><tr><th>模型</th><th>T1–T3 strict</th><th>Families</th><th>T5</th><th>T6</th><th>T5+T6</th></tr></thead><tbody id="learningTransferRows"></tbody></table></div><h3 style="margin-top:16px">Generated 概念覆盖与 Outcome</h3><div class="tablebox"><table><thead><tr><th>模型</th><th>概念覆盖</th><th>Tasks</th><th>Outcome</th></tr></thead><tbody id="learningCoverageRows"></tbody></table></div><p class="small">当前文本相似度、概念覆盖和学习通过数都只能作诊断，不能替代四条件 matched control。困难题往往既诱发更详细的 skill，也更难执行，原始相关性会被反向混杂。</p></section>
@@ -5052,7 +5090,7 @@ skillUseRows.innerHTML=D.skill_use_adherence.filter(x=>x.n).map(x=>`<tr><td>${{x
 envCards.innerHTML=D.environment_diagnostics.map(x=>{{let m=Object.fromEntries(x.self_generated_by_model.map(y=>[y.model,y]));let ctrl=['exact_oracle','curated_all','no_skill'].map(c=>{{let y=x.controls[c];return `<span class="metric ${{y.observed===20?'pass':'missing'}}">${{zh[c]}} O ${{y.outcome_passed}}/${{y.observed}}</span>`}}).join(' ');return `<article class="case"><span class="kind">${{x.status==='matched_controls_complete'?'匹配对照完整':'暂定结论'}}</span><h3>${{x.environment_id}} · ${{esc(x.name)}}</h3><p>${{esc(x.capability)}}</p><div class="grid two"><div><b>Qwen</b><div class="small">覆盖 ${{m['qwen3.7-max'].observed}}/10 · Outcome ${{m['qwen3.7-max'].outcome_passed}} · Strict ${{m['qwen3.7-max'].strict_passed}} · Process-only ${{m['qwen3.7-max'].process_only_failures}}</div></div><div><b>Fable</b><div class="small">覆盖 ${{m['sig-fable'].observed}}/10 · Outcome ${{m['sig-fable'].outcome_passed}} · Strict ${{m['sig-fable'].strict_passed}} · Process-only ${{m['sig-fable'].process_only_failures}}</div></div></div><p class="small">双模型同题 outcome 失败 ${{x.both_models_outcome_fail}}/${{x.paired_task_count}} · reference ${{x.reference_strict_passed}}/${{x.reference_total}} · scope ${{esc(JSON.stringify(x.scope_risk_counts))}}</p><p>${{esc(x.current_read)}}</p><div>${{ctrl}}</div></article>`}}).join('');
 function failureCell(x){{if(!x.observed)return '<span class="metric missing">0/5 未完成</span>';let details=x.tasks.map(t=>`<div><b>${{t.task_id}}</b> · ${{esc(t.task_slug)}} · ${{esc(t.classification)}}<br><span class="small">Skill: ${{esc((t.required_skills.length?t.required_skills:[t.primary_skill]).join(', '))}}<br>O: ${{t.failed_outcome.map(z=>esc(z.name+': '+z.message)).join('; ')||'无'}}<br>P: ${{t.failed_process.map(z=>esc(z.name+': '+z.message)).join('; ')||'无'}}</span></div>`).join('');return `<span class="metric ${{x.strict_failures?'fail':'pass'}}">失败 ${{x.strict_failures}}/${{x.observed}}</span>${{details}}`}};
 failureRows.innerHTML=['E1','E2','E3','E4','E5','E6'].flatMap(e=>[5,6].map(t=>{{let q=D.failure_map.find(x=>x.model==='qwen3.7-max'&&x.environment_id===e&&x.tier===t),f=D.failure_map.find(x=>x.model==='sig-fable'&&x.environment_id===e&&x.tier===t);return `<tr><td><b>${{e}} / T${{t}}</b></td><td>${{failureCell(q)}}</td><td>${{failureCell(f)}}</td></tr>`}})).join('');
-attributionRows.innerHTML=D.failure_attribution.summaries.map(x=>{{let c=x.cause_counts;return `<tr><td><b>${{x.environment_id}} / T${{x.tier}}</b></td><td>${{x.model}}</td><td>${{x.observed}}/5 · ${{x.strict_passed}}/${{x.observed}}</td><td>${{c.functional_gap||0}}</td><td>${{c.verified_verifier_false_negative||0}}</td><td>${{c.substantive_process_gap||0}}</td><td>${{c.shape_sensitive_process_only||0}}</td><td>${{c.unresolved_process_only||0}}</td></tr>`}}).join('');
+attributionRows.innerHTML=D.failure_attribution.summaries.map(x=>{{let c=x.cause_counts;return `<tr><td><b>${{x.environment_id}} / T${{x.tier}}</b></td><td>${{x.model}}</td><td>${{x.observed}}/5 · ${{x.strict_passed}}/${{x.observed}}</td><td>${{c.functional_gap||0}}</td><td>${{c.verified_benchmark_false_negative||0}}</td><td>${{c.mixed_benchmark_and_model_gap||0}}</td><td>${{c.invalid_or_underdetermined_task||0}}</td><td>${{c.verified_verifier_false_negative||0}}</td><td>${{c.substantive_process_gap||0}}</td><td>${{c.shape_sensitive_process_only||0}}</td><td>${{c.unresolved_process_only||0}}</td></tr>`}}).join('');
 learningCards.innerHTML=Object.entries(D.learning.by_model).map(([m,x])=>`<div class="case"><h3>${{m}}</h3><p><b>${{x.learning_tasks}}</b> 个 T1–T3 · <b>${{x.learning_attempts}}</b> 次尝试 · 最终通过 ${{x.terminal_strict_passes}} · 修复成功 ${{x.repaired_to_pass}}</p><p class="small">same-session 异常 ${{x.same_session_failures}} · active skills/families ${{x.active_skills}}/${{x.families}} · 多 skill families ${{x.families_with_multiple_skills}} · 含 verifier 术语 skills ${{x.skills_with_verifier_markers}}</p></div>`).join('');
 matchedSkillRows.innerHTML=D.matched_skill_content.map(x=>{{let n=x.controls.no_skill;let ratio=x.generated_to_curated_char_ratio==null?'—':x.generated_to_curated_char_ratio.toFixed(2)+'×';let jac=x.median_best_word_jaccard==null?'—':x.median_best_word_jaccard.toFixed(3);return `<tr><td><b>${{x.model}}</b><br><span class="small">${{x.environment_id}}</span></td><td>${{x.matched_tasks}}/10</td><td>${{x.self_outcome_passed}}/${{x.exact_outcome_passed}}</td><td>${{x.self_strict_passed}}/${{x.exact_strict_passed}}</td><td><span class="metric ${{x.outcome_vectors_identical?'pass':'fail'}}">${{x.outcome_vectors_identical?'同':'异'}}</span> <span class="metric ${{x.strict_vectors_identical?'pass':'fail'}}">${{x.strict_vectors_identical?'同':'异'}}</span></td><td>${{x.generated_skill_count}}</td><td>${{jac}}</td><td>${{ratio}}</td><td>${{x.generated_verifier_marker_hits}}/${{x.oracle_verifier_marker_hits}}</td><td>${{x.exact_full_skill_use}}/${{x.exact_skill_use_audited}}</td><td>${{n.outcome_passed}}/${{n.observed}}</td></tr>`}}).join('')||'<tr><td colspan="11" class="small">等待 self/exact matched slices</td></tr>';
 const fmtCorr=v=>v==null?'—':(v>=0?'+':'')+v.toFixed(3);

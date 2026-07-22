@@ -639,11 +639,47 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
             "process_pass": True,
             "classification": "outcome_only_failure",
         },
+        {
+            **common,
+            "model": "qwen3.7-max",
+            "environment_id": "E6",
+            "tier": 6,
+            "task_id": "E6-LS2-T6",
+            "task_slug": "verified-outcome-false-negative",
+            "outcome_pass": False,
+            "process_pass": False,
+            "classification": "outcome_and_process_failure",
+        },
+        {
+            **common,
+            "model": "qwen3.7-max",
+            "environment_id": "E6",
+            "tier": 6,
+            "task_id": "E6-LS3-T6",
+            "task_slug": "mixed-contract-and-model-gap",
+            "outcome_pass": False,
+            "process_pass": False,
+            "classification": "outcome_and_process_failure",
+        },
+        {
+            **common,
+            "model": "sig-fable",
+            "environment_id": "E6",
+            "tier": 6,
+            "task_id": "E6-LS4-T6",
+            "task_slug": "invalid-schedule",
+            "outcome_pass": False,
+            "process_pass": True,
+            "classification": "outcome_only_failure",
+        },
     ]
     audit = {
         "tasks": [
             {"task_id": "E2-LS1-T5", "process_shape_sensitivity": "high"},
             {"task_id": "E2-LS3-T5", "process_shape_sensitivity": "low"},
+            {"task_id": "E6-LS2-T6", "process_shape_sensitivity": "medium"},
+            {"task_id": "E6-LS3-T6", "process_shape_sensitivity": "medium"},
+            {"task_id": "E6-LS4-T6", "process_shape_sensitivity": "low"},
         ]
     }
     result = REPORT.failure_attribution(
@@ -655,6 +691,9 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
     assert causes == {
         "E2-LS1-T5": "verified_verifier_false_negative",
         "E2-LS3-T5": "functional_gap",
+        "E6-LS2-T6": "verified_benchmark_false_negative",
+        "E6-LS3-T6": "mixed_benchmark_and_model_gap",
+        "E6-LS4-T6": "invalid_or_underdetermined_task",
     }
 
 
