@@ -1153,3 +1153,69 @@ def test_measurement_validity_separates_history_from_on_task_requirements() -> N
     assert summary["eligible_for_causal_skill_claim"] == 2
     assert summary["oracle_all_concepts"] == 2
     assert summary["generated_all_concepts"] == 1
+
+
+def test_validity_stratified_effects_do_not_mix_on_task_only_tasks() -> None:
+    def condition(outcome: bool) -> dict:
+        return {"outcome": outcome, "strict": outcome, "process": outcome}
+
+    comparisons = []
+    for task_id, self_outcome, no_skill_outcome in (
+        ("E1-LS1-T5", True, False),
+        ("E1-LS2-T5", True, True),
+    ):
+        conditions = {
+            "self_generated": condition(self_outcome),
+            "exact_oracle": condition(True),
+            "no_skill": condition(no_skill_outcome),
+            "curated_all": condition(True),
+        }
+        comparisons.append(
+            {
+                "model": "qwen3.7-max",
+                "task_id": task_id,
+                "tier": 5,
+                "conditions": conditions,
+                "causal": REPORT.causal_diagnosis(conditions),
+            }
+        )
+    validity = {
+        "records": [
+            {
+                "model": "qwen3.7-max",
+                "task_id": "E1-LS1-T5",
+                "category": "history_supported",
+            },
+            {
+                "model": "qwen3.7-max",
+                "task_id": "E1-LS2-T5",
+                "category": "on_task_only",
+            },
+        ]
+    }
+
+    rows = REPORT.validity_stratified_effects(comparisons, validity)
+    history = next(
+        row
+        for row in rows
+        if row["model"] == "qwen3.7-max"
+        and row["validity_category"] == "history_supported"
+        and row["treatment"] == "self_generated"
+        and row["reference"] == "no_skill"
+    )
+    on_task = next(
+        row
+        for row in rows
+        if row["model"] == "qwen3.7-max"
+        and row["validity_category"] == "on_task_only"
+        and row["treatment"] == "self_generated"
+        and row["reference"] == "no_skill"
+    )
+
+    assert history["n"] == 1
+    assert history["delta"] == 1.0
+    assert history["rescued"] == 1
+    assert history["complete_four_conditions"] == 1
+    assert on_task["n"] == 1
+    assert on_task["delta"] == 0.0
+    assert on_task["complete_causal_category_counts"] == {"low_skill_demand": 1}

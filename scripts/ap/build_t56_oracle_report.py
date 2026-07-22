@@ -1137,6 +1137,95 @@ def measurement_validity_analysis(
     }
 
 
+def validity_stratified_effects(
+    comparisons: list[dict[str, Any]],
+    measurement_validity: dict[str, Any],
+) -> list[dict[str, Any]]:
+    validity = {
+        (str(row.get("model")), str(row.get("task_id"))): str(
+            row.get("category")
+        )
+        for row in measurement_validity.get("records", [])
+        if isinstance(row, dict)
+    }
+    contrasts = (
+        ("self_generated", "no_skill"),
+        ("exact_oracle", "self_generated"),
+        ("exact_oracle", "no_skill"),
+        ("exact_oracle", "curated_all"),
+    )
+    result = []
+    for model in MODELS:
+        model_rows = [
+            row
+            for row in comparisons
+            if row["model"] == model and int(row["tier"]) in {5, 6}
+        ]
+        categories = sorted(
+            {
+                validity.get((model, str(row["task_id"])), "missing")
+                for row in model_rows
+            }
+        )
+        for category in categories:
+            group = [
+                row
+                for row in model_rows
+                if validity.get((model, str(row["task_id"])), "missing")
+                == category
+            ]
+            complete = [row for row in group if row["causal"]["complete"]]
+            for treatment, reference in contrasts:
+                matched = [
+                    row
+                    for row in group
+                    if row["conditions"][treatment] is not None
+                    and row["conditions"][reference] is not None
+                ]
+                treatment_pass = sum(
+                    row["conditions"][treatment]["outcome"] is True
+                    for row in matched
+                )
+                reference_pass = sum(
+                    row["conditions"][reference]["outcome"] is True
+                    for row in matched
+                )
+                result.append(
+                    {
+                        "model": model,
+                        "validity_category": category,
+                        "task_count": len(group),
+                        "complete_four_conditions": len(complete),
+                        "complete_causal_category_counts": dict(
+                            sorted(
+                                Counter(
+                                    row["causal"]["category"] for row in complete
+                                ).items()
+                            )
+                        ),
+                        "treatment": treatment,
+                        "reference": reference,
+                        "n": len(matched),
+                        "treatment_pass": treatment_pass,
+                        "reference_pass": reference_pass,
+                        "delta": rate(
+                            treatment_pass - reference_pass, len(matched)
+                        ),
+                        "rescued": sum(
+                            row["conditions"][reference]["outcome"] is not True
+                            and row["conditions"][treatment]["outcome"] is True
+                            for row in matched
+                        ),
+                        "harmed": sum(
+                            row["conditions"][reference]["outcome"] is True
+                            and row["conditions"][treatment]["outcome"] is not True
+                            for row in matched
+                        ),
+                    }
+                )
+    return result
+
+
 def oracle_scope_analysis(audit: dict[str, Any]) -> dict[str, Any]:
     tasks_root = Path(str(audit.get("tasks_root") or "benchmark/tasks"))
     skills_root = tasks_root.parent / "skills"
@@ -2137,6 +2226,9 @@ def build_payload(
     measurement_validity = measurement_validity_analysis(
         derivability, oracle_scope
     )
+    validity_effects = validity_stratified_effects(
+        comparisons, measurement_validity
+    )
     reference_integrity = reference_integrity_analysis(reference_audit or {})
     attribution = failure_attribution(rows, audit, reference_integrity)
     environment_summary = environment_diagnostics(
@@ -2170,6 +2262,7 @@ def build_payload(
         "learning": learning,
         "derivability": derivability,
         "measurement_validity": measurement_validity,
+        "validity_stratified_effects": validity_effects,
         "oracle_scope": oracle_scope,
         "verifier_shape_outcomes": verifier_shape_outcomes(rows, audit),
         "scope_condition_outcomes": scope_condition_outcomes(comparisons, oracle_scope),
@@ -2619,6 +2712,25 @@ def render_markdown(data: dict[str, Any]) -> str:
         )
     lines += [
         "",
+        "按 measurement-validity 分层的 matched outcome 效应（只显示当前已有配对）：",
+        "",
+        "| 模型 | 有效性分层 | Treatment − Reference | n | Treatment | Reference | Δ | Rescue / Harm | 四条件完整 |",
+        "|---|---|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for item in data["validity_stratified_effects"]:
+        if not item["n"]:
+            continue
+        lines.append(
+            f"| {item['model']} | "
+            f"{MEASUREMENT_VALIDITY_ZH.get(item['validity_category'], item['validity_category'])} | "
+            f"{CONDITION_ZH[item['treatment']]} − {CONDITION_ZH[item['reference']]} | "
+            f"{item['n']} | {item['treatment_pass']}/{item['n']} | "
+            f"{item['reference_pass']}/{item['n']} | {pct(item['delta'])} | "
+            f"{item['rescued']} / {item['harmed']} | "
+            f"{item['complete_four_conditions']}/{item['task_count']} |"
+        )
+    lines += [
+        "",
         "## Curated Oracle 的任务覆盖范围审计",
         "",
         f"启发式筛查结果：`{json.dumps(data['oracle_scope']['counts'], ensure_ascii=False)}`。该筛查从任务说明与 verifier 提取受控概念，再检查绑定的 curated skill 是否覆盖；它用于定位人工复核对象，不把词面缺失直接当成语义缺失。",
@@ -2754,7 +2866,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>失败归因总览</h2><p class="small">“已核实假阴性”要求逐代码证据；“形态敏感”只是筛查标签，仍需结合 exact-oracle/no-skill 与轨迹复核。</p><div class="tablebox"><table><thead><tr><th>Env/Tier</th><th>模型</th><th>覆盖/Strict</th><th>功能 gap</th><th>已核实假阴性</th><th>实质过程 gap</th><th>形态敏感</th><th>未决过程</th></tr></thead><tbody id="attributionRows"></tbody></table></div></section>
 <section class="panel"><h2>T1–T3 学习与 Skill 来源审计</h2><div class="grid two" id="learningCards"></div><div class="filters" style="margin-top:16px"><select id="skillModel"></select><select id="skillEnv"></select><input id="skillSearch" placeholder="搜索 family / skill"></div><div class="tablebox"><table><thead><tr><th>Family</th><th>学习结果</th><th>生成 skill</th><th>Best Jaccard</th><th>Oracle evidence recall</th><th>Verifier markers</th></tr></thead><tbody id="skillRows"></tbody></table></div><p class="small">Evidence recall 仅是词面覆盖率，不代表逻辑可推导性。点击 family 查看 T1–T3 证据摘录、generated skill 与 curated oracle 全文。</p></section>
 <section class="panel"><h2>T5/T6 概念可推导性与 Annotation Prior</h2><p>把每个高级概念分别放回 T1–T3 可见证据、generated skill、curated oracle 和仅题目作者可见的 gap metadata 中检查。重点看“可见但没总结”“oracle 补入未见概念”“两边都缺”三类。</p><div class="grid two" id="derivabilityCards"></div><div class="filters" style="margin-top:16px"><select id="derivabilityModel"><option value="all">全部模型</option><option value="qwen3.7-max">qwen3.7-max</option><option value="sig-fable">sig-fable</option></select><select id="derivabilityCategory"><option value="all">全部非平凡分类</option></select><input id="derivabilitySearch" placeholder="搜索 task / concept"></div><div class="tablebox"><table><thead><tr><th>Task / Family</th><th>模型</th><th>高级概念</th><th>分类</th><th>T1–T3</th><th>Generated</th><th>Oracle</th><th>Author gap meta</th></tr></thead><tbody id="derivabilityRows"></tbody></table></div><p class="small">Author gap meta 是 benchmark 作者的设计注释，不会注入模型。此处仍是受控词表筛查，不把词面缺失自动等同于逻辑不可推导。</p></section>
-<section class="panel"><h2>哪些 T5/T6 真能测 Skill Evolution？</h2><p>先判断高级要求是否在 T1–T3 留下历史证据，再看匹配 no-skill 对照。若要求只在当前 T5/T6 题面出现，模型现场做对不能证明此前形成的 skill 有帮助；受控词表未覆盖的任务保持未分类。</p><div class="grid two" id="validityCards"></div><div class="tablebox"><table><thead><tr><th>模型/Env</th><th>可进入历史 skill 因果检验</th><th>仅当前题面</th><th>历史+现场混合</th><th>缺学习证据</th><th>词表未覆盖</th></tr></thead><tbody id="validityRows"></tbody></table></div><p class="small">“可进入因果检验”不等于已经证明 skill 有用；仍需同模型同任务的 Self / Exact / Curated-all / No-skill 四条件结果。</p></section>
+<section class="panel"><h2>哪些 T5/T6 真能测 Skill Evolution？</h2><p>先判断高级要求是否在 T1–T3 留下历史证据，再看匹配 no-skill 对照。若要求只在当前 T5/T6 题面出现，模型现场做对不能证明此前形成的 skill 有帮助；受控词表未覆盖的任务保持未分类。</p><div class="grid two" id="validityCards"></div><div class="tablebox"><table><thead><tr><th>模型/Env</th><th>可进入历史 skill 因果检验</th><th>仅当前题面</th><th>历史+现场混合</th><th>缺学习证据</th><th>词表未覆盖</th></tr></thead><tbody id="validityRows"></tbody></table></div><h3 style="margin-top:16px">按测量有效性分层的 Matched Outcome 效应</h3><div class="tablebox"><table><thead><tr><th>模型/分层</th><th>Treatment − Reference</th><th>n</th><th>Treatment</th><th>Reference</th><th>Δ</th><th>救回/损害</th><th>四条件完整</th></tr></thead><tbody id="validityEffectRows"></tbody></table></div><p class="small">“可进入因果检验”不等于已经证明 skill 有用；仍需同模型同任务的 Self / Exact / Curated-all / No-skill 四条件结果。</p></section>
 <section class="panel"><h2>Curated Oracle 是否真的足以覆盖任务？</h2><p>仓库中的 curated skill 多数是基础工作流，不是 T5/T6 的 solution manual。Oracle 仍失败必须同时考虑 skill scope gap，不能直接判题目坏。</p><div id="scopeVisibility" class="grid cards"></div><div id="scopeCounts"></div><div class="tablebox"><table><thead><tr><th>Task</th><th>Oracle skills</th><th>风险</th><th>缺失概念</th><th>Author gap 命中</th><th>Verifier-only</th><th>Scope</th></tr></thead><tbody id="scopeRows"></tbody></table></div><h3 style="margin-top:16px">Oracle 结果按 scope risk 分层</h3><div id="scopeOutcomes" class="small"></div><p class="small">这是受控概念的启发式筛查。高风险项用于人工复核，不把词面缺失自动等同于语义缺失。</p></section>
 <section class="panel"><h2>逐题匹配对照</h2><div class="filters"><select id="taskModel"></select><select id="taskEnv"></select><select id="taskTier"><option value="all">T4–T6</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6</option></select><input id="taskSearch" placeholder="搜索 task / skill"></div><div class="tablebox"><table><thead><tr><th>Task</th><th>模型</th><th>Self-generated</th><th>Exact oracle</th><th>Curated all</th><th>No skill</th><th>判定</th></tr></thead><tbody id="taskRows"></tbody></table></div></section>
 <section class="grid two"><div class="panel"><h2>Verifier 质量</h2><div id="audit"></div></div><div class="panel"><h2>Generated vs Oracle skill</h2><div id="skills"></div></div></section>
@@ -2795,6 +2907,7 @@ derivabilityCards.innerHTML=D.derivability.summaries.map(x=>{{let c=x.category_c
 options(derivabilityCategory,Object.keys(derivabilityZh).filter(x=>x!=='captured_from_visible_evidence'),derivabilityZh,true);
 function renderDerivability(){{let q=derivabilitySearch.value.toLowerCase();let rows=D.derivability.records.filter(x=>x.category!=='captured_from_visible_evidence'&&(derivabilityModel.value==='all'||x.model===derivabilityModel.value)&&(derivabilityCategory.value==='all'||x.category===derivabilityCategory.value)&&JSON.stringify(x).toLowerCase().includes(q));derivabilityRows.innerHTML=rows.map(x=>`<tr><td><b>${{x.task_id}}</b><br><span class="small">${{x.family_id}} · T${{x.tier}}</span></td><td>${{x.model}}</td><td>${{esc(x.concept)}}</td><td>${{esc(derivabilityZh[x.category])}}</td><td>${{x.in_t1_t3_evidence?'✓':'✗'}}</td><td>${{x.in_generated_skill?'✓':'✗'}}</td><td>${{x.in_curated_oracle?'✓':'✗'}}</td><td>${{x.in_author_gap_metadata?'✓':'✗'}}</td></tr>`).join('')||'<tr><td colspan="8" class="small">当前过滤条件无记录</td></tr>'}};[derivabilityModel,derivabilityCategory].forEach(x=>x.onchange=renderDerivability);derivabilitySearch.oninput=renderDerivability;renderDerivability();
 validityCards.innerHTML=D.measurement_validity.summaries.map(x=>{{let c=x.category_counts;return `<div class="case"><h3>${{x.model}}</h3><p><b>${{x.eligible_for_causal_skill_claim}}/${{x.controlled_task_count}}</b> 个受控词表覆盖任务可进入历史 skill 因果检验</p><p class="small">全部 T5/T6 ${{x.task_count}} · 仅当前题面 ${{c.on_task_only||0}} · 历史+现场混合 ${{c.mixed_history_and_on_task||0}} · 缺学习证据 ${{c.missing_learning_evidence||0}} · 词表未覆盖 ${{c.unclassified_no_controlled_concept||0}} · Oracle 全覆盖概念 ${{x.oracle_all_concepts}}/${{x.controlled_task_count}} · Generated 全覆盖概念 ${{x.generated_all_concepts}}/${{x.controlled_task_count}}</p></div>`}}).join('');validityRows.innerHTML=D.measurement_validity.by_environment.map(x=>{{let c=x.category_counts;return `<tr><td><b>${{x.model}}</b> / ${{x.environment_id}}</td><td>${{x.eligible_for_causal_skill_claim}}/${{x.controlled_task_count}}</td><td>${{c.on_task_only||0}}</td><td>${{c.mixed_history_and_on_task||0}}</td><td>${{c.missing_learning_evidence||0}}</td><td>${{c.unclassified_no_controlled_concept||0}}</td></tr>`}}).join('');
+validityEffectRows.innerHTML=D.validity_stratified_effects.filter(x=>x.n).map(x=>`<tr><td><b>${{x.model}}</b><br><span class="small">${{esc(validityZh[x.validity_category]||x.validity_category)}}</span></td><td>${{zh[x.treatment]}} − ${{zh[x.reference]}}</td><td>${{x.n}}</td><td>${{x.treatment_pass}}/${{x.n}}</td><td>${{x.reference_pass}}/${{x.n}}</td><td>${{x.delta==null?'—':(100*x.delta).toFixed(1)+'pp'}}</td><td>${{x.rescued}} / ${{x.harmed}}</td><td>${{x.complete_four_conditions}}/${{x.task_count}}</td></tr>`).join('')||'<tr><td colspan="8" class="small">等待 matched controls</td></tr>';
 let cv=D.oracle_scope.concept_visibility;scopeVisibility.innerHTML=[['受控概念实例',cv.concept_instances],['Instruction 明示',cv.instruction_explicit_instances],['Verifier-only',cv.verifier_only_instances],['Author gap meta 命中',cv.author_gap_metadata_instances],['涉及任务',cv.tasks_with_controlled_concepts+'/60']].map(x=>`<div class="card"><span class="label">${{x[0]}}</span><b>${{x[1]}}</b></div>`).join('');
 scopeCounts.innerHTML=Object.entries(D.oracle_scope.counts).map(([k,v])=>`<span class="metric ${{k==='high'?'fail':k==='medium'?'proc':'pass'}}">${{k}}: ${{v}}</span>`).join(' ');scopeRows.innerHTML=D.oracle_scope.rows.filter(x=>x.scope_risk!=='low'||x.verifier_only_concepts.length).map(x=>`<tr><td><b>${{x.task_id}}</b><br><span class="small">${{esc(x.task_slug)}}</span></td><td>${{esc(x.oracle_skill_ids.join(', '))}}</td><td><span class="metric ${{x.scope_risk==='high'?'fail':'proc'}}">${{x.scope_risk}}</span></td><td>${{esc(x.missing_concepts.join(', ')||'—')}}</td><td>${{esc(x.task_concepts_in_author_gaps.join(', ')||'—')}}</td><td>${{esc(x.verifier_only_concepts.join(', ')||'—')}}</td><td>${{esc(x.scope_lines.join('; ')||'—')}}</td></tr>`).join('');
 scopeOutcomes.innerHTML=D.scope_condition_outcomes.filter(x=>x.n).map(x=>`<div>${{x.model}} · ${{x.scope_risk}} · n=${{x.n}} · strict ${{x.oracle_strict_passes}}/${{x.n}} · outcome ${{x.oracle_outcome_passes}}/${{x.n}} · process ${{x.oracle_process_passes}}/${{x.n}}</div>`).join('')||'等待 exact-oracle 结果';
