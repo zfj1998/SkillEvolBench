@@ -1044,3 +1044,112 @@ def test_runtime_progress_separates_ap_state_from_scientific_coverage() -> None:
     )
     assert qwen_repair["job_id"] == "job-qwen-e1"
     assert qwen_repair["export_state"] == "complete"
+
+
+def test_measurement_validity_separates_history_from_on_task_requirements() -> None:
+    derivability = {
+        "records": [
+            {
+                "model": "qwen3.7-max",
+                "task_id": "E1-LS1-T5",
+                "concept": "a",
+                "in_t1_t3_evidence": True,
+                "in_generated_skill": True,
+            },
+            {
+                "model": "qwen3.7-max",
+                "task_id": "E1-LS2-T5",
+                "concept": "a",
+                "in_t1_t3_evidence": True,
+                "in_generated_skill": True,
+            },
+            {
+                "model": "qwen3.7-max",
+                "task_id": "E1-LS2-T5",
+                "concept": "b",
+                "in_t1_t3_evidence": False,
+                "in_generated_skill": False,
+            },
+            {
+                "model": "qwen3.7-max",
+                "task_id": "E1-LS3-T5",
+                "concept": "b",
+                "in_t1_t3_evidence": False,
+                "in_generated_skill": False,
+            },
+        ]
+    }
+    oracle_scope = {
+        "rows": [
+            {
+                "task_id": "E1-LS1-T5",
+                "environment_id": "E1",
+                "tier": 5,
+                "task_slug": "history",
+                "task_concepts": ["a"],
+                "instruction_concepts": ["a"],
+                "oracle_concepts": ["a"],
+            },
+            {
+                "task_id": "E1-LS2-T5",
+                "environment_id": "E1",
+                "tier": 5,
+                "task_slug": "mixed",
+                "task_concepts": ["a", "b"],
+                "instruction_concepts": ["a", "b"],
+                "oracle_concepts": ["a"],
+            },
+            {
+                "task_id": "E1-LS3-T5",
+                "environment_id": "E1",
+                "tier": 5,
+                "task_slug": "on-task",
+                "task_concepts": ["b"],
+                "instruction_concepts": ["b"],
+                "oracle_concepts": [],
+            },
+            {
+                "task_id": "E1-LS4-T5",
+                "environment_id": "E1",
+                "tier": 5,
+                "task_slug": "unclassified",
+                "task_concepts": [],
+                "instruction_concepts": [],
+                "oracle_concepts": [],
+            },
+            {
+                "task_id": "E1-LS5-T5",
+                "environment_id": "E1",
+                "tier": 5,
+                "task_slug": "missing-learning",
+                "task_concepts": ["a"],
+                "instruction_concepts": ["a"],
+                "oracle_concepts": ["a"],
+            },
+        ]
+    }
+
+    result = REPORT.measurement_validity_analysis(
+        derivability, oracle_scope
+    )
+    qwen = {
+        row["task_id"]: row
+        for row in result["records"]
+        if row["model"] == "qwen3.7-max"
+    }
+
+    assert qwen["E1-LS1-T5"]["category"] == "history_supported"
+    assert qwen["E1-LS2-T5"]["category"] == "mixed_history_and_on_task"
+    assert qwen["E1-LS3-T5"]["category"] == "on_task_only"
+    assert qwen["E1-LS4-T5"]["category"] == (
+        "unclassified_no_controlled_concept"
+    )
+    assert qwen["E1-LS5-T5"]["category"] == "missing_learning_evidence"
+    summary = next(
+        row for row in result["summaries"] if row["model"] == "qwen3.7-max"
+    )
+    assert summary["task_count"] == 5
+    assert summary["controlled_task_count"] == 4
+    assert summary["eligible_for_causal_skill_claim"] == 2
+    assert summary["oracle_all_concepts"] == 2
+    assert summary["generated_all_concepts"] == 1
