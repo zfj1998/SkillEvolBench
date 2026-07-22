@@ -484,6 +484,72 @@ def test_learning_analysis_tracks_repair_and_verifier_overfit_markers() -> None:
     assert family["oracle_token_recall_from_learning_evidence"] is not None
 
 
+def test_matched_skill_content_separates_text_distance_from_behavior() -> None:
+    learning = {
+        "families": [
+            {
+                "model": "qwen3.7-max",
+                "environment_id": "E2",
+                "family_id": "E2-LS1",
+                "generated_skill_count": 2,
+                "learning_attempts": 5,
+                "terminal_strict_passes": 2,
+                "repaired_to_pass": 1,
+                "best_word_jaccard": 0.2,
+                "generated_verifier_marker_hits": 7,
+                "oracle_verifier_marker_hits": 0,
+                "generated_text": "long generated verifier-specific procedure",
+                "curated_text": "short scaffold",
+                "generated_concepts": ["jitter", "idempotency"],
+                "curated_concepts": ["idempotency"],
+            }
+        ]
+    }
+    comparisons = []
+    for task_id, outcome, strict in (
+        ("E2-LS1-T5", True, False),
+        ("E2-LS1-T6", False, False),
+    ):
+        comparisons.append(
+            {
+                "model": "qwen3.7-max",
+                "environment_id": "E2",
+                "task_id": task_id,
+                "tier": int(task_id[-1]),
+                "conditions": {
+                    "self_generated": {"outcome": outcome, "strict": strict},
+                    "exact_oracle": {
+                        "outcome": outcome,
+                        "strict": strict,
+                        "oracle_skill_ids": ["E2-LS1.retry"],
+                        "skills_actually_used": ["E2-LS1.retry"],
+                    },
+                    "no_skill": None,
+                    "curated_all": None,
+                },
+            }
+        )
+
+    result = REPORT.matched_skill_content_diagnostics(learning, comparisons)
+
+    assert len(result) == 1
+    row = result[0]
+    assert row["matched_tasks"] == 2
+    assert row["complete_t5_t6_slice"] is False
+    assert row["outcome_vectors_identical"] is True
+    assert row["strict_vectors_identical"] is True
+    assert row["self_outcome_passed"] == row["exact_outcome_passed"] == 1
+    assert row["generated_skill_count"] == 2
+    assert row["generated_verifier_marker_hits"] == 7
+    assert row["generated_only_concepts"] == ["jitter"]
+    assert row["exact_full_skill_use"] == row["exact_skill_use_audited"] == 2
+    assert row["controls"]["no_skill"] == {
+        "observed": 0,
+        "outcome_passed": 0,
+        "strict_passed": 0,
+    }
+
+
 def test_model_comparison_uses_only_same_task_pairs() -> None:
     rows = [
         {"model": "qwen3.7-max", "condition": "self_generated", "task_id": "a", "tier": 5, "strict_pass": True, "outcome_pass": True, "process_pass": True},
