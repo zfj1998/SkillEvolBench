@@ -82,6 +82,7 @@ CASE_DEFINITIONS = {
             "这是任务正文、错误日志和公开源码足以支持的真实工程修复，不是 verifier 形态误判；"
             "它说明 dependency-conflict 与 multi-file-fix 两类历史 skill 即使都被注入，模型仍可能无法完成组合实现。"
         ),
+        "conditions": ["self_generated", "exact_oracle"],
         "files": [
             "project/src/config.py",
             "project/src/database.py",
@@ -353,18 +354,20 @@ ENVIRONMENT_PROFILES = {
         "name": "表格数据清洗、合并与校验",
         "capability": "schema 检查、类型归一化、join key 对齐、空值语义与结果一致性校验。",
         "provisional_read": (
-            "T5 只有同一个 wrong-join-key trap 被两模型共同做错；T6 则在复合排序、模糊合并和"
-            "多源空值规则上出现真实功能失败。这里更像单项 skill 能写进 library，但模型在组合任务中"
-            "没有把多个不变量同时落实。"
+            "T5 只有同一个 wrong-join-key trap 被两模型共同做错，但逐代码看二者其实都选对了 join key；"
+            "真正问题是额外改写 schema cleaner、按 user id 去重，破坏了 starter/reference 保留的重复 master rows。"
+            "T6 则在复合排序、模糊合并和多源空值规则上出现真实功能失败。E3 同时暴露过度修复与组合不变量"
+            "未同时落实，不宜仅按测试名归因为“不会选 join key”。"
         ),
     },
     "E4": {
         "name": "文档抽取、格式迁移与版本比较",
         "capability": "结构化抽取、跨格式保真、上下文填表、多版本 diff 与冲突保留。",
         "provisional_read": (
-            "已审计的 Qwen run 中，T5/T6 outcome 都是 3/5。失败集中在矛盾值必须并列保留、缺失字段"
-            "不得臆造、PDF→JSON→DOCX 数值保真和多轮版本变化覆盖，属于真实的文档语义与链式执行缺口。"
-            "需等待 Fable 与 oracle/no-skill 对照判断是 skill 质量还是模型执行上限。"
+            "已审计的 Qwen run 中，T5/T6 outcome 都是 3/5，但至少 E4-LS1-T5 不是文档语义失败："
+            "模型已正确输出两笔 revenue、source 与 conflict，三项 process 也全过，只因题面要求的输出路径"
+            "与 verifier 实际父目录合同冲突而被判 0/5 outcome。其余失败仍涉及缺失字段、PDF→DOCX 数值保真"
+            "和多轮版本覆盖。E4 必须先剔除该强假阴性，再比较 Fable 与四条件。"
         ),
     },
     "E5": {
@@ -372,9 +375,10 @@ ENVIRONMENT_PROFILES = {
         "capability": "多源筛选、证据化比较、引用核验、受约束总结与矛盾审计。",
         "provisional_read": (
             "Qwen 的 T5/T6 outcome 为 3/5、1/5，Fable 为 3/5、3/5；两模型仍共同做错 4/10 个对齐任务。"
-            "失败集中在没有读取 grounding files、丢失 provenance、引用问题标签不精确，以及 pipeline"
-            "执行错误。这不是单纯 process verifier 噪声；Fable 在复合检索总结上较强，但尚不能说明"
-            "差距来自 skill，仍需同模型四条件对照。"
+            "失败集中在没有读取 grounding files、provenance 合同、引用问题标签和 pipeline 执行。"
+            "但 E5-LS5-T6 中 Qwen 已找全 9/9 真矛盾与 3/3 非矛盾，strict 失败主要是 internal 类型、"
+            "evidence_index 调用和未公开的 source_cards_chars 形态；不能把它算成完全不会审计。"
+            "Fable 在复合检索总结上较强，但差距是否来自 skill 仍需同模型四条件对照。"
         ),
     },
     "E6": {
@@ -382,8 +386,9 @@ ENVIRONMENT_PROFILES = {
         "capability": "优先级判断、上下文回复、行动项抽取、时区排期以及 thread 级综合。",
         "provisional_read": (
             "两模型 T6 outcome 都是 0/5，且失败横跨优先级、必含内容、隐式行动、DST 排期和状态汇总。"
-            "generated skills 往往已经写到这些概念，但执行产物仍不符合契约；同时部分 curated oracle"
-            "只覆盖基础 fixed-offset/explicit-action 流程。E6 是最需要 exact-oracle 与 no-skill 解耦的环境。"
+            "generated skills 往往已经写到这些概念，但执行产物仍不符合契约；同时 E6-LS4-T6 已核实为"
+            "欠规定题：四人工作时段无共同正长度交集，官方 verifier 却要求未声明的固定日期、时间和数组顺序。"
+            "因此 E6 的 0/5 不能全部归给模型或 skill；需要 exact/no-skill 对照并单独剔除任务合同缺陷。"
         ),
     },
 }
@@ -2442,15 +2447,17 @@ def conclusions(
         result.append(
             {
                 "level": "warn",
-                "title": "当前 Exact Oracle matched pilot 尚无 outcome 救回",
+                "title": "当前 Exact Oracle matched slices 尚无 outcome 救回",
                 "body": (
                     f"目前只有 {slices} 形成 {len(matched_exact)} 个 T5/T6 self/exact 配对："
                     f"self-generated outcome {self_outcome}/{len(matched_exact)}，"
                     f"exact-oracle {exact_outcome}/{len(matched_exact)}，救回 {rescued}、"
                     f"损害 {harmed}。Exact 条件在已导出的 T4–T6 中有 "
                     f"{exact_compliant}/{len(exact_assigned)} 题实际打开了全部指定 skill，"
-                    "所以当前零增益不能归因于 treatment 没挂载或模型没读；但覆盖仍只有一个"
-                    "模型/环境，且 no-skill 与 curated-all 未齐，不能外推为最终结论。"
+                    "所以当前零增益不能归因于 treatment 普遍没挂载；目前仅覆盖上述 "
+                    f"{len(set((row['model'], row['environment_id']) for row in matched_exact))} 个"
+                    "模型×环境 slice，且有个别 T6 只读取了指定 skill 子集。No-skill 与 curated-all"
+                    "仍未齐，不能外推为最终结论。"
                 ),
             }
         )
