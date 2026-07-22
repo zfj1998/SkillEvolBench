@@ -1479,6 +1479,29 @@ def conclusions(
             + "。"
         ),
     })
+    instruction_concepts_by_task = {
+        str(row.get("task_id")): set(row.get("instruction_concepts") or [])
+        for row in oracle_scope.get("rows", [])
+        if isinstance(row, dict)
+    }
+    author_only_instruction_explicit = sorted(
+        example
+        for example in author_only_examples
+        if example.split(":", 1)[1]
+        in instruction_concepts_by_task.get(example.split(":", 1)[0], set())
+    )
+    result.append({
+        "level": "warn",
+        "title": "Author-only 新概念虽在当前题面明示，却不能证明来自 Skill Evolution",
+        "body": (
+            f"当前 {len(author_only_examples)} 个 author-only task-concept 中，"
+            f"{len(author_only_instruction_explicit)} 个在对应 T5/T6 instruction 里直接出现："
+            + ("、".join(author_only_instruction_explicit) if author_only_instruction_explicit else "无")
+            + "。因此这些题不是隐藏契约导致的不可解；模型可现场按题面实现。"
+            "但由于 T1–T3 和两种 skill 都没有该概念，做对也不能作为“此前总结出的 skill 发生迁移”的证据。"
+            "最终应看 no-skill 是否同样做对，并把这类题与真正依赖历史 skill 的题分层报告。"
+        ),
+    })
     return result
 
 
