@@ -3089,6 +3089,12 @@ def conclusions(
             and row["conditions"]["exact_oracle"]["outcome"] is not True
             for row in matched_exact
         )
+        harmed_task_ids = [
+            str(row["task_id"])
+            for row in matched_exact
+            if row["conditions"]["self_generated"]["outcome"] is True
+            and row["conditions"]["exact_oracle"]["outcome"] is not True
+        ]
         strict_rescued = sum(
             row["conditions"]["self_generated"]["strict"] is not True
             and row["conditions"]["exact_oracle"]["strict"] is True
@@ -3119,6 +3125,33 @@ def conclusions(
                 }
             )
         )
+        known_e3_defect_harms = {"E3-LS4-T6", "E3-LS5-T5"}
+        if (
+            harmed
+            and not rescued
+            and set(harmed_task_ids).issubset(known_e3_defect_harms)
+        ):
+            outcome_note = (
+                f"Outcome 已出现 {harmed} 个 exact harm，均来自 E3 已核实的 benchmark 合同缺陷"
+                "（E3-LS4-T6 的隐藏 audit shape、E3-LS5-T5 的错误 706 ground truth），"
+                "不能解释为 oracle skill 造成真实能力下降。"
+            )
+        elif rescued or harmed:
+            outcome_note = (
+                f"Outcome 已出现 {rescued + harmed} 个 discordant pairs，必须逐题查代码后"
+                "再判断是 skill 效应、执行随机性还是 benchmark 合同缺陷。"
+            )
+        else:
+            outcome_note = (
+                "当前 matched outcome 完全不变，尚没有 oracle 功能 rescue/harm 证据。"
+            )
+        if strict_rescued or strict_harmed:
+            strict_note = (
+                f"Strict 出现 {strict_rescued} 个 rescue 与 {strict_harmed} 个 harm；"
+                "已审案例主要是固定文件、字面量和输出形状路径变化，不能直接当成功能迁移。"
+            )
+        else:
+            strict_note = "Strict 也没有 discordant pair。"
         result.append(
             {
                 "level": "warn",
@@ -3129,8 +3162,7 @@ def conclusions(
                     f"exact-oracle {exact_outcome}/{len(matched_exact)}，救回 {rescued}、"
                     f"损害 {harmed}；strict 则 self={self_strict}/{len(matched_exact)}、"
                     f"exact={exact_strict}/{len(matched_exact)}，救回 {strict_rescued}、"
-                    f"损害 {strict_harmed}。目前 strict 的正负变化互相抵消且 outcome 不变，更像实现/"
-                    "源码形态路径变化，尚不是功能迁移证据。Exact 条件在已导出的 T4–T6 中有 "
+                    f"损害 {strict_harmed}。{outcome_note}{strict_note}Exact 条件在已导出的 T4–T6 中有 "
                     f"{exact_compliant}/{len(exact_assigned)} 题实际打开了全部指定 skill，"
                     "所以当前零增益不能归因于 treatment 普遍没挂载；目前仅覆盖上述 "
                     f"{len(set((row['model'], row['environment_id']) for row in matched_exact))} 个"
