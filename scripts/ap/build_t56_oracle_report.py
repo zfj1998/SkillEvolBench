@@ -90,6 +90,33 @@ CASE_DEFINITIONS = {
             "project/src/services/report_service.py",
         ],
     },
+    "E1-LS4-T5": {
+        "title": "两种 skill 都完成了端到端修复，却被隐藏 monkeypatch seam 与字面量检查判失败",
+        "kind": "隐藏可注入性合同与源码扫描假阴性（强任务缺陷）",
+        "interpretation": (
+            "Qwen 的 self-generated 与 exact-oracle 都通过 7/8 outcome tests；两份实现都移除了 service 的"
+            "吞错、让 route 返回 500/404，并在 UI 中把 error 放到 no-data 前。唯一 outcome 失败来自隐藏测试"
+            "把 backend.database.db 替换成 FailingDB，但两份实现都保留了 starter 的 "
+            "from backend.database import db，因此 service 持有旧对象，测试替换没有生效。题面要求的是"
+            "实际间歇故障后的 500→下一次 200，并没有声明必须支持这种 monkeypatch seam；官方 solution 却"
+            "特意改成 import backend.database as db_module 后逐次取 db_module.db。更强的证据是其余四个"
+            "hidden tests 也用同样的无效替换，却因原始 DB 的 modulo-3 全局调用计数碰巧通过，结果依赖测试"
+            "顺序而非替身。Process 侧同样有字面量假阴性：P2 只在 UserProfile.jsx 搜 status/error，忽略"
+            "已有 classifyProfileResponse helper；P3 只认 routes.py 中的 500 或 services.py 中的 raise/"
+            "ConnectionError，exact 实现调用 error_status() 因而被误判。两种 skill 同结果不是 oracle"
+            "不足或模型不会错误传播，而是任务把未公开的测试可注入性与源码布局混入 reward。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "backend/database.py",
+            "backend/services.py",
+            "backend/routes.py",
+            "backend/error_payloads.py",
+            "backend/http_policy.py",
+            "frontend/UserProfile.jsx",
+            "frontend/profile_state.js",
+        ],
+    },
     "E2-LS1-T6": {
         "title": "Oracle 建议的 structured error 与隐藏 ValueError 契约冲突",
         "kind": "Oracle scope / hidden-contract 冲突",
@@ -336,9 +363,10 @@ ENVIRONMENT_PROFILES = {
         "capability": "从症状定位根因，并在依赖升级、重构和跨层修改中保持行为与测试一致。",
         "provisional_read": (
             "两模型在 10 个 T5/T6 上得到完全相同的 outcome 8/10、strict 5/10，连失败题也一致。"
-            "其中 3 题功能已通过、只是指定文件/API/覆盖率形态未满足；真正的共同功能失败只有数据库"
-            "会话迁移与跨文件错误传播 2 题。因此 E1 当前更像 task-specific 的 verifier 形态敏感加"
-            "少量组合执行缺口，不支持 T5/T6 普遍不可解，也不像某一个模型的偶然退化。"
+            "其中 3 题功能已通过、只是指定文件/API/覆盖率形态未满足；两项共同 outcome 失败中，数据库"
+            "会话迁移是真实组合执行 gap，而跨文件错误传播题的两种实现其实都完成了 500/404/UI 修复，"
+            "只因隐藏 monkeypatch seam 与源码字面量扫描失败。因此 E1 当前主要是 verifier/测试形态敏感，"
+            "外加一个真实数据库会话缺口，不支持 T5/T6 普遍不可解，也不像某一个模型的偶然退化。"
         ),
     },
     "E2": {
@@ -870,6 +898,49 @@ def failure_map(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return result
 
 
+def trajectory_final_edits(path: Path) -> list[dict[str, str]]:
+    """Extract edit-tool replacements as compact final-state evidence.
+
+    Some AP exports preserve the trajectory and verifier reports but not the
+    final task tree.  The edit calls are still direct evidence of what the
+    agent wrote, and are more useful in the report than treating the artifact
+    as if no implementation evidence existed.
+    """
+
+    try:
+        value = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    edits: list[dict[str, str]] = []
+
+    def visit(node: Any) -> None:
+        if isinstance(node, dict):
+            if node.get("function_name") == "edit" and isinstance(
+                node.get("arguments"), dict
+            ):
+                arguments = node["arguments"]
+                file_path = arguments.get("filePath")
+                old = arguments.get("oldString")
+                new = arguments.get("newString")
+                if all(isinstance(item, str) for item in (file_path, old, new)):
+                    edits.append(
+                        {
+                            "file_path": file_path,
+                            "old": old,
+                            "new": new,
+                        }
+                    )
+            for child in node.values():
+                visit(child)
+        elif isinstance(node, list):
+            for child in node:
+                visit(child)
+
+    visit(value)
+    return edits
+
+
 def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Path) -> list[dict[str, Any]]:
     audit_by_id = {row["task_id"]: row for row in audit.get("tasks", [])}
     result = []
@@ -892,6 +963,8 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                             "path": str(path.resolve()),
                             "content": path.read_text(encoding="utf-8", errors="replace"),
                         })
+            trajectory_rel = row.get("local_trajectory_path")
+            trajectory_path = raw_root / trajectory_rel if trajectory_rel else None
             observations.append({
                 "model": row["model"],
                 "condition": row.get("condition"),
@@ -902,6 +975,16 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                 "failed_outcome_tests": row.get("failed_outcome_tests") or [],
                 "failed_process_tests": row.get("failed_process_tests") or [],
                 "files": files,
+                "trajectory_path": (
+                    str(trajectory_path.resolve())
+                    if trajectory_path and trajectory_path.is_file()
+                    else None
+                ),
+                "final_edits": (
+                    trajectory_final_edits(trajectory_path)
+                    if trajectory_path and trajectory_path.is_file()
+                    else []
+                ),
             })
         if not observations:
             continue
@@ -2510,7 +2593,9 @@ def conclusions(
             "level": "warn",
             "title": f"已逐代码核实 {len(strong_task_defects)} 个强 benchmark task 缺陷",
             "body": (
-                f"当前明确的是 {ids}。E4-LS1-T5 的题面输出路径与 verifier 的父目录合同冲突，"
+                f"当前明确的是 {ids}。E1-LS4-T5 的隐藏故障注入依赖未声明的 Python import binding，"
+                "其余同类替身测试又因全局 modulo-3 调用计数碰巧通过，并叠加固定文件字面量检查；"
+                "E4-LS1-T5 的题面输出路径与 verifier 的父目录合同冲突，"
                 "语义正确输出被全部判为 outcome 失败；E6-LS4-T6 的四人工作时段没有共同正长度交集，"
                 "verifier 却要求题面未声明的固定时间和数组顺序。90/90 reference pass 只能证明官方脚本能满足"
                 "官方 verifier，不能排除 reference 利用隐藏合同或任意 tie-break。最终任务质量结论必须把这类题"
@@ -3443,7 +3528,7 @@ function renderTasks(){{let q=taskSearch.value.toLowerCase();let rows=D.comparis
 function showTask(model,id){{let x=D.comparisons.find(x=>x.model===model&&x.task_id===id);let v=D.measurement_validity.records.find(v=>v.model===model&&v.task_id===id);let blocks=Object.entries(x.conditions).map(([name,c])=>`<h3>${{zh[name]}}</h3>${{c?`<p>${{status(c)}} score=${{c.score??'—'}} · job=${{esc(c.job_id)}}</p><p class="small">实际读取 skills: ${{esc(c.skills_actually_used.join(', ')||'none')}}<br>Oracle 内容证明: ${{esc(Object.entries(c.oracle_content_verification||{{}}).map(([k,v])=>k+': '+v).join(', ')||'—')}}<br>record: ${{esc(c.record_path)}}<br>trajectory: ${{esc(c.trajectory_path)}}</p><details><summary>失败测试 (${{c.failed_tests.length}})</summary><pre>${{esc(JSON.stringify(c.failed_tests,null,2))}}</pre></details>`:'<p class="small">尚无结果</p>'}}`).join('');let validityBlock=v?`<div class="case"><h3>历史 Skill 测量有效性：${{esc(validityZh[v.category]||v.category)}}</h3><p>${{v.eligible_for_causal_skill_claim?'该题可进入历史 skill 的四条件因果检验。':'该题当前不能把成功归因于 T1–T3 形成的历史 skill。'}}</p><p class="small">受控概念：${{esc(v.controlled_concepts.join(', ')||'—')}}<br>T1–T3 历史命中：${{v.history_visible_count}} · 当前题面明示：${{v.instruction_explicit_count}} · generated 覆盖：${{v.generated_coverage}} · oracle 覆盖：${{v.oracle_coverage}}</p></div>`:'';drawerBody.innerHTML=`<h2>${{x.task_id}}</h2><p>${{esc(x.task_slug)}} · T${{x.tier}} · ${{x.environment_id}}</p><div class="conclusion ${{x.causal.complete?'good':'pending'}}"><h3>${{esc(x.causal.label)}} · ${{esc(x.causal.pattern||'')}}</h3>${{esc(x.causal.explanation)}}</div>${{validityBlock}}<p><b>需要的 skills</b><br>${{esc(x.required_skills.join(', ')||x.primary_skill)}}</p>${{blocks}}`;drawer.classList.add('open')}}
 let a=D.verifier_audit.summary;audit.innerHTML=`<div class="card"><span class="label">过程 / 功能 checks</span><b>${{a.process_checks_total}} / ${{a.outcome_checks_total}}</b></div><p><b>${{a.tasks_with_literal_or_regex_process_checks}}/90</b> 含源码字面量或正则检查；<b>${{a.tasks_with_effective_process_weight_50_percent}}/90</b> 的过程权重为 50%。</p><p>形态敏感度：${{Object.entries(a.process_shape_sensitivity).map(([k,v])=>`${{k}}=${{v}}`).join(' · ')}}</p><h3>Process-only 分层</h3>${{D.verifier_shape_outcomes.filter(x=>x.n).map(x=>`<div class="small">${{zh[x.condition]}} · ${{x.shape_risk}} · process-only ${{x.process_only_failures}}/${{x.n}} · outcome ${{x.outcome_passes}}/${{x.n}} · process ${{x.process_passes}}/${{x.n}}</div>`).join('')}}`;
 skills.innerHTML=Object.entries(D.skills.by_model).map(([m,x])=>`<div class="case"><h3>${{m}}</h3><p>skill 对数 <b>${{x.n}}</b> · 改名 ${{x.renamed}} · 完全相同 ${{x.exact_equal}}</p><div class="small">中位 word Jaccard ${{x.median_word_jaccard?.toFixed(3)??'—'}} · 长度比 ${{x.median_length_ratio?.toFixed(2)??'—'}}</div></div>`).join('')+'<p class="small">词面相似度低只说明表达和覆盖范围不同，不能单独证明 skill 质量差；最终要结合 matched oracle rescue。</p>';
-cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}}<br><span class="small">Outcome failures: ${{o.failed_outcome_tests.map(t=>t.name).join(', ')||'无'}}<br>Process failures: ${{o.failed_process_tests.map(t=>t.name).join(', ')||'无'}}</span></p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}`).join('')}}<details><summary>任务正文</summary><div class="small">${{esc(x.instruction_path)}}</div><pre>${{esc(x.instruction)}}</pre></details><details><summary>Outcome verifier 源码</summary><div class="small">${{esc(x.outcome_verifier_path)}}</div><pre>${{esc(x.outcome_verifier)}}</pre></details><details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details><details><summary>官方 reference solution</summary><div class="small">${{esc(x.reference_solution_path)}}</div><pre>${{esc(x.reference_solution)}}</pre></details></article>`).join('');
+cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}}<br><span class="small">Outcome failures: ${{o.failed_outcome_tests.map(t=>t.name).join(', ')||'无'}}<br>Process failures: ${{o.failed_process_tests.map(t=>t.name).join(', ')||'无'}}</span></p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}${{o.final_edits.length?`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / trajectory 中的最终 edits (${{o.final_edits.length}})</summary><div class="small">${{esc(o.trajectory_path)}}</div><pre>${{esc(o.final_edits.map(e=>`### ${{e.file_path}}\n${{e.new}}`).join(String.fromCharCode(10,10)))}}</pre></details>`:''}}`).join('')}}<details><summary>任务正文</summary><div class="small">${{esc(x.instruction_path)}}</div><pre>${{esc(x.instruction)}}</pre></details><details><summary>Outcome verifier 源码</summary><div class="small">${{esc(x.outcome_verifier_path)}}</div><pre>${{esc(x.outcome_verifier)}}</pre></details><details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details><details><summary>官方 reference solution</summary><div class="small">${{esc(x.reference_solution_path)}}</div><pre>${{esc(x.reference_solution)}}</pre></details></article>`).join('');
 </script></body></html>'''
 
 

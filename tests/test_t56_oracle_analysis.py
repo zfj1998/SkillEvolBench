@@ -802,6 +802,47 @@ def test_oracle_case_studies_use_only_the_declared_condition(tmp_path: Path) -> 
     assert case["reference_solution"] == "#!/bin/sh\n"
 
 
+def test_case_study_recovers_final_edits_from_trajectory(tmp_path: Path) -> None:
+    trajectory = tmp_path / "trajectory.json"
+    trajectory.write_text(
+        json.dumps(
+            {
+                "events": [
+                    {
+                        "tool_calls": [
+                            {
+                                "function_name": "edit",
+                                "arguments": {
+                                    "filePath": "/root/task/backend/services.py",
+                                    "oldString": "old binding",
+                                    "newString": "dynamic binding",
+                                },
+                            },
+                            {
+                                "function_name": "read",
+                                "arguments": {
+                                    "filePath": "/root/task/backend/services.py"
+                                },
+                            },
+                        ]
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    edits = REPORT.trajectory_final_edits(trajectory)
+
+    assert edits == [
+        {
+            "file_path": "/root/task/backend/services.py",
+            "old": "old binding",
+            "new": "dynamic binding",
+        }
+    ]
+
+
 def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path) -> None:
     tasks_root = tmp_path / "benchmark/tasks"
     skill_root = tmp_path / "benchmark/skills/retry"
