@@ -25,7 +25,7 @@ EXPECTED_TASKS_PER_ENV = 15
 
 CONDITION_ZH = {
     "self_generated": "模型自生成 skill",
-    "exact_oracle": "精确 Oracle skill",
+    "exact_oracle": "精确 Curated 子集（Oracle）",
     "no_skill": "无 skill",
     "curated_all": "Env 全量 curated skills",
 }
@@ -230,6 +230,43 @@ def load_yaml_optional(path: Path) -> dict[str, Any]:
         return {}
     value = yaml.safe_load(path.read_text(encoding="utf-8"))
     return value if isinstance(value, dict) else {}
+
+
+def protocol_design_audit(audit: dict[str, Any]) -> dict[str, Any]:
+    tasks_root = Path(str(audit.get("tasks_root") or "benchmark/tasks"))
+    skills_root = tasks_root.parent / "skills"
+    role_counts: Counter[str] = Counter()
+    for path in tasks_root.glob("*/task-spec.yaml"):
+        spec = load_yaml_optional(path)
+        if not spec:
+            continue
+        role_counts[
+            f"T{spec.get('task_index')}:{spec.get('role')}:{spec.get('phase')}"
+        ] += 1
+
+    skill_metas = [
+        meta
+        for path in skills_root.glob("*/meta.yaml")
+        if (meta := load_yaml_optional(path))
+    ]
+    gap_summaries = [
+        str(meta.get(key) or "")
+        for meta in skill_metas
+        for key in ("gap_1_summary", "gap_2_summary")
+        if meta.get(key)
+    ]
+    return {
+        "family_count": len(skill_metas),
+        "gap_summary_count": len(gap_summaries),
+        "gap_summaries_explicitly_limiting_curated": sum(
+            "curated skill" in summary.lower() for summary in gap_summaries
+        ),
+        "role_counts": dict(sorted(role_counts.items())),
+        "exact_oracle_semantics": (
+            "gold task-to-skill selection over deliberately gap-exposed curated "
+            "skills; not an oracle solution or a guaranteed sufficient policy"
+        ),
+    }
 
 
 def rate(passed: int, total: int) -> float | None:
@@ -1442,6 +1479,7 @@ def conclusions(
     coverage: list[dict[str, Any]],
     comparisons: list[dict[str, Any]],
     audit: dict[str, Any],
+    protocol_design: dict[str, Any],
     learning: dict[str, Any],
     derivability: dict[str, Any],
     oracle_scope: dict[str, Any],
@@ -1464,6 +1502,19 @@ def conclusions(
             "title": "Oracle 的功能性处理效应",
             "body": f"匹配任务中，oracle 在 {len(rescued)} 题上把 self-generated 的 outcome 失败救回；仍有 {len(failed)} 个 oracle outcome 失败。应逐题区分 skill 不足、模型执行失败和题目/环境缺陷。",
         })
+    result.append({
+        "level": "warn",
+        "title": "Exact Oracle 实际是刻意留缺口的 Curated 子集",
+        "body": (
+            f"仓库共有 {protocol_design['family_count']} 个 curated skill family 和 "
+            f"{protocol_design['gap_summary_count']} 条 gap summary，其中 "
+            f"{protocol_design['gap_summaries_explicitly_limiting_curated']}/"
+            f"{protocol_design['gap_summary_count']} 明确描述 curated skill 未覆盖的能力。"
+            "T2 的 30 题是 enriched acquisition，T3 的 30 题是 variant acquisition；"
+            "模型的目标是从 T1–T3 补全 scaffold，而不是复刻 curated 文本。"
+            "因此 exact-oracle 失败不能推出题目坏，只能说明这个 gold-selected scaffold 对该模型/任务不充分。"
+        ),
+    })
     if not reference_integrity["complete"]:
         result.append({
             "level": "pending",
@@ -1621,6 +1672,7 @@ def build_payload(
     runs = selected_runs(evidence)
     coverage = condition_coverage(rows, runs)
     comparisons = task_comparisons(rows)
+    protocol_design = protocol_design_audit(audit)
     learning = learning_analysis(evidence)
     oracle_scope = oracle_scope_analysis(audit)
     derivability = derivability_analysis(learning, oracle_scope)
@@ -1640,6 +1692,7 @@ def build_payload(
         "aggregates": aggregates(rows),
         "tasks": rows,
         "comparisons": comparisons,
+        "protocol_design": protocol_design,
         "causal_diagnosis": causal_diagnosis_summary(comparisons),
         "effects": matched_effects(comparisons),
         "model_comparisons": model_comparisons(rows),
@@ -1659,6 +1712,7 @@ def build_payload(
             coverage,
             comparisons,
             audit,
+            protocol_design,
             learning,
             derivability,
             oracle_scope,
@@ -1681,6 +1735,20 @@ def render_markdown(data: dict[str, Any]) -> str:
         "## 研究问题与判定口径",
         "",
         "本报告比较同一模型、同一任务在 `self-generated`、`exact oracle`、`no skill`、`curated-all-library` 四个条件下的结果。后者与 exact oracle 使用相同 curated 内容，但不暴露任务→skill 的 gold 子集。官方 strict pass 要求 outcome 与 process 同时通过；为识别 verifier 假阴性，另行报告纯功能 outcome pass。Oracle 仍失败只能说明 oracle 对该模型不足，不能单独证明题目有问题。",
+        "",
+        "## ‘Oracle’ 的协议边界",
+        "",
+        "这里的 `exact_oracle` 只是按 gold task→skill 映射注入仓库 curated skill 子集，"
+        "不是 solution、完整策略或能力上界。仓库刻意让 curated skill 暴露 gap，"
+        "再让模型从 acquisition 经验补全它。",
+        "",
+        "| 源码事实 | 数量 | 含义 |",
+        "|---|---:|---|",
+        f"| Curated skill families | {data['protocol_design']['family_count']} | 每个 Env 五个 family |",
+        f"| Author gap summaries | {data['protocol_design']['gap_summary_count']} | 每个 family 两条刻意缺口 |",
+        f"| 明确写出 curated skill 局限的 gap | {data['protocol_design']['gap_summaries_explicitly_limiting_curated']}/{data['protocol_design']['gap_summary_count']} | Exact curated 不是充分 oracle |",
+        f"| T2 enriched acquisition | {data['protocol_design']['role_counts'].get('T2:enriched:learning', 0)} | 暴露基础 procedure 缺失的子能力 |",
+        f"| T3 variant acquisition | {data['protocol_design']['role_counts'].get('T3:variant:learning', 0)} | 换表面形式继续学习同一 procedure |",
         "",
         "## 当前结论",
         "",
@@ -2051,6 +2119,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="hero"><span class="badge">{status}</span><h1>T5/T6 为什么做不出来？</h1><p>Qwen 3.7 Max × SIG Fable · Self-generated / Exact Oracle / No skill / Curated-all-library 匹配对照。严格区分功能失败、过程 verifier 失败与 AP 执行失败。</p><div class="small" style="color:#dce5ff;margin-top:12px">生成于 {html.escape(data['generated_at_utc'])}</div></section>
 <section class="grid cards" id="cards"></section>
 <section class="panel"><h2>先看结论</h2><div id="conclusions"></div></section>
+<section class="panel"><h2>先校正 “Oracle” 的含义</h2><p><code>exact_oracle</code> 是按 gold task→skill 映射注入仓库 curated 子集，不是任务 solution 或完整能力上界。curated skill 本身被设计为 gap-exposed scaffold，模型应从 T1–T3 补全它。</p><div class="grid cards" id="protocolDesign"></div></section>
 <section class="panel"><h2>实验覆盖</h2><div class="heat" id="coverage"></div></section>
 <section class="panel"><h2>题目资产完整性：官方标准解能否通过？</h2><p>这不是模型 baseline：Harbor oracle 直接执行仓库的 <code>solution/solve.sh</code>，再运行原 verifier，用来识别题目、标准解、容器或 verifier 的内部不一致。</p><div id="referenceIntegrity"></div></section>
 <section class="panel"><h2>Pass rate 热力图</h2><div class="filters"><select id="hmModel"></select><select id="hmCond"></select><select id="hmMetric"><option value="strict">Strict</option><option value="outcome">Outcome</option><option value="process">Process</option></select><select id="hmTier"><option value="4">T4</option><option value="5" selected>T5</option><option value="6">T6</option></select></div><div class="heat" id="heatmap"></div><p class="small">每格最多 5 题；显示通过数/观测数，不能把小样本百分比当作稳定总体性能。</p></section>
@@ -2068,7 +2137,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>解释边界</h2><ol><li>Oracle 失败不等于题目必坏；它可能仍超出模型执行能力。</li><li>Exact oracle 暴露标注者选择的 skill 子集；curated-all-library 使用相同内容但不给 gold 子集，用于单独测 annotation prior。</li><li>最终结论要求两个模型、六环境、四条件全部 15/15，并审计每个 oracle 仍失败任务的轨迹。</li></ol></section>
 </div><aside class="drawer" id="drawer"><button class="close" onclick="drawer.classList.remove('open')">×</button><div id="drawerBody"></div></aside>
 <script>const D={blob};
-const zh={{self_generated:'模型自生成',exact_oracle:'精确 Oracle',no_skill:'无 skill',curated_all:'Env 全量 Curated'}};
+const zh={{self_generated:'模型自生成',exact_oracle:'精确 Curated 子集（Oracle）',no_skill:'无 skill',curated_all:'Env 全量 Curated'}};
 const derivabilityZh={{captured_from_visible_evidence:'T1–T3 可见且 generated 捕获',oracle_captures_visible_generated_misses:'T1–T3 可见，Oracle 捕获但 Generated 漏掉',visible_missing_from_both_skills:'T1–T3 可见，两种 skill 都漏掉',oracle_adds_unseen_concept:'仅 Oracle 补入的 T1–T3 未见概念',both_skills_add_unseen_concept:'Generated 与 Oracle 都补入未见概念',model_adds_beyond_visible_evidence:'仅 Generated 补入未见概念',missing_from_both_learning_and_oracle:'T1–T3、Generated 与 Oracle 都缺'}};
 const verdict={{awaiting_matched_controls:'等待匹配对照',oracle_outcome_failure:'Oracle 功能仍失败',oracle_rescues_outcome:'Oracle 救回功能',oracle_rescues_strict_only:'仅救回 strict',no_oracle_rescue_needed_or_observed:'未观察到救回'}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c]));
@@ -2077,6 +2146,7 @@ function options(el,vals,labels,all=false){{el.innerHTML=(all?'<option value="al
 const complete=D.coverage.filter(x=>x.complete).length, total=D.coverage.length, selected=D.tasks.length, procOnly=D.tasks.filter(x=>x.classification==='process_only_failure').length;
 cards.innerHTML=[['完整单元',`${{complete}}/${{total}}`],['已纳入任务记录',selected],['功能过但 strict 失败',procOnly],['源码形态敏感题',`${{D.verifier_audit.summary.tasks_with_literal_or_regex_process_checks}}/90`]].map(x=>`<div class="card"><span class="label">${{x[0]}}</span><b>${{x[1]}}</b></div>`).join('');
 conclusions.innerHTML=D.conclusions.map(x=>`<div class="conclusion ${{x.level}}"><h3>${{esc(x.title)}}</h3>${{esc(x.body)}}</div>`).join('');
+let pd=D.protocol_design;protocolDesign.innerHTML=[['Curated families',pd.family_count],['Author gap summaries',pd.gap_summary_count],['明确限制 curated',pd.gap_summaries_explicitly_limiting_curated+'/'+pd.gap_summary_count],['T2 enriched / T3 variant',(pd.role_counts['T2:enriched:learning']||0)+' / '+(pd.role_counts['T3:variant:learning']||0)]].map(x=>`<div class="card"><span class="label">${{x[0]}}</span><b>${{x[1]}}</b></div>`).join('');
 coverage.innerHTML='<div class="head">模型 / 条件</div>'+['E1','E2','E3','E4','E5','E6'].map(x=>`<div class="head">${{x}}</div>`).join('')+['qwen3.7-max','sig-fable'].flatMap(m=>['self_generated','exact_oracle','curated_all','no_skill'].map(c=>{{let cells=D.coverage.filter(x=>x.model===m&&x.condition===c);return `<div>${{m}}<br><span class="small">${{zh[c]}}</span></div>`+cells.map(x=>`<div class="v ${{x.complete?'high':x.observed?'mid':'none'}}">${{x.observed}}/15</div>`).join('')}})).join('');
 let ri=D.reference_integrity;let riRows=['E1','E2','E3','E4','E5','E6'].map(e=>{{let cells=[4,5,6].map(t=>ri.rows.find(x=>x.environment_id===e&&x.tier===t));return `<tr><td><b>${{e}}</b></td>${{cells.map(x=>`<td>${{x.passed}}/${{x.total}}</td>`).join('')}}</tr>`}}).join('');let riFailures=ri.failures.length?`<details><summary>查看 ${{ri.failures.length}} 个失败标准解</summary><pre>${{esc(JSON.stringify(ri.failures,null,2))}}</pre></details>`:'<p class="small">当前没有已观测的标准解失败。</p>';referenceIntegrity.innerHTML=`<div class="grid cards"><div class="card"><span class="label">覆盖</span><b>${{ri.total}}/90</b></div><div class="card"><span class="label">严格通过</span><b>${{ri.passed}}/${{ri.total||0}}</b></div><div class="card"><span class="label">状态</span><b style="font-size:20px">${{ri.all_reference_solutions_pass?'全部通过':ri.complete?'存在失败':'运行中'}}</b></div></div><div class="tablebox"><table><thead><tr><th>Env</th><th>T4</th><th>T5</th><th>T6</th></tr></thead><tbody>${{riRows}}</tbody></table></div>${{riFailures}}`;
 options(hmModel,['qwen3.7-max','sig-fable']);options(hmCond,['self_generated','exact_oracle','curated_all','no_skill'],zh);options(taskModel,['qwen3.7-max','sig-fable'],null,true);options(taskEnv,['E1','E2','E3','E4','E5','E6'],null,true);

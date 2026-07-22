@@ -414,6 +414,18 @@ def test_reference_integrity_requires_exact_90_task_grid() -> None:
     assert result["total"] == 89
 
 
+def test_protocol_design_audit_proves_curated_skills_are_gap_exposed() -> None:
+    result = REPORT.protocol_design_audit(
+        {"tasks_root": str(ROOT / "benchmark/tasks")}
+    )
+
+    assert result["family_count"] == 30
+    assert result["gap_summary_count"] == 60
+    assert result["gap_summaries_explicitly_limiting_curated"] == 60
+    assert result["role_counts"]["T2:enriched:learning"] == 30
+    assert result["role_counts"]["T3:variant:learning"] == 30
+
+
 def test_failure_attribution_separates_functional_and_verified_false_negative() -> None:
     common = {
         "selected_run": True,
