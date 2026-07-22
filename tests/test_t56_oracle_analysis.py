@@ -1535,6 +1535,82 @@ def test_e4_ls4_reproduction_distinguishes_literals_from_source_semantics(
     assert row["required_sections_present"] is True
 
 
+def test_e6_ls2_reproduction_accepts_explicit_semantic_equivalents(
+    tmp_path: Path,
+) -> None:
+    task_root = tmp_path / "task"
+    tests_root = task_root / "tests"
+    tests_root.mkdir(parents=True)
+    ground_truth = {
+        "expected_reply_ids": ["combo_02", "combo_03"],
+        "expected_ack_ids": ["combo_05"],
+        "expected_ignore_ids": ["combo_08"],
+        "required_terms": {
+            "combo_03": [
+                ["MVP"],
+                ["six-week", "six week"],
+                ["not promise", "would not promise"],
+            ]
+        },
+        "expected_cc": {"combo_03": ["stakeholder@example.com"]},
+        "forbidden_phrases": ["sure, we can"],
+    }
+    (tests_root / "ground_truth.json").write_text(
+        json.dumps(ground_truth), encoding="utf-8"
+    )
+    artifact = tmp_path / "artifact"
+    (artifact / "output").mkdir(parents=True)
+    output = {
+        "replies": [
+            {
+                "email_id": "combo_02",
+                "cc": [],
+                "body": "Plan A has the shorter timeline.",
+                "rationale": "Answer grounded in thread_history and thread_notes.",
+            },
+            {
+                "email_id": "combo_03",
+                "cc": ["stakeholder@example.com"],
+                "body": "We cannot commit to the full build; use MVP over six-week delivery.",
+                "rationale": "Used engineering context.",
+            },
+        ],
+        "acknowledgements": [{"email_id": "combo_05"}],
+        "ignored": [{"email_id": "combo_08"}],
+    }
+    (artifact / "output" / "replies.json").write_text(
+        json.dumps(output), encoding="utf-8"
+    )
+    (artifact / "reply_policy.py").write_text(
+        "def choose_action(message): return 'reply'\n", encoding="utf-8"
+    )
+    (artifact / "context_loader.py").write_text(
+        "def load_thread_history(): return {}\n", encoding="utf-8"
+    )
+
+    result = REPORT.reproduce_e6_ls2_semantic_phrasing(
+        task_root,
+        [{
+            "model": "qwen3.7-max",
+            "condition": "self_generated",
+            "artifact_task_path": str(artifact),
+        }],
+    )
+
+    row = result["models"][0]
+    assert row["reply_ids_exact"] is True
+    assert row["ack_ids_exact"] is True
+    assert row["ignore_ids_exact"] is True
+    assert row["expected_cc_preserved"] is True
+    assert row["combo_03_official_refusal_phrase_match"] is False
+    assert row["combo_03_semantic_refusal_match"] is True
+    assert row["combo_03_official_required_groups"] == 2
+    assert row["combo_03_semantic_required_groups"] == 3
+    assert row["combo_02_official_thread_context_match"] is False
+    assert row["combo_02_semantic_thread_evidence_match"] is True
+    assert row["literal_triage_marker_in_policy_source"] is False
+
+
 def test_pearson_correlation_handles_signal_and_constant() -> None:
     assert REPORT.pearson_correlation([0, 1, 2], [0, 1, 2]) == 1.0
     assert REPORT.pearson_correlation([1, 1, 1], [0, 1, 2]) is None

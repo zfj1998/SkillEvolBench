@@ -483,6 +483,32 @@ CASE_DEFINITIONS = {
             "scope_normalizer.py",
         ],
     },
+    "E6-LS2-T6": {
+        "title": "两模型的路由、CC 与回复语义都正确，却因两个未公开固定短语被判 outcome 失败",
+        "kind": "隐藏措辞白名单与源码 marker 造成的语义假阴性（强任务缺陷）",
+        "interpretation": (
+            "Qwen 与 Fable 都精确选出 4 个 reply、3 个 acknowledge、8 个 ignore，并保持要求的 CC；"
+            "combo_03 都明确写 `cannot commit` full engine、给出 MVP 和 six-week 方案，符合题面"
+            "`avoid making unsupported commitments`，但 hidden ground truth 只接受 `not promise` 或"
+            "`would not promise`。combo_02 的 rationale 分别写明 `context/thread_notes.md in "
+            "thread_history` 和 `thread history (thread_notes / thread_history)`，却因没有连续字面短语"
+            "`thread context` 被判失败。独立复算把语义等价表面纳入后，两模型 required groups 从"
+            "官方 2/3 变 3/3，context rationale 也通过；其余 outcome 合同本来就全部通过。Process"
+            "另因 policy 源码没出现 `triage` 固定 token 失败，但正确的 4/3/8 路由已经直接证明执行了"
+            "triage。这是功能性假阴性，不应作为 E6 组合能力或 skill evolve 失败。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "reply_policy.py",
+            "context_loader.py",
+            "output/replies.json",
+        ],
+        "task_source_files": [
+            "tests/ground_truth.json",
+            "environment/context/project_state.json",
+            "environment/context/thread_notes.md",
+        ],
+    },
     "E6-LS3-T6": {
         "title": "两模型都抽出 8/8 actions，却被未公开的 action ID 名称判成大量缺失",
         "kind": "隐藏 semantic-ID 合同与部分真实 status/follow-up gap（强任务缺陷）",
@@ -705,8 +731,10 @@ ENVIRONMENT_PROFILES = {
         "capability": "优先级判断、上下文回复、行动项抽取、时区排期以及 thread 级综合。",
         "provisional_read": (
             "两模型 T6 outcome 都是 0/5，且失败横跨优先级、必含内容、隐式行动、DST 排期和状态汇总。"
-            "generated skills 往往已经写到这些概念，但执行产物仍不符合契约。逐代码后，至少两题的 raw"
-            "0/5 被 benchmark 明显放大：E6-LS3-T6 中两模型都抽出 8/8 actions，核心字段分别命中"
+            "generated skills 往往已经写到这些概念，但执行产物仍不符合契约。逐代码后，至少三题的 raw"
+            "0/5 被 benchmark 明显放大：E6-LS2-T6 中两模型的 4 reply/3 acknowledge/8 ignore、CC 与"
+            "回复语义都正确，只因 `cannot commit`/thread history 没匹配 `not promise`/`thread context`"
+            "固定短语而失败；E6-LS3-T6 中两模型都抽出 8/8 actions，核心字段分别命中"
             "23/24 与 22/24，却因题面未公开的 action ID 名称被报大量 missing；E6-LS4-T6 则是"
             "欠规定题，四人工作时段无共同正长度交集，verifier 仍要求未声明的固定日期、时间和数组顺序。"
             "其余优先级、回复内容与 thread parsing 仍有真实执行 gap。因此 E6 的 0/5 既不是纯模型失败，"
@@ -1629,6 +1657,139 @@ def reproduce_e6_ls3_action_identity(
     }
 
 
+def reproduce_e6_ls2_semantic_phrasing(
+    task_root: Path, observations: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Re-evaluate the two hidden phrase checks with semantic equivalents."""
+
+    ground_truth_path = task_root / "tests" / "ground_truth.json"
+    ground_truth = json.loads(ground_truth_path.read_text(encoding="utf-8"))
+    semantic_refusal_terms = (
+        "cannot commit",
+        "can't commit",
+        "unable to commit",
+        "decline the commitment",
+        "declined the unsupported",
+    )
+    semantic_thread_terms = (
+        "thread context",
+        "thread history",
+        "thread_history",
+        "thread notes",
+        "thread_notes",
+        "earlier round of the thread",
+    )
+    official_refusal_terms = tuple(
+        str(term).lower()
+        for term in ground_truth["required_terms"]["combo_03"][2]
+    )
+
+    rows = []
+    for observation in observations:
+        artifact_raw = observation.get("artifact_task_path")
+        if not artifact_raw:
+            continue
+        task_artifact = Path(str(artifact_raw))
+        output_path = task_artifact / "output" / "replies.json"
+        if not output_path.is_file():
+            continue
+        output = json.loads(output_path.read_text(encoding="utf-8"))
+        replies = {
+            str(reply.get("email_id")): reply
+            for reply in output.get("replies", [])
+            if isinstance(reply, dict)
+        }
+        acknowledgements = {
+            str(item.get("email_id"))
+            for item in output.get("acknowledgements", [])
+            if isinstance(item, dict)
+        }
+        ignored = {
+            str(item.get("email_id"))
+            for item in output.get("ignored", [])
+            if isinstance(item, dict)
+        }
+        combo_02_rationale = str(
+            replies.get("combo_02", {}).get("rationale") or ""
+        ).lower()
+        combo_03_body = str(
+            replies.get("combo_03", {}).get("body") or ""
+        ).lower()
+        official_refusal_match = any(
+            term in combo_03_body for term in official_refusal_terms
+        )
+        semantic_refusal_match = any(
+            term in combo_03_body for term in semantic_refusal_terms
+        )
+        official_context_match = "thread context" in combo_02_rationale
+        semantic_context_match = any(
+            term in combo_02_rationale for term in semantic_thread_terms
+        )
+        expected_cc_ok = all(
+            set(addresses).issubset(
+                set(replies.get(message_id, {}).get("cc", []))
+            )
+            for message_id, addresses in ground_truth["expected_cc"].items()
+        )
+        forbidden_absent = all(
+            str(phrase).lower()
+            not in json.dumps(output, ensure_ascii=False).lower()
+            for phrase in ground_truth["forbidden_phrases"]
+        )
+        policy_text = "\n".join(
+            path.read_text(encoding="utf-8", errors="replace")
+            for path in (
+                task_artifact / "reply_policy.py",
+                task_artifact / "context_loader.py",
+            )
+            if path.is_file()
+        ).lower()
+        rows.append({
+            "model": observation.get("model"),
+            "condition": observation.get("condition"),
+            "reply_ids_exact": set(replies) == set(
+                ground_truth["expected_reply_ids"]
+            ),
+            "ack_ids_exact": acknowledgements == set(
+                ground_truth["expected_ack_ids"]
+            ),
+            "ignore_ids_exact": ignored == set(
+                ground_truth["expected_ignore_ids"]
+            ),
+            "expected_cc_preserved": expected_cc_ok,
+            "forbidden_phrases_absent": forbidden_absent,
+            "combo_03_official_refusal_phrase_match": official_refusal_match,
+            "combo_03_semantic_refusal_match": semantic_refusal_match,
+            "combo_03_official_required_groups": 2 + int(
+                official_refusal_match
+            ),
+            "combo_03_semantic_required_groups": 2 + int(
+                semantic_refusal_match
+            ),
+            "combo_02_official_thread_context_match": official_context_match,
+            "combo_02_semantic_thread_evidence_match": semantic_context_match,
+            "literal_triage_marker_in_policy_source": "triage" in policy_text,
+            "artifact_output_path": str(output_path.resolve()),
+        })
+
+    return {
+        "method": (
+            "Recompute routing, CC, forbidden-content and the two failed hidden "
+            "phrase checks; then accept only explicit semantic equivalents "
+            "already demanded by the public instruction."
+        ),
+        "instruction_requires_avoiding_unsupported_commitments": True,
+        "instruction_requires_context_used_rationale": True,
+        "instruction_requires_exact_not_promise_wording": False,
+        "instruction_requires_exact_thread_context_phrase": False,
+        "official_refusal_terms": list(official_refusal_terms),
+        "semantic_refusal_terms": list(semantic_refusal_terms),
+        "semantic_thread_terms": list(semantic_thread_terms),
+        "models": rows,
+        "ground_truth_path": str(ground_truth_path.resolve()),
+    }
+
+
 def reproduce_e4_ls3_missing_markers(
     task_root: Path, artifact_task_root: Path
 ) -> dict[str, Any]:
@@ -1949,6 +2110,10 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
             )
         if task_id == "E6-LS3-T6" and task_root:
             reproduction = reproduce_e6_ls3_action_identity(
+                task_root, observations
+            )
+        if task_id == "E6-LS2-T6" and task_root:
+            reproduction = reproduce_e6_ls2_semantic_phrasing(
                 task_root, observations
             )
         result.append({
@@ -3861,7 +4026,9 @@ def conclusions(
                 "`$150/month` 两个 token 和原始 policy_v2 的 en-dash、`$150 per month` 写法冲突；"
                 "E6-LS3-T6 中两模型都抽取了 8/8 个真实 action，核心"
                 "assignee/deadline/status 字段分别命中 23/24 与 22/24，却因未公开的 action-id 词表"
-                "被判大量 missing，该题同时仍有少量 status/follow-up 真缺口；E6-LS4-T6 的四人工作时段没有共同正长度交集，"
+                "被判大量 missing，该题同时仍有少量 status/follow-up 真缺口；E6-LS2-T6 的两模型"
+                "路由、CC 和拒绝过度承诺语义都正确，hidden verifier 却只接受 `not promise`/"
+                "`thread context` 两个固定短语；E6-LS4-T6 的四人工作时段没有共同正长度交集，"
                 "verifier 却要求题面未声明的固定时间和数组顺序。90/90 reference pass 只能证明官方脚本能满足"
                 "官方 verifier，不能排除 reference 利用隐藏合同或任意 tie-break。最终任务质量结论必须把这类题"
                 "从纯模型/skill failure 中单独报告。"
