@@ -211,10 +211,16 @@ def build_job_config(
         # from the AP main-process environment, and Trial.scoped_exec_env makes
         # the resolved values available to setup/run without logging per-call
         # exec env dictionaries.
-        agent_cfg_kwargs["env"] = {
-            "OPENAI_API_KEY": "${OPENAI_API_KEY}",
-            "OPENAI_BASE_URL": "${OPENAI_BASE_URL}",
-        }
+        if config.baseline.model_name.startswith("anthropic/"):
+            agent_cfg_kwargs["env"] = {
+                "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+                "ANTHROPIC_BASE_URL": "${ANTHROPIC_BASE_URL}",
+            }
+        else:
+            agent_cfg_kwargs["env"] = {
+                "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+                "OPENAI_BASE_URL": "${OPENAI_BASE_URL}",
+            }
 
     # ---- 3. Build JobConfig ----
     return JobConfig(

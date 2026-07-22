@@ -163,10 +163,22 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
     model_api_key = _runtime_model_api_key(_required_env("MODEL_API_KEY"))
     harbor_agent = os.environ.get("HARBOR_AGENT", "opencode").strip() or "opencode"
     provider = os.environ.get("MODEL_PROVIDER", "sglang").strip() or "sglang"
+    model_api_protocol = (
+        os.environ.get("MODEL_API_PROTOCOL", "openai").strip().lower() or "openai"
+    )
+    if model_api_protocol not in {"openai", "anthropic"}:
+        raise ValueError(
+            "MODEL_API_PROTOCOL must be 'openai' or 'anthropic'; "
+            f"got {model_api_protocol!r}"
+        )
     if harbor_agent not in {"codex", "opencode"}:
         raise ValueError(
             "The AP OpenAI-compatible runner supports HARBOR_AGENT='codex' "
             f"or 'opencode'; got {harbor_agent!r}"
+        )
+    if model_api_protocol == "anthropic" and harbor_agent != "opencode":
+        raise ValueError(
+            "MODEL_API_PROTOCOL='anthropic' currently requires HARBOR_AGENT='opencode'"
         )
 
     wire_api = os.environ.get("CODEX_WIRE_API", "responses").strip() or "responses"
@@ -174,6 +186,9 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
     os.environ["OPENAI_BASE_URL"] = model_base_url
     os.environ["MODEL_API_KEY"] = model_api_key
     os.environ["OPENAI_API_KEY"] = model_api_key
+    if model_api_protocol == "anthropic":
+        os.environ["ANTHROPIC_BASE_URL"] = model_base_url
+        os.environ["ANTHROPIC_API_KEY"] = model_api_key
     if harbor_agent == "codex":
         os.environ["CODEX_MODEL_PROVIDER"] = provider
         os.environ["CODEX_PROVIDER_ENV_KEY"] = "OPENAI_API_KEY"
@@ -183,7 +198,10 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
     # container rather than the Harbor task container. Same-session reflection
     # does not construct SkillAuthor; these variables remain useful for other
     # baselines and retrievers.
-    os.environ["SEVB_HOST_LITELLM_MODEL"] = model if "/" in model else f"openai/{model}"
+    litellm_prefix = "anthropic" if model_api_protocol == "anthropic" else "openai"
+    os.environ["SEVB_HOST_LITELLM_MODEL"] = (
+        model if "/" in model else f"{litellm_prefix}/{model}"
+    )
     os.environ["SEVB_HOST_LITELLM_API_BASE"] = model_base_url
     os.environ["SEVB_HOST_LITELLM_API_KEY"] = model_api_key
 
@@ -193,11 +211,15 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
     # model id. OpenCode must use a non-reserved provider id: naming a generic
     # ``@ai-sdk/openai-compatible`` provider ``openai`` makes OpenCode select
     # its Responses-specific path instead of Chat Completions.
-    served_model_id = model.removeprefix("openai/")
+    served_model_id = model.removeprefix("openai/").removeprefix("anthropic/")
     baseline_data["model_name"] = (
         f"openai/{served_model_id}"
         if harbor_agent == "codex"
-        else f"openai-compatible/{served_model_id}"
+        else (
+            f"anthropic/{served_model_id}"
+            if model_api_protocol == "anthropic"
+            else f"openai-compatible/{served_model_id}"
+        )
     )
     agent_kwargs = dict(baseline_data.get("agent_kwargs") or {})
     for stale_key in (
@@ -227,9 +249,28 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
         opencode_version = (
             os.environ.get("OPENCODE_VERSION", "1.18.3").strip() or "1.18.3"
         )
-        # Use OpenCode's generic Chat Completions provider.  The placeholders
-        # are resolved in the task container, so the Harbor config and AP
-        # artifacts never contain the credential itself.
+        # Keep the provider protocol explicit. The placeholders are resolved
+        # in the task container, so Harbor config and AP artifacts never
+        # contain the credential itself. Native Anthropic is required for
+        # signed Claude reasoning blocks to survive same-session continuation.
+        provider_id = (
+            "anthropic" if model_api_protocol == "anthropic" else "openai-compatible"
+        )
+        provider_npm = (
+            "@ai-sdk/anthropic"
+            if model_api_protocol == "anthropic"
+            else "@ai-sdk/openai-compatible"
+        )
+        base_url_env = (
+            "ANTHROPIC_BASE_URL"
+            if model_api_protocol == "anthropic"
+            else "OPENAI_BASE_URL"
+        )
+        api_key_env = (
+            "ANTHROPIC_API_KEY"
+            if model_api_protocol == "anthropic"
+            else "OPENAI_API_KEY"
+        )
         agent_kwargs.update(
             {
                 "version": opencode_version,
@@ -239,12 +280,12 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
                     "snapshot": False,
                     "permission": "allow",
                     "provider": {
-                        "openai-compatible": {
-                            "npm": "@ai-sdk/openai-compatible",
+                        provider_id: {
+                            "npm": provider_npm,
                             "name": provider,
                             "options": {
-                                "baseURL": "{env:OPENAI_BASE_URL}",
-                                "apiKey": "{env:OPENAI_API_KEY}",
+                                "baseURL": f"{{env:{base_url_env}}}",
+                                "apiKey": f"{{env:{api_key_env}}}",
                             },
                             "models": {
                                 served_model_id: {
@@ -526,6 +567,7 @@ def main() -> int:
                 "order_seed": config.order_seed,
                 "model": os.environ["MODEL"],
                 "model_base_url": os.environ["MODEL_BASE_URL"],
+                "model_api_protocol": os.environ.get("MODEL_API_PROTOCOL", "openai"),
                 "harbor_agent": config.baseline.harbor_agent_name,
                 "within_env_replay": config.baseline.within_env_replay,
                 "replay_eval": config.baseline.replay_eval,

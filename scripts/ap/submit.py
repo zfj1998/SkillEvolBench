@@ -1,8 +1,8 @@
 """Submit SkillEvolBench episodes through the Agent Platform CLI.
 
 The safe default is a one-task E1 infrastructure smoke.  Before invoking
-``ap``, the helper probes the configured OpenAI-compatible ``/v1/models``
-endpoint and verifies that the requested served model is present.
+``ap``, the helper probes either the configured OpenAI-compatible endpoint or
+the native Anthropic Messages endpoint and verifies the requested model.
 
 Credentials are accepted only through environment variables and are never
 written to disk or printed:
@@ -80,17 +80,144 @@ def _models_url(base_url: str) -> str:
     return f"{normalized}/v1/models"
 
 
+def _chat_completions_url(base_url: str) -> str:
+    normalized = base_url.rstrip("/")
+    if normalized.endswith("/v1"):
+        return f"{normalized}/chat/completions"
+    return f"{normalized}/v1/chat/completions"
+
+
+def _anthropic_messages_url(base_url: str) -> str:
+    normalized = base_url.rstrip("/")
+    if normalized.endswith("/v1"):
+        return f"{normalized}/messages"
+    return f"{normalized}/v1/messages"
+
+
+class ModelListUnavailableError(RuntimeError):
+    """The endpoint does not expose a usable OpenAI ``/models`` surface."""
+
+
 def probe_model(
     *,
     base_url: str,
     api_key: str,
     model: str,
     timeout: float = 10.0,
+    mode: str = "models",
+    protocol: str = "openai",
 ) -> list[str]:
+    requested = model.split("/", 1)[-1]
+    if protocol not in {"openai", "anthropic"}:
+        raise ValueError(f"unsupported model API protocol: {protocol!r}")
+    if mode not in {"models", "chat", "auto"}:
+        raise ValueError(f"unsupported probe mode: {mode!r}")
+
+    if protocol == "anthropic":
+        request = urllib.request.Request(
+            _anthropic_messages_url(base_url),
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "Content-Type": "application/json",
+            },
+            data=json.dumps(
+                {
+                    "model": requested,
+                    "messages": [{"role": "user", "content": "Reply with exactly: OK"}],
+                    "max_tokens": 16,
+                },
+                separators=(",", ":"),
+            ).encode("utf-8"),
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except (
+            urllib.error.URLError,
+            TimeoutError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ) as exc:
+            raise RuntimeError(
+                "Anthropic Messages probe failed for "
+                f"{_anthropic_messages_url(base_url)}: {type(exc).__name__}"
+            ) from exc
+        content = payload.get("content") if isinstance(payload, dict) else None
+        returned_model = payload.get("model") if isinstance(payload, dict) else None
+        has_text = isinstance(content, list) and any(
+            isinstance(block, dict)
+            and block.get("type") == "text"
+            and isinstance(block.get("text"), str)
+            for block in content
+        )
+        if not has_text:
+            raise RuntimeError("Anthropic Messages probe returned no text content")
+        if returned_model and returned_model not in {requested, model}:
+            raise RuntimeError(
+                f"Anthropic Messages probe returned unexpected model {returned_model!r}"
+            )
+        return [str(returned_model or requested)]
+
+    if mode in {"models", "auto"}:
+        request = urllib.request.Request(
+            _models_url(base_url),
+            headers={"Authorization": f"Bearer {api_key}"},
+            method="GET",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except (
+            urllib.error.URLError,
+            TimeoutError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ) as exc:
+            if mode == "models":
+                raise RuntimeError(
+                    f"model endpoint probe failed for {_models_url(base_url)}: "
+                    f"{type(exc).__name__}"
+                ) from exc
+            payload = None
+
+        if payload is not None:
+            entries = payload.get("data") if isinstance(payload, dict) else None
+            if not isinstance(entries, list):
+                if mode == "models":
+                    raise RuntimeError(
+                        f"model endpoint probe returned an invalid schema for "
+                        f"{_models_url(base_url)}"
+                    )
+            else:
+                model_ids = sorted(
+                    str(entry["id"])
+                    for entry in entries
+                    if isinstance(entry, dict) and entry.get("id")
+                )
+                if requested not in model_ids and model not in model_ids:
+                    raise RuntimeError(
+                        f"requested model {model!r} is absent from /v1/models; "
+                        f"available ids: {model_ids}"
+                    )
+                return model_ids
+
     request = urllib.request.Request(
-        _models_url(base_url),
-        headers={"Authorization": f"Bearer {api_key}"},
-        method="GET",
+        _chat_completions_url(base_url),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        data=json.dumps(
+            {
+                "model": requested,
+                "messages": [{"role": "user", "content": "Reply with exactly: OK"}],
+                "max_tokens": 16,
+            },
+            separators=(",", ":"),
+        ).encode("utf-8"),
+        method="POST",
     )
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
@@ -102,23 +229,18 @@ def probe_model(
         json.JSONDecodeError,
     ) as exc:
         raise RuntimeError(
-            f"model endpoint probe failed for {_models_url(base_url)}: "
+            f"chat completion probe failed for {_chat_completions_url(base_url)}: "
             f"{type(exc).__name__}"
         ) from exc
-
-    entries = payload.get("data", []) if isinstance(payload, dict) else []
-    model_ids = sorted(
-        str(entry["id"])
-        for entry in entries
-        if isinstance(entry, dict) and entry.get("id")
-    )
-    requested = model.split("/", 1)[-1]
-    if requested not in model_ids and model not in model_ids:
+    choices = payload.get("choices") if isinstance(payload, dict) else None
+    returned_model = payload.get("model") if isinstance(payload, dict) else None
+    if not isinstance(choices, list) or not choices:
+        raise RuntimeError("chat completion probe returned no choices")
+    if returned_model and returned_model not in {requested, model}:
         raise RuntimeError(
-            f"requested model {model!r} is absent from /v1/models; "
-            f"available ids: {model_ids}"
+            f"chat completion probe returned unexpected model {returned_model!r}"
         )
-    return model_ids
+    return [str(returned_model or requested)]
 
 
 def _sanitize(text: str, secrets: list[str]) -> str:
@@ -134,9 +256,7 @@ def _sanitize(text: str, secrets: list[str]) -> str:
     return sanitized
 
 
-def _model_base_urls(
-    args: argparse.Namespace, environ: Mapping[str, str]
-) -> list[str]:
+def _model_base_urls(args: argparse.Namespace, environ: Mapping[str, str]) -> list[str]:
     """Return the normalized, de-duplicated model endpoint list."""
     raw_urls = list(args.model_base_url_collection or [])
     if args.model_base_url:
@@ -164,6 +284,10 @@ class Submission:
 def build_submission(
     args: argparse.Namespace, environ: Mapping[str, str]
 ) -> Submission:
+    if args.model_api_protocol == "anthropic" and args.harbor_agent != "opencode":
+        raise ValueError(
+            "--model-api-protocol anthropic currently requires --harbor-agent opencode"
+        )
     ap_api_key = _required(environ.get("AP_API_KEY"), "AP_API_KEY")
     model_api_key = _required(environ.get("MODEL_API_KEY"), "MODEL_API_KEY")
     model_base_urls = _model_base_urls(args, environ)
@@ -189,6 +313,8 @@ def build_submission(
         "harbor_agent": args.harbor_agent,
         "agent_cli_set": args.harbor_agent,
         "model_provider": args.model_provider,
+        "model_api_protocol": args.model_api_protocol,
+        "model_probe_mode": args.probe_mode,
         "baseline_name": args.baseline_name,
         "strategy_name": args.strategy_name,
         "order_seed": args.order_seed,
@@ -356,6 +482,15 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--model-provider", default="sglang")
     parser.add_argument(
+        "--model-api-protocol",
+        choices=("openai", "anthropic"),
+        default="openai",
+        help=(
+            "wire protocol used by OpenCode: openai-compatible or native "
+            "Anthropic Messages"
+        ),
+    )
+    parser.add_argument(
         "--codex-wire-api", choices=("responses", "chat"), default="responses"
     )
     parser.add_argument(
@@ -401,6 +536,15 @@ def _parser() -> argparse.ArgumentParser:
         "--agent-runtime-image", default=os.environ.get("AGENT_RUNTIME_IMAGE", "")
     )
     parser.add_argument("--probe-timeout", type=float, default=10.0)
+    parser.add_argument(
+        "--probe-mode",
+        choices=("models", "chat", "auto"),
+        default="models",
+        help=(
+            "models=require /v1/models; chat=probe Chat Completions directly; "
+            "auto=fallback to chat only when /v1/models is unavailable"
+        ),
+    )
     parser.add_argument(
         "--suite-name",
         default=f"skillevolbench-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}",
@@ -450,6 +594,8 @@ def main(argv: list[str] | None = None) -> int:
                 api_key=model_api_key,
                 model=model,
                 timeout=args.probe_timeout,
+                mode=args.probe_mode,
+                protocol=args.model_api_protocol,
             )
             for model_base_url in model_base_urls
         ]

@@ -49,6 +49,8 @@ def test_default_submission_is_one_task_e1_smoke() -> None:
     assert params["agent_cli_set"] == "opencode"
     assert params["opencode_version"] == "1.18.3"
     assert params["learning_max_attempts"] == 3
+    assert params["model_api_protocol"] == "openai"
+    assert params["model_probe_mode"] == "models"
     assert params["harbor_agent_timeout_multiplier"] == 1.0
     assert "codex_wire_api" not in params
     assert "within_env_replay" not in params
@@ -109,9 +111,7 @@ def test_full_submission_uses_unique_model_base_url_collection() -> None:
 
     assert params["model_base_url"] == "http://model-a.example/v1"
     collection = json.loads(
-        submission.command[
-            submission.command.index("--model-base-url-collection") + 1
-        ]
+        submission.command[submission.command.index("--model-base-url-collection") + 1]
     )
     assert collection == [
         "http://model-a.example/v1",
@@ -186,6 +186,34 @@ def test_codex_submission_keeps_runtime_and_wire_api_aligned() -> None:
     assert params["agent_cli_set"] == "codex"
     assert params["codex_wire_api"] == "chat"
     assert "opencode_version" not in params
+
+
+def test_anthropic_submission_selects_native_protocol() -> None:
+    args = submit._parser().parse_args(
+        [
+            "--model-api-protocol",
+            "anthropic",
+            "--model-provider",
+            "anthropic",
+            "--probe-mode",
+            "auto",
+        ]
+    )
+    params = _params(submit.build_submission(args, _environment()).command)
+
+    assert params["harbor_agent"] == "opencode"
+    assert params["model_api_protocol"] == "anthropic"
+    assert params["model_provider"] == "anthropic"
+    assert params["model_probe_mode"] == "auto"
+
+
+def test_anthropic_submission_rejects_codex_harness() -> None:
+    args = submit._parser().parse_args(
+        ["--model-api-protocol", "anthropic", "--harbor-agent", "codex"]
+    )
+
+    with pytest.raises(ValueError, match="requires --harbor-agent opencode"):
+        submit.build_submission(args, _environment())
 
 
 def test_credentials_are_required_and_sanitized() -> None:
@@ -272,6 +300,103 @@ def test_probe_model_rejects_absent_served_id(monkeypatch: pytest.MonkeyPatch) -
             api_key="model-secret",
             model="served-model",
         )
+
+
+def test_probe_model_auto_falls_back_to_minimal_chat(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    class Response:
+        def __enter__(self) -> "Response":
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return b'{"model":"served-model","choices":[{"message":{"content":"OK"}}]}'
+
+    def fake_urlopen(request: Any, timeout: float) -> Response:
+        if request.full_url.endswith("/models"):
+            raise submit.urllib.error.URLError("models unsupported")
+        captured["url"] = request.full_url
+        captured["authorization"] = request.get_header("Authorization")
+        captured["content_type"] = request.get_header("Content-type")
+        captured["timeout"] = timeout
+        captured["payload"] = json.loads(request.data)
+        return Response()
+
+    monkeypatch.setattr(submit.urllib.request, "urlopen", fake_urlopen)
+
+    assert submit.probe_model(
+        base_url="http://model.example/v1",
+        api_key="model-secret",
+        model="openai/served-model",
+        timeout=8.0,
+        mode="auto",
+    ) == ["served-model"]
+    assert captured == {
+        "url": "http://model.example/v1/chat/completions",
+        "authorization": "Bearer model-secret",
+        "content_type": "application/json",
+        "timeout": 8.0,
+        "payload": {
+            "model": "served-model",
+            "messages": [{"role": "user", "content": "Reply with exactly: OK"}],
+            "max_tokens": 16,
+        },
+    }
+
+
+def test_probe_model_uses_native_anthropic_messages(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    class Response:
+        def __enter__(self) -> "Response":
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return b'{"model":"served-model","content":[{"type":"text","text":"OK"}]}'
+
+    def fake_urlopen(request: Any, timeout: float) -> Response:
+        captured["url"] = request.full_url
+        captured["headers"] = {
+            key.lower(): value for key, value in request.header_items()
+        }
+        captured["timeout"] = timeout
+        captured["payload"] = json.loads(request.data)
+        return Response()
+
+    monkeypatch.setattr(submit.urllib.request, "urlopen", fake_urlopen)
+
+    assert submit.probe_model(
+        base_url="https://router.example/protocol/anthropic/v1/",
+        api_key="model-secret",
+        model="anthropic/served-model",
+        timeout=9.0,
+        mode="auto",
+        protocol="anthropic",
+    ) == ["served-model"]
+    assert captured == {
+        "url": "https://router.example/protocol/anthropic/v1/messages",
+        "headers": {
+            "x-api-key": "model-secret",
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        },
+        "timeout": 9.0,
+        "payload": {
+            "model": "served-model",
+            "messages": [{"role": "user", "content": "Reply with exactly: OK"}],
+            "max_tokens": 16,
+        },
+    }
 
 
 def test_main_dry_run_probes_then_redacts_cli_output(

@@ -279,6 +279,54 @@ def test_build_config_routes_opencode_via_chat_completions_without_secret(
     assert run_episode.os.environ["OPENAI_BASE_URL"] == "http://model.example/v1"
 
 
+def test_build_config_routes_opencode_via_native_anthropic_without_secret(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    baseline = load_baseline("selfgen_experience_always")
+    monkeypatch.setattr(run_episode, "load_baseline", lambda _name: baseline)
+    monkeypatch.setenv("INSTANCE_ID", "E1")
+    monkeypatch.setenv("MODEL", "claude-opus-4-8")
+    monkeypatch.setenv(
+        "MODEL_BASE_URL", "https://router.example/protocol/anthropic/v1/"
+    )
+    monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("MODEL_PROVIDER", "anthropic")
+    monkeypatch.setenv("MODEL_API_PROTOCOL", "anthropic")
+    monkeypatch.setenv("HARBOR_AGENT", "opencode")
+    monkeypatch.setenv("OPENCODE_VERSION", "1.18.3")
+
+    config = run_episode._build_config(tmp_path)
+
+    assert config.baseline.model_name == "anthropic/claude-opus-4-8"
+    provider = config.baseline.agent_kwargs["opencode_config"]["provider"]
+    assert provider == {
+        "anthropic": {
+            "npm": "@ai-sdk/anthropic",
+            "name": "anthropic",
+            "options": {
+                "baseURL": "{env:ANTHROPIC_BASE_URL}",
+                "apiKey": "{env:ANTHROPIC_API_KEY}",
+            },
+            "models": {
+                "claude-opus-4-8": {
+                    "name": "claude-opus-4-8",
+                    "attachment": False,
+                    "limit": {"context": 131072, "output": 16384},
+                }
+            },
+        }
+    }
+    assert "test-key" not in json.dumps(config.baseline.agent_kwargs)
+    assert run_episode.os.environ["ANTHROPIC_API_KEY"] == "test-key"
+    assert run_episode.os.environ["ANTHROPIC_BASE_URL"] == (
+        "https://router.example/protocol/anthropic/v1"
+    )
+    assert run_episode.os.environ["SEVB_HOST_LITELLM_MODEL"] == (
+        "anthropic/claude-opus-4-8"
+    )
+
+
 def test_build_config_replaces_generic_no_auth_placeholder(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -605,7 +653,10 @@ def test_mask_tree_allows_only_standard_dot_venv_python_link(
 @pytest.mark.parametrize(
     ("relative", "target"),
     [
-        ("runs/trial/artifacts/root/task/project/venv/bin/python", "/usr/bin/python3.12"),
+        (
+            "runs/trial/artifacts/root/task/project/venv/bin/python",
+            "/usr/bin/python3.12",
+        ),
         ("runs/trial/artifacts/root/task/project/.venv/bin/pip", "/usr/bin/python3.12"),
         ("runs/trial/artifacts/root/task/project/.venv/bin/python", "/bin/sh"),
     ],
