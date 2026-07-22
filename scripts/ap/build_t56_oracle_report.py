@@ -170,6 +170,95 @@ CONCEPT_PATTERNS = {
     "locale-aware normalization": r"locale|umlaut|accent|unicode",
     "sentinel-aware nulls": r"sentinel|missing marker",
     "content fingerprint": r"fingerprint",
+    "business-impact prioritization": (
+        r"business impact|emotional tone|all-caps|operational risk|"
+        r"priority counts?|p0 items?"
+    ),
+    "semantic schema resolution": (
+        r"column naming convention|found by meaning|casefold|case-sensitive|"
+        r"header normalization|schema handling"
+    ),
+    "cent-level precision": r"precision|cent[- ]level|decimal",
+    "integration regression coverage": (
+        r"integration[- ]style|regression coverage|coverage threshold|"
+        r"line coverage|coverage-driven"
+    ),
+    "dependency API migration": (
+        r"alembic|sqlalchemy|deprecated alias|dependency (?:update|upgrade)|"
+        r"api migration|compatibility issues?"
+    ),
+    "multi-sheet formula preservation": (
+        r"multi-sheet|formula-driven|all sheets|formula values?|"
+        r"computed values not formulas"
+    ),
+    "ordered normalization pipeline": (
+        r"extract.*normalize.*fill.*validat|pipeline order|four-step pipeline|"
+        r"normalize.*enrich|enrich.*normalize"
+    ),
+    "citation authenticity and support": (
+        r"fabricated citations?|citation audit|authenticity|claim support|"
+        r"misrepresented|selective citation"
+    ),
+    "semantic null distinctions": (
+        r"fillna.*zero|zero.*offline|none.*empty|empty.*none|"
+        r"boundary semantics|missing.*zero|missing temperature.*offline|"
+        r"actual zero-degree|exclude null/offline|fillna\(0\)"
+    ),
+    "error propagation and HTTP semantics": (
+        r"error state|successful api responses?|db error returns 500|"
+        r"silent empty|blank profile|distinguishes 404 and 500|"
+        r"operational error"
+    ),
+    "hierarchical summarization": (
+        r"per-article summaries?|group summaries?|overall synthesis|"
+        r"hierarchical(?:ly)?"
+    ),
+    "priority-based summarization": (
+        r"highest-value findings?|high-value evidence|"
+        r"prioriti[sz](?:e|ing).*findings?|priority selection|"
+        r"document order|word limits?"
+    ),
+    "multi-dimensional recency ranking": (
+        r"evidence quality.*recency|recency.*evidence quality|"
+        r"outdated.*source|stale authority|three dimensions"
+    ),
+    "natural numeric ordering": (
+        r"sorted naturally|zero-padded|numeric position|lexicographic|"
+        r"numeric string"
+    ),
+    "response schema migration": (
+        r"deprecated.*current fields?|current.*deprecated fields?|"
+        r"canonical fields?|field migration"
+    ),
+    "per-record fallback validation": (
+        r"primary record is invalid|primary records? before|"
+        r"backup data only|fallback only for|per-record backup"
+    ),
+    "document reference validation": (
+        r"page reference|referenced section|current-year|wrong page pointer|"
+        r"source page"
+    ),
+    "local pre-call validation": (
+        r"rejected locally|before they hit the backend|zero remote 400|"
+        r"local validation|before any api call"
+    ),
+    "dynamic pagination termination": (
+        r"metadata changes mid-run|has_more|rechecks metadata|"
+        r"grow while pagination|growing while pagination|"
+        r"precomputes a page plan"
+    ),
+    "configured endpoint resolution": (
+        r"configuration endpoint|current data url|legacy url|"
+        r"migration-era legacy|uses current endpoint"
+    ),
+    "systemic root-cause repair": (
+        r"actual root cause|real fix|one-off special case|"
+        r"hardcoded regions?|all states correct"
+    ),
+    "join-key correctness": (
+        r"join key|user_id join|merge path|transactions attach|"
+        r"correct user records"
+    ),
 }
 
 ENVIRONMENT_PROFILES = {
@@ -991,9 +1080,15 @@ def derivability_analysis(
         )
     return {
         "method": (
-            "controlled concept-pattern screen over T5/T6 instructions and verifier check "
-            "names versus T1-T3 visible instructions/feedback and both skill texts"
+            "v2 full-task controlled concept-pattern screen over T5/T6 instructions and "
+            "verifier check names versus T1-T3 visible instructions/feedback and both "
+            "skill texts; every T5/T6 task was manually inspected when expanding the "
+            "dictionary, but matching remains lexical rather than a semantic proof"
         ),
+        "concept_dictionary": [
+            {"concept": concept, "pattern": pattern}
+            for concept, pattern in CONCEPT_PATTERNS.items()
+        ],
         "records": records,
         "summaries": summaries,
     }
@@ -1331,9 +1426,13 @@ def oracle_scope_analysis(audit: dict[str, Any]) -> dict[str, Any]:
         for concept in row["task_concepts"]
     ]
     return {
-        "method": "heuristic screening; high-risk cases require manual task/skill review",
+        "method": (
+            "v2 full-task lexical screening after manual inspection of all 60 T5/T6; "
+            "scope-risk cases still require task/skill review"
+        ),
         "counts": dict(Counter(row["scope_risk"] for row in rows)),
         "concept_visibility": {
+            "concept_dictionary_size": len(CONCEPT_PATTERNS),
             "task_count": len(rows),
             "tasks_with_controlled_concepts": sum(
                 bool(row["task_concepts"]) for row in rows
@@ -2102,7 +2201,7 @@ def conclusions(
         "level": "warn",
         "title": "T5/T6 题面已显式给出大部分高级要求",
         "body": (
-            f"受控概念词表在 60 个 T5/T6 中识别到 "
+            f"经逐题检查扩展的 {visibility.get('concept_dictionary_size', 0)} 项受控概念词表在 60 个 T5/T6 中识别到 "
             f"{visibility.get('concept_instances', 0)} 个 task-concept 实例，"
             f"其中 {visibility.get('instruction_explicit_instances', 0)} 个已在任务正文显式出现，"
             f"仅 {visibility.get('verifier_only_instances', 0)} 个只出现在 verifier check 命名中。"
@@ -2117,7 +2216,8 @@ def conclusions(
             f"{item.get('eligible_for_causal_skill_claim', 0)}/"
             f"{item.get('controlled_task_count', 0)}, "
             f"on-task-only={counts.get('on_task_only', 0)}, "
-            f"missing-learning={counts.get('missing_learning_evidence', 0)}"
+            f"missing-learning={counts.get('missing_learning_evidence', 0)}, "
+            f"unclassified={counts.get('unclassified_no_controlled_concept', 0)}"
         )
     result.append({
         "level": "warn",
@@ -2127,7 +2227,7 @@ def conclusions(
             + "; ".join(validity_parts)
             + "。只在当前题面出现的高级要求，即使模型做对，也只能证明现场执行能力；"
             "有 T1–T3 历史支持的任务也必须再由同题 no-skill 对照证明 skill 增量。"
-            "另有一半任务未被受控词表覆盖，保持未分类，不能据词面筛查下结论。"
+            "当前词表已逐题扩展到覆盖 60/60，但它仍是 lexical screen，不能用词面命中替代完整语义审查。"
         ),
     })
     derivability_parts = []
@@ -2662,7 +2762,7 @@ def render_markdown(data: dict[str, Any]) -> str:
         "",
         "## 哪些 T5/T6 有资格测 Skill Evolution？",
         "",
-        "这是一项 measurement-validity 筛查，而不是效果估计。只有高级要求在 T1–T3 有历史证据的任务，后续成功才有可能归因于 skill transfer；仍必须再由同任务 no-skill 对照证明增量。若高级要求只在当前 T5/T6 instruction 出现，模型做对最多说明现场执行能力，不能证明此前形成的 skill 有帮助。受控词表未覆盖的任务保持未分类。",
+        "这是一项 measurement-validity 筛查，而不是效果估计。只有高级要求在 T1–T3 有历史证据的任务，后续成功才有可能归因于 skill transfer；仍必须再由同任务 no-skill 对照证明增量。若高级要求只在当前 T5/T6 instruction 出现，模型做对最多说明现场执行能力，不能证明此前形成的 skill 有帮助。当前 60/60 题均有受控概念命中，但 lexical screen 仍不能代替语义审查。",
         "",
         "| 模型 | T5/T6 tasks | 有历史支持、可进入因果检验 | 仅当前题面 | 历史+现场混合 | 缺学习证据 | 词表未覆盖 | Oracle 覆盖全部概念 | Generated 覆盖全部概念 |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
@@ -2738,7 +2838,7 @@ def render_markdown(data: dict[str, Any]) -> str:
         "### 题面是否已经把高级要求说透？",
         "",
         (
-            f"受控词表覆盖 {data['oracle_scope']['concept_visibility']['tasks_with_controlled_concepts']}/60 题，"
+            f"{data['oracle_scope']['concept_visibility']['concept_dictionary_size']} 项受控词表覆盖 {data['oracle_scope']['concept_visibility']['tasks_with_controlled_concepts']}/60 题，"
             f"共 {data['oracle_scope']['concept_visibility']['concept_instances']} 个 task-concept 实例；"
             f"其中 {data['oracle_scope']['concept_visibility']['instruction_explicit_instances']} 个已在 instruction 显式出现，"
             f"{data['oracle_scope']['concept_visibility']['verifier_only_instances']} 个仅出现在 verifier check 命名。"
@@ -2866,7 +2966,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>失败归因总览</h2><p class="small">“已核实假阴性”要求逐代码证据；“形态敏感”只是筛查标签，仍需结合 exact-oracle/no-skill 与轨迹复核。</p><div class="tablebox"><table><thead><tr><th>Env/Tier</th><th>模型</th><th>覆盖/Strict</th><th>功能 gap</th><th>已核实假阴性</th><th>实质过程 gap</th><th>形态敏感</th><th>未决过程</th></tr></thead><tbody id="attributionRows"></tbody></table></div></section>
 <section class="panel"><h2>T1–T3 学习与 Skill 来源审计</h2><div class="grid two" id="learningCards"></div><div class="filters" style="margin-top:16px"><select id="skillModel"></select><select id="skillEnv"></select><input id="skillSearch" placeholder="搜索 family / skill"></div><div class="tablebox"><table><thead><tr><th>Family</th><th>学习结果</th><th>生成 skill</th><th>Best Jaccard</th><th>Oracle evidence recall</th><th>Verifier markers</th></tr></thead><tbody id="skillRows"></tbody></table></div><p class="small">Evidence recall 仅是词面覆盖率，不代表逻辑可推导性。点击 family 查看 T1–T3 证据摘录、generated skill 与 curated oracle 全文。</p></section>
 <section class="panel"><h2>T5/T6 概念可推导性与 Annotation Prior</h2><p>把每个高级概念分别放回 T1–T3 可见证据、generated skill、curated oracle 和仅题目作者可见的 gap metadata 中检查。重点看“可见但没总结”“oracle 补入未见概念”“两边都缺”三类。</p><div class="grid two" id="derivabilityCards"></div><div class="filters" style="margin-top:16px"><select id="derivabilityModel"><option value="all">全部模型</option><option value="qwen3.7-max">qwen3.7-max</option><option value="sig-fable">sig-fable</option></select><select id="derivabilityCategory"><option value="all">全部非平凡分类</option></select><input id="derivabilitySearch" placeholder="搜索 task / concept"></div><div class="tablebox"><table><thead><tr><th>Task / Family</th><th>模型</th><th>高级概念</th><th>分类</th><th>T1–T3</th><th>Generated</th><th>Oracle</th><th>Author gap meta</th></tr></thead><tbody id="derivabilityRows"></tbody></table></div><p class="small">Author gap meta 是 benchmark 作者的设计注释，不会注入模型。此处仍是受控词表筛查，不把词面缺失自动等同于逻辑不可推导。</p></section>
-<section class="panel"><h2>哪些 T5/T6 真能测 Skill Evolution？</h2><p>先判断高级要求是否在 T1–T3 留下历史证据，再看匹配 no-skill 对照。若要求只在当前 T5/T6 题面出现，模型现场做对不能证明此前形成的 skill 有帮助；受控词表未覆盖的任务保持未分类。</p><div class="grid two" id="validityCards"></div><div class="tablebox"><table><thead><tr><th>模型/Env</th><th>可进入历史 skill 因果检验</th><th>仅当前题面</th><th>历史+现场混合</th><th>缺学习证据</th><th>词表未覆盖</th></tr></thead><tbody id="validityRows"></tbody></table></div><h3 style="margin-top:16px">按测量有效性分层的 Matched Outcome 效应</h3><div class="tablebox"><table><thead><tr><th>模型/分层</th><th>Treatment − Reference</th><th>n</th><th>Treatment</th><th>Reference</th><th>Δ</th><th>救回/损害</th><th>四条件完整</th></tr></thead><tbody id="validityEffectRows"></tbody></table></div><p class="small">“可进入因果检验”不等于已经证明 skill 有用；仍需同模型同任务的 Self / Exact / Curated-all / No-skill 四条件结果。</p></section>
+<section class="panel"><h2>哪些 T5/T6 真能测 Skill Evolution？</h2><p>先判断高级要求是否在 T1–T3 留下历史证据，再看匹配 no-skill 对照。若要求只在当前 T5/T6 题面出现，模型现场做对不能证明此前形成的 skill 有帮助。当前 60/60 题均有受控概念命中，但 lexical screen 仍不能代替语义审查。</p><div class="grid two" id="validityCards"></div><div class="tablebox"><table><thead><tr><th>模型/Env</th><th>可进入历史 skill 因果检验</th><th>仅当前题面</th><th>历史+现场混合</th><th>缺学习证据</th><th>词表未覆盖</th></tr></thead><tbody id="validityRows"></tbody></table></div><h3 style="margin-top:16px">按测量有效性分层的 Matched Outcome 效应</h3><div class="tablebox"><table><thead><tr><th>模型/分层</th><th>Treatment − Reference</th><th>n</th><th>Treatment</th><th>Reference</th><th>Δ</th><th>救回/损害</th><th>四条件完整</th></tr></thead><tbody id="validityEffectRows"></tbody></table></div><p class="small">“可进入因果检验”不等于已经证明 skill 有用；仍需同模型同任务的 Self / Exact / Curated-all / No-skill 四条件结果。</p></section>
 <section class="panel"><h2>Curated Oracle 是否真的足以覆盖任务？</h2><p>仓库中的 curated skill 多数是基础工作流，不是 T5/T6 的 solution manual。Oracle 仍失败必须同时考虑 skill scope gap，不能直接判题目坏。</p><div id="scopeVisibility" class="grid cards"></div><div id="scopeCounts"></div><div class="tablebox"><table><thead><tr><th>Task</th><th>Oracle skills</th><th>风险</th><th>缺失概念</th><th>Author gap 命中</th><th>Verifier-only</th><th>Scope</th></tr></thead><tbody id="scopeRows"></tbody></table></div><h3 style="margin-top:16px">Oracle 结果按 scope risk 分层</h3><div id="scopeOutcomes" class="small"></div><p class="small">这是受控概念的启发式筛查。高风险项用于人工复核，不把词面缺失自动等同于语义缺失。</p></section>
 <section class="panel"><h2>逐题匹配对照</h2><div class="filters"><select id="taskModel"></select><select id="taskEnv"></select><select id="taskTier"><option value="all">T4–T6</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6</option></select><input id="taskSearch" placeholder="搜索 task / skill"></div><div class="tablebox"><table><thead><tr><th>Task</th><th>模型</th><th>Self-generated</th><th>Exact oracle</th><th>Curated all</th><th>No skill</th><th>判定</th></tr></thead><tbody id="taskRows"></tbody></table></div></section>
 <section class="grid two"><div class="panel"><h2>Verifier 质量</h2><div id="audit"></div></div><div class="panel"><h2>Generated vs Oracle skill</h2><div id="skills"></div></div></section>
@@ -2908,7 +3008,7 @@ options(derivabilityCategory,Object.keys(derivabilityZh).filter(x=>x!=='captured
 function renderDerivability(){{let q=derivabilitySearch.value.toLowerCase();let rows=D.derivability.records.filter(x=>x.category!=='captured_from_visible_evidence'&&(derivabilityModel.value==='all'||x.model===derivabilityModel.value)&&(derivabilityCategory.value==='all'||x.category===derivabilityCategory.value)&&JSON.stringify(x).toLowerCase().includes(q));derivabilityRows.innerHTML=rows.map(x=>`<tr><td><b>${{x.task_id}}</b><br><span class="small">${{x.family_id}} · T${{x.tier}}</span></td><td>${{x.model}}</td><td>${{esc(x.concept)}}</td><td>${{esc(derivabilityZh[x.category])}}</td><td>${{x.in_t1_t3_evidence?'✓':'✗'}}</td><td>${{x.in_generated_skill?'✓':'✗'}}</td><td>${{x.in_curated_oracle?'✓':'✗'}}</td><td>${{x.in_author_gap_metadata?'✓':'✗'}}</td></tr>`).join('')||'<tr><td colspan="8" class="small">当前过滤条件无记录</td></tr>'}};[derivabilityModel,derivabilityCategory].forEach(x=>x.onchange=renderDerivability);derivabilitySearch.oninput=renderDerivability;renderDerivability();
 validityCards.innerHTML=D.measurement_validity.summaries.map(x=>{{let c=x.category_counts;return `<div class="case"><h3>${{x.model}}</h3><p><b>${{x.eligible_for_causal_skill_claim}}/${{x.controlled_task_count}}</b> 个受控词表覆盖任务可进入历史 skill 因果检验</p><p class="small">全部 T5/T6 ${{x.task_count}} · 仅当前题面 ${{c.on_task_only||0}} · 历史+现场混合 ${{c.mixed_history_and_on_task||0}} · 缺学习证据 ${{c.missing_learning_evidence||0}} · 词表未覆盖 ${{c.unclassified_no_controlled_concept||0}} · Oracle 全覆盖概念 ${{x.oracle_all_concepts}}/${{x.controlled_task_count}} · Generated 全覆盖概念 ${{x.generated_all_concepts}}/${{x.controlled_task_count}}</p></div>`}}).join('');validityRows.innerHTML=D.measurement_validity.by_environment.map(x=>{{let c=x.category_counts;return `<tr><td><b>${{x.model}}</b> / ${{x.environment_id}}</td><td>${{x.eligible_for_causal_skill_claim}}/${{x.controlled_task_count}}</td><td>${{c.on_task_only||0}}</td><td>${{c.mixed_history_and_on_task||0}}</td><td>${{c.missing_learning_evidence||0}}</td><td>${{c.unclassified_no_controlled_concept||0}}</td></tr>`}}).join('');
 validityEffectRows.innerHTML=D.validity_stratified_effects.filter(x=>x.n).map(x=>`<tr><td><b>${{x.model}}</b><br><span class="small">${{esc(validityZh[x.validity_category]||x.validity_category)}}</span></td><td>${{zh[x.treatment]}} − ${{zh[x.reference]}}</td><td>${{x.n}}</td><td>${{x.treatment_pass}}/${{x.n}}</td><td>${{x.reference_pass}}/${{x.n}}</td><td>${{x.delta==null?'—':(100*x.delta).toFixed(1)+'pp'}}</td><td>${{x.rescued}} / ${{x.harmed}}</td><td>${{x.complete_four_conditions}}/${{x.task_count}}</td></tr>`).join('')||'<tr><td colspan="8" class="small">等待 matched controls</td></tr>';
-let cv=D.oracle_scope.concept_visibility;scopeVisibility.innerHTML=[['受控概念实例',cv.concept_instances],['Instruction 明示',cv.instruction_explicit_instances],['Verifier-only',cv.verifier_only_instances],['Author gap meta 命中',cv.author_gap_metadata_instances],['涉及任务',cv.tasks_with_controlled_concepts+'/60']].map(x=>`<div class="card"><span class="label">${{x[0]}}</span><b>${{x[1]}}</b></div>`).join('');
+let cv=D.oracle_scope.concept_visibility;scopeVisibility.innerHTML=[['概念词典',cv.concept_dictionary_size],['受控概念实例',cv.concept_instances],['Instruction 明示',cv.instruction_explicit_instances],['Verifier-only',cv.verifier_only_instances],['Author gap meta 命中',cv.author_gap_metadata_instances],['涉及任务',cv.tasks_with_controlled_concepts+'/60']].map(x=>`<div class="card"><span class="label">${{x[0]}}</span><b>${{x[1]}}</b></div>`).join('');
 scopeCounts.innerHTML=Object.entries(D.oracle_scope.counts).map(([k,v])=>`<span class="metric ${{k==='high'?'fail':k==='medium'?'proc':'pass'}}">${{k}}: ${{v}}</span>`).join(' ');scopeRows.innerHTML=D.oracle_scope.rows.filter(x=>x.scope_risk!=='low'||x.verifier_only_concepts.length).map(x=>`<tr><td><b>${{x.task_id}}</b><br><span class="small">${{esc(x.task_slug)}}</span></td><td>${{esc(x.oracle_skill_ids.join(', '))}}</td><td><span class="metric ${{x.scope_risk==='high'?'fail':'proc'}}">${{x.scope_risk}}</span></td><td>${{esc(x.missing_concepts.join(', ')||'—')}}</td><td>${{esc(x.task_concepts_in_author_gaps.join(', ')||'—')}}</td><td>${{esc(x.verifier_only_concepts.join(', ')||'—')}}</td><td>${{esc(x.scope_lines.join('; ')||'—')}}</td></tr>`).join('');
 scopeOutcomes.innerHTML=D.scope_condition_outcomes.filter(x=>x.n).map(x=>`<div>${{x.model}} · ${{x.scope_risk}} · n=${{x.n}} · strict ${{x.oracle_strict_passes}}/${{x.n}} · outcome ${{x.oracle_outcome_passes}}/${{x.n}} · process ${{x.oracle_process_passes}}/${{x.n}}</div>`).join('')||'等待 exact-oracle 结果';
 function renderTasks(){{let q=taskSearch.value.toLowerCase();let rows=D.comparisons.filter(x=>(taskModel.value==='all'||x.model===taskModel.value)&&(taskEnv.value==='all'||x.environment_id===taskEnv.value)&&(taskTier.value==='all'||x.tier==taskTier.value)&&JSON.stringify(x).toLowerCase().includes(q));taskRows.innerHTML=rows.map((x,i)=>`<tr class="click" data-key="${{x.model}}|${{x.task_id}}"><td><b>${{x.task_id}}</b><br><span class="small">${{esc(x.task_slug)}} · ${{esc(x.primary_skill)}}</span></td><td>${{x.model}}</td><td>${{status(x.conditions.self_generated)}}</td><td>${{status(x.conditions.exact_oracle)}}</td><td>${{status(x.conditions.curated_all)}}</td><td>${{status(x.conditions.no_skill)}}</td><td><b>${{esc(x.causal.label)}}</b><br><span class="small">${{esc(x.causal.pattern||verdict[x.verdict])}}</span></td></tr>`).join('');taskRows.querySelectorAll('tr').forEach(tr=>tr.onclick=()=>showTask(...tr.dataset.key.split('|')))}};[taskModel,taskEnv,taskTier].forEach(x=>x.onchange=renderTasks);taskSearch.oninput=renderTasks;renderTasks();

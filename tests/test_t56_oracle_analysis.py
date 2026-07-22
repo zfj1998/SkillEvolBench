@@ -817,6 +817,7 @@ def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path)
         "jitter",
     ]
     assert result["concept_visibility"] == {
+        "concept_dictionary_size": len(REPORT.CONCEPT_PATTERNS),
         "task_count": 1,
         "tasks_with_controlled_concepts": 1,
         "concept_instances": 2,
@@ -1219,3 +1220,29 @@ def test_validity_stratified_effects_do_not_mix_on_task_only_tasks() -> None:
     assert on_task["n"] == 1
     assert on_task["delta"] == 0.0
     assert on_task["complete_causal_category_counts"] == {"low_skill_demand": 1}
+
+
+def test_expanded_concept_screen_uses_instruction_semantics() -> None:
+    samples = {
+        "business-impact prioritization": (
+            "Triage by business impact rather than emotional tone."
+        ),
+        "multi-sheet formula preservation": (
+            "Read all sheets and preserve computed formula values."
+        ),
+        "citation authenticity and support": (
+            "Audit citation authenticity and claim support."
+        ),
+        "semantic null distinctions": (
+            "Exclude null/offline readings and keep actual zero-degree readings."
+        ),
+        "dynamic pagination termination": (
+            "The API metadata changes mid-run, so rechecks metadata_or_has_more."
+        ),
+        "systemic root-cause repair": (
+            "Trace the actual root cause instead of a one-off special case."
+        ),
+    }
+
+    for concept, text in samples.items():
+        assert concept in REPORT.detected_concepts(text)
