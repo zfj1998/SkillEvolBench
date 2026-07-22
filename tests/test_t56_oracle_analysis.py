@@ -795,7 +795,10 @@ def test_oracle_case_studies_use_only_the_declared_condition(tmp_path: Path) -> 
     )
 
     case = next(item for item in cases if item["task_id"] == "E2-LS1-T6")
-    assert [row["condition"] for row in case["observations"]] == ["exact_oracle"]
+    assert [row["condition"] for row in case["observations"]] == [
+        "self_generated",
+        "exact_oracle",
+    ]
     assert case["instruction"] == "task contract\n"
     assert case["outcome_verifier"] == "def test_outcome(): pass\n"
     assert case["process_verifier"] == "def test_process(): pass\n"
@@ -833,6 +836,7 @@ def test_case_study_recovers_final_edits_from_trajectory(tmp_path: Path) -> None
     )
 
     edits = REPORT.trajectory_final_edits(trajectory)
+    activity = REPORT.trajectory_tool_activity(trajectory)
 
     assert edits == [
         {
@@ -841,6 +845,9 @@ def test_case_study_recovers_final_edits_from_trajectory(tmp_path: Path) -> None
             "new": "dynamic binding",
         }
     ]
+    assert activity["tool_counts"] == {"edit": 1, "read": 1}
+    assert activity["mutation_call_count"] == 1
+    assert activity["bash_commands"] == []
 
 
 def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path) -> None:

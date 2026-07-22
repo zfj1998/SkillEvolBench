@@ -118,16 +118,37 @@ CASE_DEFINITIONS = {
         ],
     },
     "E2-LS1-T6": {
-        "title": "Oracle 建议的 structured error 与隐藏 ValueError 契约冲突",
-        "kind": "Oracle scope / hidden-contract 冲突",
+        "title": "公开测试与 fixture 冲突；Qwen 被隐藏接口卡住，Fable 两种条件都未落笔",
+        "kind": "误导性公开测试与模型执行停滞（强任务缺陷）",
         "interpretation": (
-            "exact-oracle 的 pre-call skill 明确推荐返回 structured error；任务正文只说 missing fields "
-            "should fail locally，没有声明 validate_record 必须抛 ValueError。Fable 按 skill 返回错误列表并在批处理中跳过，"
-            "还修改 requests.json 构造公开测试所需的 invalid case；隐藏测试却直接要求 ValueError。"
-            "这不是单纯的模型能力不足，而是 oracle 指导、可见契约和隐藏判分接口没有对齐。"
+            "requests.json 含 u1–u4 四条都具备 user_id/amount 的有效输入，currency/timezone 又明确应在 enrich/fallback"
+            "阶段补齐；但项目随附 public_tests/test_transactions.py 硬要求 results 长度为 3。官方 reference 不修改"
+            "fixture，实际产生 4 个正常 transaction，因而该 public test 失败；同一 reference 在官方 verifier 下却"
+            "严格 100/100。Qwen self-generated 已正确完成 validate→enrich→normalize→call、404 fallback、UTC"
+            "和 USD 归一化，hidden outcome 过 4/5；唯一失败是 validate_record 返回 missing 列表并在 loop 中"
+            "本地 skip，而 hidden test 强制要求直接抛 ValueError。题面只说 fail locally，curated pre-call skill"
+            "还明确推荐 structured errors，因此该异常类型是未公开接口。它的 process 失败也主要是源码扫描："
+            "pipeline-order 用 text.index 命中了 import 中更早的 send_transaction，UTC fallback 明明在"
+            "fallback_policy.py 却只扫描 transactions.py；reference 通过改 import 形态规避。另一方面，Fable"
+            "self-generated 和 exact-oracle 都注意到 public-test 矛盾，分别消耗 25,029 与 23,495"
+            "输出 tokens 反复讨论应删 u4、改 fixture 还是扩 REQUIRED_FIELDS，最终都只执行 read/skill/ls/pytest/"
+            "只读 Python probe，没有任何 edit/write，保留 starter 后同得 0.25。Exact 条件已实际打开两个指定"
+            "oracle skills，仍无法把不一致的公开信号变成行动。这一失败首先是 task 的误导性测试造成执行停滞，"
+            "其次是模型无法及时收敛；不能用它证明 generated skill 比 oracle 差，也不能把 oracle failure 解释为"
+            "高级 skill 本身无效。"
         ),
-        "conditions": ["exact_oracle"],
-        "files": ["transactions.py", "requests.json", "fallback_policy.py"],
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "transactions.py",
+            "requests.json",
+            "public_tests/test_transactions.py",
+            "fallback_policy.py",
+        ],
+        "task_source_files": [
+            "environment/transactions.py",
+            "environment/requests.json",
+            "environment/public_tests/test_transactions.py",
+        ],
     },
     "E2-LS1-T5": {
         "title": "有效的模块化实现被单文件字面检查误判",
@@ -898,28 +919,43 @@ def failure_map(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return result
 
 
-def trajectory_final_edits(path: Path) -> list[dict[str, str]]:
-    """Extract edit-tool replacements as compact final-state evidence.
+def trajectory_tool_activity(path: Path) -> dict[str, Any]:
+    """Extract compact tool and mutation evidence from one trajectory.
 
     Some AP exports preserve the trajectory and verifier reports but not the
-    final task tree.  The edit calls are still direct evidence of what the
-    agent wrote, and are more useful in the report than treating the artifact
-    as if no implementation evidence existed.
+    final task tree. Tool calls still show whether the model inspected, tested,
+    or actually mutated the workspace.
     """
 
     try:
         value = json.loads(path.read_text(encoding="utf-8", errors="replace"))
     except (OSError, json.JSONDecodeError):
-        return []
+        return {
+            "tool_counts": {},
+            "bash_commands": [],
+            "mutation_call_count": 0,
+            "final_edits": [],
+        }
 
+    tool_counts: Counter[str] = Counter()
+    bash_commands: list[str] = []
+    mutation_call_count = 0
     edits: list[dict[str, str]] = []
 
     def visit(node: Any) -> None:
+        nonlocal mutation_call_count
         if isinstance(node, dict):
-            if node.get("function_name") == "edit" and isinstance(
-                node.get("arguments"), dict
-            ):
-                arguments = node["arguments"]
+            function_name = node.get("function_name")
+            arguments = node.get("arguments")
+            if isinstance(function_name, str):
+                tool_counts[function_name] += 1
+                if function_name in {"edit", "write", "apply_patch"}:
+                    mutation_call_count += 1
+                if function_name == "bash" and isinstance(arguments, dict):
+                    command = arguments.get("command")
+                    if isinstance(command, str):
+                        bash_commands.append(command)
+            if function_name == "edit" and isinstance(arguments, dict):
                 file_path = arguments.get("filePath")
                 old = arguments.get("oldString")
                 new = arguments.get("newString")
@@ -938,7 +974,18 @@ def trajectory_final_edits(path: Path) -> list[dict[str, str]]:
                 visit(child)
 
     visit(value)
-    return edits
+    return {
+        "tool_counts": dict(sorted(tool_counts.items())),
+        "bash_commands": bash_commands,
+        "mutation_call_count": mutation_call_count,
+        "final_edits": edits,
+    }
+
+
+def trajectory_final_edits(path: Path) -> list[dict[str, str]]:
+    """Backward-compatible helper used by focused tests."""
+
+    return trajectory_tool_activity(path)["final_edits"]
 
 
 def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Path) -> list[dict[str, Any]]:
@@ -965,6 +1012,20 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                         })
             trajectory_rel = row.get("local_trajectory_path")
             trajectory_path = raw_root / trajectory_rel if trajectory_rel else None
+            trajectory_activity = (
+                trajectory_tool_activity(trajectory_path)
+                if trajectory_path and trajectory_path.is_file()
+                else trajectory_tool_activity(Path("/nonexistent"))
+            )
+            trial_rel = row.get("local_trial_path")
+            trial_result_path = (
+                raw_root / trial_rel / "result.json" if trial_rel else None
+            )
+            trial_result = (
+                load_json_optional(trial_result_path)
+                if trial_result_path and trial_result_path.is_file()
+                else {}
+            )
             observations.append({
                 "model": row["model"],
                 "condition": row.get("condition"),
@@ -980,11 +1041,13 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                     if trajectory_path and trajectory_path.is_file()
                     else None
                 ),
-                "final_edits": (
-                    trajectory_final_edits(trajectory_path)
-                    if trajectory_path and trajectory_path.is_file()
-                    else []
-                ),
+                "tool_counts": trajectory_activity["tool_counts"],
+                "bash_commands": trajectory_activity["bash_commands"],
+                "mutation_call_count": trajectory_activity[
+                    "mutation_call_count"
+                ],
+                "final_edits": trajectory_activity["final_edits"],
+                "agent_result": trial_result.get("agent_result") or {},
             })
         if not observations:
             continue
@@ -1001,6 +1064,20 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
         )
         instruction_path = task_root / "instruction.md" if task_root else None
         solution_path = task_root / "solution" / "solve.sh" if task_root else None
+        task_source_files = []
+        if task_root:
+            for name in definition.get("task_source_files", []):
+                path = task_root / name
+                if path.is_file():
+                    task_source_files.append(
+                        {
+                            "name": name,
+                            "path": str(path.resolve()),
+                            "content": path.read_text(
+                                encoding="utf-8", errors="replace"
+                            ),
+                        }
+                    )
         result.append({
             "task_id": task_id,
             **definition,
@@ -1017,6 +1094,7 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                 if solution_path and solution_path.is_file()
                 else ""
             ),
+            "task_source_files": task_source_files,
             "process_verifier_path": str(process_path) if process_path else None,
             "process_verifier": (
                 process_path.read_text(encoding="utf-8", errors="replace")
@@ -2595,6 +2673,9 @@ def conclusions(
             "body": (
                 f"当前明确的是 {ids}。E1-LS4-T5 的隐藏故障注入依赖未声明的 Python import binding，"
                 "其余同类替身测试又因全局 modulo-3 调用计数碰巧通过，并叠加固定文件字面量检查；"
+                "E2-LS1-T6 的项目自带 public test 要求 3 个结果，但四条 fixture 都是有效输入，官方"
+                "reference 产生 4 个结果并因此无法通过该 public test，正式 Fable self/exact 都被矛盾信号"
+                "拖入无修改的分析停滞；"
                 "E4-LS1-T5 的题面输出路径与 verifier 的父目录合同冲突，"
                 "语义正确输出被全部判为 outcome 失败；E6-LS4-T6 的四人工作时段没有共同正长度交集，"
                 "verifier 却要求题面未声明的固定时间和数组顺序。90/90 reference pass 只能证明官方脚本能满足"
@@ -3528,7 +3609,7 @@ function renderTasks(){{let q=taskSearch.value.toLowerCase();let rows=D.comparis
 function showTask(model,id){{let x=D.comparisons.find(x=>x.model===model&&x.task_id===id);let v=D.measurement_validity.records.find(v=>v.model===model&&v.task_id===id);let blocks=Object.entries(x.conditions).map(([name,c])=>`<h3>${{zh[name]}}</h3>${{c?`<p>${{status(c)}} score=${{c.score??'—'}} · job=${{esc(c.job_id)}}</p><p class="small">实际读取 skills: ${{esc(c.skills_actually_used.join(', ')||'none')}}<br>Oracle 内容证明: ${{esc(Object.entries(c.oracle_content_verification||{{}}).map(([k,v])=>k+': '+v).join(', ')||'—')}}<br>record: ${{esc(c.record_path)}}<br>trajectory: ${{esc(c.trajectory_path)}}</p><details><summary>失败测试 (${{c.failed_tests.length}})</summary><pre>${{esc(JSON.stringify(c.failed_tests,null,2))}}</pre></details>`:'<p class="small">尚无结果</p>'}}`).join('');let validityBlock=v?`<div class="case"><h3>历史 Skill 测量有效性：${{esc(validityZh[v.category]||v.category)}}</h3><p>${{v.eligible_for_causal_skill_claim?'该题可进入历史 skill 的四条件因果检验。':'该题当前不能把成功归因于 T1–T3 形成的历史 skill。'}}</p><p class="small">受控概念：${{esc(v.controlled_concepts.join(', ')||'—')}}<br>T1–T3 历史命中：${{v.history_visible_count}} · 当前题面明示：${{v.instruction_explicit_count}} · generated 覆盖：${{v.generated_coverage}} · oracle 覆盖：${{v.oracle_coverage}}</p></div>`:'';drawerBody.innerHTML=`<h2>${{x.task_id}}</h2><p>${{esc(x.task_slug)}} · T${{x.tier}} · ${{x.environment_id}}</p><div class="conclusion ${{x.causal.complete?'good':'pending'}}"><h3>${{esc(x.causal.label)}} · ${{esc(x.causal.pattern||'')}}</h3>${{esc(x.causal.explanation)}}</div>${{validityBlock}}<p><b>需要的 skills</b><br>${{esc(x.required_skills.join(', ')||x.primary_skill)}}</p>${{blocks}}`;drawer.classList.add('open')}}
 let a=D.verifier_audit.summary;audit.innerHTML=`<div class="card"><span class="label">过程 / 功能 checks</span><b>${{a.process_checks_total}} / ${{a.outcome_checks_total}}</b></div><p><b>${{a.tasks_with_literal_or_regex_process_checks}}/90</b> 含源码字面量或正则检查；<b>${{a.tasks_with_effective_process_weight_50_percent}}/90</b> 的过程权重为 50%。</p><p>形态敏感度：${{Object.entries(a.process_shape_sensitivity).map(([k,v])=>`${{k}}=${{v}}`).join(' · ')}}</p><h3>Process-only 分层</h3>${{D.verifier_shape_outcomes.filter(x=>x.n).map(x=>`<div class="small">${{zh[x.condition]}} · ${{x.shape_risk}} · process-only ${{x.process_only_failures}}/${{x.n}} · outcome ${{x.outcome_passes}}/${{x.n}} · process ${{x.process_passes}}/${{x.n}}</div>`).join('')}}`;
 skills.innerHTML=Object.entries(D.skills.by_model).map(([m,x])=>`<div class="case"><h3>${{m}}</h3><p>skill 对数 <b>${{x.n}}</b> · 改名 ${{x.renamed}} · 完全相同 ${{x.exact_equal}}</p><div class="small">中位 word Jaccard ${{x.median_word_jaccard?.toFixed(3)??'—'}} · 长度比 ${{x.median_length_ratio?.toFixed(2)??'—'}}</div></div>`).join('')+'<p class="small">词面相似度低只说明表达和覆盖范围不同，不能单独证明 skill 质量差；最终要结合 matched oracle rescue。</p>';
-cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}}<br><span class="small">Outcome failures: ${{o.failed_outcome_tests.map(t=>t.name).join(', ')||'无'}}<br>Process failures: ${{o.failed_process_tests.map(t=>t.name).join(', ')||'无'}}</span></p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}${{o.final_edits.length?`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / trajectory 中的最终 edits (${{o.final_edits.length}})</summary><div class="small">${{esc(o.trajectory_path)}}</div><pre>${{esc(o.final_edits.map(e=>`### ${{e.file_path}}\n${{e.new}}`).join(String.fromCharCode(10,10)))}}</pre></details>`:''}}`).join('')}}<details><summary>任务正文</summary><div class="small">${{esc(x.instruction_path)}}</div><pre>${{esc(x.instruction)}}</pre></details><details><summary>Outcome verifier 源码</summary><div class="small">${{esc(x.outcome_verifier_path)}}</div><pre>${{esc(x.outcome_verifier)}}</pre></details><details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details><details><summary>官方 reference solution</summary><div class="small">${{esc(x.reference_solution_path)}}</div><pre>${{esc(x.reference_solution)}}</pre></details></article>`).join('');
+cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}}<br><span class="small">Outcome failures: ${{o.failed_outcome_tests.map(t=>t.name).join(', ')||'无'}}<br>Process failures: ${{o.failed_process_tests.map(t=>t.name).join(', ')||'无'}}<br>Agent tokens: input=${{o.agent_result.n_input_tokens??'—'}} output=${{o.agent_result.n_output_tokens??'—'}} · tools: ${{Object.entries(o.tool_counts).map(([k,v])=>k+'='+v).join(', ')||'none'}} · explicit mutation calls=${{o.mutation_call_count}}</span></p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}${{o.bash_commands.length?`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / bash commands (${{o.bash_commands.length}})</summary><div class="small">${{esc(o.trajectory_path)}}</div><pre>${{esc(o.bash_commands.join(String.fromCharCode(10,10)))}}</pre></details>`:''}}${{o.final_edits.length?`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / trajectory 中的最终 edits (${{o.final_edits.length}})</summary><div class="small">${{esc(o.trajectory_path)}}</div><pre>${{esc(o.final_edits.map(e=>`### ${{e.file_path}}\n${{e.new}}`).join(String.fromCharCode(10,10)))}}</pre></details>`:''}}`).join('')}}${{x.task_source_files.map(f=>`<details><summary>任务资产 / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}<details><summary>任务正文</summary><div class="small">${{esc(x.instruction_path)}}</div><pre>${{esc(x.instruction)}}</pre></details><details><summary>Outcome verifier 源码</summary><div class="small">${{esc(x.outcome_verifier_path)}}</div><pre>${{esc(x.outcome_verifier)}}</pre></details><details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details><details><summary>官方 reference solution</summary><div class="small">${{esc(x.reference_solution_path)}}</div><pre>${{esc(x.reference_solution)}}</pre></details></article>`).join('');
 </script></body></html>'''
 
 
