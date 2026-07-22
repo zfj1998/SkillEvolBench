@@ -54,12 +54,86 @@ def tree_digest(root: Path) -> str:
     return digest.hexdigest()
 
 
+def projected_skill_digest(skill_md: bytes) -> str:
+    """Hash the active-library projection created by ``inject_curated``.
+
+    Curated benchmark folders also contain ``meta.yaml``, but the runtime
+    library intentionally copies only ``SKILL.md``.  Keep this byte-level
+    helper aligned with the oracle-view audit in ``harbor_ext/hooks.py``.
+    """
+    digest = hashlib.sha256()
+    digest.update(b"SKILL.md")
+    digest.update(b"\0")
+    digest.update(skill_md)
+    digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def sanitized_skill_matches_runtime_audit(
+    *,
+    skill_dir: Path,
+    audit_sha256: str,
+    slug: str,
+    skills_root: Path,
+    output_root: Path,
+) -> bool:
+    """Verify a redacted export against runtime hashes and canonical bytes.
+
+    AP sanitization runs *after* the episode and may redact placeholder bearer
+    tokens inside a curated SKILL.md.  The runtime oracle audit therefore
+    hashes the bytes the model saw, while the downloaded tree contains the
+    redacted bytes.  Accept that difference only when all three links agree:
+    canonical curated bytes -> audit tree hash, canonical file hash ->
+    manifest runtime hash, and delivered bytes -> manifest delivered hash.
+    """
+    files = sorted(
+        path.relative_to(skill_dir).as_posix()
+        for path in skill_dir.rglob("*")
+        if path.is_file()
+    )
+    if files != ["SKILL.md"]:
+        return False
+    canonical_path = skills_root / slug / "SKILL.md"
+    if not canonical_path.is_file():
+        return False
+    canonical = canonical_path.read_bytes()
+    if projected_skill_digest(canonical) != audit_sha256:
+        return False
+
+    manifest_path = output_root / "sanitization_manifest.json"
+    try:
+        manifest = load_json(manifest_path)
+    except (OSError, ValueError, json.JSONDecodeError):
+        return False
+    changed = {
+        str(item.get("path")): item
+        for item in manifest.get("changed_files") or []
+        if isinstance(item, dict) and item.get("path")
+    }
+    delivered_path = skill_dir / "SKILL.md"
+    try:
+        relative = delivered_path.relative_to(output_root).as_posix()
+    except ValueError:
+        return False
+    entry = changed.get(relative)
+    if not isinstance(entry, dict):
+        return False
+    delivered = delivered_path.read_bytes()
+    return (
+        entry.get("runtime_sha256") == hashlib.sha256(canonical).hexdigest()
+        and entry.get("runtime_size") == len(canonical)
+        and entry.get("delivered_sha256") == hashlib.sha256(delivered).hexdigest()
+        and entry.get("delivered_size") == len(delivered)
+    )
+
+
 def oracle_evidence(
     run_dir: Path,
     task_id: str,
     spec: dict[str, Any],
     oracle_enabled: bool,
     raw_root: Path,
+    skills_root: Path | None = None,
 ) -> dict[str, Any]:
     if not oracle_enabled:
         return {
@@ -95,6 +169,7 @@ def oracle_evidence(
     )
     if visible_slugs != expected_slugs:
         errors.append(f"visible skill dirs differ: actual={visible_slugs!r} expected={expected_slugs!r}")
+    content_verification: dict[str, str] = {}
     for skill in audit.get("skills") or []:
         if not isinstance(skill, dict):
             errors.append("non-object oracle skill audit entry")
@@ -102,7 +177,19 @@ def oracle_evidence(
         skill_dir = view_dir / str(skill.get("slug"))
         if not skill_dir.is_dir():
             errors.append(f"missing oracle skill dir: {skill.get('slug')}")
-        elif tree_digest(skill_dir) != skill.get("sha256"):
+        elif tree_digest(skill_dir) == skill.get("sha256"):
+            content_verification[str(skill.get("slug"))] = "delivered_tree"
+        elif skills_root is not None and sanitized_skill_matches_runtime_audit(
+            skill_dir=skill_dir,
+            audit_sha256=str(skill.get("sha256") or ""),
+            slug=str(skill.get("slug") or ""),
+            skills_root=skills_root,
+            output_root=run_dir.parents[1],
+        ):
+            content_verification[str(skill.get("slug"))] = (
+                "runtime_hash_via_sanitization_manifest"
+            )
+        else:
             errors.append(f"oracle content hash mismatch: {skill.get('slug')}")
     return {
         "oracle_injection_exact": not errors,
@@ -112,6 +199,7 @@ def oracle_evidence(
         "oracle_skill_ids": actual,
         "expected_oracle_skill_ids": expected,
         "oracle_injection_errors": errors,
+        "oracle_content_verification": content_verification,
     }
 
 
@@ -523,6 +611,7 @@ def collect(
                 spec,
                 bool(config.get("oracle_skill_view")),
                 raw_root,
+                skills_root,
             )
             trial_candidates = sorted(
                 (run_dir / "harbor-job" / str(config.get("run_id", run_dir.name))).glob(

@@ -361,6 +361,56 @@ def test_oracle_injection_requires_exact_ids_dirs_and_hashes(tmp_path: Path) -> 
     ]
 
 
+def test_oracle_integrity_accepts_only_manifest_proven_post_run_redaction(
+    tmp_path: Path,
+) -> None:
+    import hashlib
+    import json
+
+    output_root = tmp_path / "artifacts/output"
+    skill_dir = output_root / "runs/run/oracle-skill-views/E2-LS2-T6/example"
+    skills_root = tmp_path / "benchmark/skills"
+    canonical_path = skills_root / "example/SKILL.md"
+    delivered_path = skill_dir / "SKILL.md"
+    canonical_path.parent.mkdir(parents=True)
+    delivered_path.parent.mkdir(parents=True)
+    canonical = b'headers = {"Authorization": f"Bearer {token}"}\n'
+    delivered = b'headers = {"Authorization": [REDACTED] {token}"}\n'
+    canonical_path.write_bytes(canonical)
+    delivered_path.write_bytes(delivered)
+    relative = delivered_path.relative_to(output_root).as_posix()
+    manifest = {
+        "changed_files": [{
+            "path": relative,
+            "runtime_sha256": hashlib.sha256(canonical).hexdigest(),
+            "runtime_size": len(canonical),
+            "delivered_sha256": hashlib.sha256(delivered).hexdigest(),
+            "delivered_size": len(delivered),
+        }],
+    }
+    (output_root / "sanitization_manifest.json").write_text(
+        json.dumps(manifest), encoding="utf-8"
+    )
+    audit_hash = COLLECTOR.projected_skill_digest(canonical)
+
+    kwargs = {
+        "skill_dir": skill_dir,
+        "audit_sha256": audit_hash,
+        "slug": "example",
+        "skills_root": skills_root,
+        "output_root": output_root,
+    }
+    assert COLLECTOR.sanitized_skill_matches_runtime_audit(**kwargs) is True
+    assert ORACLE_VALIDATOR.sanitized_skill_matches_runtime_audit(**kwargs) is True
+
+    manifest["changed_files"][0]["runtime_sha256"] = "0" * 64
+    (output_root / "sanitization_manifest.json").write_text(
+        json.dumps(manifest), encoding="utf-8"
+    )
+    assert COLLECTOR.sanitized_skill_matches_runtime_audit(**kwargs) is False
+    assert ORACLE_VALIDATOR.sanitized_skill_matches_runtime_audit(**kwargs) is False
+
+
 def test_oracle_skill_use_audit_separates_assignment_from_compliance() -> None:
     specs = {
         "E2-LS1-T5": {
