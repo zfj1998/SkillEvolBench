@@ -150,6 +150,51 @@ CASE_DEFINITIONS = {
             "environment/public_tests/test_transactions.py",
         ],
     },
+    "E2-LS2-T6": {
+        "title": "Exact 只救回了 success_budget 字面量检查，没有救回任何功能",
+        "kind": "Strict-only 源码形态变化，不是 Oracle 功能迁移",
+        "interpretation": (
+            "Qwen/Fable self-generated 与 Fable exact-oracle 的全部 outcome tests 都通过，真实 breaker 行为"
+            "相同：连续失败开路、cooldown 内 fail-fast、到时 half-open probe、成功后立即关闭。两份 self 实现"
+            "已让 next_probe_time"
+            "只使用 recovery_timeout，却保留 recent_success_budget 的无害记账字段；process verifier 只要"
+            "breaker_client.py 出现 success_budget 字符串就判失败。Exact 实现删除这些 token，strict 从"
+            "0.9375 变为 1.0。关键是 generated retry skill 和 curated retry/orchestration skills 都没有"
+            "circuit-breaker 或 success_budget 知识，任务正文反而直接写了“Ignore legacy success_budget”。"
+            "所以这次 exact strict rescue 不能归功于 annotation prior 或更高质量 oracle skill，只是模型从"
+            "当前题面采取了更彻底的源码清理并满足字面量检查；它也解释了为什么 20 个当前 self/exact 配对"
+            "可以出现 strict 正负交换但 outcome rescue 仍为 0。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "breaker_client.py",
+            "cooldown_policy.py",
+            "breaker_state.py",
+        ],
+    },
+    "E2-LS3-T5": {
+        "title": "Generated strict 胜出来自 verifier 位置过拟合，功能上与 Oracle 相同",
+        "kind": "Generated skill 的 verifier-specific 过拟合反例",
+        "interpretation": (
+            "Fable self-generated 与 exact-oracle 都通过全部 outcome tests：都跟随运行期 metadata，"
+            "最终抓取 8 页、80 行。两者唯一差异是源码布局。Self 实现把 should_continue(response)"
+            "导入 solution.py，并在生成 skill 中明确记录了 hidden process check 会 grep entry module、"
+            "要把 has_more/total_pages 等字面量放到被扫描文件；因此严格 1.0。Exact 实现则把"
+            "has_more 与 total_pages 的真实判断封装在 page_plan.next_page，把每页 metadata snapshot"
+            "封装在 report_cache，solution.py 每轮调用这些 helper，功能正确且模块化，但 process verifier"
+            "只读取 solution.py，并要求其中出现 has_more 或至少两个 total_pages 字面量，故以"
+            "rechecks_metadata_or_has_more 判到 0.75。仓库 curated pagination skill 只描述通用分页，"
+            "没有该固定文件扫描先验；generated skill 则大篇幅总结了 grep、literal token 和 file-location"
+            "陷阱。这个 self>oracle 的 strict harm 是 T1–T3 verifier 细节迁移/测试过拟合，不是更强的"
+            "分页语义能力；也直接证明只看 strict reward 会把 skill evolve 与 verifier gaming 混在一起。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "solution.py",
+            "page_plan.py",
+            "report_cache.py",
+        ],
+    },
     "E2-LS1-T5": {
         "title": "有效的模块化实现被单文件字面检查误判",
         "kind": "强假阴性证据",
@@ -2575,6 +2620,14 @@ def conclusions(
             row["conditions"]["exact_oracle"]["outcome"] is True
             for row in matched_exact
         )
+        self_strict = sum(
+            row["conditions"]["self_generated"]["strict"] is True
+            for row in matched_exact
+        )
+        exact_strict = sum(
+            row["conditions"]["exact_oracle"]["strict"] is True
+            for row in matched_exact
+        )
         rescued = sum(
             row["conditions"]["self_generated"]["outcome"] is not True
             and row["conditions"]["exact_oracle"]["outcome"] is True
@@ -2583,6 +2636,16 @@ def conclusions(
         harmed = sum(
             row["conditions"]["self_generated"]["outcome"] is True
             and row["conditions"]["exact_oracle"]["outcome"] is not True
+            for row in matched_exact
+        )
+        strict_rescued = sum(
+            row["conditions"]["self_generated"]["strict"] is not True
+            and row["conditions"]["exact_oracle"]["strict"] is True
+            for row in matched_exact
+        )
+        strict_harmed = sum(
+            row["conditions"]["self_generated"]["strict"] is True
+            and row["conditions"]["exact_oracle"]["strict"] is not True
             for row in matched_exact
         )
         exact_assigned = [
@@ -2613,7 +2676,10 @@ def conclusions(
                     f"目前只有 {slices} 形成 {len(matched_exact)} 个 T5/T6 self/exact 配对："
                     f"self-generated outcome {self_outcome}/{len(matched_exact)}，"
                     f"exact-oracle {exact_outcome}/{len(matched_exact)}，救回 {rescued}、"
-                    f"损害 {harmed}。Exact 条件在已导出的 T4–T6 中有 "
+                    f"损害 {harmed}；strict 则 self={self_strict}/{len(matched_exact)}、"
+                    f"exact={exact_strict}/{len(matched_exact)}，救回 {strict_rescued}、"
+                    f"损害 {strict_harmed}。目前 strict 的正负变化互相抵消且 outcome 不变，更像实现/"
+                    "源码形态路径变化，尚不是功能迁移证据。Exact 条件在已导出的 T4–T6 中有 "
                     f"{exact_compliant}/{len(exact_assigned)} 题实际打开了全部指定 skill，"
                     "所以当前零增益不能归因于 treatment 普遍没挂载；目前仅覆盖上述 "
                     f"{len(set((row['model'], row['environment_id']) for row in matched_exact))} 个"
