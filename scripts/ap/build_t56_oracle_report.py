@@ -42,6 +42,30 @@ CAUSE_ZH = {
 }
 
 CASE_DEFINITIONS = {
+    "E2-LS1-T6": {
+        "title": "Oracle 建议的 structured error 与隐藏 ValueError 契约冲突",
+        "kind": "Oracle scope / hidden-contract 冲突",
+        "interpretation": (
+            "exact-oracle 的 pre-call skill 明确推荐返回 structured error；任务正文只说 missing fields "
+            "should fail locally，没有声明 validate_record 必须抛 ValueError。Fable 按 skill 返回错误列表并在批处理中跳过，"
+            "还修改 requests.json 构造公开测试所需的 invalid case；隐藏测试却直接要求 ValueError。"
+            "这不是单纯的模型能力不足，而是 oracle 指导、可见契约和隐藏判分接口没有对齐。"
+        ),
+        "conditions": ["exact_oracle"],
+        "files": ["transactions.py", "requests.json", "fallback_policy.py"],
+    },
+    "E2-LS2-T6": {
+        "title": "注入的 retry skill 反而让 circuit-breaker 超额请求下游",
+        "kind": "Oracle mapping 负迁移",
+        "interpretation": (
+            "该题要求 circuit breaker，但注入的两个 oracle skills 只覆盖固定三次重试和简单两步 API chain，"
+            "完全没有 breaker 状态机知识。Fable 主动把三次 retry 与 breaker 组合，导致隐藏检查统计到过多 503；"
+            "同时 cooldown 已按 recovery_timeout 正确实现，却因源码仍含 success_budget 字样被 process verifier 判失败。"
+            "这里 exact-oracle 既缺关键知识，又引入了与目标约束冲突的动作。"
+        ),
+        "conditions": ["exact_oracle"],
+        "files": ["breaker_client.py", "cooldown_policy.py"],
+    },
     "E2-LS1-T5": {
         "title": "有效的模块化实现被单文件字面检查误判",
         "kind": "强假阴性证据",
@@ -398,8 +422,9 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
     for task_id, definition in CASE_DEFINITIONS.items():
         verifier = audit_by_id.get(task_id, {})
         observations = []
+        conditions = set(definition.get("conditions", ["self_generated"]))
         for row in rows:
-            if row.get("task_id") != task_id or row.get("condition") != "self_generated":
+            if row.get("task_id") != task_id or row.get("condition") not in conditions:
                 continue
             files = []
             rel = row.get("local_artifact_task_path")
@@ -415,6 +440,7 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                         })
             observations.append({
                 "model": row["model"],
+                "condition": row.get("condition"),
                 "strict": row.get("strict_pass"),
                 "outcome": row.get("outcome_pass"),
                 "process": row.get("process_pass"),
@@ -422,6 +448,8 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                 "failed_process_tests": row.get("failed_process_tests") or [],
                 "files": files,
             })
+        if not observations:
+            continue
         process_path = Path(str(verifier.get("process", {}).get("path", "")))
         result.append({
             "task_id": task_id,
@@ -1185,7 +1213,8 @@ def render_markdown(data: dict[str, Any]) -> str:
         lines += [f"### {case['task_id']}：{case['title']}", "", f"分类：**{case['kind']}**。{case['interpretation']}", ""]
         for obs in case["observations"]:
             failures = ", ".join(item.get("name", "") for item in obs["failed_process_tests"])
-            lines.append(f"- {obs['model']}：strict={obs['strict']}，outcome={obs['outcome']}，process={obs['process']}，失败检查 `{failures}`。")
+            condition = CONDITION_ZH.get(str(obs.get("condition")), str(obs.get("condition")))
+            lines.append(f"- {obs['model']} / {condition}：strict={obs['strict']}，outcome={obs['outcome']}，process={obs['process']}，失败检查 `{failures}`。")
         lines.append("")
     lines += [
         "## 可靠性限制与下一步",
@@ -1271,7 +1300,7 @@ function renderTasks(){{let q=taskSearch.value.toLowerCase();let rows=D.comparis
 function showTask(model,id){{let x=D.comparisons.find(x=>x.model===model&&x.task_id===id);let blocks=Object.entries(x.conditions).map(([name,c])=>`<h3>${{zh[name]}}</h3>${{c?`<p>${{status(c)}} score=${{c.score??'—'}} · job=${{esc(c.job_id)}}</p><p class="small">record: ${{esc(c.record_path)}}<br>trajectory: ${{esc(c.trajectory_path)}}</p><details><summary>失败测试 (${{c.failed_tests.length}})</summary><pre>${{esc(JSON.stringify(c.failed_tests,null,2))}}</pre></details>`:'<p class="small">尚无结果</p>'}}`).join('');drawerBody.innerHTML=`<h2>${{x.task_id}}</h2><p>${{esc(x.task_slug)}} · T${{x.tier}} · ${{x.environment_id}}</p><p><b>需要的 skills</b><br>${{esc(x.required_skills.join(', ')||x.primary_skill)}}</p>${{blocks}}`;drawer.classList.add('open')}}
 let a=D.verifier_audit.summary;audit.innerHTML=`<div class="card"><span class="label">过程 / 功能 checks</span><b>${{a.process_checks_total}} / ${{a.outcome_checks_total}}</b></div><p><b>${{a.tasks_with_literal_or_regex_process_checks}}/90</b> 含源码字面量或正则检查；<b>${{a.tasks_with_effective_process_weight_50_percent}}/90</b> 的过程权重为 50%。</p><p>形态敏感度：${{Object.entries(a.process_shape_sensitivity).map(([k,v])=>`${{k}}=${{v}}`).join(' · ')}}</p><h3>Process-only 分层</h3>${{D.verifier_shape_outcomes.filter(x=>x.n).map(x=>`<div class="small">${{zh[x.condition]}} · ${{x.shape_risk}} · process-only ${{x.process_only_failures}}/${{x.n}} · outcome ${{x.outcome_passes}}/${{x.n}} · process ${{x.process_passes}}/${{x.n}}</div>`).join('')}}`;
 skills.innerHTML=Object.entries(D.skills.by_model).map(([m,x])=>`<div class="case"><h3>${{m}}</h3><p>skill 对数 <b>${{x.n}}</b> · 改名 ${{x.renamed}} · 完全相同 ${{x.exact_equal}}</p><div class="small">中位 word Jaccard ${{x.median_word_jaccard?.toFixed(3)??'—'}} · 长度比 ${{x.median_length_ratio?.toFixed(2)??'—'}}</div></div>`).join('')+'<p class="small">词面相似度低只说明表达和覆盖范围不同，不能单独证明 skill 质量差；最终要结合 matched oracle rescue。</p>';
-cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}} · ${{o.failed_process_tests.map(t=>t.name).join(', ')}}</p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}`).join('')}}<details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details></article>`).join('');
+cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}} · ${{o.failed_process_tests.map(t=>t.name).join(', ')}}</p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}`).join('')}}<details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details></article>`).join('');
 </script></body></html>'''
 
 

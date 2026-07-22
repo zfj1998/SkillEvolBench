@@ -304,6 +304,29 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
     }
 
 
+def test_oracle_case_studies_use_only_the_declared_condition(tmp_path: Path) -> None:
+    common = {
+        "task_id": "E2-LS1-T6",
+        "model": "sig-fable",
+        "strict_pass": False,
+        "outcome_pass": False,
+        "process_pass": False,
+        "normalized_score": 0.5,
+        "failed_process_tests": [],
+    }
+    cases = REPORT.build_cases(
+        [
+            {**common, "condition": "self_generated"},
+            {**common, "condition": "exact_oracle"},
+        ],
+        {"tasks": [{"task_id": "E2-LS1-T6", "process": {}}]},
+        tmp_path,
+    )
+
+    case = next(item for item in cases if item["task_id"] == "E2-LS1-T6")
+    assert [row["condition"] for row in case["observations"]] == ["exact_oracle"]
+
+
 def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path) -> None:
     tasks_root = tmp_path / "benchmark/tasks"
     skill_root = tmp_path / "benchmark/skills/retry"
