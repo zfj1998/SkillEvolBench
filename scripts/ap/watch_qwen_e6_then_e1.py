@@ -117,6 +117,7 @@ class Watcher:
         self,
         phase: str,
         *,
+        watcher_status: str = "active",
         e6_status: str | None = None,
         e1_job_id: str | None = None,
         e1_status: str | None = None,
@@ -125,7 +126,7 @@ class Watcher:
     ) -> None:
         payload: dict[str, Any] = {
             "updated_at_utc": utc_now(),
-            "watcher_status": "active",
+            "watcher_status": watcher_status,
             "watcher_phase": phase,
             "e6_job_id": E6_JOB_ID,
             "e6_status": e6_status,
@@ -386,6 +387,7 @@ class Watcher:
             write_json(self.state_dir / "completed.json", completed)
             self.heartbeat(
                 "completed",
+                watcher_status="completed",
                 e1_job_id=job_id,
                 e1_status=status,
                 next_action="none",
