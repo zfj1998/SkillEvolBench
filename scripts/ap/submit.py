@@ -134,6 +134,26 @@ def _sanitize(text: str, secrets: list[str]) -> str:
     return sanitized
 
 
+def _model_base_urls(
+    args: argparse.Namespace, environ: Mapping[str, str]
+) -> list[str]:
+    """Return the normalized, de-duplicated model endpoint list."""
+    raw_urls = list(args.model_base_url_collection or [])
+    if args.model_base_url:
+        raw_urls.insert(0, args.model_base_url)
+    elif not raw_urls and environ.get("MODEL_BASE_URL"):
+        raw_urls.append(environ["MODEL_BASE_URL"])
+
+    urls: list[str] = []
+    for raw_url in raw_urls:
+        normalized = raw_url.strip().rstrip("/")
+        if normalized and normalized not in urls:
+            urls.append(normalized)
+    if not urls:
+        raise ValueError("MODEL_BASE_URL is required")
+    return urls
+
+
 @dataclass(frozen=True)
 class Submission:
     command: list[str]
@@ -146,9 +166,8 @@ def build_submission(
 ) -> Submission:
     ap_api_key = _required(environ.get("AP_API_KEY"), "AP_API_KEY")
     model_api_key = _required(environ.get("MODEL_API_KEY"), "MODEL_API_KEY")
-    model_base_url = _required(
-        args.model_base_url or environ.get("MODEL_BASE_URL"), "MODEL_BASE_URL"
-    ).rstrip("/")
+    model_base_urls = _model_base_urls(args, environ)
+    model_base_url = model_base_urls[0]
     model = _required(
         args.model or environ.get("MODEL_NAME") or environ.get("MODEL"),
         "MODEL_NAME (or MODEL)",
@@ -223,6 +242,13 @@ def build_submission(
         command.extend(
             ["--dataset", dataset_version, "--concurrency", str(args.concurrency)]
         )
+        if len(model_base_urls) > 1:
+            command.extend(
+                [
+                    "--model-base-url-collection",
+                    json.dumps(model_base_urls, separators=(",", ":")),
+                ]
+            )
         command.append("--enable-post-process")
         description = f"full six-environment dataset {dataset_version}"
     else:
@@ -316,6 +342,16 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--model", default=None)
     parser.add_argument("--model-base-url", default=None)
     parser.add_argument(
+        "--model-base-url-collection",
+        action="append",
+        default=None,
+        metavar="URL",
+        help=(
+            "repeat for each model server; full submissions pass the unique "
+            "URL list to AP for server-side load balancing"
+        ),
+    )
+    parser.add_argument(
         "--harbor-agent", choices=("codex", "opencode"), default="opencode"
     )
     parser.add_argument("--model-provider", default="sglang")
@@ -403,21 +439,24 @@ def main(argv: list[str] | None = None) -> int:
     try:
         submission = build_submission(args, os.environ)
         model_api_key = _required(os.environ.get("MODEL_API_KEY"), "MODEL_API_KEY")
-        model_base_url = _required(
-            args.model_base_url or os.environ.get("MODEL_BASE_URL"), "MODEL_BASE_URL"
-        )
+        model_base_urls = _model_base_urls(args, os.environ)
         model = _required(
             args.model or os.environ.get("MODEL_NAME") or os.environ.get("MODEL"),
             "MODEL_NAME (or MODEL)",
         )
-        available = probe_model(
-            base_url=model_base_url,
-            api_key=model_api_key,
-            model=model,
-            timeout=args.probe_timeout,
-        )
+        available_by_url = [
+            probe_model(
+                base_url=model_base_url,
+                api_key=model_api_key,
+                model=model,
+                timeout=args.probe_timeout,
+            )
+            for model_base_url in model_base_urls
+        ]
         print(
-            f"Model probe OK: {model.split('/', 1)[-1]} ({len(available)} model id(s))"
+            f"Model probe OK: {model.split('/', 1)[-1]} "
+            f"({len(model_base_urls)} endpoint(s), "
+            f"{sum(map(len, available_by_url))} advertised model id(s))"
         )
         mode = "AP dry-run" if args.dry_run else "AP submission"
         print(f"Starting {mode}: {submission.description}")
