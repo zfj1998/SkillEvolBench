@@ -1650,6 +1650,85 @@ def test_e6_ls2_reproduction_accepts_explicit_semantic_equivalents(
     assert row["literal_triage_marker_in_policy_source"] is False
 
 
+def test_e6_ls1_reproduction_separates_hidden_literals_from_public_contract(
+    tmp_path: Path,
+) -> None:
+    task_root = tmp_path / "task"
+    tests_root = task_root / "tests"
+    mail_root = task_root / "environment" / "mail"
+    mail_root.mkdir(parents=True)
+    tests_root.mkdir(parents=True)
+    (task_root / "instruction.md").write_text(
+        "For P0 items only, draft immediate replies with an ETA. Include only "
+        "messages that truly need responses in response_list.\n",
+        encoding="utf-8",
+    )
+    ground_truth = {
+        "expected_priorities": {
+            "checkout_incident": "P0",
+            "launch_copy": "P1",
+        },
+        "expected_p0": ["checkout_incident"],
+        "expected_response_ids": ["checkout_incident"],
+        "expected_drafts": {"checkout_incident": {}},
+    }
+    (tests_root / "ground_truth.json").write_text(
+        json.dumps(ground_truth), encoding="utf-8"
+    )
+    (mail_root / "messages.json").write_text(
+        json.dumps({
+            "messages": [
+                {"id": "checkout_incident", "body": "Bridge is open."},
+                {"id": "launch_copy", "body": "Please review today."},
+            ]
+        }),
+        encoding="utf-8",
+    )
+    artifact = tmp_path / "artifact"
+    (artifact / "output").mkdir(parents=True)
+    output = {
+        "items": [
+            {
+                "id": "checkout_incident",
+                "priority": "P0",
+                "reason": "Active production incident with open bridge.",
+            },
+            {"id": "launch_copy", "priority": "P1", "reason": "Review needed."},
+        ],
+        "response_list": ["checkout_incident", "launch_copy"],
+        "drafts": [{
+            "email_id": "checkout_incident",
+            "body": "Joining inc-7421 to investigate the queue; ETA within 30 minutes.",
+        }],
+    }
+    (artifact / "output" / "triage.json").write_text(
+        json.dumps(output), encoding="utf-8"
+    )
+
+    result = REPORT.reproduce_e6_ls1_hidden_reply_contract(
+        task_root,
+        [{
+            "model": "sig-fable",
+            "condition": "self_generated",
+            "artifact_task_path": str(artifact),
+        }],
+    )
+
+    assert result[
+        "hidden_10_30_appears_in_public_instruction_or_environment"
+    ] is False
+    row = result["models"][0]
+    assert row["all_priorities_exact"] is True
+    assert row["p0_set_exact"] is True
+    assert row["draft_ids_exact"] is True
+    assert row["response_list_exact_hidden_set"] is False
+    assert row["extra_response_ids_with_explicit_requests"] == ["launch_copy"]
+    assert row["checkout_has_semantic_eta"] is True
+    assert row["checkout_has_hidden_10_30_literal"] is False
+    assert row["checkout_reason_has_hidden_immediate_literal"] is False
+    assert row["checkout_reason_has_semantic_incident_evidence"] is True
+
+
 def test_pearson_correlation_handles_signal_and_constant() -> None:
     assert REPORT.pearson_correlation([0, 1, 2], [0, 1, 2]) == 1.0
     assert REPORT.pearson_correlation([1, 1, 1], [0, 1, 2]) is None

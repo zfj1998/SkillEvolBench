@@ -72,12 +72,14 @@ VERIFIED_OUTCOME_FALSE_NEGATIVE_PAIRS = frozenset({
     ("qwen3.7-max", "E4-LS3-T5"),
     ("qwen3.7-max", "E4-LS4-T6"),
     ("qwen3.7-max", "E6-LS2-T6"),
+    ("sig-fable", "E6-LS1-T6"),
     ("sig-fable", "E6-LS2-T6"),
 })
 MIXED_BENCHMARK_MODEL_GAP_PAIRS = frozenset({
     ("qwen3.7-max", "E2-LS1-T6"),
     ("sig-fable", "E2-LS1-T6"),
     ("qwen3.7-max", "E5-LS5-T6"),
+    ("qwen3.7-max", "E6-LS1-T6"),
     ("qwen3.7-max", "E6-LS3-T6"),
     ("sig-fable", "E6-LS3-T6"),
 })
@@ -510,6 +512,35 @@ CASE_DEFINITIONS = {
             "scope_normalizer.py",
         ],
     },
+    "E6-LS1-T6": {
+        "title": "Fable 已正确分级和起草，却被未公开时间、关键词与 response-list 范围判失败",
+        "kind": "隐藏回复合同；Qwen 另有真实优先级 gap（强任务缺陷）",
+        "interpretation": (
+            "Fable 的 20 封邮件优先级、P0 集合和三份 P0 draft 全部正确；checkout draft 引用"
+            "inc-7421/queue，指定 action owner，并给出 `initial status update within 30 minutes` 和后续"
+            "两小时 mitigation ETA。Hidden ground truth 却要求字面 `10:30`，而该时间没有出现在"
+            "instruction、09:00 邮件、thread_context 或 calendar；reason 还必须含任意词 `Immediate`，"
+            "尽管 Fable 已写 active production incident/genuine current crisis。最后，Fable 把两封正文"
+            "明确说 `Please review today`、`Need your view today` 的 P1 邮件列为 need response，但没有"
+            "为它们起草 P0 immediate reply；这符合题面 `only messages that truly need responses` 与"
+            "`For P0 items only, draft immediate replies` 的自然组合，verifier 却把 response_list 偷换成"
+            "exact P0 set。故 Fable 的 raw failure 是完整合同假阴性。Qwen 还把 checkout 降为 P1 并漏掉"
+            "对应 draft，属于题目缺陷与真实模型 gap 混合，不能共享 Fable 的归因。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "priority_rules.py",
+            "reply_drafter.py",
+            "triage_pipeline.py",
+            "output/triage.json",
+        ],
+        "task_source_files": [
+            "tests/ground_truth.json",
+            "environment/mail/messages.json",
+            "environment/mail/thread_context.md",
+            "environment/calendar/today.json",
+        ],
+    },
     "E6-LS2-T6": {
         "title": "两模型的路由、CC 与回复语义都正确，却因两个未公开固定短语被判 outcome 失败",
         "kind": "隐藏措辞白名单与源码 marker 造成的语义假阴性（强任务缺陷）",
@@ -758,8 +789,9 @@ ENVIRONMENT_PROFILES = {
         "capability": "优先级判断、上下文回复、行动项抽取、时区排期以及 thread 级综合。",
         "provisional_read": (
             "两模型 T6 outcome 都是 0/5，且失败横跨优先级、必含内容、隐式行动、DST 排期和状态汇总。"
-            "generated skills 往往已经写到这些概念，但执行产物仍不符合契约。逐代码后，至少三题的 raw"
-            "0/5 被 benchmark 明显放大：E6-LS2-T6 中两模型的 4 reply/3 acknowledge/8 ignore、CC 与"
+            "generated skills 往往已经写到这些概念，但执行产物仍不符合契约。逐代码后，至少四题的 raw"
+            "0/5 被 benchmark 明显放大：E6-LS1-T6 中 Fable 的 P0 与 draft 全对，却撞上未公开 10:30、"
+            "Immediate 和 response-list=P0 合同；Qwen 同题仍有真实 priority gap。E6-LS2-T6 中两模型的 4 reply/3 acknowledge/8 ignore、CC 与"
             "回复语义都正确，只因 `cannot commit`/thread history 没匹配 `not promise`/`thread context`"
             "固定短语而失败；E6-LS3-T6 中两模型都抽出 8/8 actions，核心字段分别命中"
             "23/24 与 22/24，却因题面未公开的 action ID 名称被报大量 missing；E6-LS4-T6 则是"
@@ -1817,6 +1849,147 @@ def reproduce_e6_ls2_semantic_phrasing(
     }
 
 
+def reproduce_e6_ls1_hidden_reply_contract(
+    task_root: Path, observations: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Separate public triage semantics from hidden exact reply strings."""
+
+    ground_truth_path = task_root / "tests" / "ground_truth.json"
+    messages_path = task_root / "environment" / "mail" / "messages.json"
+    ground_truth = json.loads(ground_truth_path.read_text(encoding="utf-8"))
+    message_payload = json.loads(messages_path.read_text(encoding="utf-8"))
+    messages = {
+        str(message["id"]): message
+        for message in message_payload.get("messages", [])
+    }
+    public_text_parts = [
+        (task_root / "instruction.md").read_text(
+            encoding="utf-8", errors="replace"
+        )
+    ]
+    for path in sorted((task_root / "environment").rglob("*")):
+        if path.is_file():
+            try:
+                public_text_parts.append(
+                    path.read_text(encoding="utf-8", errors="replace")
+                )
+            except OSError:
+                pass
+    public_surface = "\n".join(public_text_parts).lower()
+
+    rows = []
+    for observation in observations:
+        artifact_raw = observation.get("artifact_task_path")
+        if not artifact_raw:
+            continue
+        task_artifact = Path(str(artifact_raw))
+        output_path = task_artifact / "output" / "triage.json"
+        if not output_path.is_file():
+            continue
+        output = json.loads(output_path.read_text(encoding="utf-8"))
+        items = {
+            str(item.get("id")): item
+            for item in output.get("items", [])
+            if isinstance(item, dict)
+        }
+        priorities = {
+            task_id: str(item.get("priority"))
+            for task_id, item in items.items()
+        }
+        expected_priorities = {
+            str(task_id): str(priority)
+            for task_id, priority in ground_truth["expected_priorities"].items()
+        }
+        p0_ids = {
+            task_id
+            for task_id, priority in priorities.items()
+            if priority == "P0"
+        }
+        response_ids = {
+            str(task_id) for task_id in output.get("response_list", [])
+        }
+        expected_response_ids = set(ground_truth["expected_response_ids"])
+        extra_response_ids = sorted(response_ids - expected_response_ids)
+        explicit_request_extras = [
+            task_id
+            for task_id in extra_response_ids
+            if re.search(
+                r"\b(?:please|need your|need a|can you|could you)\b",
+                str(messages.get(task_id, {}).get("body") or ""),
+                re.IGNORECASE,
+            )
+        ]
+        drafts = {
+            str(draft.get("email_id")): draft
+            for draft in output.get("drafts", [])
+            if isinstance(draft, dict)
+        }
+        checkout_body = str(
+            drafts.get("checkout_incident", {}).get("body") or ""
+        ).lower()
+        checkout_reason = str(
+            items.get("checkout_incident", {}).get("reason") or ""
+        ).lower()
+        checkout_semantic_eta = bool(
+            re.search(
+                r"\b(?:eta|within\s+\d+\s+(?:minutes?|hours?)|by\s+\d{1,2}:\d{2})\b",
+                checkout_body,
+                re.IGNORECASE,
+            )
+        )
+        checkout_semantic_incident_reason = any(
+            phrase in checkout_reason
+            for phrase in (
+                "active production incident",
+                "incident still active",
+                "current crisis",
+                "bridge",
+            )
+        )
+        rows.append({
+            "model": observation.get("model"),
+            "condition": observation.get("condition"),
+            "all_priorities_exact": priorities == expected_priorities,
+            "p0_set_exact": p0_ids == set(ground_truth["expected_p0"]),
+            "draft_ids_exact": set(drafts) == set(
+                ground_truth["expected_drafts"]
+            ),
+            "response_list_exact_hidden_set": (
+                response_ids == expected_response_ids
+            ),
+            "extra_response_ids": extra_response_ids,
+            "extra_response_ids_with_explicit_requests": explicit_request_extras,
+            "checkout_has_incident_and_queue_context": (
+                "inc-7421" in checkout_body and "queue" in checkout_body
+            ),
+            "checkout_has_semantic_eta": checkout_semantic_eta,
+            "checkout_has_hidden_10_30_literal": "10:30" in checkout_body,
+            "checkout_reason_has_hidden_immediate_literal": (
+                "immediate" in checkout_reason
+            ),
+            "checkout_reason_has_semantic_incident_evidence": (
+                checkout_semantic_incident_reason
+            ),
+            "artifact_output_path": str(output_path.resolve()),
+        })
+
+    return {
+        "method": (
+            "Recompute priority/P0/draft sets, inspect whether response-list "
+            "extras explicitly request an answer, and compare the hidden "
+            "10:30/Immediate literals with public ETA/incident semantics."
+        ),
+        "hidden_10_30_appears_in_public_instruction_or_environment": (
+            "10:30" in public_surface
+        ),
+        "public_instruction_limits_immediate_drafts_to_p0": True,
+        "public_instruction_limits_response_list_to_p0": False,
+        "models": rows,
+        "ground_truth_path": str(ground_truth_path.resolve()),
+        "messages_path": str(messages_path.resolve()),
+    }
+
+
 def reproduce_e4_ls3_missing_markers(
     task_root: Path, artifact_task_root: Path
 ) -> dict[str, Any]:
@@ -2141,6 +2314,10 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
             )
         if task_id == "E6-LS2-T6" and task_root:
             reproduction = reproduce_e6_ls2_semantic_phrasing(
+                task_root, observations
+            )
+        if task_id == "E6-LS1-T6" and task_root:
+            reproduction = reproduce_e6_ls1_hidden_reply_contract(
                 task_root, observations
             )
         result.append({
@@ -4061,7 +4238,9 @@ def conclusions(
                 "`$150/month` 两个 token 和原始 policy_v2 的 en-dash、`$150 per month` 写法冲突；"
                 "E6-LS3-T6 中两模型都抽取了 8/8 个真实 action，核心"
                 "assignee/deadline/status 字段分别命中 23/24 与 22/24，却因未公开的 action-id 词表"
-                "被判大量 missing，该题同时仍有少量 status/follow-up 真缺口；E6-LS2-T6 的两模型"
+                "被判大量 missing，该题同时仍有少量 status/follow-up 真缺口；E6-LS1-T6 中 Fable"
+                "优先级/P0/draft 全对，但被从未公开的 10:30/Immediate/response-list exact set 拒绝，"
+                "Qwen 同题另有真实优先级错误；E6-LS2-T6 的两模型"
                 "路由、CC 和拒绝过度承诺语义都正确，hidden verifier 却只接受 `not promise`/"
                 "`thread context` 两个固定短语；E6-LS4-T6 的四人工作时段没有共同正长度交集，"
                 "verifier 却要求题面未声明的固定时间和数组顺序。90/90 reference pass 只能证明官方脚本能满足"
