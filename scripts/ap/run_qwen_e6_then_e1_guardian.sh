@@ -14,7 +14,9 @@ readonly GUARDIAN_DIR="${STATE_DIR}/guardian"
 readonly SESSION="sevb-qwen-e6-then-e1-watch"
 readonly LOG_PATH="${GUARDIAN_DIR}/guardian.log"
 readonly HEARTBEAT_PATH="${GUARDIAN_DIR}/heartbeat.json"
+readonly WATCHER_HEARTBEAT_PATH="${STATE_DIR}/heartbeat.json"
 readonly POLL_SECONDS=60
+readonly WATCHER_STALE_SECONDS=300
 
 mkdir -p "${GUARDIAN_DIR}"
 chmod 700 "${GUARDIAN_DIR}"
@@ -42,7 +44,12 @@ write_heartbeat() {
 
 session_is_healthy() {
   tmux has-session -t "${SESSION}" 2>/dev/null || return 1
-  [[ "$(tmux list-panes -t "${SESSION}" -F '#{pane_dead}' 2>/dev/null | sort -u)" == "0" ]]
+  [[ "$(tmux list-panes -t "${SESSION}" -F '#{pane_dead}' 2>/dev/null | sort -u)" == "0" ]] || return 1
+  [[ -f "${WATCHER_HEARTBEAT_PATH}" ]] || return 1
+
+  local heartbeat_mtime
+  heartbeat_mtime="$(stat -c '%Y' "${WATCHER_HEARTBEAT_PATH}" 2>/dev/null)" || return 1
+  (( $(date +%s) - heartbeat_mtime <= WATCHER_STALE_SECONDS ))
 }
 
 start_session() {
