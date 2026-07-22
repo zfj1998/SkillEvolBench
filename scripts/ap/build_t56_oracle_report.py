@@ -1323,6 +1323,172 @@ def validity_stratified_effects(
     return result
 
 
+def pearson_correlation(left: list[float], right: list[float]) -> float | None:
+    if len(left) != len(right) or len(left) < 2:
+        return None
+    left_mean = sum(left) / len(left)
+    right_mean = sum(right) / len(right)
+    left_variance = sum((value - left_mean) ** 2 for value in left)
+    right_variance = sum((value - right_mean) ** 2 for value in right)
+    if left_variance == 0 or right_variance == 0:
+        return None
+    covariance = sum(
+        (left_value - left_mean) * (right_value - right_mean)
+        for left_value, right_value in zip(left, right)
+    )
+    return covariance / math.sqrt(left_variance * right_variance)
+
+
+def learning_transfer_diagnostics(
+    learning: dict[str, Any],
+    comparisons: list[dict[str, Any]],
+    measurement_validity: dict[str, Any],
+) -> dict[str, Any]:
+    """Relate acquisition evidence to later self-generated outcomes.
+
+    This is descriptive, not a causal estimate: family difficulty can affect
+    both T1-T3 acquisition and T5/T6 performance, and no-skill controls are
+    required before any difference can be attributed to the generated skill.
+    """
+
+    families = {
+        (str(row.get("model")), str(row.get("family_id"))): row
+        for row in learning.get("families", [])
+        if isinstance(row, dict) and row.get("model") and row.get("family_id")
+    }
+    self_outcomes: dict[tuple[str, str], dict[int, bool]] = defaultdict(dict)
+    for row in comparisons:
+        if int(row.get("tier", -1)) not in (5, 6):
+            continue
+        condition = row.get("conditions", {}).get("self_generated")
+        if not isinstance(condition, dict):
+            continue
+        family_id = str(row.get("task_id") or "").rsplit("-T", 1)[0]
+        self_outcomes[(str(row.get("model")), family_id)][int(row["tier"])] = (
+            condition.get("outcome") is True
+        )
+
+    rows: list[dict[str, Any]] = []
+    for key, outcomes in sorted(self_outcomes.items()):
+        family = families.get(key)
+        if family is None or set(outcomes) != {5, 6}:
+            continue
+        rows.append(
+            {
+                "model": key[0],
+                "family_id": key[1],
+                "terminal_strict_passes": int(
+                    family.get("terminal_strict_passes") or 0
+                ),
+                "learning_attempts": int(family.get("learning_attempts") or 0),
+                "repaired_to_pass": int(family.get("repaired_to_pass") or 0),
+                "best_word_jaccard": float(family.get("best_word_jaccard") or 0),
+                "t5_outcome": outcomes[5],
+                "t6_outcome": outcomes[6],
+            }
+        )
+
+    validity_by_key = {
+        (str(row.get("model")), str(row.get("task_id"))): row
+        for row in measurement_validity.get("records", [])
+        if isinstance(row, dict)
+    }
+    comparison_by_key = {
+        (str(row.get("model")), str(row.get("task_id"))): row
+        for row in comparisons
+        if int(row.get("tier", -1)) in (5, 6)
+    }
+    summaries: list[dict[str, Any]] = []
+    for model in MODELS:
+        model_rows = [row for row in rows if row["model"] == model]
+        pass_groups = []
+        for terminal_passes in range(4):
+            group = [
+                row
+                for row in model_rows
+                if row["terminal_strict_passes"] == terminal_passes
+            ]
+            pass_groups.append(
+                {
+                    "terminal_strict_passes": terminal_passes,
+                    "families": len(group),
+                    "t5_passed": sum(row["t5_outcome"] for row in group),
+                    "t6_passed": sum(row["t6_outcome"] for row in group),
+                    "combined_passed": sum(
+                        row["t5_outcome"] + row["t6_outcome"] for row in group
+                    ),
+                    "combined_total": 2 * len(group),
+                }
+            )
+
+        coverage_groups = []
+        for coverage in ("all", "partial", "none"):
+            group = []
+            for key, validity in validity_by_key.items():
+                if key[0] != model or validity.get("generated_coverage") != coverage:
+                    continue
+                comparison = comparison_by_key.get(key)
+                if comparison is None:
+                    continue
+                condition = comparison.get("conditions", {}).get("self_generated")
+                if isinstance(condition, dict):
+                    group.append(condition.get("outcome") is True)
+            coverage_groups.append(
+                {
+                    "generated_coverage": coverage,
+                    "tasks": len(group),
+                    "outcome_passed": sum(group),
+                    "outcome_rate": rate(sum(group), len(group)),
+                }
+            )
+
+        def values(name: str) -> list[float]:
+            return [float(row[name]) for row in model_rows]
+
+        t5 = [float(row["t5_outcome"]) for row in model_rows]
+        t6 = [float(row["t6_outcome"]) for row in model_rows]
+        combined = [
+            (float(row["t5_outcome"]) + float(row["t6_outcome"])) / 2
+            for row in model_rows
+        ]
+        summaries.append(
+            {
+                "model": model,
+                "families": len(model_rows),
+                "by_terminal_strict_passes": pass_groups,
+                "by_generated_concept_coverage": coverage_groups,
+                "correlations": {
+                    "terminal_passes_vs_t5": pearson_correlation(
+                        values("terminal_strict_passes"), t5
+                    ),
+                    "terminal_passes_vs_t6": pearson_correlation(
+                        values("terminal_strict_passes"), t6
+                    ),
+                    "terminal_passes_vs_combined": pearson_correlation(
+                        values("terminal_strict_passes"), combined
+                    ),
+                    "learning_attempts_vs_t6": pearson_correlation(
+                        values("learning_attempts"), t6
+                    ),
+                    "repairs_vs_t6": pearson_correlation(
+                        values("repaired_to_pass"), t6
+                    ),
+                    "generated_oracle_jaccard_vs_t6": pearson_correlation(
+                        values("best_word_jaccard"), t6
+                    ),
+                },
+            }
+        )
+    return {
+        "method": (
+            "descriptive family-level association between T1-T3 acquisition and "
+            "self-generated T5/T6 outcome; not causal and confounded by family difficulty"
+        ),
+        "rows": rows,
+        "summaries": summaries,
+    }
+
+
 def oracle_scope_analysis(audit: dict[str, Any]) -> dict[str, Any]:
     tasks_root = Path(str(audit.get("tasks_root") or "benchmark/tasks"))
     skills_root = tasks_root.parent / "skills"
@@ -2389,6 +2555,9 @@ def build_payload(
     measurement_validity = measurement_validity_analysis(
         derivability, oracle_scope
     )
+    learning_transfer = learning_transfer_diagnostics(
+        learning, comparisons, measurement_validity
+    )
     validity_effects = validity_stratified_effects(
         comparisons, measurement_validity
     )
@@ -2423,6 +2592,7 @@ def build_payload(
         "cases": build_cases(rows, audit, raw_root),
         "skills": skill_summary(evidence),
         "learning": learning,
+        "learning_transfer": learning_transfer,
         "derivability": derivability,
         "measurement_validity": measurement_validity,
         "validity_stratified_effects": validity_effects,
@@ -2768,6 +2938,62 @@ def render_markdown(data: dict[str, Any]) -> str:
         )
     lines += [
         "",
+        "### T1–T3 做得好，是否真的预测 T5/T6？",
+        "",
+        "下面只做 family-level 描述性关联：把每个 family 的 T1–T3 最终 strict 通过数，与同一模型 self-generated 条件下的 T5/T6 outcome 对齐。它不能证明 generated skill 造成了后续成功，因为 family 难度会同时影响 acquisition 与 transfer；最终仍以同题 no-skill 对照为准。",
+        "",
+        "| 模型 | T1–T3 最终 strict | Families | T5 outcome | T6 outcome | T5+T6 |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    for item in data["learning_transfer"]["summaries"]:
+        for group in item["by_terminal_strict_passes"]:
+            if not group["families"]:
+                continue
+            lines.append(
+                f"| {item['model']} | {group['terminal_strict_passes']}/3 | "
+                f"{group['families']} | {group['t5_passed']}/{group['families']} | "
+                f"{group['t6_passed']}/{group['families']} | "
+                f"{group['combined_passed']}/{group['combined_total']} |"
+            )
+    lines += [
+        "",
+        "| 模型 | r(T1–T3 pass, T5) | r(T1–T3 pass, T6) | r(T1–T3 pass, combined) | r(尝试数, T6) | r(修复成功数, T6) | r(Generated/Oracle Jaccard, T6) |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for item in data["learning_transfer"]["summaries"]:
+        correlations = item["correlations"]
+        rendered = {
+            key: "—" if value is None else f"{value:+.3f}"
+            for key, value in correlations.items()
+        }
+        lines.append(
+            f"| {item['model']} | {rendered['terminal_passes_vs_t5']} | "
+            f"{rendered['terminal_passes_vs_t6']} | "
+            f"{rendered['terminal_passes_vs_combined']} | "
+            f"{rendered['learning_attempts_vs_t6']} | "
+            f"{rendered['repairs_vs_t6']} | "
+            f"{rendered['generated_oracle_jaccard_vs_t6']} |"
+        )
+    lines += [
+        "",
+        "Generated skill 的受控概念词面覆盖与 self-generated outcome 也不是单调关系：",
+        "",
+        "| 模型 | Generated 概念覆盖 | Tasks | Outcome |",
+        "|---|---|---:|---:|",
+    ]
+    for item in data["learning_transfer"]["summaries"]:
+        for group in item["by_generated_concept_coverage"]:
+            if not group["tasks"]:
+                continue
+            lines.append(
+                f"| {item['model']} | {group['generated_coverage']} | "
+                f"{group['tasks']} | {group['outcome_passed']}/{group['tasks']} "
+                f"({pct(group['outcome_rate'])}) |"
+            )
+    lines += [
+        "",
+        "当前相关性整体偏弱，Generated/Oracle 文本 Jaccard 对 T6 近乎没有预测力；而 generated 概念全覆盖组的原始通过率反而更低。最合理的解释不是 skill 有害，而是困难题会诱发更长、更具体、概念更全的总结，同时仍更难执行。这说明不能用 skill 长度、词面覆盖或与 oracle 相似度替代同题四条件实验。",
+        "",
         "Generated skill 普遍比 curated oracle 更长、更贴近具体任务和 verifier 反馈；这可能增加可执行性，也可能是对当前测试的过拟合。下表的 `oracle evidence recall` 只是 oracle 词汇在 T1–T3 可见说明/失败反馈中的词面覆盖率，不能证明某个概念逻辑上一定可推出。",
         "",
         "| 模型 | Family | T1–T3 | 尝试 | 最终通过 | Generated skills | Best Jaccard | Oracle evidence recall | Generated verifier markers |",
@@ -3028,6 +3254,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>逐 Env 的 T5/T6 失败地图</h2><div class="tablebox"><table><thead><tr><th>Env / Tier</th><th>Qwen 3.7 Max</th><th>SIG Fable</th></tr></thead><tbody id="failureRows"></tbody></table></div></section>
 <section class="panel"><h2>失败归因总览</h2><p class="small">“已核实假阴性”要求逐代码证据；“形态敏感”只是筛查标签，仍需结合 exact-oracle/no-skill 与轨迹复核。</p><div class="tablebox"><table><thead><tr><th>Env/Tier</th><th>模型</th><th>覆盖/Strict</th><th>功能 gap</th><th>已核实假阴性</th><th>实质过程 gap</th><th>形态敏感</th><th>未决过程</th></tr></thead><tbody id="attributionRows"></tbody></table></div></section>
 <section class="panel"><h2>T1–T3 学习与 Skill 来源审计</h2><div class="grid two" id="learningCards"></div><div class="filters" style="margin-top:16px"><select id="skillModel"></select><select id="skillEnv"></select><input id="skillSearch" placeholder="搜索 family / skill"></div><div class="tablebox"><table><thead><tr><th>Family</th><th>学习结果</th><th>生成 skill</th><th>Best Jaccard</th><th>Oracle evidence recall</th><th>Verifier markers</th></tr></thead><tbody id="skillRows"></tbody></table></div><p class="small">Evidence recall 仅是词面覆盖率，不代表逻辑可推导性。点击 family 查看 T1–T3 证据摘录、generated skill 与 curated oracle 全文。</p></section>
+<section class="panel"><h2>T1–T3 表现能预测 T5/T6 吗？</h2><p>这是 family-level 描述性关联，不是 skill 的因果效果：family 难度会同时影响 acquisition 与 transfer，最终仍要看同题 no-skill。</p><div class="grid two" id="learningTransferCards"></div><h3 style="margin-top:16px">按 T1–T3 最终 strict 通过数分层</h3><div class="tablebox"><table><thead><tr><th>模型</th><th>T1–T3 strict</th><th>Families</th><th>T5</th><th>T6</th><th>T5+T6</th></tr></thead><tbody id="learningTransferRows"></tbody></table></div><h3 style="margin-top:16px">Generated 概念覆盖与 Outcome</h3><div class="tablebox"><table><thead><tr><th>模型</th><th>概念覆盖</th><th>Tasks</th><th>Outcome</th></tr></thead><tbody id="learningCoverageRows"></tbody></table></div><p class="small">当前文本相似度、概念覆盖和学习通过数都只能作诊断，不能替代四条件 matched control。困难题往往既诱发更详细的 skill，也更难执行，原始相关性会被反向混杂。</p></section>
 <section class="panel"><h2>T5/T6 概念可推导性与 Annotation Prior</h2><p>把每个高级概念分别放回 T1–T3 可见证据、generated skill、curated oracle 和仅题目作者可见的 gap metadata 中检查。重点看“可见但没总结”“oracle 补入未见概念”“两边都缺”三类。</p><div class="grid two" id="derivabilityCards"></div><div class="filters" style="margin-top:16px"><select id="derivabilityModel"><option value="all">全部模型</option><option value="qwen3.7-max">qwen3.7-max</option><option value="sig-fable">sig-fable</option></select><select id="derivabilityCategory"><option value="all">全部非平凡分类</option></select><input id="derivabilitySearch" placeholder="搜索 task / concept"></div><div class="tablebox"><table><thead><tr><th>Task / Family</th><th>模型</th><th>高级概念</th><th>分类</th><th>T1–T3</th><th>Generated</th><th>Oracle</th><th>Author gap meta</th></tr></thead><tbody id="derivabilityRows"></tbody></table></div><p class="small">Author gap meta 是 benchmark 作者的设计注释，不会注入模型。此处仍是受控词表筛查，不把词面缺失自动等同于逻辑不可推导。</p></section>
 <section class="panel"><h2>哪些 T5/T6 真能测 Skill Evolution？</h2><p>先判断高级要求是否在 T1–T3 留下历史证据，再看匹配 no-skill 对照。若要求只在当前 T5/T6 题面出现，模型现场做对不能证明此前形成的 skill 有帮助。当前 60/60 题均有受控概念命中，但 lexical screen 仍不能代替语义审查。</p><div class="grid two" id="validityCards"></div><div class="tablebox"><table><thead><tr><th>模型/Env</th><th>可进入历史 skill 因果检验</th><th>仅当前题面</th><th>历史+现场混合</th><th>缺学习证据</th><th>词表未覆盖</th></tr></thead><tbody id="validityRows"></tbody></table></div><h3 style="margin-top:16px">按测量有效性分层的 Matched Outcome 效应</h3><div class="tablebox"><table><thead><tr><th>模型/分层</th><th>Treatment − Reference</th><th>n</th><th>Treatment</th><th>Reference</th><th>Δ</th><th>救回/损害</th><th>四条件完整</th></tr></thead><tbody id="validityEffectRows"></tbody></table></div><p class="small">“可进入因果检验”不等于已经证明 skill 有用；仍需同模型同任务的 Self / Exact / Curated-all / No-skill 四条件结果。</p></section>
 <section class="panel"><h2>Curated Oracle 是否真的足以覆盖任务？</h2><p>仓库中的 curated skill 多数是基础工作流，不是 T5/T6 的 solution manual。Oracle 仍失败必须同时考虑 skill scope gap，不能直接判题目坏。</p><div id="scopeVisibility" class="grid cards"></div><div id="scopeCounts"></div><div class="tablebox"><table><thead><tr><th>Task</th><th>Oracle skills</th><th>风险</th><th>缺失概念</th><th>Author gap 命中</th><th>Verifier-only</th><th>Scope</th></tr></thead><tbody id="scopeRows"></tbody></table></div><h3 style="margin-top:16px">Oracle 结果按 scope risk 分层</h3><div id="scopeOutcomes" class="small"></div><p class="small">这是受控概念的启发式筛查。高风险项用于人工复核，不把词面缺失自动等同于语义缺失。</p></section>
@@ -3063,6 +3290,10 @@ function failureCell(x){{if(!x.observed)return '<span class="metric missing">0/5
 failureRows.innerHTML=['E1','E2','E3','E4','E5','E6'].flatMap(e=>[5,6].map(t=>{{let q=D.failure_map.find(x=>x.model==='qwen3.7-max'&&x.environment_id===e&&x.tier===t),f=D.failure_map.find(x=>x.model==='sig-fable'&&x.environment_id===e&&x.tier===t);return `<tr><td><b>${{e}} / T${{t}}</b></td><td>${{failureCell(q)}}</td><td>${{failureCell(f)}}</td></tr>`}})).join('');
 attributionRows.innerHTML=D.failure_attribution.summaries.map(x=>{{let c=x.cause_counts;return `<tr><td><b>${{x.environment_id}} / T${{x.tier}}</b></td><td>${{x.model}}</td><td>${{x.observed}}/5 · ${{x.strict_passed}}/${{x.observed}}</td><td>${{c.functional_gap||0}}</td><td>${{c.verified_verifier_false_negative||0}}</td><td>${{c.substantive_process_gap||0}}</td><td>${{c.shape_sensitive_process_only||0}}</td><td>${{c.unresolved_process_only||0}}</td></tr>`}}).join('');
 learningCards.innerHTML=Object.entries(D.learning.by_model).map(([m,x])=>`<div class="case"><h3>${{m}}</h3><p><b>${{x.learning_tasks}}</b> 个 T1–T3 · <b>${{x.learning_attempts}}</b> 次尝试 · 最终通过 ${{x.terminal_strict_passes}} · 修复成功 ${{x.repaired_to_pass}}</p><p class="small">same-session 异常 ${{x.same_session_failures}} · active skills/families ${{x.active_skills}}/${{x.families}} · 多 skill families ${{x.families_with_multiple_skills}} · 含 verifier 术语 skills ${{x.skills_with_verifier_markers}}</p></div>`).join('');
+const fmtCorr=v=>v==null?'—':(v>=0?'+':'')+v.toFixed(3);
+learningTransferCards.innerHTML=D.learning_transfer.summaries.map(x=>{{let c=x.correlations;return `<div class="case"><h3>${{x.model}}</h3><p><b>${{x.families}}</b> 个完整 family</p><p class="small">r(T1–T3 pass → T5) ${{fmtCorr(c.terminal_passes_vs_t5)}} · r(pass → T6) ${{fmtCorr(c.terminal_passes_vs_t6)}} · r(pass → combined) ${{fmtCorr(c.terminal_passes_vs_combined)}}<br>r(attempts → T6) ${{fmtCorr(c.learning_attempts_vs_t6)}} · r(repairs → T6) ${{fmtCorr(c.repairs_vs_t6)}} · r(Jaccard → T6) ${{fmtCorr(c.generated_oracle_jaccard_vs_t6)}}</p></div>`}}).join('');
+learningTransferRows.innerHTML=D.learning_transfer.summaries.flatMap(x=>x.by_terminal_strict_passes.filter(g=>g.families).map(g=>`<tr><td><b>${{x.model}}</b></td><td>${{g.terminal_strict_passes}}/3</td><td>${{g.families}}</td><td>${{g.t5_passed}}/${{g.families}}</td><td>${{g.t6_passed}}/${{g.families}}</td><td>${{g.combined_passed}}/${{g.combined_total}}</td></tr>`)).join('');
+learningCoverageRows.innerHTML=D.learning_transfer.summaries.flatMap(x=>x.by_generated_concept_coverage.filter(g=>g.tasks).map(g=>`<tr><td><b>${{x.model}}</b></td><td>${{g.generated_coverage}}</td><td>${{g.tasks}}</td><td>${{g.outcome_passed}}/${{g.tasks}} (${{(100*g.outcome_rate).toFixed(1)}}%)</td></tr>`)).join('');
 options(skillModel,['qwen3.7-max','sig-fable'],null,true);options(skillEnv,['E1','E2','E3','E4','E5','E6'],null,true);
 function renderSkills(){{let q=skillSearch.value.toLowerCase(),rows=D.learning.families.filter(x=>(skillModel.value==='all'||x.model===skillModel.value)&&(skillEnv.value==='all'||x.environment_id===skillEnv.value)&&JSON.stringify(x).toLowerCase().includes(q));skillRows.innerHTML=rows.map(x=>`<tr class="click" data-key="${{x.model}}|${{x.family_id}}"><td><b>${{x.family_id}}</b><br><span class="small">${{x.model}} · ${{x.expected_oracle_slug}}</span></td><td>${{x.terminal_strict_passes}}/${{x.learning_task_count}} 通过 · ${{x.learning_attempts}} attempts</td><td>${{x.generated_skill_count}} · ${{x.generated_slugs.join(', ')}}</td><td>${{x.best_word_jaccard.toFixed(3)}}</td><td>${{x.oracle_token_recall_from_learning_evidence==null?'—':(100*x.oracle_token_recall_from_learning_evidence).toFixed(1)+'%'}}</td><td>${{x.generated_verifier_marker_hits}}</td></tr>`).join('');skillRows.querySelectorAll('tr').forEach(tr=>tr.onclick=()=>showFamily(...tr.dataset.key.split('|')))}};[skillModel,skillEnv].forEach(x=>x.onchange=renderSkills);skillSearch.oninput=renderSkills;renderSkills();
 function showFamily(model,id){{let x=D.learning.families.find(x=>x.model===model&&x.family_id===id);drawerBody.innerHTML=`<h2>${{x.family_id}} · ${{model}}</h2><p>学习任务 ${{x.learning_task_count}}/3 · 最终通过 ${{x.terminal_strict_passes}} · attempts ${{x.learning_attempts}} · generated skills ${{x.generated_skill_count}}</p><p>Best Jaccard ${{x.best_word_jaccard.toFixed(3)}} · Oracle evidence recall ${{x.oracle_token_recall_from_learning_evidence==null?'—':(100*x.oracle_token_recall_from_learning_evidence).toFixed(1)+'%'}} · verifier markers ${{x.generated_verifier_marker_hits}}</p><details open><summary>Generated skill 全文</summary><pre>${{esc(x.generated_text)}}</pre></details><details><summary>Curated oracle 全文</summary><pre>${{esc(x.curated_text)}}</pre></details><details><summary>T1–T3 可见证据摘录</summary><pre>${{esc(x.learning_evidence_excerpt)}}</pre></details>`;drawer.classList.add('open')}}

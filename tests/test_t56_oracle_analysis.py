@@ -1246,3 +1246,79 @@ def test_expanded_concept_screen_uses_instruction_semantics() -> None:
 
     for concept, text in samples.items():
         assert concept in REPORT.detected_concepts(text)
+
+
+def test_pearson_correlation_handles_signal_and_constant() -> None:
+    assert REPORT.pearson_correlation([0, 1, 2], [0, 1, 2]) == 1.0
+    assert REPORT.pearson_correlation([1, 1, 1], [0, 1, 2]) is None
+    assert REPORT.pearson_correlation([0], [1]) is None
+
+
+def test_learning_transfer_diagnostics_groups_family_outcomes() -> None:
+    learning = {
+        "families": [
+            {
+                "model": "qwen3.7-max",
+                "family_id": "E1-LS1",
+                "terminal_strict_passes": 3,
+                "learning_attempts": 4,
+                "repaired_to_pass": 1,
+                "best_word_jaccard": 0.5,
+            },
+            {
+                "model": "qwen3.7-max",
+                "family_id": "E1-LS2",
+                "terminal_strict_passes": 1,
+                "learning_attempts": 7,
+                "repaired_to_pass": 0,
+                "best_word_jaccard": 0.2,
+            },
+        ]
+    }
+    comparisons = []
+    for family_id, t5, t6 in (
+        ("E1-LS1", True, True),
+        ("E1-LS2", False, False),
+    ):
+        for tier, outcome in ((5, t5), (6, t6)):
+            comparisons.append(
+                {
+                    "model": "qwen3.7-max",
+                    "task_id": f"{family_id}-T{tier}",
+                    "tier": tier,
+                    "conditions": {"self_generated": {"outcome": outcome}},
+                }
+            )
+    measurement_validity = {
+        "records": [
+            {
+                "model": "qwen3.7-max",
+                "task_id": f"{family_id}-T{tier}",
+                "generated_coverage": coverage,
+            }
+            for family_id, coverage in (("E1-LS1", "all"), ("E1-LS2", "none"))
+            for tier in (5, 6)
+        ]
+    }
+
+    result = REPORT.learning_transfer_diagnostics(
+        learning, comparisons, measurement_validity
+    )
+    qwen = next(
+        row for row in result["summaries"] if row["model"] == "qwen3.7-max"
+    )
+
+    assert qwen["families"] == 2
+    by_pass = {
+        row["terminal_strict_passes"]: row
+        for row in qwen["by_terminal_strict_passes"]
+    }
+    assert by_pass[3]["combined_passed"] == 2
+    assert by_pass[1]["combined_passed"] == 0
+    by_coverage = {
+        row["generated_coverage"]: row
+        for row in qwen["by_generated_concept_coverage"]
+    }
+    assert by_coverage["all"]["outcome_passed"] == 2
+    assert by_coverage["none"]["outcome_passed"] == 0
+    assert qwen["correlations"]["terminal_passes_vs_t6"] == 1.0
