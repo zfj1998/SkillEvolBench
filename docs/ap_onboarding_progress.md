@@ -65,6 +65,37 @@ The immutable dataset revision, Agent-Hub revision, smoke job, and repaired
 E3/E1 job ids are appended here after each gate succeeds; they must not be
 claimed complete before then.
 
+### Published and live evidence
+
+- Immutable dataset: `skillevolbench/skillevolbench/v1@15`, built twice from
+  benchmark revision `a1ee9be0420e06b5bd9b8770b697da73c1bd5354`. All 13
+  package files were byte-identical between builds; AP discovers exactly
+  `E1` through `E6`.
+- Exact retry template revision:
+  `a32ea0ecd2daf6661dd3212d973d0f8e222f3a77`. AP's template resolver returned
+  this commit, and its schema exposes timeout multiplier `6.0`, job timeout
+  `172800`, two total episode attempts, and a 30-second retry backoff.
+- Fable one-task E3 smoke `ap-skillevolbench-b0f23fa07f8c4b80-d2` succeeded on
+  the preceding retry-template revision. Qwen 3.7 Max one-task E1 smoke
+  `ap-skillevolbench-99d4f98824bf4d0b-d2` succeeded on the exact revision
+  above. Both produced one verifier-backed primary trial, solve and full
+  trajectories, a completed same-session reflection, one non-retry attempt
+  ledger row, and explicit `partial`, `canonical=false`, `scoreable=false`
+  metrics with `task_score=0`.
+- Both downloaded smoke trees passed manifest-digest validation and a complete
+  read-only export scan with zero findings. They are retained under
+  `/cpfs02/user/zhangfengji.zfj/skillevolbench_stability_20260722/live-smokes-v1-15/`.
+- Canonical repairs were submitted as standalone 30-primary-task episodes:
+  Fable E3 `ap-skillevolbench-5abdd1d973254ba8-d2` and Qwen 3.7 Max E1
+  `ap-skillevolbench-ea203c23062a49c6-d2`. They were queued at the time of this
+  update and are not accepted as completed episodes yet.
+
+The short Qwen smoke exercised the corrected sanitizer and delivered a valid
+manifest, but its selected task did not create the exact CPython virtualenv
+link chain that broke the old 30-task E1 run. That link shape is covered by
+the focused sanitizer tests; the canonical E1 repair remains the live
+end-to-end acceptance of that specific fix.
+
 ## Current status
 
 SkillEvolBench is now accepted on AP through the documented standalone-job
