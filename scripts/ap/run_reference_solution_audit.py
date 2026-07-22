@@ -74,7 +74,15 @@ def benchmark_revision(
     return result.stdout.strip() if result.returncode == 0 else "unknown"
 
 
-def harbor_provenance() -> dict[str, Any]:
+def harbor_provenance(runtime_path: Path | None = None) -> dict[str, Any]:
+    if runtime_path is not None:
+        runtime = read_json(runtime_path)
+        commit = runtime.get("installed_git_commit")
+        if isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}", commit):
+            return {
+                "version": runtime.get("version"),
+                "installed_git_commit": commit,
+            }
     try:
         distribution = importlib.metadata.distribution("harbor")
     except importlib.metadata.PackageNotFoundError:
@@ -212,14 +220,21 @@ def collect_results(
         outcome = rewards.get("outcome_passed")
         process = rewards.get("process_passed")
         exception = result.get("exception_info")
+        component_values = []
+        for value in (outcome, process):
+            if value is None:
+                continue
+            try:
+                component_values.append(float(value))
+            except (TypeError, ValueError):
+                component_values.append(float("nan"))
         strict_pass = bool(
             trial_dir is not None
             and result
             and exception is None
             and normalized is not None
             and abs(normalized - 1.0) <= 1e-9
-            and float(outcome) == 1.0
-            and float(process) == 1.0
+            and all(value == 1.0 for value in component_values)
         )
         rows.append(
             {
@@ -253,6 +268,7 @@ def build_audit(
     job_name: str,
     run_error: str | None,
     dataset_episode_path: Path | None = None,
+    harbor_runtime_path: Path | None = None,
 ) -> dict[str, Any]:
     job_root = jobs_dir / job_name
     rows = collect_results(tasks=tasks, job_root=job_root)
@@ -272,7 +288,7 @@ def build_audit(
         "generated_at_utc": utc_now(),
         "environment_id": environment_id,
         "benchmark_revision": benchmark_revision(repo_root, dataset_episode_path),
-        "harbor": harbor_provenance(),
+        "harbor": harbor_provenance(harbor_runtime_path),
         "job_name": job_name,
         "job_root": str(job_root),
         "execution": {
@@ -351,6 +367,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--workspace-root", type=Path, required=True)
     parser.add_argument("--concurrency", type=int, default=2)
     parser.add_argument("--job-name")
+    parser.add_argument(
+        "--recover-job-root",
+        type=Path,
+        help="Collect an already completed Harbor oracle job without rerunning trials",
+    )
+    parser.add_argument("--dataset-episode", type=Path)
+    parser.add_argument("--harbor-runtime", type=Path)
     return parser.parse_args()
 
 
@@ -364,26 +387,32 @@ def main() -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     workspace_root.mkdir(parents=True, exist_ok=True)
     tasks = select_tasks(repo_root, args.environment_id)
-    job_name = args.job_name or (
-        f"reference_solution__{args.environment_id}__"
-        + datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    )
-    runtime_root = workspace_root / "runtime" / args.environment_id
-    jobs_dir = workspace_root / "harbor-job"
-    task_paths = prepare_runtime_tasks(tasks, runtime_root)
-
     run_error: str | None = None
-    try:
-        asyncio.run(
-            run_harbor_oracle(
-                task_paths=task_paths,
-                jobs_dir=jobs_dir,
-                job_name=job_name,
-                concurrency=args.concurrency,
-            )
+    if args.recover_job_root is not None:
+        job_root = args.recover_job_root.resolve()
+        if not job_root.is_dir():
+            raise SystemExit(f"--recover-job-root is not a directory: {job_root}")
+        jobs_dir = job_root.parent
+        job_name = job_root.name
+    else:
+        job_name = args.job_name or (
+            f"reference_solution__{args.environment_id}__"
+            + datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         )
-    except BaseException as exc:  # preserve partial trials for diagnosis
-        run_error = f"{type(exc).__name__}: {exc}"
+        runtime_root = workspace_root / "runtime" / args.environment_id
+        jobs_dir = workspace_root / "harbor-job"
+        task_paths = prepare_runtime_tasks(tasks, runtime_root)
+        try:
+            asyncio.run(
+                run_harbor_oracle(
+                    task_paths=task_paths,
+                    jobs_dir=jobs_dir,
+                    job_name=job_name,
+                    concurrency=args.concurrency,
+                )
+            )
+        except BaseException as exc:  # preserve partial trials for diagnosis
+            run_error = f"{type(exc).__name__}: {exc}"
 
     audit = build_audit(
         repo_root=repo_root,
@@ -392,7 +421,16 @@ def main() -> int:
         jobs_dir=jobs_dir,
         job_name=job_name,
         run_error=run_error,
-        dataset_episode_path=output_dir / "dataset_episode.json",
+        dataset_episode_path=(
+            args.dataset_episode.resolve()
+            if args.dataset_episode is not None
+            else output_dir / "dataset_episode.json"
+        ),
+        harbor_runtime_path=(
+            args.harbor_runtime.resolve()
+            if args.harbor_runtime is not None
+            else output_dir / "harbor_runtime.json"
+        ),
     )
     atomic_json(output_dir / "reference_solution_audit.json", audit)
     write_csv(output_dir / "reference_solution_audit.csv", audit["tasks"])

@@ -74,10 +74,42 @@ def test_collect_results_fails_closed_on_duplicate_or_missing_trials(tmp_path: P
     assert rows[1]["strict_pass"] is False
 
 
+def test_collect_results_accepts_normalized_only_verifier(tmp_path: Path) -> None:
+    task = MODULE.select_tasks(REPO_ROOT, "E5")[0]
+    job_root = tmp_path / "jobs" / "reference"
+    trial = job_root / f"{task.spec.task_id}__trial"
+    _write_json(
+        trial / "result.json",
+        {
+            "verifier_result": {"rewards": {"normalized_score": 1.0}},
+            "exception_info": None,
+        },
+    )
+    (trial / "verifier").mkdir(parents=True, exist_ok=True)
+    (trial / "verifier" / "reward.txt").write_text("1.0\n", encoding="utf-8")
+
+    row = MODULE.collect_results(tasks=[task], job_root=job_root)[0]
+    assert row["outcome_passed"] is None
+    assert row["process_passed"] is None
+    assert row["strict_pass"] is True
+
+
 def test_benchmark_revision_uses_packaged_episode_without_git(tmp_path: Path) -> None:
     episode = tmp_path / "dataset_episode.json"
     _write_json(episode, {"benchmark_revision": "a" * 40})
     assert MODULE.benchmark_revision(tmp_path, episode) == "a" * 40
+
+
+def test_harbor_provenance_uses_exported_runtime(tmp_path: Path) -> None:
+    runtime = tmp_path / "harbor_runtime.json"
+    _write_json(
+        runtime,
+        {"version": "0.1.0", "installed_git_commit": "b" * 40},
+    )
+    assert MODULE.harbor_provenance(runtime) == {
+        "version": "0.1.0",
+        "installed_git_commit": "b" * 40,
+    }
 
 
 def _audit_payload(environment_id: str, *, strict_pass: bool = True) -> dict:

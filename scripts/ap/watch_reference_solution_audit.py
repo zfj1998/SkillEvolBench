@@ -281,9 +281,59 @@ class Watcher:
         destination = marker.get("destination")
         if not isinstance(destination, str):
             return None
-        audit_path = find_one_audit(Path(destination))
+        destination_path = Path(destination)
+        audit_path = find_one_audit(destination_path)
         if audit_path is None:
-            return None
+            recovered_dir = self.state_dir / "recovered-audits" / job_id
+            recovered_path = recovered_dir / "reference_solution_audit.json"
+            if not recovered_path.exists():
+                job_roots = sorted(
+                    path
+                    for path in destination_path.rglob("reference_solution__*")
+                    if path.is_dir() and path.parent.name == "harbor-job"
+                )
+                episodes = sorted(destination_path.rglob("dataset_episode.json"))
+                harbor_runtimes = sorted(destination_path.rglob("harbor_runtime.json"))
+                if len(job_roots) != 1 or len(episodes) != 1 or len(harbor_runtimes) != 1:
+                    return None
+                environment_id = str(read_json(episodes[0], {}).get("environment_id") or "")
+                if environment_id not in {f"E{index}" for index in range(1, 7)}:
+                    return None
+                result = self.run(
+                    [
+                        sys.executable,
+                        str(self.repo / "scripts/ap/run_reference_solution_audit.py"),
+                        "--repo-root",
+                        str(self.repo),
+                        "--environment-id",
+                        environment_id,
+                        "--output-dir",
+                        str(recovered_dir),
+                        "--workspace-root",
+                        str(recovered_dir / "unused-workspace"),
+                        "--recover-job-root",
+                        str(job_roots[0]),
+                        "--dataset-episode",
+                        str(episodes[0]),
+                        "--harbor-runtime",
+                        str(harbor_runtimes[0]),
+                    ],
+                    timeout=120,
+                )
+                if result.returncode != 0 or not recovered_path.exists():
+                    self.event(
+                        "audit_recovery_failed",
+                        job_id=job_id,
+                        returncode=result.returncode,
+                        diagnostic=(result.stderr or result.stdout)[-1000:],
+                    )
+                    return None
+                self.event(
+                    "audit_recovered_from_harbor_results",
+                    job_id=job_id,
+                    harbor_job_root=str(job_roots[0]),
+                )
+            audit_path = recovered_path
         value = read_json(audit_path, {})
         return value if isinstance(value, dict) else None
 
