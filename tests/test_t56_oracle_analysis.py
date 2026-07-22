@@ -229,6 +229,35 @@ def test_model_comparison_uses_only_same_task_pairs() -> None:
     assert strict["sign_test_p"] == 1.0
 
 
+def test_reference_integrity_requires_exact_90_task_grid() -> None:
+    rows = [
+        {
+            "task_id": f"E{environment}-LS{family}-T{tier}",
+            "environment_id": f"E{environment}",
+            "tier": tier,
+            "strict_pass": True,
+        }
+        for environment in range(1, 7)
+        for family in range(1, 6)
+        for tier in (4, 5, 6)
+    ]
+    result = REPORT.reference_integrity_analysis({"tasks": rows})
+    assert result["complete"] is True
+    assert result["all_reference_solutions_pass"] is True
+    assert result["passed"] == result["total"] == 90
+
+    rows[-1]["strict_pass"] = False
+    result = REPORT.reference_integrity_analysis({"tasks": rows})
+    assert result["complete"] is True
+    assert result["all_reference_solutions_pass"] is False
+    assert result["passed"] == 89
+    assert [row["task_id"] for row in result["failures"]] == ["E6-LS5-T6"]
+
+    result = REPORT.reference_integrity_analysis({"tasks": rows[:-1]})
+    assert result["complete"] is False
+    assert result["total"] == 89
+
+
 def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path) -> None:
     tasks_root = tmp_path / "benchmark/tasks"
     skill_root = tmp_path / "benchmark/skills/retry"

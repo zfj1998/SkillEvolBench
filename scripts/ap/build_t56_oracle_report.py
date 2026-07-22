@@ -116,6 +116,12 @@ def load_json(path: Path) -> dict[str, Any]:
     return value
 
 
+def load_json_optional(path: Path | None) -> dict[str, Any]:
+    if path is None or not path.exists():
+        return {}
+    return load_json(path)
+
+
 def rate(passed: int, total: int) -> float | None:
     return passed / total if total else None
 
@@ -213,7 +219,6 @@ def task_comparisons(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             base = next(row for row in conditions.values() if row)
             self_row = conditions["self_generated"]
             oracle = conditions["exact_oracle"]
-            no_skill = conditions["no_skill"]
             verdict = "awaiting_matched_controls"
             if self_row and oracle:
                 if oracle.get("outcome_pass") is not True:
@@ -666,12 +671,61 @@ def scope_condition_outcomes(
     return result
 
 
+def reference_integrity_analysis(reference_audit: dict[str, Any]) -> dict[str, Any]:
+    tasks = [
+        row
+        for row in reference_audit.get("tasks", [])
+        if isinstance(row, dict) and row.get("task_id")
+    ]
+    expected_ids = {
+        f"E{environment}-LS{family}-T{tier}"
+        for environment in range(1, 7)
+        for family in range(1, 6)
+        for tier in TIERS
+    }
+    actual_ids = {str(row["task_id"]) for row in tasks}
+    rows = []
+    for environment_id in ENVS:
+        for tier in TIERS:
+            selected = [
+                row
+                for row in tasks
+                if row.get("environment_id") == environment_id
+                and int(row.get("tier", -1)) == tier
+            ]
+            passed = sum(row.get("strict_pass") is True for row in selected)
+            rows.append(
+                {
+                    "environment_id": environment_id,
+                    "tier": tier,
+                    "passed": passed,
+                    "total": len(selected),
+                    "pass_rate": rate(passed, len(selected)),
+                }
+            )
+    failures = [row for row in tasks if row.get("strict_pass") is not True]
+    complete = actual_ids == expected_ids and len(tasks) == 90
+    return {
+        "available": bool(tasks),
+        "complete": complete,
+        "passed": sum(row.get("strict_pass") is True for row in tasks),
+        "total": len(tasks),
+        "all_reference_solutions_pass": complete and not failures,
+        "rows": rows,
+        "failures": failures,
+        "benchmark_revision": reference_audit.get("benchmark_revision"),
+        "harbor_revision": reference_audit.get("harbor_revision"),
+        "audit_type": reference_audit.get("audit_type"),
+    }
+
+
 def conclusions(
     coverage: list[dict[str, Any]],
     comparisons: list[dict[str, Any]],
     audit: dict[str, Any],
     learning: dict[str, Any],
     oracle_scope: dict[str, Any],
+    reference_integrity: dict[str, Any],
 ) -> list[dict[str, str]]:
     missing = [row for row in coverage if not row["complete"]]
     result = []
@@ -689,6 +743,33 @@ def conclusions(
             "level": "good" if rescued else "warn",
             "title": "Oracle 的功能性处理效应",
             "body": f"匹配任务中，oracle 在 {len(rescued)} 题上把 self-generated 的 outcome 失败救回；仍有 {len(failed)} 个 oracle outcome 失败。应逐题区分 skill 不足、模型执行失败和题目/环境缺陷。",
+        })
+    if not reference_integrity["complete"]:
+        result.append({
+            "level": "pending",
+            "title": "官方 reference solution 完整性审计仍在运行",
+            "body": (
+                f"目前收集 {reference_integrity['total']}/90 个官方 solution/solve.sh → 官方 verifier 结果。"
+                "这项审计与模型使用 oracle skill 不同：它直接检查仓库提供的标准解能否在真实容器中通过。"
+            ),
+        })
+    elif reference_integrity["all_reference_solutions_pass"]:
+        result.append({
+            "level": "good",
+            "title": "90/90 官方 reference solutions 通过真实 verifier",
+            "body": (
+                "这排除了 T4–T6 任务资产普遍不可解或标准解与 verifier 系统性冲突。"
+                "模型拿 exact oracle skill 仍失败时，不能仅据此判题目坏；还需区分模型执行能力、skill scope 和 verifier 形态约束。"
+            ),
+        })
+    else:
+        result.append({
+            "level": "warn",
+            "title": "官方 reference solution 发现完整性失败",
+            "body": (
+                f"官方标准解严格通过 {reference_integrity['passed']}/{reference_integrity['total']}；"
+                f"{len(reference_integrity['failures'])} 题需要优先视为题目、标准解、容器或 verifier 的完整性嫌疑，不能用于归因 skill evolve。"
+            ),
         })
     summary = audit.get("summary", {})
     result.append({
@@ -724,13 +805,19 @@ def conclusions(
     return result
 
 
-def build_payload(evidence: dict[str, Any], audit: dict[str, Any], raw_root: Path) -> dict[str, Any]:
+def build_payload(
+    evidence: dict[str, Any],
+    audit: dict[str, Any],
+    raw_root: Path,
+    reference_audit: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     rows = selected_rows(evidence)
     runs = selected_runs(evidence)
     coverage = condition_coverage(rows, runs)
     comparisons = task_comparisons(rows)
     learning = learning_analysis(evidence)
     oracle_scope = oracle_scope_analysis(audit)
+    reference_integrity = reference_integrity_analysis(reference_audit or {})
     return {
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "is_complete": all(row["complete"] for row in coverage),
@@ -747,8 +834,16 @@ def build_payload(evidence: dict[str, Any], audit: dict[str, Any], raw_root: Pat
         "oracle_scope": oracle_scope,
         "verifier_shape_outcomes": verifier_shape_outcomes(rows, audit),
         "scope_condition_outcomes": scope_condition_outcomes(comparisons, oracle_scope),
+        "reference_integrity": reference_integrity,
         "verifier_audit": audit,
-        "conclusions": conclusions(coverage, comparisons, audit, learning, oracle_scope),
+        "conclusions": conclusions(
+            coverage,
+            comparisons,
+            audit,
+            learning,
+            oracle_scope,
+            reference_integrity,
+        ),
         "paths": {
             "raw_root": str(raw_root.resolve()),
             "evidence": evidence.get("inventory_path"),
@@ -777,6 +872,36 @@ def render_markdown(data: dict[str, Any]) -> str:
         for condition in CONDITIONS:
             rows = [row for row in data["coverage"] if row["model"] == model and row["condition"] == condition]
             lines.append(f"| {model} | {CONDITION_ZH[condition]} | {sum(row['complete'] for row in rows)}/6 | {sum(row['observed'] for row in rows)}/90 |")
+    reference = data["reference_integrity"]
+    lines += [
+        "",
+        "## 官方 Reference Solution × 官方 Verifier 完整性审计",
+        "",
+        "该对照不调用模型，也不注入 skill；Harbor `oracle` agent 在真实 task container 中执行仓库的 `solution/solve.sh`，再运行未修改的官方 verifier。它回答的是题目资产是否内部可解，不代表模型拿到 oracle skill 就必然能解题。",
+        "",
+        f"当前覆盖 **{reference['total']}/90**，严格通过 **{reference['passed']}/{reference['total'] or 0}**，完整性状态：**{'完整且全部通过' if reference['all_reference_solutions_pass'] else '完整但存在失败' if reference['complete'] else '运行中'}**。",
+        "",
+        "| Env | T4 | T5 | T6 |",
+        "|---|---:|---:|---:|",
+    ]
+    for environment_id in ENVS:
+        cells = []
+        for tier in TIERS:
+            row = next(
+                item
+                for item in reference["rows"]
+                if item["environment_id"] == environment_id and item["tier"] == tier
+            )
+            cells.append(f"{row['passed']}/{row['total']}")
+        lines.append(f"| {environment_id} | {' | '.join(cells)} |")
+    if reference["failures"]:
+        lines += ["", "失败的官方 reference solutions：", ""]
+        for row in reference["failures"]:
+            lines.append(
+                f"- `{row.get('task_id')}`：score={row.get('normalized_score')}，"
+                f"outcome={row.get('outcome_passed')}，process={row.get('process_passed')}，"
+                f"exception=`{row.get('exception_info') or '无'}`。"
+            )
     lines += ["", "## 分环境与层级结果", "", "| 模型 | 条件 | Env | Tier | n | Strict | Outcome | Process |", "|---|---|---:|---:|---:|---:|---:|---:|"]
     for row in data["aggregates"]:
         lines.append(
@@ -936,6 +1061,7 @@ def render_markdown(data: dict[str, Any]) -> str:
         f"- 原始 artifacts：`{data['paths']['raw_root']}`",
         "- `t56_evidence.json`：任务结果、失败测试、轨迹和 skill 文本。",
         "- `t56_verifier_audit.json`：90 题 verifier 静态结构与有效评分权重。",
+        "- `reference_solution_audit_all_envs.json`：90 个官方标准解在真实容器与官方 verifier 下的完整性审计。",
         "- `t56_report_data.json`：本报告的全部派生数据。",
         "",
     ]
@@ -966,6 +1092,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="grid cards" id="cards"></section>
 <section class="panel"><h2>先看结论</h2><div id="conclusions"></div></section>
 <section class="panel"><h2>实验覆盖</h2><div class="heat" id="coverage"></div></section>
+<section class="panel"><h2>题目资产完整性：官方标准解能否通过？</h2><p>这不是模型 baseline：Harbor oracle 直接执行仓库的 <code>solution/solve.sh</code>，再运行原 verifier，用来识别题目、标准解、容器或 verifier 的内部不一致。</p><div id="referenceIntegrity"></div></section>
 <section class="panel"><h2>Pass rate 热力图</h2><div class="filters"><select id="hmModel"></select><select id="hmCond"></select><select id="hmMetric"><option value="strict">Strict</option><option value="outcome">Outcome</option><option value="process">Process</option></select><select id="hmTier"><option value="4">T4</option><option value="5" selected>T5</option><option value="6">T6</option></select></div><div class="heat" id="heatmap"></div><p class="small">每格最多 5 题；显示通过数/观测数，不能把小样本百分比当作稳定总体性能。</p></section>
 <section class="grid two"><div class="panel"><h2>Qwen vs Fable 配对比较</h2><div class="tablebox"><table><thead><tr><th>条件/Tier/指标</th><th>n</th><th>Qwen</th><th>Fable</th><th>only Q/F</th><th>p</th></tr></thead><tbody id="modelCmpRows"></tbody></table></div></div><div class="panel"><h2>Skill 条件配对效应</h2><div class="tablebox"><table><thead><tr><th>模型/Tier/指标</th><th>对照</th><th>n</th><th>Δ</th><th>救回/损害</th></tr></thead><tbody id="effectRows"></tbody></table></div></div></section>
 <section class="panel"><h2>逐 Env 的 T5/T6 失败地图</h2><div class="tablebox"><table><thead><tr><th>Env / Tier</th><th>Qwen 3.7 Max</th><th>SIG Fable</th></tr></thead><tbody id="failureRows"></tbody></table></div></section>
@@ -986,6 +1113,7 @@ const complete=D.coverage.filter(x=>x.complete).length, total=D.coverage.length,
 cards.innerHTML=[['完整单元',`${{complete}}/${{total}}`],['已纳入任务记录',selected],['功能过但 strict 失败',procOnly],['源码形态敏感题',`${{D.verifier_audit.summary.tasks_with_literal_or_regex_process_checks}}/90`]].map(x=>`<div class="card"><span class="label">${{x[0]}}</span><b>${{x[1]}}</b></div>`).join('');
 conclusions.innerHTML=D.conclusions.map(x=>`<div class="conclusion ${{x.level}}"><h3>${{esc(x.title)}}</h3>${{esc(x.body)}}</div>`).join('');
 coverage.innerHTML='<div class="head">模型 / 条件</div>'+['E1','E2','E3','E4','E5','E6'].map(x=>`<div class="head">${{x}}</div>`).join('')+['qwen3.7-max','sig-fable'].flatMap(m=>['self_generated','exact_oracle','no_skill'].map(c=>{{let cells=D.coverage.filter(x=>x.model===m&&x.condition===c);return `<div>${{m}}<br><span class="small">${{zh[c]}}</span></div>`+cells.map(x=>`<div class="v ${{x.complete?'high':x.observed?'mid':'none'}}">${{x.observed}}/15</div>`).join('')}})).join('');
+let ri=D.reference_integrity;let riRows=['E1','E2','E3','E4','E5','E6'].map(e=>{{let cells=[4,5,6].map(t=>ri.rows.find(x=>x.environment_id===e&&x.tier===t));return `<tr><td><b>${{e}}</b></td>${{cells.map(x=>`<td>${{x.passed}}/${{x.total}}</td>`).join('')}}</tr>`}}).join('');let riFailures=ri.failures.length?`<details><summary>查看 ${{ri.failures.length}} 个失败标准解</summary><pre>${{esc(JSON.stringify(ri.failures,null,2))}}</pre></details>`:'<p class="small">当前没有已观测的标准解失败。</p>';referenceIntegrity.innerHTML=`<div class="grid cards"><div class="card"><span class="label">覆盖</span><b>${{ri.total}}/90</b></div><div class="card"><span class="label">严格通过</span><b>${{ri.passed}}/${{ri.total||0}}</b></div><div class="card"><span class="label">状态</span><b style="font-size:20px">${{ri.all_reference_solutions_pass?'全部通过':ri.complete?'存在失败':'运行中'}}</b></div></div><div class="tablebox"><table><thead><tr><th>Env</th><th>T4</th><th>T5</th><th>T6</th></tr></thead><tbody>${{riRows}}</tbody></table></div>${{riFailures}}`;
 options(hmModel,['qwen3.7-max','sig-fable']);options(hmCond,['self_generated','exact_oracle','no_skill'],zh);options(taskModel,['qwen3.7-max','sig-fable'],null,true);options(taskEnv,['E1','E2','E3','E4','E5','E6'],null,true);
 function renderHeat(){{let m=hmModel.value,c=hmCond.value,k=hmMetric.value,t=+hmTier.value;let rows=['E1','E2','E3','E4','E5','E6'].map(e=>D.aggregates.find(x=>x.model===m&&x.condition===c&&x.environment_id===e&&x.tier===t));heatmap.innerHTML='<div class="head">'+m+' · '+zh[c]+'</div>'+['E1','E2','E3','E4','E5','E6'].map(x=>`<div class="head">${{x}}</div>`).join('')+`<div>T${{t}} · ${{k}}</div>`+rows.map(x=>{{if(!x)return '<div class="v none">—</div>';let p=x[k]/x.n,cl=p>=.8?'high':p>=.4?'mid':'low';return `<div class="v ${{cl}}">${{x[k]}}/${{x.n}}</div>`}}).join('')}};[hmModel,hmCond,hmMetric,hmTier].forEach(x=>x.onchange=renderHeat);renderHeat();
 modelCmpRows.innerHTML=D.model_comparisons.filter(x=>x.n).map(x=>`<tr><td>${{zh[x.condition]}} / T${{x.tier}} / ${{x.metric}}</td><td>${{x.n}}</td><td>${{x.qwen_pass}}</td><td>${{x.fable_pass}}</td><td>${{x.qwen_only}} / ${{x.fable_only}}</td><td>${{x.sign_test_p==null?'—':x.sign_test_p.toFixed(4)}}</td></tr>`).join('');
@@ -1012,10 +1140,12 @@ def main() -> int:
     parser.add_argument("--verifier-audit", type=Path, required=True)
     parser.add_argument("--raw-root", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--reference-audit", type=Path)
     args = parser.parse_args()
     evidence = load_json(args.evidence)
     audit = load_json(args.verifier_audit)
-    data = build_payload(evidence, audit, args.raw_root)
+    reference_audit = load_json_optional(args.reference_audit)
+    data = build_payload(evidence, audit, args.raw_root, reference_audit)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     data_path = args.output_dir / "t56_report_data.json"
     md_path = args.output_dir / "t56_oracle_study_report_zh.md"

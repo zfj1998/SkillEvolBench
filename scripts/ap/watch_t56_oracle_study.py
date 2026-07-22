@@ -491,6 +491,7 @@ class Watcher:
         collector = self.args.repo_root / "scripts/ap/build_t56_oracle_study.py"
         verifier_audit = self.args.repo_root / "scripts/ap/audit_t56_verifiers.py"
         report_builder = self.args.repo_root / "scripts/ap/build_t56_oracle_report.py"
+        reference_audit_path = self.analysis_dir / "reference_solution_audit_all_envs.json"
         signature_rows = [
             {
                 "job_id": job_id,
@@ -505,9 +506,18 @@ class Watcher:
             for path in (collector, verifier_audit, report_builder)
             if path.exists()
         }
+        reference_audit_hash = (
+            hashlib.sha256(reference_audit_path.read_bytes()).hexdigest()
+            if reference_audit_path.exists()
+            else "missing"
+        )
         signature = hashlib.sha256(
             json.dumps(
-                {"jobs": signature_rows, "analysis_scripts": analysis_script_hashes},
+                {
+                    "jobs": signature_rows,
+                    "analysis_scripts": analysis_script_hashes,
+                    "reference_audit": reference_audit_hash,
+                },
                 sort_keys=True,
             ).encode("utf-8")
         ).hexdigest()
@@ -534,6 +544,8 @@ class Watcher:
                 str(self.state_dir / "inventory.json"),
                 "--output-dir",
                 str(self.analysis_dir),
+                "--reference-audit",
+                str(reference_audit_path),
             ],
             timeout=self.args.analysis_timeout_sec,
             phase="building_analysis",
