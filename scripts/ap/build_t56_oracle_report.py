@@ -72,6 +72,23 @@ MEASUREMENT_VALIDITY_ZH = {
 }
 
 CASE_DEFINITIONS = {
+    "E1-LS2-T6": {
+        "title": "两模型都只做了表层 SQLAlchemy 2.0 迁移，未完成会话与事务语义",
+        "kind": "真实的跨文件组合执行 gap",
+        "interpretation": (
+            "两模型都升级了依赖并把裸 SQL 包进 text()，但没有按迁移日志建立 SessionLocal/会话边界。"
+            "Qwen 继续使用 engine 连接且 total_amount_for_user 只取第一笔金额，config 仍是 sqlite；"
+            "Fable 用 postgresql URL 却仍通过 engine.connect() 写入且不 commit。因而跨会话持久化、聚合和并发检查失败。"
+            "这是任务正文、错误日志和公开源码足以支持的真实工程修复，不是 verifier 形态误判；"
+            "它说明 dependency-conflict 与 multi-file-fix 两类历史 skill 即使都被注入，模型仍可能无法完成组合实现。"
+        ),
+        "files": [
+            "project/src/config.py",
+            "project/src/database.py",
+            "project/src/services/order_service.py",
+            "project/src/services/report_service.py",
+        ],
+    },
     "E2-LS1-T6": {
         "title": "Oracle 建议的 structured error 与隐藏 ValueError 契约冲突",
         "kind": "Oracle scope / hidden-contract 冲突",
@@ -83,18 +100,6 @@ CASE_DEFINITIONS = {
         ),
         "conditions": ["exact_oracle"],
         "files": ["transactions.py", "requests.json", "fallback_policy.py"],
-    },
-    "E2-LS2-T6": {
-        "title": "注入的 retry skill 反而让 circuit-breaker 超额请求下游",
-        "kind": "Oracle mapping 负迁移",
-        "interpretation": (
-            "该题要求 circuit breaker，但注入的两个 oracle skills 只覆盖固定三次重试和简单两步 API chain，"
-            "完全没有 breaker 状态机知识。Fable 主动把三次 retry 与 breaker 组合，导致隐藏检查统计到过多 503；"
-            "同时 cooldown 已按 recovery_timeout 正确实现，却因源码仍含 success_budget 字样被 process verifier 判失败。"
-            "这里 exact-oracle 既缺关键知识，又引入了与目标约束冲突的动作。"
-        ),
-        "conditions": ["exact_oracle"],
-        "files": ["breaker_client.py", "cooldown_policy.py"],
     },
     "E2-LS1-T5": {
         "title": "有效的模块化实现被单文件字面检查误判",
@@ -140,6 +145,69 @@ CASE_DEFINITIONS = {
             "字面量 price >= 0。这是语义等价实现的表面形式误判。"
         ),
         "files": ["record_validator.py", "fetch_products.py", "merge_policy.py"],
+    },
+    "E3-LS3-T5": {
+        "title": "Join key 已修对，但两模型额外去重 master rows 导致统计偏差",
+        "kind": "模型过度修复 / 真实数据语义 gap",
+        "interpretation": (
+            "两模型都把 users.id 正确连到 transactions.user_id，过程检查全部通过；失败来自它们同时改写"
+            "schema_cleaner 并对 users.id 做 drop_duplicates。题目只要求修 merge path，starter 与 reference"
+            "保留清洗后仍重复的 master rows；额外去重把 merged_row_count、平均交易数和 totals 一起改变。"
+            "这不是错误 join key，也不是题目不可解，而是模型在已有正确清洗逻辑上过度泛化了“去重”经验。"
+        ),
+        "files": [
+            "join_selector.py",
+            "merge_user_spending.py",
+            "schema_cleaner.py",
+            "output.json",
+        ],
+    },
+    "E4-LS1-T5": {
+        "title": "模型完全做对冲突抽取，却因输出路径隐藏契约被判全部 outcome 失败",
+        "kind": "题面与 verifier 路径契约冲突（强任务缺陷）",
+        "interpretation": (
+            "Qwen 产出的 JSON 含两笔正确 revenue、source、conflict_detected 和禁止单一 corrected value 的 summary，"
+            "三项 process checks 也全部通过。失败原因是模型按题面把 output.json 写到 /root/task；Harbor 验证时"
+            "artifact 被放进 workspace/task/project，而 verifier 实际要求 workspace/task/output.json，即 project 的父目录。"
+            "starter 的 run_analysis.sh 恰好用 ../output.json 满足这个隐藏布局，generated structured-extraction skill"
+            "反而明确建议改为脚本同目录。这里 reward=0.5 是路径合同错位造成的假阴性，也是清晰的 skill 负迁移案例。"
+        ),
+        "files": [
+            "run_analysis.sh",
+            "analyzer.py",
+            "conflict_policy.py",
+            "revenue_sources.py",
+            "output.json",
+        ],
+    },
+    "E5-LS5-T6": {
+        "title": "矛盾集合完全正确，但类型、provenance 形态与 grounding 调用仍不完整",
+        "kind": "高语义完成度 + 实质与形态混合 gap",
+        "interpretation": (
+            "Qwen 找到了 ground truth 的 9/9 真矛盾和 3/3 非矛盾，证据 quote 也完整；失败并非不会做审计。"
+            "实质缺口是三个 internal pair 仍标 numeric/date，而题面明确要求 internal 类型；pipeline 也没有读取"
+            "evidence_index.json。另一方面，它已经保存 source cards 与 URLs，hidden outcome 却额外要求未写进"
+            "output schema 的 source_cards_chars 数字字段，部分 reasoning 失败也来自固定关键词白名单。"
+            "因此 strict failure 同时包含真实 contract 漏项和 verifier 形态放大，不能等同于整题功能失败。"
+        ),
+        "files": [
+            "audit_pipeline.py",
+            "contradiction_policy.py",
+            "scope_normalizer.py",
+        ],
+    },
+    "E6-LS4-T6": {
+        "title": "题目没有唯一最优日程，verifier 却要求任意固定时间与数组顺序",
+        "kind": "欠规定的唯一解与不可满足硬约束（强任务缺陷）",
+        "interpretation": (
+            "两模型都生成了 DST-aware、多日分散、带偏好解释的三会议方案；Fable 的三项 score 和 soft count"
+            "甚至全部匹配 ground truth。verifier 仍要求 meetings 必须保持 team_sync/client_demo/one_on_one 的数组顺序，"
+            "并必须包含 2026-04-28 15:00、04-29 14:00、04-30 19:00 三个固定 start。题面没有给这些"
+            "tie-break，官方 solution 只是按 meeting id 硬编码时间。更严重的是纽约、洛杉矶、柏林和伦敦的"
+            "09:00–17:00 工作时段没有四人共同正长度交集，官方时间也违反“每位 attendee 的 hard constraints”。"
+            "因此该题当前不能可靠区分 skill quality；即使 oracle skill 合理，模型也可能因选择另一个等价/更合理解而失败。"
+        ),
+        "files": ["scheduling_policy.py", "output/schedule.json"],
     },
 }
 
@@ -826,19 +894,50 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                 "outcome": row.get("outcome_pass"),
                 "process": row.get("process_pass"),
                 "score": row.get("normalized_score"),
+                "failed_outcome_tests": row.get("failed_outcome_tests") or [],
                 "failed_process_tests": row.get("failed_process_tests") or [],
                 "files": files,
             })
         if not observations:
             continue
-        process_path = Path(str(verifier.get("process", {}).get("path", "")))
+        process_raw = str(verifier.get("process", {}).get("path") or "")
+        outcome_raw = str(verifier.get("outcome", {}).get("path") or "")
+        process_path = Path(process_raw) if process_raw else None
+        outcome_path = Path(outcome_raw) if outcome_raw else None
+        task_slug = str(verifier.get("task_slug") or "")
+        tasks_root_raw = str(audit.get("tasks_root") or "")
+        task_root = (
+            Path(tasks_root_raw) / task_slug
+            if tasks_root_raw and task_slug
+            else None
+        )
+        instruction_path = task_root / "instruction.md" if task_root else None
+        solution_path = task_root / "solution" / "solve.sh" if task_root else None
         result.append({
             "task_id": task_id,
             **definition,
+            "task_slug": task_slug or None,
+            "instruction_path": str(instruction_path) if instruction_path else None,
+            "instruction": (
+                instruction_path.read_text(encoding="utf-8", errors="replace")
+                if instruction_path and instruction_path.is_file()
+                else ""
+            ),
+            "reference_solution_path": str(solution_path) if solution_path else None,
+            "reference_solution": (
+                solution_path.read_text(encoding="utf-8", errors="replace")
+                if solution_path and solution_path.is_file()
+                else ""
+            ),
             "process_verifier_path": str(process_path) if process_path else None,
             "process_verifier": (
                 process_path.read_text(encoding="utf-8", errors="replace")
-                if process_path.is_file() else ""
+                if process_path and process_path.is_file() else ""
+            ),
+            "outcome_verifier_path": str(outcome_path) if outcome_path else None,
+            "outcome_verifier": (
+                outcome_path.read_text(encoding="utf-8", errors="replace")
+                if outcome_path and outcome_path.is_file() else ""
             ),
             "observations": observations,
         })
@@ -2275,6 +2374,7 @@ def conclusions(
     oracle_scope: dict[str, Any],
     reference_integrity: dict[str, Any],
     measurement_validity: dict[str, Any],
+    cases: list[dict[str, Any]],
 ) -> list[dict[str, str]]:
     missing = [row for row in coverage if not row["complete"]]
     result = []
@@ -2392,6 +2492,22 @@ def conclusions(
             "body": (
                 f"官方标准解严格通过 {reference_integrity['passed']}/{reference_integrity['total']}；"
                 f"{len(reference_integrity['failures'])} 题需要优先视为题目、标准解、容器或 verifier 的完整性嫌疑，不能用于归因 skill evolve。"
+            ),
+        })
+    strong_task_defects = [
+        case for case in cases if "强任务缺陷" in str(case.get("kind") or "")
+    ]
+    if strong_task_defects:
+        ids = ", ".join(str(case["task_id"]) for case in strong_task_defects)
+        result.append({
+            "level": "warn",
+            "title": f"已逐代码核实 {len(strong_task_defects)} 个强 benchmark task 缺陷",
+            "body": (
+                f"当前明确的是 {ids}。E4-LS1-T5 的题面输出路径与 verifier 的父目录合同冲突，"
+                "语义正确输出被全部判为 outcome 失败；E6-LS4-T6 的四人工作时段没有共同正长度交集，"
+                "verifier 却要求题面未声明的固定时间和数组顺序。90/90 reference pass 只能证明官方脚本能满足"
+                "官方 verifier，不能排除 reference 利用隐藏合同或任意 tie-break。最终任务质量结论必须把这类题"
+                "从纯模型/skill failure 中单独报告。"
             ),
         })
     summary = audit.get("summary", {})
@@ -2576,6 +2692,7 @@ def build_payload(
         inventory or {},
         matrix_state or {},
     )
+    cases = build_cases(rows, audit, raw_root)
     return {
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "is_complete": all(row["complete"] for row in coverage),
@@ -2589,7 +2706,7 @@ def build_payload(
         "effects": matched_effects(comparisons),
         "model_comparisons": model_comparisons(rows),
         "failure_map": failure_map(rows),
-        "cases": build_cases(rows, audit, raw_root),
+        "cases": cases,
         "skills": skill_summary(evidence),
         "learning": learning,
         "learning_transfer": learning_transfer,
@@ -2615,6 +2732,7 @@ def build_payload(
             oracle_scope,
             reference_integrity,
             measurement_validity,
+            cases,
         ),
         "paths": {
             "raw_root": str(raw_root.resolve()),
@@ -3194,9 +3312,18 @@ def render_markdown(data: dict[str, Any]) -> str:
     for case in data["cases"]:
         lines += [f"### {case['task_id']}：{case['title']}", "", f"分类：**{case['kind']}**。{case['interpretation']}", ""]
         for obs in case["observations"]:
-            failures = ", ".join(item.get("name", "") for item in obs["failed_process_tests"])
+            outcome_failures = ", ".join(
+                item.get("name", "") for item in obs["failed_outcome_tests"]
+            ) or "无"
+            process_failures = ", ".join(
+                item.get("name", "") for item in obs["failed_process_tests"]
+            ) or "无"
             condition = CONDITION_ZH.get(str(obs.get("condition")), str(obs.get("condition")))
-            lines.append(f"- {obs['model']} / {condition}：strict={obs['strict']}，outcome={obs['outcome']}，process={obs['process']}，失败检查 `{failures}`。")
+            lines.append(
+                f"- {obs['model']} / {condition}：strict={obs['strict']}，"
+                f"outcome={obs['outcome']}，process={obs['process']}；"
+                f"outcome failures `{outcome_failures}`；process failures `{process_failures}`。"
+            )
         lines.append("")
     lines += [
         "## 可靠性限制与下一步",
@@ -3309,7 +3436,7 @@ function renderTasks(){{let q=taskSearch.value.toLowerCase();let rows=D.comparis
 function showTask(model,id){{let x=D.comparisons.find(x=>x.model===model&&x.task_id===id);let v=D.measurement_validity.records.find(v=>v.model===model&&v.task_id===id);let blocks=Object.entries(x.conditions).map(([name,c])=>`<h3>${{zh[name]}}</h3>${{c?`<p>${{status(c)}} score=${{c.score??'—'}} · job=${{esc(c.job_id)}}</p><p class="small">实际读取 skills: ${{esc(c.skills_actually_used.join(', ')||'none')}}<br>Oracle 内容证明: ${{esc(Object.entries(c.oracle_content_verification||{{}}).map(([k,v])=>k+': '+v).join(', ')||'—')}}<br>record: ${{esc(c.record_path)}}<br>trajectory: ${{esc(c.trajectory_path)}}</p><details><summary>失败测试 (${{c.failed_tests.length}})</summary><pre>${{esc(JSON.stringify(c.failed_tests,null,2))}}</pre></details>`:'<p class="small">尚无结果</p>'}}`).join('');let validityBlock=v?`<div class="case"><h3>历史 Skill 测量有效性：${{esc(validityZh[v.category]||v.category)}}</h3><p>${{v.eligible_for_causal_skill_claim?'该题可进入历史 skill 的四条件因果检验。':'该题当前不能把成功归因于 T1–T3 形成的历史 skill。'}}</p><p class="small">受控概念：${{esc(v.controlled_concepts.join(', ')||'—')}}<br>T1–T3 历史命中：${{v.history_visible_count}} · 当前题面明示：${{v.instruction_explicit_count}} · generated 覆盖：${{v.generated_coverage}} · oracle 覆盖：${{v.oracle_coverage}}</p></div>`:'';drawerBody.innerHTML=`<h2>${{x.task_id}}</h2><p>${{esc(x.task_slug)}} · T${{x.tier}} · ${{x.environment_id}}</p><div class="conclusion ${{x.causal.complete?'good':'pending'}}"><h3>${{esc(x.causal.label)}} · ${{esc(x.causal.pattern||'')}}</h3>${{esc(x.causal.explanation)}}</div>${{validityBlock}}<p><b>需要的 skills</b><br>${{esc(x.required_skills.join(', ')||x.primary_skill)}}</p>${{blocks}}`;drawer.classList.add('open')}}
 let a=D.verifier_audit.summary;audit.innerHTML=`<div class="card"><span class="label">过程 / 功能 checks</span><b>${{a.process_checks_total}} / ${{a.outcome_checks_total}}</b></div><p><b>${{a.tasks_with_literal_or_regex_process_checks}}/90</b> 含源码字面量或正则检查；<b>${{a.tasks_with_effective_process_weight_50_percent}}/90</b> 的过程权重为 50%。</p><p>形态敏感度：${{Object.entries(a.process_shape_sensitivity).map(([k,v])=>`${{k}}=${{v}}`).join(' · ')}}</p><h3>Process-only 分层</h3>${{D.verifier_shape_outcomes.filter(x=>x.n).map(x=>`<div class="small">${{zh[x.condition]}} · ${{x.shape_risk}} · process-only ${{x.process_only_failures}}/${{x.n}} · outcome ${{x.outcome_passes}}/${{x.n}} · process ${{x.process_passes}}/${{x.n}}</div>`).join('')}}`;
 skills.innerHTML=Object.entries(D.skills.by_model).map(([m,x])=>`<div class="case"><h3>${{m}}</h3><p>skill 对数 <b>${{x.n}}</b> · 改名 ${{x.renamed}} · 完全相同 ${{x.exact_equal}}</p><div class="small">中位 word Jaccard ${{x.median_word_jaccard?.toFixed(3)??'—'}} · 长度比 ${{x.median_length_ratio?.toFixed(2)??'—'}}</div></div>`).join('')+'<p class="small">词面相似度低只说明表达和覆盖范围不同，不能单独证明 skill 质量差；最终要结合 matched oracle rescue。</p>';
-cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}} · ${{o.failed_process_tests.map(t=>t.name).join(', ')}}</p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}`).join('')}}<details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details></article>`).join('');
+cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}}<br><span class="small">Outcome failures: ${{o.failed_outcome_tests.map(t=>t.name).join(', ')||'无'}}<br>Process failures: ${{o.failed_process_tests.map(t=>t.name).join(', ')||'无'}}</span></p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}`).join('')}}<details><summary>任务正文</summary><div class="small">${{esc(x.instruction_path)}}</div><pre>${{esc(x.instruction)}}</pre></details><details><summary>Outcome verifier 源码</summary><div class="small">${{esc(x.outcome_verifier_path)}}</div><pre>${{esc(x.outcome_verifier)}}</pre></details><details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details><details><summary>官方 reference solution</summary><div class="small">${{esc(x.reference_solution_path)}}</div><pre>${{esc(x.reference_solution)}}</pre></details></article>`).join('');
 </script></body></html>'''
 
 

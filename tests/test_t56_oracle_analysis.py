@@ -755,8 +755,19 @@ def test_execution_attempt_audit_separates_platform_failures_from_results(
 
 
 def test_oracle_case_studies_use_only_the_declared_condition(tmp_path: Path) -> None:
+    task_root = tmp_path / "tasks" / "oracle-path-contract"
+    (task_root / "solution").mkdir(parents=True)
+    (task_root / "instruction.md").write_text("task contract\n", encoding="utf-8")
+    (task_root / "solution" / "solve.sh").write_text(
+        "#!/bin/sh\n", encoding="utf-8"
+    )
+    outcome_path = tmp_path / "test_outcome.py"
+    process_path = tmp_path / "test_process.py"
+    outcome_path.write_text("def test_outcome(): pass\n", encoding="utf-8")
+    process_path.write_text("def test_process(): pass\n", encoding="utf-8")
     common = {
         "task_id": "E2-LS1-T6",
+        "task_slug": "oracle-path-contract",
         "model": "sig-fable",
         "strict_pass": False,
         "outcome_pass": False,
@@ -769,12 +780,26 @@ def test_oracle_case_studies_use_only_the_declared_condition(tmp_path: Path) -> 
             {**common, "condition": "self_generated"},
             {**common, "condition": "exact_oracle"},
         ],
-        {"tasks": [{"task_id": "E2-LS1-T6", "process": {}}]},
+        {
+            "tasks_root": str(tmp_path / "tasks"),
+            "tasks": [
+                {
+                    "task_id": "E2-LS1-T6",
+                    "task_slug": "oracle-path-contract",
+                    "outcome": {"path": str(outcome_path)},
+                    "process": {"path": str(process_path)},
+                }
+            ],
+        },
         tmp_path,
     )
 
     case = next(item for item in cases if item["task_id"] == "E2-LS1-T6")
     assert [row["condition"] for row in case["observations"]] == ["exact_oracle"]
+    assert case["instruction"] == "task contract\n"
+    assert case["outcome_verifier"] == "def test_outcome(): pass\n"
+    assert case["process_verifier"] == "def test_process(): pass\n"
+    assert case["reference_solution"] == "#!/bin/sh\n"
 
 
 def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path) -> None:
