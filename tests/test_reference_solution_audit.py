@@ -74,6 +74,12 @@ def test_collect_results_fails_closed_on_duplicate_or_missing_trials(tmp_path: P
     assert rows[1]["strict_pass"] is False
 
 
+def test_benchmark_revision_uses_packaged_episode_without_git(tmp_path: Path) -> None:
+    episode = tmp_path / "dataset_episode.json"
+    _write_json(episode, {"benchmark_revision": "a" * 40})
+    assert MODULE.benchmark_revision(tmp_path, episode) == "a" * 40
+
+
 def _audit_payload(environment_id: str, *, strict_pass: bool = True) -> dict:
     rows = []
     for task_id in sorted(WATCHER.expected_task_ids(environment_id)):
@@ -108,6 +114,26 @@ def test_reference_watcher_validates_exact_task_grid_and_provenance() -> None:
     assert valid is False
     assert "task row count is not 15" in errors
     assert "T4-T6 task grid mismatch" in errors
+
+
+def test_reference_watcher_accepts_exact_packaged_revision_fallback() -> None:
+    payload = _audit_payload("E2")
+    payload["benchmark_revision"] = "unknown"
+    valid, errors = WATCHER.validate_audit(
+        payload,
+        "E2",
+        packaged_benchmark_revision=WATCHER.BENCHMARK_REVISION,
+    )
+    assert valid is True
+    assert errors == []
+
+    valid, errors = WATCHER.validate_audit(
+        payload,
+        "E2",
+        packaged_benchmark_revision="b" * 40,
+    )
+    assert valid is False
+    assert "benchmark_revision mismatch" in errors
 
 
 def test_reference_watcher_aggregates_all_90_tasks() -> None:

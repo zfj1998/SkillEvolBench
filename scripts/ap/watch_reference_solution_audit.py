@@ -84,7 +84,12 @@ def expected_task_ids(environment_id: str) -> set[str]:
     }
 
 
-def validate_audit(payload: Any, environment_id: str) -> tuple[bool, list[str]]:
+def validate_audit(
+    payload: Any,
+    environment_id: str,
+    *,
+    packaged_benchmark_revision: str | None = None,
+) -> tuple[bool, list[str]]:
     errors: list[str] = []
     if not isinstance(payload, dict):
         return False, ["audit root is not an object"]
@@ -92,7 +97,10 @@ def validate_audit(payload: Any, environment_id: str) -> tuple[bool, list[str]]:
         errors.append("unexpected audit_type")
     if payload.get("environment_id") != environment_id:
         errors.append("environment_id mismatch")
-    if payload.get("benchmark_revision") != BENCHMARK_REVISION:
+    if (
+        payload.get("benchmark_revision") != BENCHMARK_REVISION
+        and packaged_benchmark_revision != BENCHMARK_REVISION
+    ):
         errors.append("benchmark_revision mismatch")
     harbor = payload.get("harbor")
     if not isinstance(harbor, dict) or harbor.get("installed_git_commit") != HARBOR_REVISION:
@@ -279,6 +287,19 @@ class Watcher:
         value = read_json(audit_path, {})
         return value if isinstance(value, dict) else None
 
+    def exported_dataset_episode(self, job_id: str) -> dict[str, Any] | None:
+        marker = self.export_marker(job_id)
+        if not isinstance(marker, dict) or marker.get("completed") is not True:
+            return None
+        destination = marker.get("destination")
+        if not isinstance(destination, str):
+            return None
+        matches = sorted(Path(destination).rglob("dataset_episode.json"))
+        if len(matches) != 1:
+            return None
+        value = read_json(matches[0], {})
+        return value if isinstance(value, dict) else None
+
     def register_group(self, group_id: str) -> None:
         result = self.run(
             [
@@ -302,7 +323,15 @@ class Watcher:
         payload = self.exported_audit(SMOKE_JOB_ID)
         if payload is None:
             return None
-        valid, errors = validate_audit(payload, "E2")
+        episode = self.exported_dataset_episode(SMOKE_JOB_ID) or {}
+        packaged_revision = episode.get("benchmark_revision")
+        valid, errors = validate_audit(
+            payload,
+            "E2",
+            packaged_benchmark_revision=(
+                packaged_revision if isinstance(packaged_revision, str) else None
+            ),
+        )
         atomic_json(
             self.state_dir / "smoke-validation.json",
             {
@@ -311,6 +340,13 @@ class Watcher:
                 "errors": errors,
                 "strict_passed": payload.get("summary", {}).get("passed"),
                 "strict_total": payload.get("summary", {}).get("total"),
+                "audit_benchmark_revision": payload.get("benchmark_revision"),
+                "packaged_benchmark_revision": packaged_revision,
+                "benchmark_revision_evidence": (
+                    "audit_json"
+                    if payload.get("benchmark_revision") == BENCHMARK_REVISION
+                    else "dataset_episode_json"
+                ),
             },
         )
         return valid, errors
@@ -372,7 +408,15 @@ class Watcher:
             payload = self.exported_audit(job_id)
             if payload is None:
                 return False
-            valid, audit_errors = validate_audit(payload, environment_id)
+            episode = self.exported_dataset_episode(job_id) or {}
+            packaged_revision = episode.get("benchmark_revision")
+            valid, audit_errors = validate_audit(
+                payload,
+                environment_id,
+                packaged_benchmark_revision=(
+                    packaged_revision if isinstance(packaged_revision, str) else None
+                ),
+            )
             if not valid:
                 errors.extend(f"{environment_id}: {error}" for error in audit_errors)
             payloads.append(payload)
