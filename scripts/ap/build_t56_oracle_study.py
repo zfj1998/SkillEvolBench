@@ -32,6 +32,89 @@ def load_json(path: Path) -> dict[str, Any]:
     return value
 
 
+def load_optional_json(path: Path | None) -> Any:
+    if path is None or not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def tree_digest(root: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(
+        (item for item in root.rglob("*") if item.is_file()),
+        key=lambda item: item.relative_to(root).as_posix(),
+    ):
+        digest.update(path.relative_to(root).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def oracle_evidence(
+    run_dir: Path,
+    task_id: str,
+    spec: dict[str, Any],
+    oracle_enabled: bool,
+    raw_root: Path,
+) -> dict[str, Any]:
+    if not oracle_enabled:
+        return {
+            "oracle_injection_exact": None,
+            "oracle_audit_path": None,
+            "oracle_skill_ids": [],
+            "expected_oracle_skill_ids": [],
+            "oracle_injection_errors": [],
+        }
+    expected = (
+        list(spec.get("required_skills") or [])
+        if int(spec.get("task_index", 0)) == 6
+        else [str(spec.get("primary_skill"))]
+    )
+    audit_path = run_dir / "oracle-skill-views" / f"{task_id}.audit.json"
+    view_dir = run_dir / "oracle-skill-views" / task_id
+    errors: list[str] = []
+    audit: dict[str, Any] = {}
+    if not audit_path.exists():
+        errors.append("missing oracle audit")
+    else:
+        try:
+            audit = load_json(audit_path)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            errors.append(f"invalid oracle audit: {exc}")
+    actual = list(audit.get("oracle_skill_ids") or [])
+    if actual != expected:
+        errors.append(f"oracle IDs differ: actual={actual!r} expected={expected!r}")
+    expected_slugs = sorted(skill.split(".", 1)[-1] for skill in expected)
+    visible_slugs = (
+        sorted(path.name for path in view_dir.iterdir() if path.is_dir())
+        if view_dir.is_dir() else []
+    )
+    if visible_slugs != expected_slugs:
+        errors.append(f"visible skill dirs differ: actual={visible_slugs!r} expected={expected_slugs!r}")
+    for skill in audit.get("skills") or []:
+        if not isinstance(skill, dict):
+            errors.append("non-object oracle skill audit entry")
+            continue
+        skill_dir = view_dir / str(skill.get("slug"))
+        if not skill_dir.is_dir():
+            errors.append(f"missing oracle skill dir: {skill.get('slug')}")
+        elif tree_digest(skill_dir) != skill.get("sha256"):
+            errors.append(f"oracle content hash mismatch: {skill.get('slug')}")
+    return {
+        "oracle_injection_exact": not errors,
+        "oracle_audit_path": (
+            relative_or_absolute(audit_path, raw_root) if audit_path.exists() else None
+        ),
+        "oracle_skill_ids": actual,
+        "expected_oracle_skill_ids": expected,
+        "oracle_injection_errors": errors,
+    }
+
+
 def load_task_specs(tasks_root: Path) -> dict[str, dict[str, Any]]:
     specs: dict[str, dict[str, Any]] = {}
     for path in sorted(tasks_root.glob("*/task-spec.yaml")):
@@ -175,6 +258,36 @@ def iter_run_dirs(raw_root: Path) -> Iterable[Path]:
     yield from sorted(raw_root.glob("*/ap-*/artifacts/output/runs/*"))
 
 
+def mark_selected_runs(
+    runs: list[dict[str, Any]],
+    rows: list[dict[str, Any]],
+    skill_rows: list[dict[str, Any]],
+) -> set[tuple[str, str]]:
+    """Mark one non-blended episode per model/condition/environment."""
+    task_counts = Counter((row["job_id"], row["run_id"]) for row in rows)
+    grouped_runs: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    for run in runs:
+        grouped_runs[(run["model"], run["condition"], run["environment_id"])].append(run)
+    selected_keys: set[tuple[str, str]] = set()
+    for candidates in grouped_runs.values():
+        selected = max(
+            candidates,
+            key=lambda run: (
+                task_counts[(run["job_id"], run["run_id"])],
+                run["ap_status"] == "Succeeded",
+                str(run.get("ap_updated_at") or run.get("ap_created_at") or ""),
+            ),
+        )
+        selected_keys.add((selected["job_id"], selected["run_id"]))
+    for collection in (runs, rows, skill_rows):
+        for item in collection:
+            item["selected_run"] = (item["job_id"], item["run_id"]) in selected_keys
+    for run in runs:
+        run["selected_t56_record_count"] = task_counts[(run["job_id"], run["run_id"])]
+        run["selection_rule"] = "max_t56_coverage_then_ap_success_then_latest"
+    return selected_keys
+
+
 def collect(
     raw_root: Path,
     tasks_root: Path,
@@ -184,6 +297,7 @@ def collect(
     specs = load_task_specs(tasks_root)
     inventory = load_inventory(inventory_path)
     rows: list[dict[str, Any]] = []
+    learning_rows: list[dict[str, Any]] = []
     runs: list[dict[str, Any]] = []
     skill_rows: list[dict[str, Any]] = []
     expected_skill_by_family = {
@@ -211,6 +325,8 @@ def collect(
             "job_label": job.get("label", export_label),
             "ap_status": job.get("status", "unknown"),
             "ap_error_code": job.get("error_code"),
+            "ap_created_at": job.get("created_at"),
+            "ap_updated_at": job.get("updated_at"),
             "environment_id": config.get("environment_id"),
             "model": model,
             "model_name": baseline.get("model_name"),
@@ -329,8 +445,24 @@ def collect(
                 if isinstance(item, dict) and item.get("name")
             }
             retrieval = record.get("retrieval") or {}
+            oracle = oracle_evidence(
+                run_dir,
+                task_id,
+                spec,
+                bool(config.get("oracle_skill_view")),
+                raw_root,
+            )
+            trial_candidates = sorted(
+                (run_dir / "harbor-job" / str(config.get("run_id", run_dir.name))).glob(
+                    f"{task_id}__*"
+                )
+            )
+            trial_dir = trial_candidates[0] if len(trial_candidates) == 1 else None
+            artifact_task_dir = trial_dir / "artifacts/root/task" if trial_dir else None
+            local_trajectory = trial_dir / "agent/trajectory.json" if trial_dir else None
             row = {
                 **run_row,
+                **oracle,
                 "task_id": task_id,
                 "family_id": record.get("family_id") or spec.get("family_id"),
                 "family_index": int(match.group(2)),
@@ -355,17 +487,109 @@ def collect(
                 "rubric_dimensions": dimension_rows,
                 "retrieved_skill_ids": skill_ids(retrieval.get("skills")),
                 "skills_actually_used": skill_ids(record.get("skills_actually_used")),
+                "no_skill_empty": (
+                    not skill_ids(retrieval.get("skills"))
+                    and not skill_ids(record.get("skills_actually_used"))
+                    if condition == "no_skill"
+                    else None
+                ),
                 "primary_skill": spec.get("primary_skill"),
                 "required_skills": spec.get("required_skills") or [],
                 "composition_type": spec.get("composition_type"),
                 "trajectory_path": outcome.get("trajectory_path"),
+                "local_trial_path": (
+                    relative_or_absolute(trial_dir, raw_root) if trial_dir else None
+                ),
+                "local_artifact_task_path": (
+                    relative_or_absolute(artifact_task_dir, raw_root)
+                    if artifact_task_dir and artifact_task_dir.is_dir()
+                    else None
+                ),
+                "local_trajectory_path": (
+                    relative_or_absolute(local_trajectory, raw_root)
+                    if local_trajectory and local_trajectory.exists()
+                    else None
+                ),
                 "record_path": relative_or_absolute(record_path, raw_root),
                 "task_spec_path": spec.get("_path"),
             }
             rows.append(row)
 
+        for record_path in sorted(records_dir.glob("E*-LS*-T[1-3].json")):
+            record = load_json(record_path)
+            task_id = str(record.get("task_id") or record_path.stem)
+            match = TASK_ID_RE.match(task_id)
+            if not match:
+                continue
+            spec = specs.get(task_id, {})
+            outcome = record.get("outcome") or {}
+            reflection = record.get("reflection") or {}
+            failed_tests = enrich_failed_tests(outcome.get("failed_tests") or [], spec)
+            trial_candidates = sorted(
+                (run_dir / "harbor-job" / str(config.get("run_id", run_dir.name))).glob(
+                    f"{task_id}__*"
+                )
+            )
+            trial_dir = trial_candidates[0] if len(trial_candidates) == 1 else None
+            reflection_dir = trial_dir / "self-reflection-audit" if trial_dir else None
+            feedback_path = reflection_dir / "self_reflection_feedback.json" if reflection_dir else None
+            patch_path = reflection_dir / "self_reflection_patch.json" if reflection_dir else None
+            learning_rows.append({
+                **run_row,
+                "task_id": task_id,
+                "family_id": record.get("family_id") or spec.get("family_id"),
+                "family_index": int(match.group(2)),
+                "tier": int(match.group(3)),
+                "task_slug": spec.get("task_slug"),
+                "task_role": record.get("task_role") or spec.get("role"),
+                "instruction": (record.get("retrieval") or {}).get("query_text"),
+                "strict_pass": outcome.get("verifier_passed"),
+                "reward": outcome.get("reward"),
+                "normalized_score": outcome.get("normalized_score"),
+                "outcome_pass": outcome.get("outcome_passed"),
+                "process_pass": outcome.get("process_passed"),
+                "classification": classify(outcome),
+                "failed_tests": failed_tests,
+                "reflection_status": reflection.get("status"),
+                "reflection_mode": reflection.get("mode"),
+                "learning_attempts": reflection.get("learning_attempts"),
+                "repair_attempts": reflection.get("repair_attempts"),
+                "initial_verifier_passed": reflection.get("initial_verifier_passed"),
+                "terminal_verifier_passed": reflection.get("terminal_verifier_passed"),
+                "repaired_to_pass": reflection.get("repaired_to_pass"),
+                "same_session_verified": reflection.get("same_session_verified"),
+                "all_attempts_same_session_verified": reflection.get("all_attempts_same_session_verified"),
+                "reflection_feedback": (
+                    load_optional_json(feedback_path)
+                ),
+                "reflection_patch": (
+                    load_optional_json(patch_path)
+                ),
+                "local_trial_path": (
+                    relative_or_absolute(trial_dir, raw_root) if trial_dir else None
+                ),
+                "local_reflection_path": (
+                    relative_or_absolute(reflection_dir, raw_root)
+                    if reflection_dir and reflection_dir.is_dir()
+                    else None
+                ),
+                "record_path": relative_or_absolute(record_path, raw_root),
+                "task_spec_path": spec.get("_path"),
+            })
+
+    # Repairs and reruns deliberately remain in the evidence file, but only one
+    # run per model/condition/environment is used for aggregate conclusions.
+    # Never blend tasks from different stateful episodes: prefer the run with
+    # the most distinct T4-T6 records, then a platform-complete run, then the
+    # newest AP timestamp.
+    selected_keys = mark_selected_runs(runs, rows, skill_rows)
+    for item in learning_rows:
+        item["selected_run"] = (item["job_id"], item["run_id"]) in selected_keys
+
+    selected_rows = [row for row in rows if row["selected_run"]]
+    selected_learning_rows = [row for row in learning_rows if row["selected_run"]]
     summary_groups: dict[tuple[str, str, str, int], list[dict[str, Any]]] = defaultdict(list)
-    for row in rows:
+    for row in selected_rows:
         key = (row["model"], row["condition"], row["environment_id"], row["tier"])
         summary_groups[key].append(row)
 
@@ -399,10 +623,15 @@ def collect(
         "inventory_path": str(inventory_path.resolve()),
         "run_count": len(runs),
         "task_record_count": len(rows),
+        "selected_run_count": len(selected_keys),
+        "selected_task_record_count": len(selected_rows),
+        "learning_record_count": len(learning_rows),
+        "selected_learning_record_count": len(selected_learning_rows),
         "skill_pair_count": len(skill_rows),
         "runs": runs,
         "summaries": summaries,
         "tasks": rows,
+        "learning_tasks": learning_rows,
         "skills": skill_rows,
     }
 
@@ -413,7 +642,9 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "task_slug", "classification", "strict_pass", "outcome_pass",
         "process_pass", "reward", "primary_skill", "required_skills",
         "retrieved_skill_ids", "skills_actually_used", "job_id", "ap_status",
-        "record_path",
+        "selected_run", "oracle_injection_exact", "no_skill_empty",
+        "record_path", "local_trial_path", "local_artifact_task_path",
+        "local_trajectory_path",
     ]
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=columns)
@@ -445,6 +676,10 @@ def main() -> int:
         "csv": str(csv_path.resolve()),
         "run_count": result["run_count"],
         "task_record_count": result["task_record_count"],
+        "selected_run_count": result["selected_run_count"],
+        "selected_task_record_count": result["selected_task_record_count"],
+        "learning_record_count": result["learning_record_count"],
+        "selected_learning_record_count": result["selected_learning_record_count"],
         "skill_pair_count": result["skill_pair_count"],
         "summary_count": len(result["summaries"]),
     }, ensure_ascii=False, indent=2))

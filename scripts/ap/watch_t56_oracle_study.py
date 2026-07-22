@@ -488,6 +488,9 @@ class Watcher:
 
     def refresh_analysis(self, inventory: dict[str, dict[str, Any]]) -> None:
         """Refresh derived evidence only when its AP/export inputs changed."""
+        collector = self.args.repo_root / "scripts/ap/build_t56_oracle_study.py"
+        verifier_audit = self.args.repo_root / "scripts/ap/audit_t56_verifiers.py"
+        report_builder = self.args.repo_root / "scripts/ap/build_t56_oracle_report.py"
         signature_rows = [
             {
                 "job_id": job_id,
@@ -497,8 +500,16 @@ class Watcher:
             }
             for job_id, job in sorted(inventory.items())
         ]
+        analysis_script_hashes = {
+            path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in (collector, verifier_audit, report_builder)
+            if path.exists()
+        }
         signature = hashlib.sha256(
-            json.dumps(signature_rows, sort_keys=True).encode("utf-8")
+            json.dumps(
+                {"jobs": signature_rows, "analysis_scripts": analysis_script_hashes},
+                sort_keys=True,
+            ).encode("utf-8")
         ).hexdigest()
         marker_path = self.state_dir / "analysis.json"
         previous = read_json(marker_path, {})
@@ -509,7 +520,6 @@ class Watcher:
         ):
             return
 
-        collector = self.args.repo_root / "scripts/ap/build_t56_oracle_study.py"
         result = self.run_command(
             [
                 sys.executable,
@@ -532,9 +542,57 @@ class Watcher:
             diagnostic = (result.stderr.strip() or result.stdout.strip())[-1000:]
             self.event("analysis_refresh_failed", diagnostic=diagnostic)
             return
+        audit_result = self.run_command(
+            [
+                sys.executable,
+                str(verifier_audit),
+                "--tasks-root",
+                str(self.args.repo_root / "benchmark/tasks"),
+                "--evidence",
+                str(self.analysis_dir / "t56_evidence.json"),
+                "--output-dir",
+                str(self.analysis_dir),
+            ],
+            timeout=self.args.analysis_timeout_sec,
+            phase="auditing_verifiers",
+        )
+        if audit_result.returncode != 0:
+            diagnostic = (audit_result.stderr.strip() or audit_result.stdout.strip())[-1000:]
+            self.event("verifier_audit_failed", diagnostic=diagnostic)
+            return
+        report_result = self.run_command(
+            [
+                sys.executable,
+                str(report_builder),
+                "--evidence",
+                str(self.analysis_dir / "t56_evidence.json"),
+                "--verifier-audit",
+                str(self.analysis_dir / "t56_verifier_audit.json"),
+                "--raw-root",
+                str(self.evidence_dir),
+                "--output-dir",
+                str(self.analysis_dir),
+            ],
+            timeout=self.args.analysis_timeout_sec,
+            phase="building_report",
+        )
+        if report_result.returncode != 0:
+            diagnostic = (report_result.stderr.strip() or report_result.stdout.strip())[-1000:]
+            self.event("report_build_failed", diagnostic=diagnostic)
+            return
         payload: dict[str, Any] = {}
         try:
             payload = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            pass
+        audit_payload: dict[str, Any] = {}
+        report_payload: dict[str, Any] = {}
+        try:
+            audit_payload = json.loads(audit_result.stdout)
+        except json.JSONDecodeError:
+            pass
+        try:
+            report_payload = json.loads(report_result.stdout)
         except json.JSONDecodeError:
             pass
         write_json(
@@ -543,6 +601,9 @@ class Watcher:
                 "input_signature": signature,
                 "refreshed_at_utc": utc_now(),
                 "collector_result": payload,
+                "analysis_script_hashes": analysis_script_hashes,
+                "verifier_audit_result": audit_payload,
+                "report_result": report_payload,
             },
         )
         self.event("analysis_refreshed", **payload)
