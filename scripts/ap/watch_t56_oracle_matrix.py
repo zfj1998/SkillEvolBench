@@ -23,6 +23,9 @@ from typing import Any, Iterable
 
 TERMINAL = {"Succeeded", "Failed", "Cancelled"}
 AGENTHUB_REF = "2dae59b5340774a528be443840b889452c78cfba"
+SELFGEN_AGENTHUB_REF = "a32ea0ecd2daf6661dd3212d973d0f8e222f3a77"
+FABLE_SMOKE_JOB_ID = "ap-skillevolbench-3be14e2ba69944b4-d2"
+FABLE_E4_LABEL = "sig-fable-e4-repair-v1-15"
 DEFAULT_ROOT = Path(
     "/cpfs02/user/zhangfengji.zfj/skillevolbench_t56_oracle_study_20260723"
 )
@@ -70,6 +73,27 @@ def find_group_id(value: Any) -> str | None:
     return None
 
 
+def find_job_id(value: Any, instance_id: str) -> str | None:
+    if isinstance(value, dict):
+        direct = value.get("job_id")
+        if (
+            isinstance(direct, str)
+            and direct.startswith("ap-")
+            and value.get("instance_id") == instance_id
+        ):
+            return direct
+        for child in value.values():
+            found = find_job_id(child, instance_id)
+            if found:
+                return found
+    if isinstance(value, list):
+        for child in value:
+            found = find_job_id(child, instance_id)
+            if found:
+                return found
+    return None
+
+
 def json_values(text: str) -> Iterable[Any]:
     decoder = json.JSONDecoder()
     for index, character in enumerate(text):
@@ -112,6 +136,15 @@ class MatrixWatcher:
     def load_state(self) -> dict[str, Any]:
         state = read_json(self.state_path, {})
         if isinstance(state, dict) and state.get("schema_version") == 1:
+            state.setdefault(
+                "fable_e4_repair",
+                {
+                    "status": "pending",
+                    "idempotency_key": str(uuid.uuid4()),
+                    "job_id": None,
+                },
+            )
+            atomic_json(self.state_path, state)
             return state
         stages = {}
         for name in (
@@ -125,7 +158,16 @@ class MatrixWatcher:
                 "idempotency_key": str(uuid.uuid4()),
                 "group_id": None,
             }
-        state = {"schema_version": 1, "created_at_utc": utc_now(), "stages": stages}
+        state = {
+            "schema_version": 1,
+            "created_at_utc": utc_now(),
+            "fable_e4_repair": {
+                "status": "pending",
+                "idempotency_key": str(uuid.uuid4()),
+                "job_id": None,
+            },
+            "stages": stages,
+        }
         atomic_json(self.state_path, state)
         return state
 
@@ -153,6 +195,10 @@ class MatrixWatcher:
                         "group_id": stage.get("group_id"),
                     }
                     for name, stage in self.state["stages"].items()
+                },
+                "fable_e4_repair": {
+                    "status": self.state["fable_e4_repair"].get("status"),
+                    "job_id": self.state["fable_e4_repair"].get("job_id"),
                 },
                 **fields,
             },
@@ -185,6 +231,15 @@ class MatrixWatcher:
         value = json.loads(result.stdout)
         jobs = value.get("jobs", []) if isinstance(value, dict) else []
         return [job for job in jobs if isinstance(job, dict) and job.get("job_type", "default") == "default"]
+
+    def get_job(self, job_id: str) -> dict[str, Any]:
+        result = self.run([self.args.ap_cli, "job", "get", job_id], timeout=120)
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or result.stdout.strip())
+        value = json.loads(result.stdout)
+        if not isinstance(value, dict) or value.get("job_id") != job_id:
+            raise RuntimeError(f"unexpected AP job response for {job_id}")
+        return value
 
     def update_submitted_stages(self) -> None:
         for name, stage in self.state["stages"].items():
@@ -221,6 +276,138 @@ class MatrixWatcher:
         self.save()
         self.event("group_registered", stage=stage_name, group_id=group_id)
 
+    def register_e4_repair(self, job_id: str) -> None:
+        register = self.run(
+            [
+                sys.executable,
+                str(self.repo / "scripts/ap/watch_t56_oracle_study.py"),
+                "--state-dir", str(self.root / "watcher"),
+                "--register-job", job_id,
+                "--label", FABLE_E4_LABEL,
+            ],
+            timeout=60,
+        )
+        if register.returncode != 0:
+            raise RuntimeError(
+                f"failed to register E4 repair {job_id}: "
+                f"{register.stderr or register.stdout}"
+            )
+        self.state["fable_e4_repair"]["registered_with_evidence_watcher"] = True
+        self.save()
+        self.event("e4_repair_registered", job_id=job_id)
+
+    def submit_e4_repair(self) -> None:
+        repair = self.state["fable_e4_repair"]
+        child = dict(self.environment)
+        key = child.get("ROUTIFY_KEY_sig")
+        if not key:
+            raise RuntimeError("ROUTIFY_KEY_sig is required")
+        model = "serve-3.8-maxp-cpt-s1-0715-fable-1ep"
+        child.update(
+            {
+                "MODEL_API_KEY": key,
+                "MODEL_BASE_URL": FABLE_ENDPOINTS[0],
+                "MODEL_NAME": model,
+            }
+        )
+        command = [
+            sys.executable,
+            str(self.repo / "scripts/ap/submit.py"),
+            "--scope", "environment",
+            "--environment-id", "E4",
+            "--cluster", self.args.cluster,
+            "--agenthub-ref", SELFGEN_AGENTHUB_REF,
+            "--dataset", "skillevolbench/skillevolbench",
+            "--split", "v1@15",
+            "--model", model,
+            "--model-base-url", FABLE_ENDPOINTS[0],
+            "--harbor-agent", "opencode",
+            "--model-provider", "sglang",
+            "--model-api-protocol", "openai",
+            "--learning-max-attempts", "3",
+            "--harbor-agent-timeout-multiplier", "6",
+            "--runtime-timeout-sec", "172800",
+            "--episode-retry-max-attempts", "2",
+            "--episode-retry-backoff-sec", "300",
+            "--concurrency", "1",
+            "--probe-mode", "chat",
+            "--idempotency-key", str(repair["idempotency_key"]),
+        ]
+        self.heartbeat("submitting_fable_e4_repair")
+        dry_run = self.run([*command, "--dry-run"], env=child, timeout=300)
+        if dry_run.returncode != 0:
+            repair["last_submit_error"] = (dry_run.stdout + "\n" + dry_run.stderr)[-2000:]
+            repair["last_submit_attempt_utc"] = utc_now()
+            repair["next_submit_attempt_epoch"] = time.time() + 300
+            self.event(
+                "e4_repair_dry_run_retryable_failure",
+                returncode=dry_run.returncode,
+            )
+            self.save()
+            return
+        result = self.run(command, env=child, timeout=300)
+        combined = result.stdout + "\n" + result.stderr
+        job_id = next(
+            (
+                found
+                for value in json_values(combined)
+                if (found := find_job_id(value, "E4"))
+            ),
+            None,
+        )
+        if result.returncode != 0 or not job_id:
+            repair["last_submit_error"] = combined[-2000:]
+            repair["last_submit_attempt_utc"] = utc_now()
+            repair["next_submit_attempt_epoch"] = time.time() + 300
+            self.event(
+                "e4_repair_submission_retryable_failure",
+                returncode=result.returncode,
+            )
+            self.save()
+            return
+        repair.update(
+            {
+                "status": "submitted",
+                "job_id": job_id,
+                "submitted_at_utc": utc_now(),
+            }
+        )
+        repair.pop("last_submit_error", None)
+        repair.pop("next_submit_attempt_epoch", None)
+        self.save()
+        self.register_e4_repair(job_id)
+        self.event("e4_repair_submitted", job_id=job_id)
+
+    def advance_e4_repair(self) -> tuple[bool, str]:
+        repair = self.state["fable_e4_repair"]
+        job_id = repair.get("job_id")
+        if job_id:
+            if repair.get("registered_with_evidence_watcher") is not True:
+                self.register_e4_repair(str(job_id))
+            job = self.get_job(str(job_id))
+            status = str(job.get("status") or "Unknown")
+            repair["job_status"] = status
+            if status in TERMINAL:
+                repair["status"] = (
+                    "succeeded" if status == "Succeeded" else "terminal_with_failure"
+                )
+                repair.setdefault("terminal_at_utc", utc_now())
+                self.save()
+                return True, f"E4 repair terminal: {status}"
+            self.save()
+            return False, f"waiting for Fable E4 repair {job_id}: {status}"
+
+        smoke = self.get_job(FABLE_SMOKE_JOB_ID)
+        smoke_status = str(smoke.get("status") or "Unknown")
+        if smoke_status not in TERMINAL:
+            return False, f"waiting for Fable exact-oracle smoke: {smoke_status}"
+        next_attempt = repair.get("next_submit_attempt_epoch", 0)
+        if isinstance(next_attempt, (int, float)) and time.time() < next_attempt:
+            remaining = int(next_attempt - time.time())
+            return False, f"Fable E4 repair preflight backoff: {remaining}s"
+        self.submit_e4_repair()
+        return False, "submitted Fable E4 repair"
+
     def prerequisites(self) -> tuple[bool, str]:
         validation = read_json(self.smoke_validation_path, {})
         if not isinstance(validation, dict) or validation.get("valid") is not True:
@@ -230,6 +417,7 @@ class MatrixWatcher:
         by_label = {str(job.get("label")): job for job in jobs if isinstance(job, dict)}
         fable_labels = (
             "sig-fable-e3-repair-v1-15",
+            FABLE_E4_LABEL,
             "sig-fable-selfgen-v1-13-E5",
         )
         if any(by_label.get(label, {}).get("status") not in TERMINAL for label in fable_labels):
@@ -323,6 +511,11 @@ class MatrixWatcher:
 
     def step(self) -> None:
         self.update_submitted_stages()
+        e4_ready, e4_reason = self.advance_e4_repair()
+        if not e4_ready:
+            self.heartbeat("waiting_for_fable_e4_repair", reason=e4_reason)
+            self.save()
+            return
         ready, reason = self.prerequisites()
         if not ready:
             self.heartbeat("waiting_for_smoke_or_fable", reason=reason)
