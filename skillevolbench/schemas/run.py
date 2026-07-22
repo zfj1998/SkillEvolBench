@@ -154,10 +154,10 @@ class RunConfig(BaseModel):
     # global skill library is consistent across trials. Any value other than 1
     # breaks the score-before-maintain rule.
     harbor_n_concurrent_trials: int = Field(default=1, ge=1)
-    # Diagnostic escape hatch for slow model/tool loops. Canonical runs keep
-    # 1.0; AP family smokes may raise this without changing task contents,
-    # verifier logic, or the same-session attempt protocol.
-    harbor_agent_timeout_multiplier: float = Field(default=1.0, ge=1.0, le=4.0)
+    # Runtime budget for slow model/tool loops.  This is orthogonal to the
+    # benchmark's verifier-backed attempt count: it only changes how long one
+    # agent phase may run.  AP uses a fixed value across compared models.
+    harbor_agent_timeout_multiplier: float = Field(default=1.0, ge=1.0, le=8.0)
 
     # ===== LLM endpoints =====
     api_base: Optional[str] = None

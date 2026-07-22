@@ -55,7 +55,10 @@ def test_default_submission_is_one_task_e1_smoke() -> None:
     assert params["model_proxy_enabled"] is False
     assert params["model_proxy_retry_attempts"] == 3
     assert params["model_proxy_request_timeout_sec"] == 1800
-    assert params["harbor_agent_timeout_multiplier"] == 1.0
+    assert params["harbor_agent_timeout_multiplier"] == 6.0
+    assert params["runtime_timeout_sec"] == 172800
+    assert params["episode_retry_max_attempts"] == 2
+    assert params["episode_retry_backoff_sec"] == 30
     assert "codex_wire_api" not in params
     assert "within_env_replay" not in params
     assert "replay_eval" not in params
@@ -93,6 +96,19 @@ def test_full_submission_uses_dataset_and_no_smoke_truncation() -> None:
     )
     assert "smoke_max_tasks" not in _params(submission.command)
     assert "--dry-run" not in submission.command
+
+
+def test_full_submission_defaults_to_six_concurrent_jobs() -> None:
+    default_args = submit._parser().parse_args(["--scope", "full"])
+    default_submission = submit.build_submission(default_args, _environment())
+    assert default_submission.command[
+        default_submission.command.index("--concurrency") + 1
+    ] == "6"
+
+
+def test_main_rejects_concurrency_above_six() -> None:
+    with pytest.raises(SystemExit):
+        submit.main(["--scope", "full", "--concurrency", "7"])
 
 
 def test_full_submission_uses_unique_model_base_url_collection() -> None:

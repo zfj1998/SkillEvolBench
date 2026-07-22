@@ -329,6 +329,8 @@ def build_submission(
         "learning_max_attempts": args.learning_max_attempts,
         "harbor_agent_timeout_multiplier": args.harbor_agent_timeout_multiplier,
         "runtime_timeout_sec": args.runtime_timeout_sec,
+        "episode_retry_max_attempts": args.episode_retry_max_attempts,
+        "episode_retry_backoff_sec": args.episode_retry_backoff_sec,
     }
     # Tri-state CLI flags: omission means "use the selected baseline's yaml".
     # In particular, the same-session baseline intentionally disables replay;
@@ -532,10 +534,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--harbor-agent-timeout-multiplier",
         type=float,
-        default=1.0,
+        default=6.0,
         help=(
-            "Harbor agent timeout multiplier (1-4); canonical runs use 1, "
-            "slow non-canonical smokes may use a larger value"
+            "Harbor agent timeout multiplier (1-8); AP evaluations default to "
+            "6 so a 600-second task receives 60 minutes"
         ),
     )
     parser.add_argument(
@@ -548,8 +550,37 @@ def _parser() -> argparse.ArgumentParser:
         action=argparse.BooleanOptionalAction,
         default=_env_optional_bool("REPLAY_EVAL"),
     )
-    parser.add_argument("--runtime-timeout-sec", type=int, default=86400)
-    parser.add_argument("--concurrency", type=int, default=6)
+    parser.add_argument(
+        "--runtime-timeout-sec",
+        type=int,
+        default=172800,
+        help="AP job wall-clock timeout; default 48h leaves room for one fresh retry",
+    )
+    parser.add_argument(
+        "--episode-retry-max-attempts",
+        type=int,
+        default=2,
+        help=(
+            "fresh full-episode attempts inside one AP job (1-3); retries only "
+            "structured infrastructure failures such as AgentTimeoutError"
+        ),
+    )
+    parser.add_argument(
+        "--episode-retry-backoff-sec",
+        type=int,
+        default=30,
+        help="delay before a retryable fresh episode attempt (0-300 seconds)",
+    )
+    parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=6,
+        help=(
+            "maximum concurrent environment jobs for a full group (1-6); "
+            "six maps to at most three environment sessions per endpoint "
+            "when two model URLs are supplied"
+        ),
+    )
     parser.add_argument("--queue", default=os.environ.get("AP_QUEUE_ID", ""))
     parser.add_argument("--runner-image", default=os.environ.get("AP_RUNNER_IMAGE", ""))
     parser.add_argument(
@@ -635,14 +666,18 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--smoke-max-tasks must be >= 1")
     if args.smoke_max_tasks > 30:
         parser.error("--smoke-max-tasks must be <= 30")
-    if args.concurrency < 1:
-        parser.error("--concurrency must be >= 1")
     if args.runtime_timeout_sec < 1:
         parser.error("--runtime-timeout-sec must be >= 1")
     if not 1 <= args.learning_max_attempts <= 5:
         parser.error("--learning-max-attempts must be between 1 and 5")
-    if not 1.0 <= args.harbor_agent_timeout_multiplier <= 4.0:
-        parser.error("--harbor-agent-timeout-multiplier must be between 1 and 4")
+    if not 1.0 <= args.harbor_agent_timeout_multiplier <= 8.0:
+        parser.error("--harbor-agent-timeout-multiplier must be between 1 and 8")
+    if not 1 <= args.episode_retry_max_attempts <= 3:
+        parser.error("--episode-retry-max-attempts must be between 1 and 3")
+    if not 0 <= args.episode_retry_backoff_sec <= 300:
+        parser.error("--episode-retry-backoff-sec must be between 0 and 300")
+    if not 1 <= args.concurrency <= 6:
+        parser.error("--concurrency must be between 1 and 6")
     if args.probe_timeout <= 0:
         parser.error("--probe-timeout must be > 0")
     if not 5 <= args.model_probe_timeout_sec <= 300:

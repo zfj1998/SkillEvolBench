@@ -60,25 +60,35 @@ _UNQUOTED_SECRET_VALUE = re.compile(
 )
 
 _SYSTEM_PYTHON_TARGET = re.compile(r"/usr/bin/python3(?:\.\d+)?")
+_VENV_PYTHON_NAME = re.compile(r"python(?:3(?:\.\d+)?)?")
 
 
 def _safe_external_venv_interpreter_link(relative: str, target: str) -> bool:
-    """Recognize the one inert external link created by ``python -m venv``.
+    """Recognize the narrow interpreter-link chain made by ``python -m venv``.
 
-    Task solutions may create ``.venv/bin/python`` as an absolute link to the
-    container's system interpreter.  The evidence tree preserves links without
-    following or executing them, so this exact shape is safe to retain.  Keep
-    the exception deliberately narrow: arbitrary virtualenv names, binaries,
-    relative escapes, and non-system targets remain rejected.
+    CPython commonly creates ``python -> python3.X`` and
+    ``python3.X -> /usr/bin/python3.X`` rather than one direct link.  The
+    evidence tree preserves links without following or executing them, so the
+    interpreter-only chain is safe to retain.  Every root-escaping terminal
+    target is still checked independently; arbitrary virtualenv names,
+    binaries, relative paths with separators, and non-system targets remain
+    rejected.
     """
 
     path = PurePosixPath(relative)
+    target_is_python_basename = (
+        "/" not in target and _VENV_PYTHON_NAME.fullmatch(target) is not None
+    )
     return (
         not path.is_absolute()
         and ".." not in path.parts
         and len(path.parts) >= 3
-        and path.parts[-3:] == (".venv", "bin", "python")
-        and _SYSTEM_PYTHON_TARGET.fullmatch(target) is not None
+        and path.parts[-3:-1] == (".venv", "bin")
+        and _VENV_PYTHON_NAME.fullmatch(path.name) is not None
+        and (
+            _SYSTEM_PYTHON_TARGET.fullmatch(target) is not None
+            or target_is_python_basename
+        )
     )
 
 

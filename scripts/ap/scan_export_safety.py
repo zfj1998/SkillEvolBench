@@ -135,6 +135,7 @@ CREDENTIAL_ASSIGNMENT_RE = re.compile(
     re.IGNORECASE | re.VERBOSE,
 )
 _SYSTEM_PYTHON_TARGET = re.compile(r"/usr/bin/python3(?:\.\d+)?")
+_VENV_PYTHON_NAME = re.compile(r"python(?:3(?:\.\d+)?)?")
 
 
 def _safe_external_venv_interpreter_link(
@@ -142,23 +143,31 @@ def _safe_external_venv_interpreter_link(
     target: str,
     resolved_root: Path,
 ) -> bool:
-    """Allow only the inert absolute interpreter link made by ``venv``.
+    """Allow only the inert interpreter-link chain made by ``venv``.
 
     The scanner never follows links.  This exception preserves auditable task
-    snapshots containing ``.venv/bin/python -> /usr/bin/python3.X`` while all
-    other root-escaping links remain findings.
+    snapshots containing the standard ``python -> python3.X ->
+    /usr/bin/python3.X`` chain while all other root-escaping links remain
+    findings.  Each terminal external target is scanned independently.
     """
 
     try:
         relative = PurePosixPath(path.relative_to(resolved_root).as_posix())
     except ValueError:
         return False
+    target_is_python_basename = (
+        "/" not in target and _VENV_PYTHON_NAME.fullmatch(target) is not None
+    )
     return (
         not relative.is_absolute()
         and ".." not in relative.parts
         and len(relative.parts) >= 3
-        and relative.parts[-3:] == (".venv", "bin", "python")
-        and _SYSTEM_PYTHON_TARGET.fullmatch(target) is not None
+        and relative.parts[-3:-1] == (".venv", "bin")
+        and _VENV_PYTHON_NAME.fullmatch(relative.name) is not None
+        and (
+            _SYSTEM_PYTHON_TARGET.fullmatch(target) is not None
+            or target_is_python_basename
+        )
     )
 
 PLACEHOLDER_PREFIXES = (

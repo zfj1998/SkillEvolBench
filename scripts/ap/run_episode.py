@@ -370,7 +370,7 @@ def _build_config(output_dir: Path) -> RunConfig:
             "HARBOR_AGENT_TIMEOUT_MULTIPLIER",
             1.0,
             minimum=1.0,
-            maximum=4.0,
+            maximum=8.0,
         ),
         max_tasks=max_tasks,
     )
@@ -575,6 +575,9 @@ def main() -> int:
                 "harbor_agent_timeout_multiplier": (
                     config.harbor_agent_timeout_multiplier
                 ),
+                "runtime_attempt": int(
+                    os.environ.get("SEVB_EPISODE_ATTEMPT", "1")
+                ),
                 "smoke_max_tasks": config.max_tasks,
                 "workspace_root": str(config.workspace_root),
                 "started_at": datetime.now(timezone.utc).isoformat(),
@@ -585,6 +588,9 @@ def main() -> int:
         return 0
     except Exception as exc:
         actionable = _actionable_exception(exc)
+        error_reason = getattr(actionable, "reason", None)
+        error_task_id = getattr(actionable, "task_id", None)
+        error_exception_type = getattr(actionable, "exception_type", None)
         failed_family_smoke_id = os.environ.get("SMOKE_FAMILY_ID") or None
         failed_max_tasks = os.environ.get("SMOKE_MAX_TASKS") or None
         _write_json(
@@ -606,6 +612,12 @@ def main() -> int:
                 "n_primary_trials": 0,
                 "n_verifier_backed_trials": 0,
                 "error_type": type(actionable).__name__,
+                "error_reason": error_reason,
+                "error_task_id": error_task_id,
+                "error_exception_type": error_exception_type,
+                "runtime_attempt": int(
+                    os.environ.get("SEVB_EPISODE_ATTEMPT", "1")
+                ),
                 "message": _sanitize_error(str(actionable)),
             },
         )

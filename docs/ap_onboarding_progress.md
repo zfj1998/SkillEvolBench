@@ -1,10 +1,69 @@
 # Agent Platform onboarding progress
 
-Last updated: 2026-07-21 UTC
+Last updated: 2026-07-22 UTC
 
 This is the credential-free implementation log for onboarding SkillEvolBench
 to Agent Platform (AP). Do not add API keys, registry passwords, OSS
 credentials, signed artifact URLs, or raw transport metadata to this file.
+
+## 2026-07-22 reliability hardening
+
+Two apparent full-group timeouts had different root causes and therefore must
+not share one blanket retry policy:
+
+- Fable E3 job `ap-skillevolbench-9b295565b5fb4a21-d2` reached
+  `E3-LS5-T2` and raised a structured `AgentTimeoutError` after 40 minutes.
+  The task's base budget is 600 seconds and the submitted multiplier was 4.0,
+  so the observed duration exactly matched the configured limit.
+- Qwen 3.7 Max E1 job `ap-skillevolbench-7f6f19c736474e25-d2` completed all
+  30 primary tasks. It then lost its artifacts because the export sanitizer
+  rejected CPython 3.12's standard virtual-environment link chain
+  `python -> python3.12 -> /usr/bin/python3.12`. This was an export-policy bug,
+  not a model or episode timeout.
+
+The hardening patch separates the three retry layers:
+
+1. T1-T3 keep up to three same-session, verifier-backed task attempts. These
+   are benchmark semantics and do not restart the environment.
+2. Native Anthropic transport retries remain request-local and bounded in the
+   model proxy.
+3. One Agent-Hub recovery attempt is allowed only when benchmark metrics say
+   `status=failed`, `scoreable=false`,
+   `error_reason=agent-or-runtime-exception`, and
+   `error_exception_type=AgentTimeoutError`. It deletes the complete evolving
+   workspace and restarts the environment from immutable assets. Verifier
+   failures and unstructured errors never take this path.
+
+The AP defaults are now a 6.0 Harbor timeout multiplier (60 minutes for a
+600-second task), a 48-hour job deadline, and two total clean episode attempts.
+Every attempt is recorded in `episode_attempts.jsonl`; failed attempts retain
+bounded diagnostics under `failed_episode_attempts/`; final metrics report the
+attempt and retry counts. The sanitizer accepts only interpreter names inside
+`.venv/bin` and still rejects arbitrary binaries, virtualenv names, path
+escapes, and non-system terminal targets.
+
+Full-group concurrency is bounded at six environment jobs. For the two Fable
+model URLs this is at most three sequential-agent sessions per endpoint, which
+is small relative to those endpoints' existing SkillsBench load settings. AP
+worker allocation is the tighter constraint: observed jobs request 32 CPU and
+128 GiB each, so six runnable jobs may queue when 192 CPU / 768 GiB is not
+available. Queuing does not invalidate the benchmark and AP will not exceed
+the cap.
+
+Local evidence before publishing a new immutable dataset:
+
+- SkillEvolBench: `309 passed`;
+- retry, submission, export-safety, and runner subset: `101 passed`;
+- Agent-Hub template: `28 passed`, including a real two-attempt harness that
+  verifies the failed workspace is absent on attempt two;
+- Agent-Hub path lint and `bash -n`: passed;
+- strict preflight asset/config layers: passed; the local strict command stops
+  only because this host intentionally has neither Harbor SDK nor Docker
+  `agent-runtime:latest`.
+
+The immutable dataset revision, Agent-Hub revision, smoke job, and repaired
+E3/E1 job ids are appended here after each gate succeeds; they must not be
+claimed complete before then.
 
 ## Current status
 

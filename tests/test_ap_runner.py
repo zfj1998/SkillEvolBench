@@ -414,7 +414,7 @@ def test_build_config_applies_bounded_agent_timeout_multiplier(
     assert config.harbor_agent_timeout_multiplier == 2.0
 
 
-@pytest.mark.parametrize("value", ["0.5", "5", "not-a-number"])
+@pytest.mark.parametrize("value", ["0.5", "8.1", "not-a-number"])
 def test_build_config_rejects_invalid_agent_timeout_multiplier(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -635,19 +635,25 @@ def test_mask_tree_allows_internal_symlinks_without_following_them(
     assert (tmp_path / "linked.log").is_symlink()
 
 
-def test_mask_tree_allows_only_standard_dot_venv_python_link(
+def test_mask_tree_allows_standard_dot_venv_python_link_chain(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("MODEL_API_KEY", "model-secret-123")
-    link = tmp_path / "runs" / "trial" / "artifacts" / "root" / "task"
-    link = link / "project" / ".venv" / "bin" / "python"
-    link.parent.mkdir(parents=True)
-    link.symlink_to("/usr/bin/python3.12")
+    bin_dir = tmp_path / "runs" / "trial" / "artifacts" / "root" / "task"
+    bin_dir = bin_dir / "project" / ".venv" / "bin"
+    bin_dir.mkdir(parents=True)
+    (bin_dir / "python").symlink_to("python3.12")
+    (bin_dir / "python3").symlink_to("python3.12")
+    (bin_dir / "python3.12").symlink_to("/usr/bin/python3.12")
 
     assert mask_tree(tmp_path) == 0
-    assert link.is_symlink()
-    assert link.readlink() == Path("/usr/bin/python3.12")
+    assert all(
+        (bin_dir / name).is_symlink()
+        for name in ("python", "python3", "python3.12")
+    )
+    assert (bin_dir / "python").readlink() == Path("python3.12")
+    assert (bin_dir / "python3.12").readlink() == Path("/usr/bin/python3.12")
 
 
 @pytest.mark.parametrize(
@@ -659,6 +665,10 @@ def test_mask_tree_allows_only_standard_dot_venv_python_link(
         ),
         ("runs/trial/artifacts/root/task/project/.venv/bin/pip", "/usr/bin/python3.12"),
         ("runs/trial/artifacts/root/task/project/.venv/bin/python", "/bin/sh"),
+        (
+            "runs/trial/artifacts/root/task/project/.venv/bin/python3.12",
+            "../../../../../../../../../../bin/sh",
+        ),
     ],
 )
 def test_mask_tree_rejects_lookalike_external_venv_links(
