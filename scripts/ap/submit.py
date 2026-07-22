@@ -538,6 +538,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--probe-timeout", type=float, default=10.0)
     parser.add_argument(
+        "--skip-local-probe",
+        action="store_true",
+        help=(
+            "skip only the submit-host probe; the AP template's host and DinD "
+            "probes remain mandatory"
+        ),
+    )
+    parser.add_argument(
         "--model-probe-timeout-sec",
         type=int,
         default=30,
@@ -597,22 +605,25 @@ def main(argv: list[str] | None = None) -> int:
             args.model or os.environ.get("MODEL_NAME") or os.environ.get("MODEL"),
             "MODEL_NAME (or MODEL)",
         )
-        available_by_url = [
-            probe_model(
-                base_url=model_base_url,
-                api_key=model_api_key,
-                model=model,
-                timeout=args.probe_timeout,
-                mode=args.probe_mode,
-                protocol=args.model_api_protocol,
+        if args.skip_local_probe:
+            print("Local model probe skipped; AP host and DinD probes remain mandatory")
+        else:
+            available_by_url = [
+                probe_model(
+                    base_url=model_base_url,
+                    api_key=model_api_key,
+                    model=model,
+                    timeout=args.probe_timeout,
+                    mode=args.probe_mode,
+                    protocol=args.model_api_protocol,
+                )
+                for model_base_url in model_base_urls
+            ]
+            print(
+                f"Model probe OK: {model.split('/', 1)[-1]} "
+                f"({len(model_base_urls)} endpoint(s), "
+                f"{sum(map(len, available_by_url))} advertised model id(s))"
             )
-            for model_base_url in model_base_urls
-        ]
-        print(
-            f"Model probe OK: {model.split('/', 1)[-1]} "
-            f"({len(model_base_urls)} endpoint(s), "
-            f"{sum(map(len, available_by_url))} advertised model id(s))"
-        )
         mode = "AP dry-run" if args.dry_run else "AP submission"
         print(f"Starting {mode}: {submission.description}")
         completed = subprocess.run(

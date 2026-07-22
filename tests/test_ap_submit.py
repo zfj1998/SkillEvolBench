@@ -476,3 +476,20 @@ def test_main_probes_every_model_base_url(monkeypatch: pytest.MonkeyPatch) -> No
         "http://model-a.example/v1",
         "http://model-b.example/v1",
     ]
+
+
+def test_main_can_skip_only_local_probe(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name, value in _environment().items():
+        monkeypatch.setenv(name, value)
+
+    def unexpected_probe(**_kwargs: Any) -> list[str]:
+        raise AssertionError("local probe should have been skipped")
+
+    monkeypatch.setattr(submit, "probe_model", unexpected_probe)
+    monkeypatch.setattr(
+        submit.subprocess,
+        "run",
+        lambda command, **_kwargs: subprocess.CompletedProcess(command, 0, "", ""),
+    )
+
+    assert submit.main(["--dry-run", "--skip-local-probe"]) == 0
