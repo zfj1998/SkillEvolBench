@@ -288,6 +288,10 @@ def build_submission(
         raise ValueError(
             "--model-api-protocol anthropic currently requires --harbor-agent opencode"
         )
+    if args.model_proxy_enabled and args.model_api_protocol != "anthropic":
+        raise ValueError(
+            "--model-proxy-enabled requires --model-api-protocol anthropic"
+        )
     ap_api_key = _required(environ.get("AP_API_KEY"), "AP_API_KEY")
     model_api_key = _required(environ.get("MODEL_API_KEY"), "MODEL_API_KEY")
     model_base_urls = _model_base_urls(args, environ)
@@ -316,6 +320,9 @@ def build_submission(
         "model_api_protocol": args.model_api_protocol,
         "model_probe_mode": args.probe_mode,
         "model_probe_timeout_sec": args.model_probe_timeout_sec,
+        "model_proxy_enabled": args.model_proxy_enabled,
+        "model_proxy_retry_attempts": args.model_proxy_retry_attempts,
+        "model_proxy_request_timeout_sec": args.model_proxy_request_timeout_sec,
         "baseline_name": args.baseline_name,
         "strategy_name": args.strategy_name,
         "order_seed": args.order_seed,
@@ -338,6 +345,18 @@ def build_submission(
         )
     if args.agent_runtime_image:
         params["agent_runtime_image"] = args.agent_runtime_image
+    if args.model_proxy_image:
+        params["model_proxy_image"] = args.model_proxy_image
+    if args.model_proxy_envs:
+        try:
+            proxy_envs = json.loads(args.model_proxy_envs)
+        except json.JSONDecodeError as exc:
+            raise ValueError("--model-proxy-envs must be valid JSON") from exc
+        if not isinstance(proxy_envs, dict):
+            raise ValueError("--model-proxy-envs must be a JSON object")
+        params["model_proxy_envs"] = json.dumps(
+            proxy_envs, ensure_ascii=False, separators=(",", ":")
+        )
 
     if args.scope == "smoke":
         params["smoke_max_tasks"] = args.smoke_max_tasks
@@ -552,6 +571,37 @@ def _parser() -> argparse.ArgumentParser:
         help="per-request timeout for model probes inside AP main and DinD containers",
     )
     parser.add_argument(
+        "--model-proxy-enabled",
+        action=argparse.BooleanOptionalAction,
+        default=_env_bool("MODEL_PROXY_ENABLED", False),
+        help=(
+            "route native Anthropic requests through the AP transport proxy; "
+            "this retries one HTTP request without changing verifier retry semantics"
+        ),
+    )
+    parser.add_argument(
+        "--model-proxy-retry-attempts",
+        type=int,
+        default=int(os.environ.get("MODEL_PROXY_RETRY_ATTEMPTS", "3")),
+        help="bounded upstream attempts per Anthropic request (1-10)",
+    )
+    parser.add_argument(
+        "--model-proxy-request-timeout-sec",
+        type=int,
+        default=int(os.environ.get("MODEL_PROXY_REQUEST_TIMEOUT_SEC", "1800")),
+        help="upstream request timeout used by the AP model proxy (30-3600 seconds)",
+    )
+    parser.add_argument(
+        "--model-proxy-image",
+        default=os.environ.get("MODEL_PROXY_IMAGE", ""),
+        help="optional override for the Agent-Hub model proxy image",
+    )
+    parser.add_argument(
+        "--model-proxy-envs",
+        default=os.environ.get("MODEL_PROXY_ENVS", ""),
+        help="optional JSON object of additional model proxy environment values",
+    )
+    parser.add_argument(
         "--probe-mode",
         choices=("models", "chat", "auto"),
         default="models",
@@ -596,6 +646,12 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--probe-timeout must be > 0")
     if not 5 <= args.model_probe_timeout_sec <= 300:
         parser.error("--model-probe-timeout-sec must be between 5 and 300")
+    if not 1 <= args.model_proxy_retry_attempts <= 10:
+        parser.error("--model-proxy-retry-attempts must be between 1 and 10")
+    if not 30 <= args.model_proxy_request_timeout_sec <= 3600:
+        parser.error(
+            "--model-proxy-request-timeout-sec must be between 30 and 3600"
+        )
 
     try:
         submission = build_submission(args, os.environ)

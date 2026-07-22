@@ -52,6 +52,9 @@ def test_default_submission_is_one_task_e1_smoke() -> None:
     assert params["model_api_protocol"] == "openai"
     assert params["model_probe_mode"] == "models"
     assert params["model_probe_timeout_sec"] == 30
+    assert params["model_proxy_enabled"] is False
+    assert params["model_proxy_retry_attempts"] == 3
+    assert params["model_proxy_request_timeout_sec"] == 1800
     assert params["harbor_agent_timeout_multiplier"] == 1.0
     assert "codex_wire_api" not in params
     assert "within_env_replay" not in params
@@ -209,6 +212,57 @@ def test_anthropic_submission_selects_native_protocol() -> None:
     assert params["model_provider"] == "anthropic"
     assert params["model_probe_mode"] == "auto"
     assert params["model_probe_timeout_sec"] == 120
+
+
+def test_anthropic_submission_enables_bounded_transport_proxy() -> None:
+    args = submit._parser().parse_args(
+        [
+            "--model-api-protocol",
+            "anthropic",
+            "--model-provider",
+            "anthropic",
+            "--model-proxy-enabled",
+            "--model-proxy-retry-attempts",
+            "4",
+            "--model-proxy-request-timeout-sec",
+            "900",
+            "--model-proxy-image",
+            "registry.example/model-proxy:immutable",
+            "--model-proxy-envs",
+            '{"NATIVE_FORCE_NON_STREAM":"true"}',
+        ]
+    )
+    params = _params(submit.build_submission(args, _environment()).command)
+
+    assert params["model_proxy_enabled"] is True
+    assert params["model_proxy_retry_attempts"] == 4
+    assert params["model_proxy_request_timeout_sec"] == 900
+    assert params["model_proxy_image"] == "registry.example/model-proxy:immutable"
+    assert json.loads(params["model_proxy_envs"]) == {
+        "NATIVE_FORCE_NON_STREAM": "true"
+    }
+
+
+def test_model_proxy_rejects_openai_protocol() -> None:
+    args = submit._parser().parse_args(["--model-proxy-enabled"])
+
+    with pytest.raises(ValueError, match="requires --model-api-protocol anthropic"):
+        submit.build_submission(args, _environment())
+
+
+def test_model_proxy_envs_must_be_json_object() -> None:
+    args = submit._parser().parse_args(
+        [
+            "--model-api-protocol",
+            "anthropic",
+            "--model-proxy-enabled",
+            "--model-proxy-envs",
+            "[]",
+        ]
+    )
+
+    with pytest.raises(ValueError, match="must be a JSON object"):
+        submit.build_submission(args, _environment())
 
 
 def test_anthropic_submission_rejects_codex_harness() -> None:
