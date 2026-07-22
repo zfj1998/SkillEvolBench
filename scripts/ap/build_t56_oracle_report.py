@@ -266,9 +266,10 @@ ENVIRONMENT_PROFILES = {
         "name": "软件调试、依赖与多文件修复",
         "capability": "从症状定位根因，并在依赖升级、重构和跨层修改中保持行为与测试一致。",
         "provisional_read": (
-            "现有 Fable 结果里，T5/T6 多数功能测试已经通过，strict 失败主要来自指定文件、"
-            "指定 API 或覆盖率形态；真正的功能失败集中在数据库会话迁移与跨文件错误传播。"
-            "因此 E1 当前更像 verifier 形态敏感与少量组合执行失败的混合，而不是 T5/T6 普遍不可解。"
+            "两模型在 10 个 T5/T6 上得到完全相同的 outcome 8/10、strict 5/10，连失败题也一致。"
+            "其中 3 题功能已通过、只是指定文件/API/覆盖率形态未满足；真正的共同功能失败只有数据库"
+            "会话迁移与跨文件错误传播 2 题。因此 E1 当前更像 task-specific 的 verifier 形态敏感加"
+            "少量组合执行缺口，不支持 T5/T6 普遍不可解，也不像某一个模型的偶然退化。"
         ),
     },
     "E2": {
@@ -302,9 +303,10 @@ ENVIRONMENT_PROFILES = {
         "name": "研究检索、证据归因与综合",
         "capability": "多源筛选、证据化比较、引用核验、受约束总结与矛盾审计。",
         "provisional_read": (
-            "已审计的 Qwen run 中，T5 outcome 3/5、T6 outcome 1/5。主要问题是没有读取 grounding files、"
-            "丢失 provenance、引用问题标签不精确，以及一个 pipeline 直接运行失败；这不是单纯"
-            "process verifier 噪声。"
+            "Qwen 的 T5/T6 outcome 为 3/5、1/5，Fable 为 3/5、3/5；两模型仍共同做错 4/10 个对齐任务。"
+            "失败集中在没有读取 grounding files、丢失 provenance、引用问题标签不精确，以及 pipeline"
+            "执行错误。这不是单纯 process verifier 噪声；Fable 在复合检索总结上较强，但尚不能说明"
+            "差距来自 skill，仍需同模型四条件对照。"
         ),
     },
     "E6": {
