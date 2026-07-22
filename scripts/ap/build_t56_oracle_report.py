@@ -33,6 +33,13 @@ CLASS_ZH = {
     "outcome_and_process_failure": "功能与过程均失败",
     "unknown": "状态未知",
 }
+CAUSE_ZH = {
+    "functional_gap": "功能实现错误或不完整",
+    "verified_verifier_false_negative": "已核实的 process verifier 假阴性",
+    "substantive_process_gap": "有实际泛化意义的过程约束缺失",
+    "shape_sensitive_process_only": "源码形态敏感的 process-only 失败",
+    "unresolved_process_only": "尚待人工复核的 process-only 失败",
+}
 
 CASE_DEFINITIONS = {
     "E2-LS1-T5": {
@@ -719,6 +726,120 @@ def reference_integrity_analysis(reference_audit: dict[str, Any]) -> dict[str, A
     }
 
 
+def failure_attribution(
+    rows: list[dict[str, Any]],
+    verifier_audit: dict[str, Any],
+    reference_integrity: dict[str, Any],
+) -> dict[str, Any]:
+    shape_by_task = {
+        str(row.get("task_id")): str(row.get("process_shape_sensitivity") or "unknown")
+        for row in verifier_audit.get("tasks", [])
+        if isinstance(row, dict)
+    }
+    reference_by_task = {
+        str(row.get("task_id")): row
+        for row in reference_integrity.get("failures", [])
+        if isinstance(row, dict)
+    }
+    verified_false_negatives = {
+        task_id
+        for task_id, definition in CASE_DEFINITIONS.items()
+        if definition["kind"] == "强假阴性证据"
+    }
+    substantive_process = {
+        task_id
+        for task_id, definition in CASE_DEFINITIONS.items()
+        if definition["kind"] == "合理的过程约束"
+    }
+    selected = [
+        row
+        for row in rows
+        if row.get("condition") == "self_generated"
+        and int(row.get("tier", -1)) in (5, 6)
+    ]
+    failed_by_task: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in selected:
+        if row.get("strict_pass") is not True:
+            failed_by_task[str(row["task_id"])].append(row)
+
+    failures = []
+    for row in selected:
+        if row.get("strict_pass") is True:
+            continue
+        task_id = str(row["task_id"])
+        shape = shape_by_task.get(task_id, "unknown")
+        if row.get("outcome_pass") is not True:
+            cause = "functional_gap"
+        elif task_id in verified_false_negatives:
+            cause = "verified_verifier_false_negative"
+        elif task_id in substantive_process:
+            cause = "substantive_process_gap"
+        elif shape in {"high", "medium"}:
+            cause = "shape_sensitive_process_only"
+        else:
+            cause = "unresolved_process_only"
+        peer_rows = [item for item in failed_by_task[task_id] if item.get("model") != row.get("model")]
+        reference_status = "pending"
+        if reference_integrity.get("complete"):
+            reference_status = "failed" if task_id in reference_by_task else "passed"
+        failures.append(
+            {
+                "model": row.get("model"),
+                "environment_id": row.get("environment_id"),
+                "tier": int(row.get("tier", -1)),
+                "task_id": task_id,
+                "task_slug": row.get("task_slug"),
+                "cause": cause,
+                "cause_zh": CAUSE_ZH[cause],
+                "classification": row.get("classification"),
+                "shape_sensitivity": shape,
+                "failed_tests": row.get("failed_tests") or [],
+                "failed_by_other_model": bool(peer_rows),
+                "other_model_classifications": sorted(
+                    {str(item.get("classification")) for item in peer_rows}
+                ),
+                "reference_solution_status": reference_status,
+                "trajectory_path": row.get("local_trajectory_path"),
+                "artifact_path": row.get("local_artifact_task_path"),
+            }
+        )
+
+    summaries = []
+    for environment_id in ENVS:
+        for model in MODELS:
+            for tier in (5, 6):
+                observed = [
+                    row
+                    for row in selected
+                    if row.get("environment_id") == environment_id
+                    and row.get("model") == model
+                    and int(row.get("tier", -1)) == tier
+                ]
+                failed = [
+                    row
+                    for row in failures
+                    if row["environment_id"] == environment_id
+                    and row["model"] == model
+                    and row["tier"] == tier
+                ]
+                summaries.append(
+                    {
+                        "environment_id": environment_id,
+                        "model": model,
+                        "tier": tier,
+                        "observed": len(observed),
+                        "strict_passed": sum(row.get("strict_pass") is True for row in observed),
+                        "failures": len(failed),
+                        "cause_counts": dict(Counter(row["cause"] for row in failed)),
+                    }
+                )
+    return {
+        "taxonomy": CAUSE_ZH,
+        "summaries": summaries,
+        "failures": failures,
+    }
+
+
 def conclusions(
     coverage: list[dict[str, Any]],
     comparisons: list[dict[str, Any]],
@@ -818,6 +939,7 @@ def build_payload(
     learning = learning_analysis(evidence)
     oracle_scope = oracle_scope_analysis(audit)
     reference_integrity = reference_integrity_analysis(reference_audit or {})
+    attribution = failure_attribution(rows, audit, reference_integrity)
     return {
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "is_complete": all(row["complete"] for row in coverage),
@@ -835,6 +957,7 @@ def build_payload(
         "verifier_shape_outcomes": verifier_shape_outcomes(rows, audit),
         "scope_condition_outcomes": scope_condition_outcomes(comparisons, oracle_scope),
         "reference_integrity": reference_integrity,
+        "failure_attribution": attribution,
         "verifier_audit": audit,
         "conclusions": conclusions(
             coverage,
@@ -955,6 +1078,22 @@ def render_markdown(data: dict[str, Any]) -> str:
                         f"  - `{task['task_id']}`（{task['task_slug']}；skill: `{', '.join(task['required_skills']) or task['primary_skill']}`）{CLASS_ZH.get(str(task['classification']), task['classification'])}；outcome: `{outcome_names}`；process: `{process_names}`。"
                     )
         lines.append("")
+    lines += [
+        "## Self-generated 失败归因总览",
+        "",
+        "该表先区分功能失败与 process-only 失败。`已核实假阴性`仅用于已经逐代码确认“功能测试全过、实现存在、verifier 只扫固定文件或字面量”的案例；其余源码形态敏感项仍标为待复核，不把启发式判断冒充结论。",
+        "",
+        "| Env | Tier | 模型 | 覆盖 | Strict | 功能 gap | 已核实假阴性 | 实质过程 gap | 形态敏感 | 未决过程 |",
+        "|---|---:|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for item in data["failure_attribution"]["summaries"]:
+        counts = item["cause_counts"]
+        lines.append(
+            f"| {item['environment_id']} | T{item['tier']} | {item['model']} | {item['observed']}/5 | "
+            f"{item['strict_passed']}/{item['observed']} | {counts.get('functional_gap', 0)} | "
+            f"{counts.get('verified_verifier_false_negative', 0)} | {counts.get('substantive_process_gap', 0)} | "
+            f"{counts.get('shape_sensitive_process_only', 0)} | {counts.get('unresolved_process_only', 0)} |"
+        )
     lines += [
         "## T1–T3 学习证据与 Generated/Oracle Skill 差异",
         "",
@@ -1096,6 +1235,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>Pass rate 热力图</h2><div class="filters"><select id="hmModel"></select><select id="hmCond"></select><select id="hmMetric"><option value="strict">Strict</option><option value="outcome">Outcome</option><option value="process">Process</option></select><select id="hmTier"><option value="4">T4</option><option value="5" selected>T5</option><option value="6">T6</option></select></div><div class="heat" id="heatmap"></div><p class="small">每格最多 5 题；显示通过数/观测数，不能把小样本百分比当作稳定总体性能。</p></section>
 <section class="grid two"><div class="panel"><h2>Qwen vs Fable 配对比较</h2><div class="tablebox"><table><thead><tr><th>条件/Tier/指标</th><th>n</th><th>Qwen</th><th>Fable</th><th>only Q/F</th><th>p</th></tr></thead><tbody id="modelCmpRows"></tbody></table></div></div><div class="panel"><h2>Skill 条件配对效应</h2><div class="tablebox"><table><thead><tr><th>模型/Tier/指标</th><th>对照</th><th>n</th><th>Δ</th><th>救回/损害</th></tr></thead><tbody id="effectRows"></tbody></table></div></div></section>
 <section class="panel"><h2>逐 Env 的 T5/T6 失败地图</h2><div class="tablebox"><table><thead><tr><th>Env / Tier</th><th>Qwen 3.7 Max</th><th>SIG Fable</th></tr></thead><tbody id="failureRows"></tbody></table></div></section>
+<section class="panel"><h2>失败归因总览</h2><p class="small">“已核实假阴性”要求逐代码证据；“形态敏感”只是筛查标签，仍需结合 exact-oracle/no-skill 与轨迹复核。</p><div class="tablebox"><table><thead><tr><th>Env/Tier</th><th>模型</th><th>覆盖/Strict</th><th>功能 gap</th><th>已核实假阴性</th><th>实质过程 gap</th><th>形态敏感</th><th>未决过程</th></tr></thead><tbody id="attributionRows"></tbody></table></div></section>
 <section class="panel"><h2>T1–T3 学习与 Skill 来源审计</h2><div class="grid two" id="learningCards"></div><div class="filters" style="margin-top:16px"><select id="skillModel"></select><select id="skillEnv"></select><input id="skillSearch" placeholder="搜索 family / skill"></div><div class="tablebox"><table><thead><tr><th>Family</th><th>学习结果</th><th>生成 skill</th><th>Best Jaccard</th><th>Oracle evidence recall</th><th>Verifier markers</th></tr></thead><tbody id="skillRows"></tbody></table></div><p class="small">Evidence recall 仅是词面覆盖率，不代表逻辑可推导性。点击 family 查看 T1–T3 证据摘录、generated skill 与 curated oracle 全文。</p></section>
 <section class="panel"><h2>Curated Oracle 是否真的足以覆盖任务？</h2><p>仓库中的 curated skill 多数是基础工作流，不是 T5/T6 的 solution manual。Oracle 仍失败必须同时考虑 skill scope gap，不能直接判题目坏。</p><div id="scopeCounts"></div><div class="tablebox"><table><thead><tr><th>Task</th><th>Oracle skills</th><th>风险</th><th>缺失概念</th><th>Scope</th></tr></thead><tbody id="scopeRows"></tbody></table></div><h3 style="margin-top:16px">Oracle 结果按 scope risk 分层</h3><div id="scopeOutcomes" class="small"></div><p class="small">这是受控概念的启发式筛查。高风险项用于人工复核，不把词面缺失自动等同于语义缺失。</p></section>
 <section class="panel"><h2>逐题匹配对照</h2><div class="filters"><select id="taskModel"></select><select id="taskEnv"></select><select id="taskTier"><option value="all">T4–T6</option><option value="4">T4</option><option value="5">T5</option><option value="6">T6</option></select><input id="taskSearch" placeholder="搜索 task / skill"></div><div class="tablebox"><table><thead><tr><th>Task</th><th>模型</th><th>Self-generated</th><th>Exact oracle</th><th>No skill</th><th>判定</th></tr></thead><tbody id="taskRows"></tbody></table></div></section>
@@ -1120,6 +1260,7 @@ modelCmpRows.innerHTML=D.model_comparisons.filter(x=>x.n).map(x=>`<tr><td>${{zh[
 effectRows.innerHTML=D.effects.filter(x=>x.n).map(x=>`<tr><td>${{x.model}} / T${{x.tier}} / ${{x.metric}}</td><td>${{zh[x.treatment]}} − ${{zh[x.reference]}}</td><td>${{x.n}}</td><td>${{(100*x.delta).toFixed(1)}}pp</td><td>${{x.rescued}} / ${{x.harmed}}</td></tr>`).join('')||'<tr><td colspan="5" class="small">等待 oracle/no-skill 匹配结果</td></tr>';
 function failureCell(x){{if(!x.observed)return '<span class="metric missing">0/5 未完成</span>';let details=x.tasks.map(t=>`<div><b>${{t.task_id}}</b> · ${{esc(t.task_slug)}} · ${{esc(t.classification)}}<br><span class="small">Skill: ${{esc((t.required_skills.length?t.required_skills:[t.primary_skill]).join(', '))}}<br>O: ${{t.failed_outcome.map(z=>esc(z.name+': '+z.message)).join('; ')||'无'}}<br>P: ${{t.failed_process.map(z=>esc(z.name+': '+z.message)).join('; ')||'无'}}</span></div>`).join('');return `<span class="metric ${{x.strict_failures?'fail':'pass'}}">失败 ${{x.strict_failures}}/${{x.observed}}</span>${{details}}`}};
 failureRows.innerHTML=['E1','E2','E3','E4','E5','E6'].flatMap(e=>[5,6].map(t=>{{let q=D.failure_map.find(x=>x.model==='qwen3.7-max'&&x.environment_id===e&&x.tier===t),f=D.failure_map.find(x=>x.model==='sig-fable'&&x.environment_id===e&&x.tier===t);return `<tr><td><b>${{e}} / T${{t}}</b></td><td>${{failureCell(q)}}</td><td>${{failureCell(f)}}</td></tr>`}})).join('');
+attributionRows.innerHTML=D.failure_attribution.summaries.map(x=>{{let c=x.cause_counts;return `<tr><td><b>${{x.environment_id}} / T${{x.tier}}</b></td><td>${{x.model}}</td><td>${{x.observed}}/5 · ${{x.strict_passed}}/${{x.observed}}</td><td>${{c.functional_gap||0}}</td><td>${{c.verified_verifier_false_negative||0}}</td><td>${{c.substantive_process_gap||0}}</td><td>${{c.shape_sensitive_process_only||0}}</td><td>${{c.unresolved_process_only||0}}</td></tr>`}}).join('');
 learningCards.innerHTML=Object.entries(D.learning.by_model).map(([m,x])=>`<div class="case"><h3>${{m}}</h3><p><b>${{x.learning_tasks}}</b> 个 T1–T3 · <b>${{x.learning_attempts}}</b> 次尝试 · 最终通过 ${{x.terminal_strict_passes}} · 修复成功 ${{x.repaired_to_pass}}</p><p class="small">same-session 异常 ${{x.same_session_failures}} · active skills/families ${{x.active_skills}}/${{x.families}} · 多 skill families ${{x.families_with_multiple_skills}} · 含 verifier 术语 skills ${{x.skills_with_verifier_markers}}</p></div>`).join('');
 options(skillModel,['qwen3.7-max','sig-fable'],null,true);options(skillEnv,['E1','E2','E3','E4','E5','E6'],null,true);
 function renderSkills(){{let q=skillSearch.value.toLowerCase(),rows=D.learning.families.filter(x=>(skillModel.value==='all'||x.model===skillModel.value)&&(skillEnv.value==='all'||x.environment_id===skillEnv.value)&&JSON.stringify(x).toLowerCase().includes(q));skillRows.innerHTML=rows.map(x=>`<tr class="click" data-key="${{x.model}}|${{x.family_id}}"><td><b>${{x.family_id}}</b><br><span class="small">${{x.model}} · ${{x.expected_oracle_slug}}</span></td><td>${{x.terminal_strict_passes}}/${{x.learning_task_count}} 通过 · ${{x.learning_attempts}} attempts</td><td>${{x.generated_skill_count}} · ${{x.generated_slugs.join(', ')}}</td><td>${{x.best_word_jaccard.toFixed(3)}}</td><td>${{x.oracle_token_recall_from_learning_evidence==null?'—':(100*x.oracle_token_recall_from_learning_evidence).toFixed(1)+'%'}}</td><td>${{x.generated_verifier_marker_hits}}</td></tr>`).join('');skillRows.querySelectorAll('tr').forEach(tr=>tr.onclick=()=>showFamily(...tr.dataset.key.split('|')))}};[skillModel,skillEnv].forEach(x=>x.onchange=renderSkills);skillSearch.oninput=renderSkills;renderSkills();

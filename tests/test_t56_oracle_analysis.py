@@ -258,6 +258,52 @@ def test_reference_integrity_requires_exact_90_task_grid() -> None:
     assert result["total"] == 89
 
 
+def test_failure_attribution_separates_functional_and_verified_false_negative() -> None:
+    common = {
+        "selected_run": True,
+        "condition": "self_generated",
+        "model": "qwen3.7-max",
+        "environment_id": "E2",
+        "tier": 5,
+        "strict_pass": False,
+        "failed_tests": [],
+    }
+    rows = [
+        {
+            **common,
+            "task_id": "E2-LS1-T5",
+            "task_slug": "known-shape-case",
+            "outcome_pass": True,
+            "process_pass": False,
+            "classification": "process_only_failure",
+        },
+        {
+            **common,
+            "task_id": "E2-LS3-T5",
+            "task_slug": "functional-case",
+            "outcome_pass": False,
+            "process_pass": True,
+            "classification": "outcome_only_failure",
+        },
+    ]
+    audit = {
+        "tasks": [
+            {"task_id": "E2-LS1-T5", "process_shape_sensitivity": "high"},
+            {"task_id": "E2-LS3-T5", "process_shape_sensitivity": "low"},
+        ]
+    }
+    result = REPORT.failure_attribution(
+        rows,
+        audit,
+        {"complete": False, "failures": []},
+    )
+    causes = {row["task_id"]: row["cause"] for row in result["failures"]}
+    assert causes == {
+        "E2-LS1-T5": "verified_verifier_false_negative",
+        "E2-LS3-T5": "functional_gap",
+    }
+
+
 def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path) -> None:
     tasks_root = tmp_path / "benchmark/tasks"
     skill_root = tmp_path / "benchmark/skills/retry"
