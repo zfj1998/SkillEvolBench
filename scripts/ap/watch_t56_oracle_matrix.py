@@ -529,24 +529,11 @@ class MatrixWatcher:
 
     def step(self) -> None:
         self.update_submitted_stages()
-        e4_ready, e4_reason = self.advance_e4_repair()
-        if not e4_ready:
-            self.heartbeat("waiting_for_fable_e4_repair", reason=e4_reason)
-            self.save()
-            return
-        ready, reason = self.prerequisites()
-        if not ready:
-            self.heartbeat("waiting_for_smoke_or_fable", reason=reason)
-            self.save()
-            return
         stages = self.state["stages"]
-        if stages["fable_exact_oracle"]["status"] == "pending":
-            self.submit("fable_exact_oracle")
-        elif self.done(stages["fable_exact_oracle"]) and stages["fable_no_skill"]["status"] == "pending":
-            self.submit("fable_no_skill")
-        elif self.done(stages["fable_no_skill"]) and stages["fable_curated_all"]["status"] == "pending":
-            self.submit("fable_curated_all")
 
+        # Qwen and Fable use independent model services.  Conditions remain
+        # serialized within each model lane, but a Fable-only smoke/repair gate
+        # must not idle Qwen once its own repairs are terminal.
         qwen_ready, qwen_reason = self.qwen_ready()
         if qwen_ready:
             if stages["qwen_exact_oracle"]["status"] == "pending":
@@ -555,9 +542,25 @@ class MatrixWatcher:
                 self.submit("qwen_no_skill")
             elif self.done(stages["qwen_no_skill"]) and stages["qwen_curated_all"]["status"] == "pending":
                 self.submit("qwen_curated_all")
+
+        e4_ready, e4_reason = self.advance_e4_repair()
+        fable_reason = e4_reason
+        if e4_ready:
+            fable_ready, fable_reason = self.prerequisites()
+            if fable_ready:
+                if stages["fable_exact_oracle"]["status"] == "pending":
+                    self.submit("fable_exact_oracle")
+                elif self.done(stages["fable_exact_oracle"]) and stages["fable_no_skill"]["status"] == "pending":
+                    self.submit("fable_no_skill")
+                elif self.done(stages["fable_no_skill"]) and stages["fable_curated_all"]["status"] == "pending":
+                    self.submit("fable_curated_all")
         self.save()
         all_done = all(self.done(stage) for stage in stages.values())
-        self.heartbeat("matrix_terminal" if all_done else "monitoring_matrix", qwen_gate=qwen_reason)
+        self.heartbeat(
+            "matrix_terminal" if all_done else "monitoring_matrix",
+            qwen_gate=qwen_reason,
+            fable_gate=fable_reason,
+        )
 
     def loop(self) -> int:
         self.event("matrix_watcher_started", pid=os.getpid())

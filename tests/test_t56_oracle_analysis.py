@@ -19,6 +19,7 @@ def load_script(name: str):
 COLLECTOR = load_script("build_t56_oracle_study.py")
 AUDITOR = load_script("audit_t56_verifiers.py")
 REPORT = load_script("build_t56_oracle_report.py")
+MATRIX = load_script("watch_t56_oracle_matrix.py")
 
 
 def run(job: str, run_id: str, *, status: str, updated: str, env: str = "E1") -> dict:
@@ -35,6 +36,41 @@ def run(job: str, run_id: str, *, status: str, updated: str, env: str = "E1") ->
 
 def task(job: str, run_id: str, task_id: str) -> dict:
     return {"job_id": job, "run_id": run_id, "task_id": task_id}
+
+
+def test_matrix_watcher_fable_gate_does_not_block_qwen_lane() -> None:
+    watcher = object.__new__(MATRIX.MatrixWatcher)
+    watcher.state = {
+        "stages": {
+            name: {"status": "pending", "group_id": None}
+            for name in MATRIX.STAGE_NAMES
+        },
+        "fable_e4_repair": {"status": "pending", "job_id": None},
+    }
+    submitted: list[str] = []
+    heartbeats: list[tuple[str, dict]] = []
+    watcher.update_submitted_stages = lambda: None
+    watcher.qwen_ready = lambda: (True, "Qwen repairs terminal")
+    watcher.advance_e4_repair = lambda: (
+        False,
+        "Fable exact-oracle smoke still running",
+    )
+    watcher.submit = submitted.append
+    watcher.save = lambda: None
+    watcher.heartbeat = lambda phase, **fields: heartbeats.append((phase, fields))
+
+    watcher.step()
+
+    assert submitted == ["qwen_exact_oracle"]
+    assert heartbeats == [
+        (
+            "monitoring_matrix",
+            {
+                "qwen_gate": "Qwen repairs terminal",
+                "fable_gate": "Fable exact-oracle smoke still running",
+            },
+        )
+    ]
 
 
 def test_run_selection_never_blends_stateful_episodes() -> None:
