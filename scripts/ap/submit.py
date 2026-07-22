@@ -576,7 +576,8 @@ def _parser() -> argparse.ArgumentParser:
         default=_env_bool("MODEL_PROXY_ENABLED", False),
         help=(
             "route native Anthropic requests through the AP transport proxy; "
-            "this retries one HTTP request without changing verifier retry semantics"
+            "this buffers and retries one HTTP request without changing verifier "
+            "retry semantics"
         ),
     )
     parser.add_argument(
