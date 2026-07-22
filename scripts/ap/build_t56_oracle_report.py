@@ -258,6 +258,28 @@ CASE_DEFINITIONS = {
             "output.json",
         ],
     },
+    "E3-LS1-T6": {
+        "title": "两种条件 outcome 全过，三类等价实现仍被固定 token 扫描拒绝",
+        "kind": "跨模块、常量与 regex 写法的 process 假阴性",
+        "interpretation": (
+            "Fable self-generated 与 exact-oracle 都通过全部 outcome tests，正确清理逗号/货币/会计"
+            "负数/零宽字符，得到四个 region 的精确 totals，并按 1.0% tolerance 生成正确 validation。Self"
+            "唯一 process 失败是 totals_validator 使用 TOLERANCE_PCT=1.0 后比较 delta_pct <="
+            "TOLERANCE_PCT；verifier 只接受源码中连续字面量 <= 1.0。Exact 另两项失败同样是形态问题："
+            "它用 ACCOUNTING_NEGATIVE regex + is_negative 处理括号负数，而检查只认 negative_mask 或"
+            "startswith('(')；它从 schema_inspector.ZERO_WIDTH_CHARS 导入并循环移除 ZWSP，而检查只在"
+            "amount_cleaner.py 搜索 literal \\u200b。三项实现均被真实结果证明有效，差异不涉及 generated/"
+            "oracle skill 的功能质量；strict 分只衡量是否复刻 reference 的局部命名与文件布局。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "process_pipeline.py",
+            "amount_cleaner.py",
+            "totals_validator.py",
+            "schema_inspector.py",
+            "output.json",
+        ],
+    },
     "E3-LS2-T6": {
         "title": "三次实现的 767 行语义与顺序全对，只因题面允许的 count 字段被 dict 全等拒绝",
         "kind": "隐藏 record shape 合同（强任务缺陷）",
@@ -356,6 +378,30 @@ CASE_DEFINITIONS = {
             "environment/generate_data.py",
             "environment/order_validity.py",
             "environment/README.md",
+        ],
+    },
+    "E3-LS5-T6": {
+        "title": "完整 quality report 功能全过，process 仍要求固定变量名、tuple 方向与内联常量",
+        "kind": "高密度固定字符串 process 假阴性",
+        "interpretation": (
+            "Fable self-generated 与 exact-oracle 都通过全部 outcome tests：row counts、五类 issues、"
+            "cent-level cross-query reconciliation、invalid office status、low confidence 与 corrected"
+            "revenue 均正确。Self 仍失败两项：它用 groups[(month, region)] 而非 verifier 硬编码的"
+            "grouped[(str(row['month']), str(row['region']))]，并把 0.01 放进 CENT_TOLERANCE 常量；两者"
+            "语义等价。Exact 用 by_region_month[(region, month)] 分组，tuple 方向不影响 grouping，却不"
+            "匹配固定字符串；它确实生成 duplicate_region_month_batches issue，只因局部变量没有命名为"
+            "duplicate_batches 又失败一项。两份输出的 outcome 完整通过已经反证这些 token 对功能的必要"
+            "性。该题可以测 layered sanity 的功能，但 strict/process 分主要测 reference-style 源码复刻，"
+            "不应进入 skill evolve 功能结论。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "revenue_anomaly.py",
+            "consistency_guard.py",
+            "office_registry.py",
+            "confidence_policy.py",
+            "build_operations_quality_report.py",
+            "output.json",
         ],
     },
     "E4-LS1-T5": {
