@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Durably advance the matched T4-T6 oracle/no-skill AP matrix.
+"""Durably advance the matched T4-T6 skill-condition AP matrix.
 
 This state machine is intentionally fail-closed: no full diagnostic is
 submitted until the exported E2 exact-oracle smoke passes the structural
 validator.  Per-model conditions are serialized to protect model endpoints.
+The curated-all condition uses the same five curated environment skills as
+exact-oracle without exposing the annotated task-specific subset.
 """
 
 from __future__ import annotations
@@ -26,6 +28,14 @@ AGENTHUB_REF = "2dae59b5340774a528be443840b889452c78cfba"
 SELFGEN_AGENTHUB_REF = "a32ea0ecd2daf6661dd3212d973d0f8e222f3a77"
 FABLE_SMOKE_JOB_ID = "ap-skillevolbench-3be14e2ba69944b4-d2"
 FABLE_E4_LABEL = "sig-fable-e4-repair-v1-15"
+STAGE_NAMES = (
+    "fable_exact_oracle",
+    "fable_no_skill",
+    "fable_curated_all",
+    "qwen_exact_oracle",
+    "qwen_no_skill",
+    "qwen_curated_all",
+)
 DEFAULT_ROOT = Path(
     "/cpfs02/user/zhangfengji.zfj/skillevolbench_t56_oracle_study_20260723"
 )
@@ -136,6 +146,16 @@ class MatrixWatcher:
     def load_state(self) -> dict[str, Any]:
         state = read_json(self.state_path, {})
         if isinstance(state, dict) and state.get("schema_version") == 1:
+            stages = state.setdefault("stages", {})
+            for name in STAGE_NAMES:
+                stages.setdefault(
+                    name,
+                    {
+                        "status": "pending",
+                        "idempotency_key": str(uuid.uuid4()),
+                        "group_id": None,
+                    },
+                )
             state.setdefault(
                 "fable_e4_repair",
                 {
@@ -147,12 +167,7 @@ class MatrixWatcher:
             atomic_json(self.state_path, state)
             return state
         stages = {}
-        for name in (
-            "fable_exact_oracle",
-            "fable_no_skill",
-            "qwen_exact_oracle",
-            "qwen_no_skill",
-        ):
+        for name in STAGE_NAMES:
             stages[name] = {
                 "status": "pending",
                 "idempotency_key": str(uuid.uuid4()),
@@ -440,6 +455,7 @@ class MatrixWatcher:
         stage = self.state["stages"][stage_name]
         model = "qwen3.7-max" if stage_name.startswith("qwen") else "serve-3.8-maxp-cpt-s1-0715-fable-1ep"
         is_oracle = stage_name.endswith("exact_oracle")
+        is_curated_all = stage_name.endswith("curated_all")
         suite = f"t56-{stage_name.replace('_', '-')}-v1-16"
         command = [
             sys.executable,
@@ -486,6 +502,8 @@ class MatrixWatcher:
             command.extend(["--model-provider", "dashscope", "--concurrency", "1"])
         if is_oracle:
             command.extend(["--baseline-name", "curated_static", "--oracle-skill-view"])
+        elif is_curated_all:
+            command.extend(["--baseline-name", "curated_static"])
         else:
             command.extend(["--baseline-name", "no_skill"])
 
@@ -526,6 +544,8 @@ class MatrixWatcher:
             self.submit("fable_exact_oracle")
         elif self.done(stages["fable_exact_oracle"]) and stages["fable_no_skill"]["status"] == "pending":
             self.submit("fable_no_skill")
+        elif self.done(stages["fable_no_skill"]) and stages["fable_curated_all"]["status"] == "pending":
+            self.submit("fable_curated_all")
 
         qwen_ready, qwen_reason = self.qwen_ready()
         if qwen_ready:
@@ -533,6 +553,8 @@ class MatrixWatcher:
                 self.submit("qwen_exact_oracle")
             elif self.done(stages["qwen_exact_oracle"]) and stages["qwen_no_skill"]["status"] == "pending":
                 self.submit("qwen_no_skill")
+            elif self.done(stages["qwen_no_skill"]) and stages["qwen_curated_all"]["status"] == "pending":
+                self.submit("qwen_curated_all")
         self.save()
         all_done = all(self.done(stage) for stage in stages.values())
         self.heartbeat("matrix_terminal" if all_done else "monitoring_matrix", qwen_gate=qwen_reason)

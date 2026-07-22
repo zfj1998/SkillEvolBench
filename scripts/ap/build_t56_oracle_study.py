@@ -115,6 +115,61 @@ def oracle_evidence(
     }
 
 
+def curated_all_evidence(
+    run_dir: Path,
+    environment_id: str,
+    specs: dict[str, dict[str, Any]],
+    skills_root: Path,
+) -> dict[str, Any]:
+    expected_by_family = {
+        str(spec.get("family_id")): str(spec.get("latent_skill_id"))
+        for spec in specs.values()
+        if spec.get("environment_id") == environment_id
+        and spec.get("family_id")
+        and spec.get("latent_skill_id")
+    }
+    expected_slugs = sorted(
+        skill_id.split(".", 1)[-1] for skill_id in expected_by_family.values()
+    )
+    active_dir = run_dir / "library" / environment_id / "active"
+    visible_slugs = (
+        sorted(
+            path.name
+            for path in active_dir.iterdir()
+            if path.is_dir()
+            and not path.is_symlink()
+            and (path / "SKILL.md").is_file()
+        )
+        if active_dir.is_dir()
+        else []
+    )
+    errors: list[str] = []
+    if len(expected_by_family) != 5:
+        errors.append(f"expected five families, got {len(expected_by_family)}")
+    if visible_slugs != expected_slugs:
+        errors.append(
+            f"visible skill dirs differ: actual={visible_slugs!r} "
+            f"expected={expected_slugs!r}"
+        )
+    for slug in expected_slugs:
+        active_skill = active_dir / slug / "SKILL.md"
+        curated_skill = skills_root / slug / "SKILL.md"
+        if not active_skill.is_file():
+            errors.append(f"missing active curated skill: {slug}")
+        elif not curated_skill.is_file():
+            errors.append(f"missing source curated skill: {slug}")
+        elif active_skill.read_bytes() != curated_skill.read_bytes():
+            errors.append(f"curated content mismatch: {slug}")
+    if not (active_dir.parent / ".frozen").is_file():
+        errors.append("curated environment library is not frozen")
+    return {
+        "curated_all_library_complete": not errors,
+        "curated_all_visible_slugs": visible_slugs,
+        "curated_all_expected_slugs": expected_slugs,
+        "curated_all_library_errors": errors,
+    }
+
+
 def load_task_specs(tasks_root: Path) -> dict[str, dict[str, Any]]:
     specs: dict[str, dict[str, Any]] = {}
     for path in sorted(tasks_root.glob("*/task-spec.yaml")):
@@ -211,6 +266,8 @@ def condition_name(config: dict[str, Any]) -> str:
     oracle_view = bool(config.get("oracle_skill_view"))
     if oracle_view and name == "curated_static":
         return "exact_oracle"
+    if name == "curated_static":
+        return "curated_all"
     if name == "no_skill":
         return "no_skill"
     if name.startswith("selfgen"):
@@ -339,6 +396,21 @@ def collect(
         runs.append(run_row)
 
         active_dir = run_dir / "library" / str(config.get("environment_id")) / "active"
+        curated_all = (
+            curated_all_evidence(
+                run_dir,
+                str(config.get("environment_id") or ""),
+                specs,
+                skills_root,
+            )
+            if condition == "curated_all"
+            else {
+                "curated_all_library_complete": None,
+                "curated_all_visible_slugs": [],
+                "curated_all_expected_slugs": [],
+                "curated_all_library_errors": [],
+            }
+        )
         if active_dir.is_dir():
             manifest_path = active_dir.parent / "manifest.yaml"
             manifest = (
@@ -463,6 +535,7 @@ def collect(
             row = {
                 **run_row,
                 **oracle,
+                **curated_all,
                 "task_id": task_id,
                 "family_id": record.get("family_id") or spec.get("family_id"),
                 "family_index": int(match.group(2)),
@@ -643,6 +716,8 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "process_pass", "reward", "primary_skill", "required_skills",
         "retrieved_skill_ids", "skills_actually_used", "job_id", "ap_status",
         "selected_run", "oracle_injection_exact", "no_skill_empty",
+        "curated_all_library_complete", "curated_all_visible_slugs",
+        "curated_all_expected_slugs", "curated_all_library_errors",
         "record_path", "local_trial_path", "local_artifact_task_path",
         "local_trajectory_path",
     ]
@@ -651,7 +726,14 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer.writeheader()
         for source in rows:
             row = {key: source.get(key) for key in columns}
-            for key in ("required_skills", "retrieved_skill_ids", "skills_actually_used"):
+            for key in (
+                "required_skills",
+                "retrieved_skill_ids",
+                "skills_actually_used",
+                "curated_all_visible_slugs",
+                "curated_all_expected_slugs",
+                "curated_all_library_errors",
+            ):
                 row[key] = json.dumps(row[key], ensure_ascii=False)
             writer.writerow(row)
 

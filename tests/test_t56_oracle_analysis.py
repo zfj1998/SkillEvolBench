@@ -123,7 +123,7 @@ def test_coverage_is_fail_closed_for_missing_conditions() -> None:
     ]
     coverage = REPORT.condition_coverage(rows, [])
 
-    assert len(coverage) == 36
+    assert len(coverage) == 48
     assert next(
         item for item in coverage
         if item["model"] == "qwen3.7-max"
@@ -131,6 +131,45 @@ def test_coverage_is_fail_closed_for_missing_conditions() -> None:
         and item["environment_id"] == "E1"
     )["complete"] is True
     assert sum(item["complete"] for item in coverage) == 1
+
+
+def test_curated_all_condition_requires_five_exact_frozen_skills(
+    tmp_path: Path,
+) -> None:
+    skills_root = tmp_path / "benchmark/skills"
+    run_dir = tmp_path / "run"
+    active = run_dir / "library/E1/active"
+    specs = {}
+    for family in range(1, 6):
+        slug = f"skill-{family}"
+        source = skills_root / slug
+        visible = active / slug
+        source.mkdir(parents=True)
+        visible.mkdir(parents=True)
+        content = f"# Skill {family}\n"
+        (source / "SKILL.md").write_text(content, encoding="utf-8")
+        (visible / "SKILL.md").write_text(content, encoding="utf-8")
+        specs[f"E1-LS{family}-T4"] = {
+            "environment_id": "E1",
+            "family_id": f"E1-LS{family}",
+            "latent_skill_id": f"E1-LS{family}.{slug}",
+        }
+    (active.parent / ".frozen").write_text("frozen\n", encoding="utf-8")
+
+    valid = COLLECTOR.curated_all_evidence(run_dir, "E1", specs, skills_root)
+
+    assert valid["curated_all_library_complete"] is True
+    assert valid["curated_all_library_errors"] == []
+    assert COLLECTOR.condition_name(
+        {"baseline": {"name": "curated_static"}, "oracle_skill_view": False}
+    ) == "curated_all"
+
+    (active / "skill-3/SKILL.md").write_text("tampered\n", encoding="utf-8")
+    invalid = COLLECTOR.curated_all_evidence(run_dir, "E1", specs, skills_root)
+    assert invalid["curated_all_library_complete"] is False
+    assert invalid["curated_all_library_errors"] == [
+        "curated content mismatch: skill-3"
+    ]
 
 
 def test_oracle_injection_requires_exact_ids_dirs_and_hashes(tmp_path: Path) -> None:

@@ -72,3 +72,45 @@ def test_existing_matrix_state_is_migrated_with_durable_e4_repair(
     assert repair["idempotency_key"]
     persisted = json.loads(state_path.read_text(encoding="utf-8"))
     assert persisted["fable_e4_repair"] == repair
+    assert set(persisted["stages"]) == set(MATRIX.STAGE_NAMES)
+    assert persisted["stages"]["fable_curated_all"]["status"] == "pending"
+    assert persisted["stages"]["qwen_curated_all"]["status"] == "pending"
+
+
+def test_curated_all_submission_uses_same_content_without_oracle_view(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("AP_API_KEY", "test-only-ap-key")
+    monkeypatch.setenv("ROUTIFY_KEY_sig", "test-only-model-key")
+    args = argparse.Namespace(
+        study_root=tmp_path,
+        repo_root=ROOT,
+        cluster="test-cluster",
+        ap_cli="ap",
+    )
+    watcher = MATRIX.MatrixWatcher(args)
+    commands: list[list[str]] = []
+
+    def fake_run(command, *, env=None, timeout=300):
+        del env, timeout
+        commands.append(command)
+        return MATRIX.subprocess.CompletedProcess(
+            command,
+            0,
+            json.dumps({"submission": {"group_id": "group-curated-all"}}),
+            "",
+        )
+
+    monkeypatch.setattr(watcher, "run", fake_run)
+    monkeypatch.setattr(watcher, "register_group", lambda *_: None)
+
+    watcher.submit("fable_curated_all")
+
+    command = commands[0]
+    assert command[command.index("--baseline-name") + 1] == "curated_static"
+    assert "--oracle-skill-view" not in command
+    assert "--evaluation-only-t4-t6" in command
+    assert watcher.state["stages"]["fable_curated_all"]["group_id"] == (
+        "group-curated-all"
+    )
