@@ -2127,6 +2127,67 @@ def conclusions(
             "title": "Oracle 的功能性处理效应",
             "body": f"匹配任务中，oracle 在 {len(rescued)} 题上把 self-generated 的 outcome 失败救回；仍有 {len(failed)} 个 oracle outcome 失败。应逐题区分 skill 不足、模型执行失败和题目/环境缺陷。",
         })
+    matched_exact = [
+        row
+        for row in comparisons
+        if int(row["tier"]) in (5, 6)
+        and row["conditions"]["self_generated"] is not None
+        and row["conditions"]["exact_oracle"] is not None
+    ]
+    if matched_exact:
+        self_outcome = sum(
+            row["conditions"]["self_generated"]["outcome"] is True
+            for row in matched_exact
+        )
+        exact_outcome = sum(
+            row["conditions"]["exact_oracle"]["outcome"] is True
+            for row in matched_exact
+        )
+        rescued = sum(
+            row["conditions"]["self_generated"]["outcome"] is not True
+            and row["conditions"]["exact_oracle"]["outcome"] is True
+            for row in matched_exact
+        )
+        harmed = sum(
+            row["conditions"]["self_generated"]["outcome"] is True
+            and row["conditions"]["exact_oracle"]["outcome"] is not True
+            for row in matched_exact
+        )
+        exact_assigned = [
+            row
+            for row in comparisons
+            if row["conditions"]["exact_oracle"] is not None
+        ]
+        exact_compliant = sum(
+            bool(row["conditions"]["exact_oracle"]["oracle_skill_ids"])
+            and set(row["conditions"]["exact_oracle"]["oracle_skill_ids"]).issubset(
+                row["conditions"]["exact_oracle"]["skills_actually_used"]
+            )
+            for row in exact_assigned
+        )
+        slices = ", ".join(
+            sorted(
+                {
+                    f"{row['model']}/{row['environment_id']}"
+                    for row in matched_exact
+                }
+            )
+        )
+        result.append(
+            {
+                "level": "warn",
+                "title": "当前 Exact Oracle matched pilot 尚无 outcome 救回",
+                "body": (
+                    f"目前只有 {slices} 形成 {len(matched_exact)} 个 T5/T6 self/exact 配对："
+                    f"self-generated outcome {self_outcome}/{len(matched_exact)}，"
+                    f"exact-oracle {exact_outcome}/{len(matched_exact)}，救回 {rescued}、"
+                    f"损害 {harmed}。Exact 条件在已导出的 T4–T6 中有 "
+                    f"{exact_compliant}/{len(exact_assigned)} 题实际打开了全部指定 skill，"
+                    "所以当前零增益不能归因于 treatment 没挂载或模型没读；但覆盖仍只有一个"
+                    "模型/环境，且 no-skill 与 curated-all 未齐，不能外推为最终结论。"
+                ),
+            }
+        )
     result.append({
         "level": "warn",
         "title": "Exact Oracle 实际是刻意留缺口的 Curated 子集",
