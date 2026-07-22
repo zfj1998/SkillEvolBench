@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -691,6 +692,66 @@ def test_environment_diagnostics_keeps_reference_and_model_controls_distinct() -
     assert "self-generated 20/20" in e2_complete["current_read"]
     assert "exact-oracle 20/20" in e2_complete["current_read"]
     assert "选择先验效应 +20 题" in e2_complete["current_read"]
+
+
+def test_execution_attempt_audit_separates_platform_failures_from_results(
+    tmp_path: Path,
+) -> None:
+    config_job = tmp_path / "fable-exact-E1" / "ap-config"
+    config_output = config_job / "artifacts/output"
+    config_output.mkdir(parents=True)
+    (config_output / "metrics.json").write_text(
+        json.dumps(
+            {
+                "status": "failed",
+                "message": (
+                    "learning_max_attempts > 1 requires "
+                    "skill_update_source='same_agent_session'"
+                ),
+            }
+        ),
+        encoding="utf-8",
+    )
+    mirror_job = tmp_path / "sig-fable-e4" / "ap-mirror"
+    mirror_output = mirror_job / "artifacts/output"
+    exception = (
+        mirror_output
+        / "runs/run-1/harbor-job/run-1/E4-LS1-T1__x/exception.txt"
+    )
+    exception.parent.mkdir(parents=True)
+    exception.write_text(
+        "File has unexpected size. Mirror sync in progress?",
+        encoding="utf-8",
+    )
+    (mirror_output / "metrics.json").write_text(
+        json.dumps({"status": "failed", "message": "RuntimeError"}),
+        encoding="utf-8",
+    )
+    evidence = {
+        "runs": [
+            {
+                "job_id": "ap-mirror",
+                "run_id": "run-1",
+                "selected_run": True,
+            }
+        ],
+        "tasks": [{"job_id": "ap-mirror", "selected_run": True}],
+    }
+
+    result = REPORT.execution_attempt_audit(tmp_path, evidence)
+
+    assert result["failed_attempt_count"] == 2
+    assert result["excluded_attempt_count"] == 1
+    assert result["failed_attempts_contributing_t56"] == 1
+    assert result["failure_counts"] == {
+        "invalid_eval_configuration": 1,
+        "package_mirror_sync": 1,
+    }
+    by_job = {row["job_id"]: row for row in result["failures"]}
+    assert by_job["ap-config"]["contributes_t56_results"] is False
+    assert by_job["ap-mirror"]["contributes_t56_results"] is True
+    assert by_job["ap-mirror"]["selected_run_candidate"] is True
+    assert by_job["ap-mirror"]["exception_path"].endswith("exception.txt")
 
 
 def test_oracle_case_studies_use_only_the_declared_condition(tmp_path: Path) -> None:

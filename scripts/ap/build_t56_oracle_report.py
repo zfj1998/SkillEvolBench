@@ -1559,6 +1559,97 @@ def compact_message(value: Any, limit: int = 260) -> str:
     return text[: limit - 1].rstrip() + "…"
 
 
+def execution_failure_kind(text: str) -> str:
+    lowered = text.lower()
+    if "learning_max_attempts > 1 requires" in lowered:
+        return "invalid_eval_configuration"
+    if "mirror sync in progress" in lowered or "file has unexpected size" in lowered:
+        return "package_mirror_sync"
+    if "agenttimeouterror" in lowered:
+        return "agent_timeout"
+    if "sanitize-output" in lowered or "output sanitization failed" in lowered:
+        return "artifact_sanitization"
+    if "download-assets" in lowered:
+        return "asset_download"
+    return "other_runtime_failure"
+
+
+def execution_attempt_audit(
+    raw_root: Path,
+    evidence: dict[str, Any],
+) -> dict[str, Any]:
+    """Separate failed AP attempts from accepted scientific task records."""
+    selected_job_ids = {
+        str(run.get("job_id"))
+        for run in selected_runs(evidence)
+        if run.get("job_id")
+    }
+    contributing_job_ids = {
+        str(row.get("job_id"))
+        for row in selected_rows(evidence)
+        if row.get("job_id")
+    }
+    failures: list[dict[str, Any]] = []
+    for metrics_path in sorted(
+        raw_root.glob("*/ap-*/artifacts/output/metrics.json")
+    ):
+        label = metrics_path.parents[3].name
+        if label.startswith("reference-oracle-"):
+            continue
+        metrics = load_json_optional(metrics_path)
+        if metrics.get("status") != "failed":
+            continue
+        job_id = metrics_path.parents[2].name
+        job_root = metrics_path.parents[2]
+        exception_text = ""
+        exception_paths = sorted(
+            job_root.glob(
+                "artifacts/output/runs/*/harbor-job/*/*/exception.txt"
+            )
+        )
+        if exception_paths:
+            exception_text = exception_paths[0].read_text(
+                encoding="utf-8", errors="replace"
+            )
+        message = compact_message(metrics.get("message"), limit=420)
+        raw_diagnostic = " ".join(
+            part
+            for part in (
+                str(metrics.get("error_stage") or ""),
+                message,
+                exception_text,
+            )
+            if part
+        )
+        failures.append(
+            {
+                "label": label,
+                "job_id": job_id,
+                "error_stage": metrics.get("error_stage"),
+                "message": message,
+                "failure_kind": execution_failure_kind(raw_diagnostic),
+                "selected_run_candidate": job_id in selected_job_ids,
+                "contributes_t56_results": job_id in contributing_job_ids,
+                "metrics_path": str(metrics_path.resolve()),
+                "exception_path": (
+                    str(exception_paths[0].resolve()) if exception_paths else None
+                ),
+            }
+        )
+    counts = Counter(row["failure_kind"] for row in failures)
+    return {
+        "failed_attempt_count": len(failures),
+        "excluded_attempt_count": sum(
+            row["contributes_t56_results"] is not True for row in failures
+        ),
+        "failed_attempts_contributing_t56": sum(
+            row["contributes_t56_results"] is True for row in failures
+        ),
+        "failure_counts": dict(sorted(counts.items())),
+        "failures": failures,
+    }
+
+
 def conclusions(
     coverage: list[dict[str, Any]],
     comparisons: list[dict[str, Any]],
@@ -1769,6 +1860,7 @@ def build_payload(
         attribution,
         reference_integrity,
     )
+    execution_attempts = execution_attempt_audit(raw_root, evidence)
     return {
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "is_complete": all(row["complete"] for row in coverage),
@@ -1792,6 +1884,7 @@ def build_payload(
         "reference_integrity": reference_integrity,
         "failure_attribution": attribution,
         "environment_diagnostics": environment_summary,
+        "execution_attempts": execution_attempts,
         "verifier_audit": audit,
         "conclusions": conclusions(
             coverage,
@@ -1845,6 +1938,36 @@ def render_markdown(data: dict[str, Any]) -> str:
         for condition in CONDITIONS:
             rows = [row for row in data["coverage"] if row["model"] == model and row["condition"] == condition]
             lines.append(f"| {model} | {CONDITION_ZH[condition]} | {sum(row['complete'] for row in rows)}/6 | {sum(row['observed'] for row in rows)}/90 |")
+    attempts = data["execution_attempts"]
+    lines += [
+        "",
+        "## 实验执行健康与排除尝试",
+        "",
+        f"当前识别到 **{attempts['failed_attempt_count']}** 个模型实验 AP 失败尝试；"
+        f"其中 **{attempts['excluded_attempt_count']}** 个未进入科学统计，"
+        f"**{attempts['failed_attempts_contributing_t56']}** 个仍贡献了 T4–T6 记录。"
+        "失败尝试保留作运行审计，但只有完整、可复核的环境 episode 才能形成 15/15 单元。",
+        "",
+        "| 类型 | 数量 |",
+        "|---|---:|",
+    ]
+    for kind, count in attempts["failure_counts"].items():
+        lines.append(f"| {kind} | {count} |")
+    lines += [
+        "",
+        "| Label | Job | 类型 | Stage | 纳入分析 | 诊断 |",
+        "|---|---|---|---|---:|---|",
+    ]
+    for row in attempts["failures"]:
+        diagnostic = compact_message(row.get("message"), limit=160).replace(
+            "|", "\\|"
+        )
+        lines.append(
+            f"| {row['label']} | `{row['job_id']}` | {row['failure_kind']} | "
+            f"{row.get('error_stage') or '—'} | "
+            f"{'是' if row['contributes_t56_results'] else '否'} | "
+            f"{diagnostic} |"
+        )
     reference = data["reference_integrity"]
     lines += [
         "",
@@ -2232,6 +2355,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>先看结论</h2><div id="conclusions"></div></section>
 <section class="panel"><h2>先校正 “Oracle” 的含义</h2><p><code>exact_oracle</code> 是按 gold task→skill 映射注入仓库 curated 子集，不是任务 solution 或完整能力上界。curated skill 本身被设计为 gap-exposed scaffold，模型应从 T1–T3 补全它。</p><div class="grid cards" id="protocolDesign"></div></section>
 <section class="panel"><h2>实验覆盖</h2><div class="heat" id="coverage"></div></section>
+<section class="panel"><h2>实验执行健康</h2><p class="small">AP 失败尝试与模型 T5/T6 结果分层展示。失败尝试保留作审计；只有完整、可复核的 episode 才能形成 15/15 科学单元。</p><div id="executionHealth"></div></section>
 <section class="panel"><h2>题目资产完整性：官方标准解能否通过？</h2><p>这不是模型 baseline：Harbor oracle 直接执行仓库的 <code>solution/solve.sh</code>，再运行原 verifier，用来识别题目、标准解、容器或 verifier 的内部不一致。</p><div id="referenceIntegrity"></div></section>
 <section class="panel"><h2>Pass rate 热力图</h2><div class="filters"><select id="hmModel"></select><select id="hmCond"></select><select id="hmMetric"><option value="strict">Strict</option><option value="outcome">Outcome</option><option value="process">Process</option></select><select id="hmTier"><option value="4">T4</option><option value="5" selected>T5</option><option value="6">T6</option></select></div><div class="heat" id="heatmap"></div><p class="small">每格最多 5 题；显示通过数/观测数，不能把小样本百分比当作稳定总体性能。</p></section>
 <section class="grid two"><div class="panel"><h2>Qwen vs Fable 配对比较</h2><div class="tablebox"><table><thead><tr><th>条件/Tier/指标</th><th>n</th><th>Qwen</th><th>Fable</th><th>only Q/F</th><th>p</th></tr></thead><tbody id="modelCmpRows"></tbody></table></div></div><div class="panel"><h2>Skill 条件配对效应</h2><div class="tablebox"><table><thead><tr><th>模型/Tier/指标</th><th>对照</th><th>n</th><th>Δ</th><th>救回/损害</th></tr></thead><tbody id="effectRows"></tbody></table></div></div></section>
@@ -2260,6 +2384,7 @@ cards.innerHTML=[['完整单元',`${{complete}}/${{total}}`],['已纳入任务�
 conclusions.innerHTML=D.conclusions.map(x=>`<div class="conclusion ${{x.level}}"><h3>${{esc(x.title)}}</h3>${{esc(x.body)}}</div>`).join('');
 let pd=D.protocol_design;protocolDesign.innerHTML=[['Curated families',pd.family_count],['Author gap summaries',pd.gap_summary_count],['明确限制 curated',pd.gap_summaries_explicitly_limiting_curated+'/'+pd.gap_summary_count],['T2 enriched / T3 variant',(pd.role_counts['T2:enriched:learning']||0)+' / '+(pd.role_counts['T3:variant:learning']||0)]].map(x=>`<div class="card"><span class="label">${{x[0]}}</span><b>${{x[1]}}</b></div>`).join('');
 coverage.innerHTML='<div class="head">模型 / 条件</div>'+['E1','E2','E3','E4','E5','E6'].map(x=>`<div class="head">${{x}}</div>`).join('')+['qwen3.7-max','sig-fable'].flatMap(m=>['self_generated','exact_oracle','curated_all','no_skill'].map(c=>{{let cells=D.coverage.filter(x=>x.model===m&&x.condition===c);return `<div>${{m}}<br><span class="small">${{zh[c]}}</span></div>`+cells.map(x=>`<div class="v ${{x.complete?'high':x.observed?'mid':'none'}}">${{x.observed}}/15</div>`).join('')}})).join('');
+let eh=D.execution_attempts;executionHealth.innerHTML=`<div class="grid cards"><div class="card"><span class="label">失败 AP 尝试</span><b>${{eh.failed_attempt_count}}</b></div><div class="card"><span class="label">未纳入统计</span><b>${{eh.excluded_attempt_count}}</b></div><div class="card"><span class="label">贡献 T4–T6 的失败尝试</span><b>${{eh.failed_attempts_contributing_t56}}</b></div><div class="card"><span class="label">失败类型</span><b>${{Object.keys(eh.failure_counts).length}}</b></div></div><div>${{Object.entries(eh.failure_counts).map(([k,v])=>`<span class="metric fail">${{esc(k)}}: ${{v}}</span>`).join(' ')}}</div><details><summary>查看失败尝试证据</summary><div class="tablebox"><table><thead><tr><th>Label / Job</th><th>类型</th><th>Stage</th><th>进入 T4–T6</th><th>诊断</th></tr></thead><tbody>${{eh.failures.map(x=>`<tr><td>${{esc(x.label)}}<br><span class="small">${{esc(x.job_id)}}</span></td><td>${{esc(x.failure_kind)}}</td><td>${{esc(x.error_stage||'—')}}</td><td>${{x.contributes_t56_results?'是':'否'}}</td><td>${{esc(x.message||'—')}}</td></tr>`).join('')}}</tbody></table></div></details>`;
 let ri=D.reference_integrity;let riRows=['E1','E2','E3','E4','E5','E6'].map(e=>{{let cells=[4,5,6].map(t=>ri.rows.find(x=>x.environment_id===e&&x.tier===t));return `<tr><td><b>${{e}}</b></td>${{cells.map(x=>`<td>${{x.passed}}/${{x.total}}</td>`).join('')}}</tr>`}}).join('');let riFailures=ri.failures.length?`<details><summary>查看 ${{ri.failures.length}} 个失败标准解</summary><pre>${{esc(JSON.stringify(ri.failures,null,2))}}</pre></details>`:'<p class="small">当前没有已观测的标准解失败。</p>';referenceIntegrity.innerHTML=`<div class="grid cards"><div class="card"><span class="label">覆盖</span><b>${{ri.total}}/90</b></div><div class="card"><span class="label">严格通过</span><b>${{ri.passed}}/${{ri.total||0}}</b></div><div class="card"><span class="label">状态</span><b style="font-size:20px">${{ri.all_reference_solutions_pass?'全部通过':ri.complete?'存在失败':'运行中'}}</b></div></div><div class="tablebox"><table><thead><tr><th>Env</th><th>T4</th><th>T5</th><th>T6</th></tr></thead><tbody>${{riRows}}</tbody></table></div>${{riFailures}}`;
 options(hmModel,['qwen3.7-max','sig-fable']);options(hmCond,['self_generated','exact_oracle','curated_all','no_skill'],zh);options(taskModel,['qwen3.7-max','sig-fable'],null,true);options(taskEnv,['E1','E2','E3','E4','E5','E6'],null,true);
 function renderHeat(){{let m=hmModel.value,c=hmCond.value,k=hmMetric.value,t=+hmTier.value;let rows=['E1','E2','E3','E4','E5','E6'].map(e=>D.aggregates.find(x=>x.model===m&&x.condition===c&&x.environment_id===e&&x.tier===t));heatmap.innerHTML='<div class="head">'+m+' · '+zh[c]+'</div>'+['E1','E2','E3','E4','E5','E6'].map(x=>`<div class="head">${{x}}</div>`).join('')+`<div>T${{t}} · ${{k}}</div>`+rows.map(x=>{{if(!x)return '<div class="v none">—</div>';let p=x[k]/x.n,cl=p>=.8?'high':p>=.4?'mid':'low';return `<div class="v ${{cl}}">${{x[k]}}/${{x.n}}</div>`}}).join('')}};[hmModel,hmCond,hmMetric,hmTier].forEach(x=>x.onchange=renderHeat);renderHeat();
