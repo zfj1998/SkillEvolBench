@@ -964,3 +964,83 @@ def test_t6_derivability_unions_all_required_skill_families() -> None:
     assert row["source_family_ids"] == ["E3-LS2", "E3-LS3"]
     assert row["in_t1_t3_evidence"] is True
     assert row["in_generated_skill"] is True
+
+
+def test_runtime_progress_separates_ap_state_from_scientific_coverage() -> None:
+    coverage = [
+        {
+            "model": model,
+            "condition": condition,
+            "environment_id": f"E{index}",
+            "complete": model == "sig-fable"
+            and condition == "exact_oracle"
+            and index == 2,
+            "observed": (
+                15
+                if model == "sig-fable"
+                and condition == "exact_oracle"
+                and index == 2
+                else 0
+            ),
+        }
+        for model in REPORT.MODELS
+        for condition in REPORT.CONDITIONS
+        for index in range(1, 7)
+    ]
+    inventory = {
+        "updated_at_utc": "2026-07-22T21:00:00Z",
+        "jobs": [
+            {
+                "label": "fable-exact-oracle-v1-16-E1",
+                "job_id": "job-exact-e1",
+                "group_id": "group-exact",
+                "status": "Running",
+                "export_state": "not_started",
+                "created_at": "2026-07-22T20:00:00Z",
+            },
+            {
+                "label": "qwen37max-e1-repair-v1-15",
+                "job_id": "job-qwen-e1",
+                "group_id": None,
+                "status": "Succeeded",
+                "export_state": "complete",
+                "created_at": "2026-07-22T19:00:00Z",
+            },
+        ],
+    }
+    matrix_state = {
+        "updated_at_utc": "2026-07-22T21:00:01Z",
+        "stages": {
+            "fable_exact_oracle": {
+                "status": "submitted",
+                "group_id": "group-exact",
+                "registered_with_evidence_watcher": True,
+                "failed_groups": [{"group_id": "group-old"}],
+            }
+        },
+    }
+
+    result = REPORT.runtime_progress_analysis(
+        coverage, inventory, matrix_state
+    )
+
+    assert result["complete_cells"] == 1
+    assert result["total_cells"] == 48
+    assert result["active_job_count"] == 1
+    exact = next(
+        row for row in result["stages"] if row["stage"] == "fable_exact_oracle"
+    )
+    assert exact["job_statuses"] == {"Running": 1}
+    assert exact["complete_cells"] == 1
+    assert exact["observed_tasks"] == 15
+    assert exact["failed_group_count"] == 1
+    pending = next(
+        row for row in result["stages"] if row["stage"] == "qwen_exact_oracle"
+    )
+    assert pending["group_id"] is None
+    assert pending["job_statuses"] == {}
+    qwen_repair = next(
+        row for row in result["repairs"] if row["model"] == "qwen3.7-max"
+    )
+    assert qwen_repair["job_id"] == "job-qwen-e1"
+    assert qwen_repair["export_state"] == "complete"

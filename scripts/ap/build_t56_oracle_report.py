@@ -22,6 +22,16 @@ CONDITIONS = ("self_generated", "exact_oracle", "no_skill", "curated_all")
 ENVS = tuple(f"E{i}" for i in range(1, 7))
 TIERS = (4, 5, 6)
 EXPECTED_TASKS_PER_ENV = 15
+AP_CLUSTER = "hk-benchmark-dev"
+
+MATRIX_STAGE_META = {
+    "qwen_exact_oracle": ("qwen3.7-max", "exact_oracle"),
+    "qwen_no_skill": ("qwen3.7-max", "no_skill"),
+    "qwen_curated_all": ("qwen3.7-max", "curated_all"),
+    "fable_exact_oracle": ("sig-fable", "exact_oracle"),
+    "fable_no_skill": ("sig-fable", "no_skill"),
+    "fable_curated_all": ("sig-fable", "curated_all"),
+}
 
 CONDITION_ZH = {
     "self_generated": "模型自生成 skill",
@@ -1650,6 +1660,109 @@ def execution_attempt_audit(
     }
 
 
+def ap_console_url(kind: str, identifier: str | None) -> str | None:
+    if not identifier:
+        return None
+    return (
+        "https://agentplatform.aliyun-inc.com/?cluster="
+        f"{AP_CLUSTER}#/{kind}/{identifier}"
+    )
+
+
+def runtime_progress_analysis(
+    coverage: list[dict[str, Any]],
+    inventory: dict[str, Any],
+    matrix_state: dict[str, Any],
+) -> dict[str, Any]:
+    """Expose live AP/control progress without treating it as score evidence."""
+    jobs = [job for job in inventory.get("jobs", []) if isinstance(job, dict)]
+    active_statuses = {"Queued", "Pending", "Scheduling", "Running"}
+    terminal_statuses = {"Succeeded", "Failed", "Cancelled"}
+    stages = matrix_state.get("stages", {})
+    rows: list[dict[str, Any]] = []
+    for stage_name, (model, condition) in MATRIX_STAGE_META.items():
+        stage = stages.get(stage_name, {}) if isinstance(stages, dict) else {}
+        group_id = str(stage.get("group_id") or "") or None
+        group_jobs = (
+            [job for job in jobs if job.get("group_id") == group_id]
+            if group_id
+            else []
+        )
+        status_counts = Counter(
+            str(job.get("status") or "Unknown") for job in group_jobs
+        )
+        if not status_counts and isinstance(stage.get("job_statuses"), dict):
+            status_counts.update(
+                {
+                    str(key): int(value)
+                    for key, value in stage["job_statuses"].items()
+                }
+            )
+        cells = [
+            row
+            for row in coverage
+            if row["model"] == model and row["condition"] == condition
+        ]
+        rows.append(
+            {
+                "stage": stage_name,
+                "model": model,
+                "condition": condition,
+                "status": str(stage.get("status") or "pending"),
+                "group_id": group_id,
+                "group_url": ap_console_url("groups", group_id),
+                "job_statuses": dict(sorted(status_counts.items())),
+                "complete_cells": sum(bool(row["complete"]) for row in cells),
+                "observed_tasks": sum(int(row["observed"]) for row in cells),
+                "failed_group_count": len(stage.get("failed_groups") or []),
+                "registered_for_export": (
+                    stage.get("registered_with_evidence_watcher") is True
+                ),
+            }
+        )
+
+    repairs: list[dict[str, Any]] = []
+    repair_specs = (
+        ("qwen3.7-max", "E1", "qwen37max-e1-repair-v1-15"),
+        ("sig-fable", "E4", "sig-fable-e4-repair-v1-15"),
+    )
+    for model, environment_id, label in repair_specs:
+        candidates = [job for job in jobs if job.get("label") == label]
+        candidates.sort(key=lambda job: str(job.get("created_at") or ""))
+        job = candidates[-1] if candidates else {}
+        repairs.append(
+            {
+                "model": model,
+                "environment_id": environment_id,
+                "label": label,
+                "job_id": job.get("job_id"),
+                "job_url": ap_console_url("jobs", job.get("job_id")),
+                "status": str(job.get("status") or "missing"),
+                "export_state": str(job.get("export_state") or "not_started"),
+                "attempt_count": len(candidates),
+            }
+        )
+
+    return {
+        "inventory_updated_at_utc": inventory.get("updated_at_utc"),
+        "matrix_updated_at_utc": matrix_state.get("updated_at_utc"),
+        "complete_cells": sum(bool(row["complete"]) for row in coverage),
+        "total_cells": len(coverage),
+        "active_job_count": sum(job.get("status") in active_statuses for job in jobs),
+        "terminal_waiting_export": sum(
+            job.get("status") in terminal_statuses
+            and job.get("export_state") != "complete"
+            for job in jobs
+        ),
+        "stages": rows,
+        "repairs": repairs,
+        "interpretation": (
+            "AP status only describes platform lifecycle. A stage contributes scientific "
+            "results only after terminal export, artifact audit, and 15/15 task coverage."
+        ),
+    }
+
+
 def conclusions(
     coverage: list[dict[str, Any]],
     comparisons: list[dict[str, Any]],
@@ -1842,6 +1955,8 @@ def build_payload(
     audit: dict[str, Any],
     raw_root: Path,
     reference_audit: dict[str, Any] | None = None,
+    inventory: dict[str, Any] | None = None,
+    matrix_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     rows = selected_rows(evidence)
     runs = selected_runs(evidence)
@@ -1861,6 +1976,11 @@ def build_payload(
         reference_integrity,
     )
     execution_attempts = execution_attempt_audit(raw_root, evidence)
+    runtime_progress = runtime_progress_analysis(
+        coverage,
+        inventory or {},
+        matrix_state or {},
+    )
     return {
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "is_complete": all(row["complete"] for row in coverage),
@@ -1885,6 +2005,7 @@ def build_payload(
         "failure_attribution": attribution,
         "environment_diagnostics": environment_summary,
         "execution_attempts": execution_attempts,
+        "runtime_progress": runtime_progress,
         "verifier_audit": audit,
         "conclusions": conclusions(
             coverage,
@@ -1938,6 +2059,46 @@ def render_markdown(data: dict[str, Any]) -> str:
         for condition in CONDITIONS:
             rows = [row for row in data["coverage"] if row["model"] == model and row["condition"] == condition]
             lines.append(f"| {model} | {CONDITION_ZH[condition]} | {sum(row['complete'] for row in rows)}/6 | {sum(row['observed'] for row in rows)}/90 |")
+    progress = data["runtime_progress"]
+    lines += [
+        "",
+        "## 运行中的完整对照矩阵",
+        "",
+        f"当前科学证据完整单元 **{progress['complete_cells']}/{progress['total_cells']}**；"
+        f"AP active jobs **{progress['active_job_count']}**；"
+        f"已经终态但等待导出的 jobs **{progress['terminal_waiting_export']}**。"
+        "下表的 `Running`/`Succeeded` 只是平台状态，只有导出并通过 artifact 审计且达到 15/15 才进入上面的证据覆盖。",
+        "",
+        "| 模型 | 条件 | Matrix 状态 | AP jobs | 完整 Env | 任务记录 | 历史失败组 | AP group |",
+        "|---|---|---|---|---:|---:|---:|---|",
+    ]
+    for row in progress["stages"]:
+        statuses = ", ".join(
+            f"{key}={value}" for key, value in row["job_statuses"].items()
+        ) or "—"
+        group = (
+            f"[{row['group_id']}]({row['group_url']})"
+            if row.get("group_url")
+            else "—"
+        )
+        lines.append(
+            f"| {row['model']} | {CONDITION_ZH[row['condition']]} | "
+            f"{row['status']} | {statuses} | {row['complete_cells']}/6 | "
+            f"{row['observed_tasks']}/90 | {row['failed_group_count']} | {group} |"
+        )
+    lines += [
+        "",
+        "| Self-generated 修复 | Job 状态 | Artifact 导出 | 尝试数 | AP job |",
+        "|---|---|---|---:|---|",
+    ]
+    for row in progress["repairs"]:
+        job = (
+            f"[{row['job_id']}]({row['job_url']})" if row.get("job_url") else "—"
+        )
+        lines.append(
+            f"| {row['model']} / {row['environment_id']} | {row['status']} | "
+            f"{row['export_state']} | {row['attempt_count']} | {job} |"
+        )
     attempts = data["execution_attempts"]
     lines += [
         "",
@@ -2355,6 +2516,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>先看结论</h2><div id="conclusions"></div></section>
 <section class="panel"><h2>先校正 “Oracle” 的含义</h2><p><code>exact_oracle</code> 是按 gold task→skill 映射注入仓库 curated 子集，不是任务 solution 或完整能力上界。curated skill 本身被设计为 gap-exposed scaffold，模型应从 T1–T3 补全它。</p><div class="grid cards" id="protocolDesign"></div></section>
 <section class="panel"><h2>实验覆盖</h2><div class="heat" id="coverage"></div></section>
+<section class="panel"><h2>运行中的完整对照矩阵</h2><p class="small">把 AP 生命周期与科学证据分开：Queued/Running/Succeeded 不等于已有可用结果；只有终态导出、artifact 审计通过且单元达到 15/15，才计入实验覆盖。</p><div id="runtimeProgress"></div></section>
 <section class="panel"><h2>实验执行健康</h2><p class="small">AP 失败尝试与模型 T5/T6 结果分层展示。失败尝试保留作审计；只有完整、可复核的 episode 才能形成 15/15 科学单元。</p><div id="executionHealth"></div></section>
 <section class="panel"><h2>题目资产完整性：官方标准解能否通过？</h2><p>这不是模型 baseline：Harbor oracle 直接执行仓库的 <code>solution/solve.sh</code>，再运行原 verifier，用来识别题目、标准解、容器或 verifier 的内部不一致。</p><div id="referenceIntegrity"></div></section>
 <section class="panel"><h2>Pass rate 热力图</h2><div class="filters"><select id="hmModel"></select><select id="hmCond"></select><select id="hmMetric"><option value="strict">Strict</option><option value="outcome">Outcome</option><option value="process">Process</option></select><select id="hmTier"><option value="4">T4</option><option value="5" selected>T5</option><option value="6">T6</option></select></div><div class="heat" id="heatmap"></div><p class="small">每格最多 5 题；显示通过数/观测数，不能把小样本百分比当作稳定总体性能。</p></section>
@@ -2384,6 +2546,7 @@ cards.innerHTML=[['完整单元',`${{complete}}/${{total}}`],['已纳入任务�
 conclusions.innerHTML=D.conclusions.map(x=>`<div class="conclusion ${{x.level}}"><h3>${{esc(x.title)}}</h3>${{esc(x.body)}}</div>`).join('');
 let pd=D.protocol_design;protocolDesign.innerHTML=[['Curated families',pd.family_count],['Author gap summaries',pd.gap_summary_count],['明确限制 curated',pd.gap_summaries_explicitly_limiting_curated+'/'+pd.gap_summary_count],['T2 enriched / T3 variant',(pd.role_counts['T2:enriched:learning']||0)+' / '+(pd.role_counts['T3:variant:learning']||0)]].map(x=>`<div class="card"><span class="label">${{x[0]}}</span><b>${{x[1]}}</b></div>`).join('');
 coverage.innerHTML='<div class="head">模型 / 条件</div>'+['E1','E2','E3','E4','E5','E6'].map(x=>`<div class="head">${{x}}</div>`).join('')+['qwen3.7-max','sig-fable'].flatMap(m=>['self_generated','exact_oracle','curated_all','no_skill'].map(c=>{{let cells=D.coverage.filter(x=>x.model===m&&x.condition===c);return `<div>${{m}}<br><span class="small">${{zh[c]}}</span></div>`+cells.map(x=>`<div class="v ${{x.complete?'high':x.observed?'mid':'none'}}">${{x.observed}}/15</div>`).join('')}})).join('');
+let rp=D.runtime_progress;let stageRows=rp.stages.map(x=>{{let counts=Object.entries(x.job_statuses).map(([k,v])=>`${{k}}=${{v}}`).join(', ')||'—';let group=x.group_url?`<a href="${{esc(x.group_url)}}" target="_blank" rel="noreferrer">${{esc(x.group_id)}}</a>`:'—';return `<tr><td><b>${{esc(x.model)}}</b><br><span class="small">${{zh[x.condition]}}</span></td><td>${{esc(x.status)}}</td><td>${{esc(counts)}}</td><td>${{x.complete_cells}}/6 · ${{x.observed_tasks}}/90</td><td>${{x.failed_group_count}}</td><td>${{group}}</td></tr>`}}).join('');let repairRows=rp.repairs.map(x=>{{let job=x.job_url?`<a href="${{esc(x.job_url)}}" target="_blank" rel="noreferrer">${{esc(x.job_id)}}</a>`:'—';return `<tr><td>${{esc(x.model)}} / ${{esc(x.environment_id)}}</td><td>${{esc(x.status)}}</td><td>${{esc(x.export_state)}}</td><td>${{x.attempt_count}}</td><td>${{job}}</td></tr>`}}).join('');runtimeProgress.innerHTML=`<div class="grid cards"><div class="card"><span class="label">科学证据完整单元</span><b>${{rp.complete_cells}}/${{rp.total_cells}}</b></div><div class="card"><span class="label">AP Active Jobs</span><b>${{rp.active_job_count}}</b></div><div class="card"><span class="label">终态待导出</span><b>${{rp.terminal_waiting_export}}</b></div><div class="card"><span class="label">Inventory 更新</span><b style="font-size:15px">${{esc(rp.inventory_updated_at_utc||'—')}}</b></div></div><div class="tablebox"><table><thead><tr><th>模型/条件</th><th>Matrix 状态</th><th>AP jobs</th><th>科学覆盖</th><th>历史失败组</th><th>AP group</th></tr></thead><tbody>${{stageRows}}</tbody></table></div><h3 style="margin-top:16px">Self-generated 缺失 Env 修复</h3><div class="tablebox"><table><thead><tr><th>模型/Env</th><th>Job 状态</th><th>Artifact 导出</th><th>尝试数</th><th>AP job</th></tr></thead><tbody>${{repairRows}}</tbody></table></div>`;
 let eh=D.execution_attempts;executionHealth.innerHTML=`<div class="grid cards"><div class="card"><span class="label">失败 AP 尝试</span><b>${{eh.failed_attempt_count}}</b></div><div class="card"><span class="label">未纳入统计</span><b>${{eh.excluded_attempt_count}}</b></div><div class="card"><span class="label">贡献 T4–T6 的失败尝试</span><b>${{eh.failed_attempts_contributing_t56}}</b></div><div class="card"><span class="label">失败类型</span><b>${{Object.keys(eh.failure_counts).length}}</b></div></div><div>${{Object.entries(eh.failure_counts).map(([k,v])=>`<span class="metric fail">${{esc(k)}}: ${{v}}</span>`).join(' ')}}</div><details><summary>查看失败尝试证据</summary><div class="tablebox"><table><thead><tr><th>Label / Job</th><th>类型</th><th>Stage</th><th>进入 T4–T6</th><th>诊断</th></tr></thead><tbody>${{eh.failures.map(x=>`<tr><td>${{esc(x.label)}}<br><span class="small">${{esc(x.job_id)}}</span></td><td>${{esc(x.failure_kind)}}</td><td>${{esc(x.error_stage||'—')}}</td><td>${{x.contributes_t56_results?'是':'否'}}</td><td>${{esc(x.message||'—')}}</td></tr>`).join('')}}</tbody></table></div></details>`;
 let ri=D.reference_integrity;let riRows=['E1','E2','E3','E4','E5','E6'].map(e=>{{let cells=[4,5,6].map(t=>ri.rows.find(x=>x.environment_id===e&&x.tier===t));return `<tr><td><b>${{e}}</b></td>${{cells.map(x=>`<td>${{x.passed}}/${{x.total}}</td>`).join('')}}</tr>`}}).join('');let riFailures=ri.failures.length?`<details><summary>查看 ${{ri.failures.length}} 个失败标准解</summary><pre>${{esc(JSON.stringify(ri.failures,null,2))}}</pre></details>`:'<p class="small">当前没有已观测的标准解失败。</p>';referenceIntegrity.innerHTML=`<div class="grid cards"><div class="card"><span class="label">覆盖</span><b>${{ri.total}}/90</b></div><div class="card"><span class="label">严格通过</span><b>${{ri.passed}}/${{ri.total||0}}</b></div><div class="card"><span class="label">状态</span><b style="font-size:20px">${{ri.all_reference_solutions_pass?'全部通过':ri.complete?'存在失败':'运行中'}}</b></div></div><div class="tablebox"><table><thead><tr><th>Env</th><th>T4</th><th>T5</th><th>T6</th></tr></thead><tbody>${{riRows}}</tbody></table></div>${{riFailures}}`;
 options(hmModel,['qwen3.7-max','sig-fable']);options(hmCond,['self_generated','exact_oracle','curated_all','no_skill'],zh);options(taskModel,['qwen3.7-max','sig-fable'],null,true);options(taskEnv,['E1','E2','E3','E4','E5','E6'],null,true);
@@ -2425,7 +2588,19 @@ def main() -> int:
     evidence = load_json(args.evidence)
     audit = load_json(args.verifier_audit)
     reference_audit = load_json_optional(args.reference_audit)
-    data = build_payload(evidence, audit, args.raw_root, reference_audit)
+    study_root = args.raw_root.resolve().parent
+    inventory = load_json_optional(study_root / "watcher" / "inventory.json")
+    matrix_state = load_json_optional(
+        study_root / "matrix-watcher" / "state.json"
+    )
+    data = build_payload(
+        evidence,
+        audit,
+        args.raw_root,
+        reference_audit,
+        inventory,
+        matrix_state,
+    )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     data_path = args.output_dir / "t56_report_data.json"
     md_path = args.output_dir / "t56_oracle_study_report_zh.md"
