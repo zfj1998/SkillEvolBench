@@ -441,6 +441,32 @@ CASE_DEFINITIONS = {
             "intake_extractor.py",
         ],
     },
+    "E4-LS4-T6": {
+        "title": "两模型都完整报告五项首轮变化，却因 verifier 自造的两种表面写法被判失败",
+        "kind": "隐藏字面量与任务原始文档表面冲突（强任务缺陷）",
+        "interpretation": (
+            "Qwen self-generated 与 Fable exact-oracle 都修复了按位置比较的问题，生成的报告包含"
+            "v1→v2、v2→v3、Rollbacks、Net v1→v3 四段，首轮明确列出 Eligibility、Work Hours、"
+            "Equipment、Security、Co-Working 五项变化，并正确排除 rolled-back Eligibility 与"
+            "quarterly security briefing。唯一 outcome failure 的 hidden test 不解析结构或变化数，"
+            "而是从五个固定 token 中要求命中四个；其中 `10 am - 4 pm` 与原始 policy_v2 的"
+            "`10 AM – 4 PM` 标点不同，`$150/month` 又与原文 `$150 per month` 不同。两份报告忠实"
+            "复用原文，因而只得 3/5 literal hits；把这两个 source-faithful variant 归一后是 5/5。"
+            "这是确定的 verifier 假阴性，不是模型不会三版本 diff，也不是 oracle skill 不足。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "analyze_policy_history.py",
+            "version_diff.py",
+            "rollback_detector.py",
+            "output/policy_history_report.md",
+        ],
+        "task_source_files": [
+            "environment/policy_v1.md",
+            "environment/policy_v2.md",
+            "environment/policy_v3.md",
+        ],
+    },
     "E5-LS5-T6": {
         "title": "矛盾集合完全正确，但类型、provenance 形态与 grounding 调用仍不完整",
         "kind": "高语义完成度 + 实质与形态混合 gap",
@@ -652,12 +678,15 @@ ENVIRONMENT_PROFILES = {
         "name": "文档抽取、格式迁移与版本比较",
         "capability": "结构化抽取、跨格式保真、上下文填表、多版本 diff 与冲突保留。",
         "provisional_read": (
-            "已审计的 Qwen run 中，T5/T6 outcome 都是 3/5，但两项 T5 失败都是明确 benchmark 合同问题。"
+            "Qwen self 的 T5/T6 raw outcome 都是 3/5；新完成的 Fable exact-oracle 则是 T5 3/5、T6 4/5。"
+            "两项 T5 raw 失败和两模型共同的 E4-LS4-T6 raw 失败都是明确 benchmark 合同问题。"
             "E4-LS1-T5 不是文档语义失败："
             "模型已正确输出两笔 revenue、source 与 conflict，三项 process 也全过，只因题面要求的输出路径"
             "与 verifier 实际父目录合同冲突而被判 0/5 outcome；E4-LS3-T5 则使用题面明确允许的 MISSING，"
-            "隐藏 verifier 却只接受 N/A、字符串 null 或 TODO，甚至拒绝真正 JSON null。T6 的 PDF→DOCX"
-            "数值保真和多轮版本覆盖仍是模型真实 gap。E4 必须先剔除这两项强假阴性，再比较 Fable 与四条件。"
+            "隐藏 verifier 却只接受 N/A、字符串 null 或 TODO，甚至拒绝真正 JSON null；E4-LS4-T6 两模型"
+            "都列全五项首轮变化，却因 hidden token 的标点/单位写法与原始文档不一致而失败。剔除这三项"
+            "假阴性后，Fable exact 的 T5/T6 核心语义为 10/10；Qwen self 为 9/10，剩余 PDF→DOCX"
+            "数值表面保真是真实 gap。Fable self repair 与另外两 control 到齐前，尚不能把跨模型差异当 oracle 因果效应。"
         ),
     },
     "E5": {
@@ -1663,6 +1692,117 @@ def reproduce_e4_ls3_missing_markers(
     }
 
 
+def reproduce_e4_ls4_literal_surface(
+    task_root: Path, observations: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Compare hidden literal hits with source-faithful surface variants."""
+
+    verifier_tokens = [
+        "60 days",
+        "10 am - 4 pm",
+        "$800",
+        "quarterly security briefings",
+        "$150/month",
+    ]
+    semantic_variants = {
+        "60 days": ["60 days"],
+        "10 am - 4 pm": ["10 am - 4 pm", "10 am – 4 pm", "10 am — 4 pm"],
+        "$800": ["$800"],
+        "quarterly security briefings": ["quarterly security briefings"],
+        "$150/month": ["$150/month", "$150 per month"],
+    }
+
+    rows = []
+    for observation in observations:
+        path_raw = observation.get("trajectory_path")
+        if not path_raw:
+            continue
+        path = Path(str(path_raw))
+        try:
+            trajectory = json.loads(
+                path.read_text(encoding="utf-8", errors="replace")
+            )
+        except (OSError, json.JSONDecodeError):
+            continue
+
+        text_candidates: list[str] = []
+
+        def collect(node: Any) -> None:
+            if isinstance(node, dict):
+                content = node.get("content")
+                if isinstance(content, str):
+                    lowered = content.lower()
+                    if (
+                        "policy history analysis" in lowered
+                        and "net v1 -> v3 changes" in lowered
+                    ):
+                        text_candidates.append(content)
+                for child in node.values():
+                    collect(child)
+            elif isinstance(node, list):
+                for child in node:
+                    collect(child)
+
+        collect(trajectory)
+        if not text_candidates:
+            continue
+
+        def candidate_score(value: str) -> tuple[int, int]:
+            lowered = value.lower()
+            signals = {
+                variant
+                for variants in semantic_variants.values()
+                for variant in variants
+                if variant in lowered
+            }
+            return len(signals), len(value)
+
+        report = max(text_candidates, key=candidate_score)
+        lowered = report.lower()
+        exact_hits = [token for token in verifier_tokens if token in lowered]
+        semantic_hits = [
+            label
+            for label, variants in semantic_variants.items()
+            if any(variant in lowered for variant in variants)
+        ]
+        rows.append({
+            "model": observation.get("model"),
+            "condition": observation.get("condition"),
+            "verifier_literal_hits": exact_hits,
+            "verifier_literal_hit_count": len(exact_hits),
+            "source_normalized_semantic_hits": semantic_hits,
+            "source_normalized_semantic_hit_count": len(semantic_hits),
+            "hidden_threshold": 4,
+            "hidden_literal_check_passes": len(exact_hits) >= 4,
+            "source_normalized_check_passes": len(semantic_hits) >= 4,
+            "required_sections_present": all(
+                heading in lowered
+                for heading in (
+                    "v1 -> v2",
+                    "v2 -> v3",
+                    "rollbacks",
+                    "net v1 -> v3 changes",
+                )
+            ),
+            "trajectory_path": str(path.resolve()),
+        })
+
+    policy_v2 = task_root / "environment" / "policy_v2.md"
+    source_text = policy_v2.read_text(encoding="utf-8", errors="replace")
+    return {
+        "method": (
+            "Recover the generated report from trajectory tool output; compare "
+            "the verifier's five literal tokens with semantically identical "
+            "spellings copied from policy_v2.md."
+        ),
+        "verifier_tokens": verifier_tokens,
+        "source_policy_uses_en_dash_core_hours": "10 AM – 4 PM" in source_text,
+        "source_policy_uses_per_month_stipend": "$150 per month" in source_text,
+        "models": rows,
+        "policy_v2_path": str(policy_v2.resolve()),
+    }
+
+
 def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Path) -> list[dict[str, Any]]:
     audit_by_id = {row["task_id"]: row for row in audit.get("tasks", [])}
     result = []
@@ -1802,6 +1942,10 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
         ):
             reproduction = reproduce_e4_ls3_missing_markers(
                 task_root, qwen_self_artifact_path
+            )
+        if task_id == "E4-LS4-T6" and task_root:
+            reproduction = reproduce_e4_ls4_literal_surface(
+                task_root, observations
             )
         if task_id == "E6-LS3-T6" and task_root:
             reproduction = reproduce_e6_ls3_action_identity(
@@ -3668,12 +3812,89 @@ def conclusions(
                 "E3-LS2-T6 的 767 行内容和排序完全正确，仅因题面允许的 count 字段被 record dict 全等"
                 "拒绝；E3-LS3-T6 的 segment totals 数值一致，仅数组顺序未匹配未声明的字母序；"
                 "E4-LS1-T5 的题面输出路径与 verifier 的父目录合同冲突，"
-                "语义正确输出被全部判为 outcome 失败；E6-LS4-T6 的四人工作时段没有共同正长度交集，"
+                "语义正确输出被全部判为 outcome 失败；E4-LS3-T5 的题面明确允许 UNKNOWN、MISSING、"
+                "空字符串或 null，隐藏 verifier 却只接受 N/A、字符串 null 和 TODO，且实际 JSON null"
+                "经 str(None) 后也会被拒绝；"
+                "E4-LS4-T6 中两模型都报告了五项首轮变化，但 hidden test 的 `10 am - 4 pm` 与"
+                "`$150/month` 两个 token 和原始 policy_v2 的 en-dash、`$150 per month` 写法冲突；"
+                "E6-LS3-T6 中两模型都抽取了 8/8 个真实 action，核心"
+                "assignee/deadline/status 字段分别命中 23/24 与 22/24，却因未公开的 action-id 词表"
+                "被判大量 missing，该题同时仍有少量 status/follow-up 真缺口；E6-LS4-T6 的四人工作时段没有共同正长度交集，"
                 "verifier 却要求题面未声明的固定时间和数组顺序。90/90 reference pass 只能证明官方脚本能满足"
                 "官方 verifier，不能排除 reference 利用隐藏合同或任意 tie-break。最终任务质量结论必须把这类题"
                 "从纯模型/skill failure 中单独报告。"
             ),
         })
+    qwen_e4_t5 = [
+        row
+        for row in comparisons
+        if row["model"] == "qwen3.7-max"
+        and row["environment_id"] == "E4"
+        and int(row["tier"]) == 5
+        and row["conditions"]["self_generated"] is not None
+    ]
+    if len(qwen_e4_t5) == 5:
+        raw_passed = sum(
+            row["conditions"]["self_generated"]["outcome"] is True
+            for row in qwen_e4_t5
+        )
+        raw_failed_ids = {
+            str(row["task_id"])
+            for row in qwen_e4_t5
+            if row["conditions"]["self_generated"]["outcome"] is not True
+        }
+        confirmed_contract_artifacts = {"E4-LS1-T5", "E4-LS3-T5"}
+        if raw_failed_ids == confirmed_contract_artifacts:
+            result.append({
+                "level": "warn",
+                "title": "Qwen/E4 T5：原始 3/5，但两个失败均为已复现的契约假阴性",
+                "body": (
+                    f"官方 outcome 原始值仍应报告为 {raw_passed}/5，不能擅自改分；但失败集合恰好只有 "
+                    "E4-LS1-T5 与 E4-LS3-T5。前者已正确抽取两笔 revenue、source 与 conflict，"
+                    "三项 process 全过，只错在题面与隐藏 verifier 的输出目录不一致；后者五个现有字段"
+                    "和三项 process 全过，只因使用题面明确允许的 MISSING 被隐藏白名单拒绝。故在"
+                    "contract-aware 的能力解释中，这 5 个 T5 都显示了任务核心功能完成证据；这是一项"
+                    "诊断性语义结论，不是把官方 3/5 改写成新的 benchmark 分数。若不单列这两题，会把"
+                    "E4 的 T5 skill-evolve/模型能力低估 40 个百分点。"
+                ),
+            })
+    fable_e4_exact = [
+        row
+        for row in comparisons
+        if row["model"] == "sig-fable"
+        and row["environment_id"] == "E4"
+        and int(row["tier"]) in (5, 6)
+        and row["conditions"]["exact_oracle"] is not None
+    ]
+    if len(fable_e4_exact) == 10:
+        raw_passed = sum(
+            row["conditions"]["exact_oracle"]["outcome"] is True
+            for row in fable_e4_exact
+        )
+        raw_failed_ids = {
+            str(row["task_id"])
+            for row in fable_e4_exact
+            if row["conditions"]["exact_oracle"]["outcome"] is not True
+        }
+        known_contract_artifacts = {
+            "E4-LS1-T5",
+            "E4-LS3-T5",
+            "E4-LS4-T6",
+        }
+        if raw_failed_ids == known_contract_artifacts:
+            result.append({
+                "level": "good",
+                "title": "Fable/E4 exact oracle：raw 7/10，三个失败全是可复现 verifier 假阴性",
+                "body": (
+                    f"Fable exact-oracle 的 10 个 T5/T6 官方 outcome 为 {raw_passed}/10；失败集合精确为 "
+                    "E4-LS1-T5、E4-LS3-T5、E4-LS4-T6。前两题分别是输出目录错位和 missing-marker"
+                    "白名单矛盾；后一题实际输出五项 v1→v2 变化、六项 v2→v3 变化、正确 rollback 与"
+                    "net sections，独立复算表明 hidden literal 只命中 3/5，但按任务原始文档表面归一后"
+                    "命中 5/5。因此 exact 条件下 10/10 题都有核心语义完成证据。这个结果直接反驳"
+                    "“E4 T5/T6 因太难而连 oracle 条件也普遍做不出”；同时，Fable self、no-skill 和"
+                    "curated-all 尚未形成同模型配对，所以它还不能证明成功是 oracle skill 造成的。"
+                ),
+            })
     summary = audit.get("summary", {})
     result.append({
         "level": "warn",

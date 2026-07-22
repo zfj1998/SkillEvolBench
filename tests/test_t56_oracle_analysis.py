@@ -1486,6 +1486,55 @@ def test_expanded_concept_screen_uses_instruction_semantics() -> None:
         assert concept in REPORT.detected_concepts(text)
 
 
+def test_e4_ls4_reproduction_distinguishes_literals_from_source_semantics(
+    tmp_path: Path,
+) -> None:
+    task_root = tmp_path / "task"
+    environment = task_root / "environment"
+    environment.mkdir(parents=True)
+    (environment / "policy_v2.md").write_text(
+        "Core hours: 10 AM – 4 PM. Co-working stipend: $150 per month.\n",
+        encoding="utf-8",
+    )
+    trajectory = tmp_path / "trajectory.json"
+    report = """# Policy History Analysis
+## v1 -> v2
+- eligibility changed to 60 days
+- work hours changed to 10 AM – 4 PM
+- equipment changed to $800
+- added quarterly security briefings
+- co-working stipend is $150 per month
+## v2 -> v3
+- effective date changed
+## Rollbacks
+- eligibility rolled back
+## Net v1 -> v3 changes
+- co-working stipend remains
+"""
+    trajectory.write_text(
+        json.dumps({"steps": [{"observation": {"content": report}}]}),
+        encoding="utf-8",
+    )
+
+    result = REPORT.reproduce_e4_ls4_literal_surface(
+        task_root,
+        [{
+            "model": "sig-fable",
+            "condition": "exact_oracle",
+            "trajectory_path": str(trajectory),
+        }],
+    )
+
+    assert result["source_policy_uses_en_dash_core_hours"] is True
+    assert result["source_policy_uses_per_month_stipend"] is True
+    row = result["models"][0]
+    assert row["verifier_literal_hit_count"] == 3
+    assert row["hidden_literal_check_passes"] is False
+    assert row["source_normalized_semantic_hit_count"] == 5
+    assert row["source_normalized_check_passes"] is True
+    assert row["required_sections_present"] is True
+
+
 def test_pearson_correlation_handles_signal_and_constant() -> None:
     assert REPORT.pearson_correlation([0, 1, 2], [0, 1, 2]) == 1.0
     assert REPORT.pearson_correlation([1, 1, 1], [0, 1, 2]) is None
