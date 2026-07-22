@@ -1027,6 +1027,7 @@ def conclusions(
     comparisons: list[dict[str, Any]],
     audit: dict[str, Any],
     learning: dict[str, Any],
+    derivability: dict[str, Any],
     oracle_scope: dict[str, Any],
     reference_integrity: dict[str, Any],
 ) -> list[dict[str, str]]:
@@ -1117,6 +1118,26 @@ def conclusions(
             "这提示部分题对 skill 的增量需求可能偏弱；最终以 no-skill 与 skill 条件的配对差判定。"
         ),
     })
+    derivability_parts = []
+    for item in derivability.get("summaries", []):
+        counts = item.get("category_counts", {})
+        derivability_parts.append(
+            f"{item.get('model')}: oracle-only unseen="
+            f"{counts.get('oracle_adds_unseen_concept', 0)}, "
+            f"missing-everywhere="
+            f"{counts.get('missing_from_both_learning_and_oracle', 0)}"
+        )
+    result.append({
+        "level": "info",
+        "title": "当前未观察到 Oracle 独有的未见高级概念",
+        "body": (
+            "在受控词表与当前已完整导出的 T1–T3 family 中，"
+            + "; ".join(derivability_parts)
+            + "。这不支持“oracle 文本偷偷写入了标注者额外解题知识”的假设；"
+            "更明显的问题是一些 T5/T6 概念在 T1–T3、generated skill 和 oracle skill 中都不存在。"
+            "这是词表筛查而非完整语义证明，且仍需 curated-all 实验测选择先验。"
+        ),
+    })
     return result
 
 
@@ -1160,6 +1181,7 @@ def build_payload(
             comparisons,
             audit,
             learning,
+            derivability,
             oracle_scope,
             reference_integrity,
         ),
