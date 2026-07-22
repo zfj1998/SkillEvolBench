@@ -3752,6 +3752,48 @@ def conclusions(
                 f"两类 skill 等质，也不证明 skill 无用。{control_note}"
             ),
         })
+    e1_matched = {
+        str(row["model"]): row
+        for row in matched_skill_content
+        if row["environment_id"] == "E1"
+        and row["complete_t5_t6_slice"]
+    }
+    qwen_e1 = e1_matched.get("qwen3.7-max")
+    fable_e1 = e1_matched.get("sig-fable")
+    if (
+        qwen_e1
+        and fable_e1
+        and qwen_e1["outcome_vectors_identical"]
+        and qwen_e1["strict_vectors_identical"]
+        and fable_e1["outcome_vectors_identical"]
+        and fable_e1["strict_vectors_identical"]
+    ):
+        def decimal_text(value: Any, digits: int) -> str:
+            return (
+                f"{float(value):.{digits}f}"
+                if isinstance(value, (int, float))
+                else "未知"
+            )
+
+        result.append({
+            "level": "warn",
+            "title": "E1 跨模型复现：self 与 exact 的 20 组同题结果逐项相同",
+            "body": (
+                "Qwen 与 Fable 在 E1 各有 10 个 T5/T6 self/exact 配对；两个模型的两种条件都"
+                "逐题得到 outcome 8/10、strict 5/10，而非仅平均分相同。Exact 执行中共 "
+                f"{qwen_e1['exact_full_skill_use'] + fable_e1['exact_full_skill_use']}/"
+                f"{qwen_e1['exact_skill_use_audited'] + fable_e1['exact_skill_use_audited']} 题读取了"
+                "全部指定 skill。与此同时，Qwen/Fable generated skill 相对 curated 的总长度为 "
+                f"{decimal_text(qwen_e1['generated_to_curated_char_ratio'], 2)}×/"
+                f"{decimal_text(fable_e1['generated_to_curated_char_ratio'], 2)}×，中位 best Jaccard 仅 "
+                f"{decimal_text(qwen_e1['median_best_word_jaccard'], 3)}/"
+                f"{decimal_text(fable_e1['median_best_word_jaccard'], 3)}。共同的两个 outcome failure 仍是 "
+                "E1-LS2-T6 的真实数据库 session 迁移执行 gap，以及 E1-LS4-T5 已核实的隐藏"
+                "monkeypatch/import-binding 缺陷。故当前最可靠的说法是：在 E1 上把 generated"
+                "换成 exact curated 并未改变行为，失败不支持归因为 generated skill 文本质量不足；"
+                "但 no-skill 未到齐，尚不能区分“两类 skill 都有效”与“任务主要靠题面即可完成”。"
+            ),
+        })
     result.append({
         "level": "warn",
         "title": "Exact Oracle 实际是刻意留缺口的 Curated 子集",
