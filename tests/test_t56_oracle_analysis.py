@@ -930,6 +930,65 @@ def test_e3_ls5_reproduction_exposes_generator_verifier_conflict() -> None:
     assert result["malformed_qualified_rows_under_strict_parser"] == 0
 
 
+def test_e6_ls3_reproduction_aligns_semantic_actions_by_source(
+    tmp_path: Path,
+) -> None:
+    task_root = ROOT / "benchmark" / "tasks" / "full-thread-extract-track-followup"
+    artifact_root = tmp_path / "task"
+    output_dir = artifact_root / "output"
+    output_dir.mkdir(parents=True)
+    actions = []
+    source_specs = [
+        ("act_webhook_runbook", "ft01", "alice", "2026-04-13", "overdue"),
+        ("act_pricing_faq", "ft02", "bob", "2026-04-15", "overdue"),
+        ("act_emea_dns", "ft03", "charlie", None, "delayed"),
+        ("act_customer_comms", "ft04", "diana", "2026-04-24", "completed"),
+        ("act_regression", "ft05", "eli", "2026-04-27", "open"),
+        ("act_docs_update", "ft06", "team", "2026-04-30", "open"),
+        ("act_migration_mapping", "ft07", "alice", None, "no_update"),
+        ("act_partner_qa", "ft08", "bob", "2026-04-24", "open"),
+    ]
+    for action_id, source_id, assignee, deadline, status in source_specs:
+        actions.append({
+            "id": action_id,
+            "source_message_id": source_id,
+            "description": action_id,
+            "assignee": assignee,
+            "deadline": deadline,
+            "status": status,
+        })
+    (output_dir / "actions.json").write_text(
+        json.dumps({"actions": actions}), encoding="utf-8"
+    )
+
+    result = REPORT.reproduce_e6_ls3_action_identity(
+        task_root,
+        [{
+            "model": "qwen3.7-max",
+            "condition": "self_generated",
+            "artifact_task_path": str(artifact_root),
+        }],
+    )
+
+    model = result["models"][0]
+    assert model["source_aligned_actions_found"] == 8
+    assert model["expected_actions"] == 8
+    assert model["exact_hidden_id_matches"] == 6
+    assert model["core_fields_matched"] == 23
+    assert model["core_fields_checked"] == 24
+    assert {row["verifier_expected_id"] for row in model["id_mismatches"]} == {
+        "act_runbook",
+        "act_docs",
+    }
+    assert model["core_field_mismatches"] == [{
+        "source_message_id": "ft06",
+        "field": "status",
+        "expected": "no_update",
+        "actual": "open",
+        "matched": False,
+    }]
+
+
 def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path) -> None:
     tasks_root = tmp_path / "benchmark/tasks"
     skill_root = tmp_path / "benchmark/skills/retry"

@@ -438,6 +438,33 @@ CASE_DEFINITIONS = {
             "scope_normalizer.py",
         ],
     },
+    "E6-LS3-T6": {
+        "title": "两模型都抽出 8/8 actions，却被未公开的 action ID 名称判成大量缺失",
+        "kind": "隐藏 semantic-ID 合同与部分真实 status/follow-up gap（强任务缺陷）",
+        "interpretation": (
+            "Qwen 与 Fable 都从 ft01–ft08 正确抽出全部 8 个真实 action，source_message_id、"
+            "assignee、deadline 和大多数 status 也与 ground truth 对齐。Qwen 的核心字段命中"
+            "23/24，Fable 命中 22/24；两者都把 ft01 命名为 act_webhook_runbook，而 verifier"
+            "只接受未在题面公开的 act_runbook，于是 test_expected_actions_detected 和"
+            "test_assignees_deadlines_and_descriptions 报 missing。ft06 同样被合理命名为"
+            "act_docs_update/act_update_docs，而隐藏答案只认 act_docs，连 implicit=true 也因按"
+            "隐藏 ID lookup 被忽略。题面只要求 stable action id，没有规定命名词表；verifier"
+            "应以 source_message_id 或语义字段对齐。模型仍有真实缺口：docs/migration 的"
+            "open/no_update 区分不全对，并生成了非 overdue follow-up。故本题不是完全假阴性，"
+            "但当前 2/7 outcome pass 严重低估实际 extraction 能力，不能直接用于判断 skill"
+            "evolution 失败。"
+        ),
+        "files": [
+            "action_tracker.py",
+            "extractor_policy.py",
+            "followup_drafter.py",
+            "output/actions.json",
+        ],
+        "task_source_files": [
+            "tests/ground_truth.json",
+            "environment/slack/channel_export.json",
+        ],
+    },
     "E6-LS4-T6": {
         "title": "题目没有唯一最优日程，verifier 却要求任意固定时间与数组顺序",
         "kind": "欠规定的唯一解与不可满足硬约束（强任务缺陷）",
@@ -1451,6 +1478,104 @@ def reproduce_e3_ls3_category_order(
     }
 
 
+def reproduce_e6_ls3_action_identity(
+    task_root: Path, observations: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Align actions by source message instead of the verifier's hidden IDs."""
+
+    ground_truth_path = task_root / "tests" / "ground_truth.json"
+    messages_path = task_root / "environment" / "slack" / "channel_export.json"
+    ground_truth = json.loads(ground_truth_path.read_text(encoding="utf-8"))
+    messages = json.loads(messages_path.read_text(encoding="utf-8"))["messages"]
+
+    expected_source_by_id: dict[str, str] = {}
+    for action_id, spec in ground_truth.get("expected_fields", {}).items():
+        terms = [str(term).lower() for term in spec.get("description_terms", [])]
+        candidates = [
+            str(message["id"])
+            for message in messages
+            if all(term in str(message.get("text") or "").lower() for term in terms)
+        ]
+        if candidates:
+            expected_source_by_id[str(action_id)] = candidates[0]
+
+    rows = []
+    for observation in observations:
+        artifact_raw = observation.get("artifact_task_path")
+        if not artifact_raw:
+            continue
+        output_path = Path(str(artifact_raw)) / "output" / "actions.json"
+        if not output_path.is_file():
+            continue
+        output = json.loads(output_path.read_text(encoding="utf-8"))
+        actions = [
+            action for action in output.get("actions", [])
+            if isinstance(action, dict)
+        ]
+        by_source = {
+            str(action.get("source_message_id")): action
+            for action in actions
+            if action.get("source_message_id")
+        }
+        field_checks = []
+        id_mismatches = []
+        for expected_id, source_id in expected_source_by_id.items():
+            actual = by_source.get(source_id)
+            if actual is None:
+                continue
+            if str(actual.get("id") or "") != expected_id:
+                id_mismatches.append({
+                    "source_message_id": source_id,
+                    "verifier_expected_id": expected_id,
+                    "model_id": actual.get("id"),
+                })
+            spec = ground_truth["expected_fields"][expected_id]
+            for field in ("assignee", "deadline", "status"):
+                if field in spec:
+                    field_checks.append({
+                        "source_message_id": source_id,
+                        "field": field,
+                        "expected": spec[field],
+                        "actual": actual.get(field),
+                        "matched": actual.get(field) == spec[field],
+                    })
+        rows.append({
+            "model": observation.get("model"),
+            "condition": observation.get("condition"),
+            "expected_actions": len(expected_source_by_id),
+            "source_aligned_actions_found": sum(
+                source_id in by_source
+                for source_id in expected_source_by_id.values()
+            ),
+            "exact_hidden_id_matches": sum(
+                by_source.get(source_id, {}).get("id") == expected_id
+                for expected_id, source_id in expected_source_by_id.items()
+            ),
+            "core_fields_matched": sum(
+                check["matched"] for check in field_checks
+            ),
+            "core_fields_checked": len(field_checks),
+            "id_mismatches": id_mismatches,
+            "core_field_mismatches": [
+                check for check in field_checks if not check["matched"]
+            ],
+            "artifact_output_path": str(output_path.resolve()),
+        })
+    return {
+        "method": (
+            "Derive each expected action's source message from its description "
+            "terms, then align model outputs by the public source_message_id "
+            "instead of the verifier-only action ID vocabulary."
+        ),
+        "instruction_only_requires_stable_action_id": True,
+        "verifier_indexes_actions_by_exact_hidden_id": True,
+        "expected_source_by_hidden_id": expected_source_by_id,
+        "models": rows,
+        "ground_truth_path": str(ground_truth_path.resolve()),
+        "messages_path": str(messages_path.resolve()),
+    }
+
+
 def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Path) -> list[dict[str, Any]]:
     audit_by_id = {row["task_id"]: row for row in audit.get("tasks", [])}
     result = []
@@ -1572,6 +1697,10 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
         ):
             reproduction = reproduce_e3_ls3_category_order(
                 task_root, self_artifact_path
+            )
+        if task_id == "E6-LS3-T6" and task_root:
+            reproduction = reproduce_e6_ls3_action_identity(
+                task_root, observations
             )
         result.append({
             "task_id": task_id,
