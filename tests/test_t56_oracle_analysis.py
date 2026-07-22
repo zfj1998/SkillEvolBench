@@ -358,3 +358,59 @@ def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path)
         "exponential backoff",
         "jitter",
     ]
+
+
+def test_derivability_analysis_keeps_all_three_sources_distinct() -> None:
+    concepts = [
+        "visible-captured",
+        "visible-oracle-only",
+        "visible-missing-both",
+        "unseen-both-skills",
+        "unseen-oracle-only",
+        "unseen-generated-only",
+        "missing-everywhere",
+    ]
+    learning = {
+        "families": [{
+            "model": "qwen3.7-max",
+            "family_id": "E1-LS1",
+            "learning_concepts": concepts[:3],
+            "generated_concepts": [
+                "visible-captured",
+                "unseen-both-skills",
+                "unseen-generated-only",
+            ],
+            "curated_concepts": [
+                "visible-oracle-only",
+                "unseen-both-skills",
+                "unseen-oracle-only",
+            ],
+        }],
+    }
+    oracle_scope = {
+        "rows": [{
+            "task_id": "E1-LS1-T5",
+            "environment_id": "E1",
+            "tier": 5,
+            "task_concepts": concepts,
+        }],
+    }
+
+    result = REPORT.derivability_analysis(learning, oracle_scope)
+
+    assert {
+        row["concept"]: row["category"] for row in result["records"]
+    } == {
+        "visible-captured": "captured_from_visible_evidence",
+        "visible-oracle-only": "oracle_captures_visible_generated_misses",
+        "visible-missing-both": "visible_missing_from_both_skills",
+        "unseen-both-skills": "both_skills_add_unseen_concept",
+        "unseen-oracle-only": "oracle_adds_unseen_concept",
+        "unseen-generated-only": "model_adds_beyond_visible_evidence",
+        "missing-everywhere": "missing_from_both_learning_and_oracle",
+    }
+    qwen = next(
+        row for row in result["summaries"] if row["model"] == "qwen3.7-max"
+    )
+    assert qwen["concept_instances"] == 7
+    assert set(qwen["category_counts"].values()) == {1}
