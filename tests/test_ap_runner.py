@@ -44,6 +44,20 @@ def _family_config(tmp_path: Path) -> RunConfig:
     )
 
 
+def _t4_t6_config(tmp_path: Path) -> RunConfig:
+    return RunConfig(
+        run_id="ap-t4-t6-diagnostic-test",
+        baseline=load_baseline("curated_static"),
+        strategy=StrategyConfig.from_yaml(
+            REPO_ROOT / "configs" / "strategies" / "chain.yaml"
+        ),
+        environment_id="E1",
+        evaluation_only_t4_t6=True,
+        oracle_skill_view=True,
+        workspace_root=tmp_path,
+    )
+
+
 def _report(
     *,
     evaluation_sr: float = 1.0,
@@ -158,6 +172,31 @@ def test_complete_family_smoke_is_explicitly_noncanonical_and_unscoreable(
     assert metrics["repaired_to_pass_count"] == 1
     assert metrics["same_task_repair_success_rate"] == 0.5
     assert "single-family smoke" in metrics["message"]
+
+
+def test_complete_t4_t6_diagnostic_is_noncanonical_and_unscoreable(
+    tmp_path: Path,
+) -> None:
+    metrics = run_episode._success_metrics(
+        _t4_t6_config(tmp_path),
+        _report(
+            evaluation_sr=0.8,
+            n_primary_trials=15,
+            n_replay_trials=0,
+        ),
+    )
+
+    assert metrics["execution_scope"] == "t4_t6_diagnostic"
+    assert metrics["evaluation_only_t4_t6"] is True
+    assert metrics["oracle_skill_view"] is True
+    assert metrics["canonical"] is False
+    assert metrics["scoreable"] is False
+    assert metrics["task_score"] == 0.0
+    assert metrics["evaluation_sr"] == 0.8
+    assert metrics["expected_primary_trials"] == 15
+    assert metrics["n_primary_trials"] == 15
+    assert metrics["status"] == "completed_noncanonical"
+    assert "matched T4-T6 diagnostic" in metrics["message"]
 
 
 @pytest.mark.parametrize(
@@ -379,6 +418,30 @@ def test_build_config_selects_explicit_t1_t6_family_smoke(
     assert config.environment_id == "E1"
     assert config.family_smoke_id == "E1-LS1"
     assert config.max_tasks is None
+    assert config.baseline.within_env_replay is False
+    assert config.baseline.replay_eval is False
+
+
+def test_build_config_selects_curated_t4_t6_oracle_diagnostic(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("INSTANCE_ID", "E4")
+    monkeypatch.setenv("BASELINE_NAME", "curated_static")
+    monkeypatch.setenv("MODEL", "served-model")
+    monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1")
+    monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("EVALUATION_ONLY_T4_T6", "true")
+    monkeypatch.setenv("ORACLE_SKILL_VIEW", "true")
+    monkeypatch.setenv("WITHIN_ENV_REPLAY", "false")
+    monkeypatch.setenv("REPLAY_EVAL", "false")
+
+    config = run_episode._build_config(tmp_path)
+
+    assert config.environment_id == "E4"
+    assert config.evaluation_only_t4_t6 is True
+    assert config.oracle_skill_view is True
+    assert config.baseline.name == "curated_static"
     assert config.baseline.within_env_replay is False
     assert config.baseline.replay_eval is False
 

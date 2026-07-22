@@ -147,15 +147,20 @@ class LifelongRunner:
                 "benchmark_hash": benchmark_hash,
                 "n_tasks": len(ordered_tasks),
                 "execution_scope": (
-                    "family_smoke"
-                    if self.config.family_smoke_id is not None
+                    "t4_t6_diagnostic"
+                    if self.config.evaluation_only_t4_t6
                     else (
-                        "environment"
-                        if self.config.environment_id is not None
-                        else "full"
+                        "family_smoke"
+                        if self.config.family_smoke_id is not None
+                        else (
+                            "environment"
+                            if self.config.environment_id is not None
+                            else "full"
+                        )
                     )
                 ),
                 "family_smoke_id": self.config.family_smoke_id,
+                "oracle_skill_view": self.config.oracle_skill_view,
             },
         )
 
@@ -257,6 +262,22 @@ class LifelongRunner:
             environment_id=self.config.environment_id,
             family_smoke_id=self.config.family_smoke_id,
         )
+        if self.config.evaluation_only_t4_t6:
+            evaluation_tasks = [
+                record
+                for record in ordered_tasks
+                if not record.is_replay and record.spec.phase.value == "evaluation"
+            ]
+            if len(evaluation_tasks) != 15:
+                raise AssertionError(
+                    "T4-T6 diagnostic must contain exactly 15 primary tasks; "
+                    f"got {len(evaluation_tasks)}"
+                )
+            if {record.spec.task_index for record in evaluation_tasks} != {4, 5, 6}:
+                raise AssertionError("T4-T6 diagnostic contains an unexpected tier")
+            if len({record.spec.family_id for record in evaluation_tasks}) != 5:
+                raise AssertionError("T4-T6 diagnostic must contain five families")
+            return evaluation_tasks
         if self.config.family_smoke_id is not None:
             assert_family_smoke_invariants(
                 ordered_tasks,

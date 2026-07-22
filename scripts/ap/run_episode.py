@@ -359,6 +359,8 @@ def _build_config(output_dir: Path) -> RunConfig:
         order_seed=os.environ.get("ORDER_SEED", "A"),
         environment_id=environment_id,
         family_smoke_id=family_smoke_id,
+        evaluation_only_t4_t6=_env_bool("EVALUATION_ONLY_T4_T6", False),
+        oracle_skill_view=_env_bool("ORACLE_SKILL_VIEW", False),
         workspace_root=workspace_root,
         # Host-side calls are routed by SEVB_HOST_LITELLM_* above. The Harbor
         # agent receives the endpoint through its agent-specific config/env.
@@ -382,7 +384,8 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
     revision_safety = getattr(report, "revision_safety", {})
     reflection_transfer = getattr(report, "reflection_transfer", {}) or {}
     family_smoke = config.family_smoke_id is not None
-    expected_primary = 6 if family_smoke else 30
+    t4_t6_diagnostic = config.evaluation_only_t4_t6
+    expected_primary = 15 if t4_t6_diagnostic else (6 if family_smoke else 30)
     expected_replays = 0
     if not family_smoke and config.baseline.within_env_replay:
         expected_replays = 30 if config.baseline.replay_eval else 15
@@ -404,7 +407,9 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
         # A family smoke has one family x T1-T3; a canonical environment has
         # five. Both require a terminal same-session result for every learning
         # primary trial before the execution unit is considered complete.
-        expected_reflections = 3 if family_smoke else 15
+        expected_reflections = (
+            0 if t4_t6_diagnostic else (3 if family_smoke else 15)
+        )
         unit_complete = (
             unit_complete and reflection.get("n_terminal") == expected_reflections
         )
@@ -415,7 +420,9 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
             reflection.get("n_all_attempts_same_session_verified")
             == reflection.get("n_terminal")
         )
-    canonical_complete = bool(unit_complete and not family_smoke)
+    canonical_complete = bool(
+        unit_complete and not family_smoke and not t4_t6_diagnostic
+    )
     evaluation_sr = float(task_success.get("evaluation_sr", 0.0))
     metrics: dict[str, Any] = {
         "task_score": evaluation_sr if canonical_complete else 0.0,
@@ -426,14 +433,28 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
             else ("completed_noncanonical" if unit_complete else "partial")
         ),
         "scoreable": canonical_complete,
-        "canonical": not family_smoke and config.max_tasks is None,
+        "canonical": (
+            not family_smoke
+            and not t4_t6_diagnostic
+            and config.max_tasks is None
+        ),
         "execution_scope": (
-            "family_smoke"
-            if family_smoke
-            else ("truncated_smoke" if config.max_tasks is not None else "environment")
+            "t4_t6_diagnostic"
+            if t4_t6_diagnostic
+            else (
+                "family_smoke"
+                if family_smoke
+                else (
+                    "truncated_smoke"
+                    if config.max_tasks is not None
+                    else "environment"
+                )
+            )
         ),
         "environment_id": config.environment_id,
         "family_smoke_id": config.family_smoke_id,
+        "evaluation_only_t4_t6": t4_t6_diagnostic,
+        "oracle_skill_view": config.oracle_skill_view,
         "run_id": config.run_id,
         "baseline_name": config.baseline.name,
         "evaluation_sr": evaluation_sr,
@@ -522,7 +543,12 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
             "success_regression_rate"
         ),
     }
-    if family_smoke and unit_complete:
+    if t4_t6_diagnostic and unit_complete:
+        metrics["message"] = (
+            "Complete matched T4-T6 diagnostic; intentionally non-canonical "
+            "and unscoreable as a benchmark result."
+        )
+    elif family_smoke and unit_complete:
         metrics["message"] = (
             "Complete T1-T6 single-family smoke; intentionally non-canonical "
             "and unscoreable as a benchmark result."
@@ -550,17 +576,25 @@ def main() -> int:
                 "run_id": config.run_id,
                 "environment_id": config.environment_id,
                 "family_smoke_id": config.family_smoke_id,
+                "evaluation_only_t4_t6": config.evaluation_only_t4_t6,
+                "oracle_skill_view": config.oracle_skill_view,
                 "execution_scope": (
-                    "family_smoke"
-                    if config.family_smoke_id is not None
+                    "t4_t6_diagnostic"
+                    if config.evaluation_only_t4_t6
                     else (
-                        "truncated_smoke"
-                        if config.max_tasks is not None
-                        else "environment"
+                        "family_smoke"
+                        if config.family_smoke_id is not None
+                        else (
+                            "truncated_smoke"
+                            if config.max_tasks is not None
+                            else "environment"
+                        )
                     )
                 ),
                 "canonical": (
-                    config.family_smoke_id is None and config.max_tasks is None
+                    not config.evaluation_only_t4_t6
+                    and config.family_smoke_id is None
+                    and config.max_tasks is None
                 ),
                 "baseline_name": config.baseline.name,
                 "strategy_name": config.strategy.name,
@@ -593,6 +627,8 @@ def main() -> int:
         error_exception_type = getattr(actionable, "exception_type", None)
         failed_family_smoke_id = os.environ.get("SMOKE_FAMILY_ID") or None
         failed_max_tasks = os.environ.get("SMOKE_MAX_TASKS") or None
+        failed_t4_t6_diagnostic = _env_bool("EVALUATION_ONLY_T4_T6", False)
+        failed_oracle_skill_view = _env_bool("ORACLE_SKILL_VIEW", False)
         _write_json(
             metrics_path,
             {
@@ -600,15 +636,33 @@ def main() -> int:
                 "passed": False,
                 "status": "failed",
                 "scoreable": False,
-                "canonical": not failed_family_smoke_id and not failed_max_tasks,
+                "canonical": (
+                    not failed_t4_t6_diagnostic
+                    and not failed_family_smoke_id
+                    and not failed_max_tasks
+                ),
                 "execution_scope": (
-                    "family_smoke"
-                    if failed_family_smoke_id
-                    else ("truncated_smoke" if failed_max_tasks else "environment")
+                    "t4_t6_diagnostic"
+                    if failed_t4_t6_diagnostic
+                    else (
+                        "family_smoke"
+                        if failed_family_smoke_id
+                        else (
+                            "truncated_smoke"
+                            if failed_max_tasks
+                            else "environment"
+                        )
+                    )
                 ),
                 "environment_id": os.environ.get("INSTANCE_ID"),
                 "family_smoke_id": failed_family_smoke_id,
-                "expected_primary_trials": 6 if failed_family_smoke_id else 30,
+                "evaluation_only_t4_t6": failed_t4_t6_diagnostic,
+                "oracle_skill_view": failed_oracle_skill_view,
+                "expected_primary_trials": (
+                    15
+                    if failed_t4_t6_diagnostic
+                    else (6 if failed_family_smoke_id else 30)
+                ),
                 "n_primary_trials": 0,
                 "n_verifier_backed_trials": 0,
                 "error_type": type(actionable).__name__,

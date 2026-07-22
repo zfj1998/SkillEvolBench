@@ -114,6 +114,32 @@ def test_legacy_harbor_mounts_json_is_still_supported(
     _assert_complete_mount_set(environment, base_mounts)
 
 
+def test_oracle_diagnostic_mounts_task_specific_skill_view(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class CurrentDockerEnvironment:
+        def __init__(self, *, mounts: list[dict] | None = None, **_kwargs: Any):
+            self.forwarded_mounts = list(mounts or [])
+
+    environment_cls = _load_environment_class(monkeypatch, CurrentDockerEnvironment)
+    environment = environment_cls(
+        **_common_args(tmp_path),
+        mounts=[],
+        oracle_skill_view=True,
+    )
+
+    skill_mounts = [
+        mount
+        for mount in environment.forwarded_mounts
+        if mount["target"] != "/context/injection.json"
+    ]
+    expected = tmp_path / "oracle-skill-views" / "E1-LS1-T1"
+    assert expected.is_dir()
+    assert {mount["source"] for mount in skill_mounts} == {str(expected)}
+    assert all(mount["read_only"] is True for mount in skill_mounts)
+
+
 def test_main_service_lifecycle_queries_are_checked_and_state_specific(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

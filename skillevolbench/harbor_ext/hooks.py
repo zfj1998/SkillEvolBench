@@ -143,6 +143,9 @@ class SkillEvolBenchHooks:
         # freeze, BEFORE the first eval trial's container is constructed).
         # See _on_trial_ended_sync's freeze trigger.
         self._learning_completed_per_env: dict[str, int] = {}
+        # Evaluation-only curated diagnostics skip T1, so all five gold
+        # family skills are seeded together before the first T4 starts.
+        self._oracle_seeded_envs: set[str] = set()
         # Same-session candidates are generated before Harbor stops the task
         # environment, then consumed by the ordinary END hook. Keying mirrors
         # _pre_state_cache so shadow/replay names cannot alias a primary trial.
@@ -205,6 +208,16 @@ class SkillEvolBenchHooks:
         # below -- they access ``runtime.library`` and need the right
         # env's LibraryStore.
         self.runtime.switch_env(task.environment_id)
+
+        # The matched T4-T6 oracle diagnostic deliberately has no learning
+        # trials. Seed the complete curated environment library once before
+        # freezing it; the per-trial oracle view below will expose only the
+        # annotated relevant subset to the task agent.
+        if (
+            self.runtime.run_config.evaluation_only_t4_t6
+            and self.runtime.baseline.allow_curated_inject
+        ):
+            self._seed_curated_environment(task.environment_id, task.task_id)
 
         # ---- 2. Path-B curated injection (on first arrival of family) ----
         # SKIPPED for replays: curated v0 was already injected during the
@@ -276,6 +289,9 @@ class SkillEvolBenchHooks:
                 task=task,
                 max_tokens=self.runtime.baseline.history_context_max_tokens,
             )
+
+        if self.runtime.run_config.oracle_skill_view:
+            self._stage_oracle_skill_view(task, runtime_basename)
 
         # ---- 7. Build runtime task copy (overwrites instruction.md) ----
         # Pass runtime_basename so replay/shadow trials write to their own
@@ -2585,6 +2601,141 @@ class SkillEvolBenchHooks:
         self.runtime.event_store.record(
             "curated_seeded",
             {"family_id": task.family_id, "task_id": task.task_id},
+        )
+
+    def _seed_curated_environment(self, env_id: str, triggered_by_task: str) -> None:
+        """Seed all five immutable curated skills for an eval-only control."""
+        if env_id in self._oracle_seeded_envs:
+            return
+        families = self.task_registry.families_in_env(env_id)
+        if len(families) != 5:
+            raise RuntimeError(
+                f"oracle diagnostic expected five families in {env_id}; "
+                f"got {len(families)}"
+            )
+        for family in families:
+            if self.runtime.library.has_curated_for(family.meta.family_id):
+                continue
+            curated_path = family.folder / family.meta.curated_skill_path
+            if not curated_path.is_file():
+                raise FileNotFoundError(
+                    f"oracle diagnostic is missing curated skill {curated_path}"
+                )
+            self.runtime.library.inject_curated(
+                skill_md_path=curated_path,
+                family_id=family.meta.family_id,
+                latent_skill_id=family.meta.latent_skill_id,
+                created_from_task=triggered_by_task,
+            )
+            self.runtime.event_store.record(
+                "curated_seeded",
+                {
+                    "family_id": family.meta.family_id,
+                    "task_id": triggered_by_task,
+                    "diagnostic_preseed": True,
+                },
+            )
+        self._oracle_seeded_envs.add(env_id)
+        self.runtime.event_store.record(
+            "oracle_environment_seeded",
+            {
+                "environment_id": env_id,
+                "task_id": triggered_by_task,
+                "n_curated_skills": len(families),
+                "library_hash": self.runtime.library.compute_hash(),
+            },
+        )
+
+    def _stage_oracle_skill_view(self, task: Any, runtime_basename: str) -> None:
+        """Expose exactly the annotated gold skill subset for one eval task."""
+        from skillevolbench.stores.library_store import skill_id_to_slug
+
+        skill_ids = (
+            list(task.required_skills)
+            if task.role == TaskRole.COMPOSITION.value
+            else [task.primary_skill]
+        )
+        if not skill_ids:
+            raise RuntimeError(
+                f"oracle diagnostic task {task.task_id} has no annotated skills"
+            )
+        if len(skill_ids) != len(set(skill_ids)):
+            raise RuntimeError(
+                f"oracle diagnostic task {task.task_id} has duplicate skill ids"
+            )
+
+        views_root = self.runtime.run_root / "oracle-skill-views"
+        view_dir = views_root / runtime_basename
+        view_dir.mkdir(parents=True, exist_ok=True)
+        for child in list(view_dir.iterdir()):
+            if child.is_symlink() or child.is_file():
+                child.unlink()
+            elif child.is_dir():
+                shutil.rmtree(child)
+            else:
+                raise RuntimeError(f"unsupported object in oracle view: {child}")
+
+        copied: list[dict[str, Any]] = []
+        for skill_id in skill_ids:
+            family_id = skill_id.split(".", 1)[0]
+            family = self.task_registry.family(family_id)
+            if family.meta.latent_skill_id != skill_id:
+                raise RuntimeError(
+                    f"oracle annotation {skill_id!r} does not match family metadata"
+                )
+            slug = skill_id_to_slug(skill_id)
+            source = self.runtime.library.active_dir / slug
+            if not source.is_dir() or source.is_symlink():
+                raise RuntimeError(
+                    f"curated library content for {skill_id!r} is unavailable"
+                )
+            for path in source.rglob("*"):
+                if path.is_symlink():
+                    raise RuntimeError(
+                        f"oracle skill {skill_id!r} contains a forbidden symlink"
+                    )
+            destination = view_dir / slug
+            shutil.copytree(source, destination)
+            digest = hashlib.sha256()
+            for path in sorted(
+                (item for item in destination.rglob("*") if item.is_file()),
+                key=lambda item: item.relative_to(destination).as_posix(),
+            ):
+                relative = path.relative_to(destination).as_posix()
+                digest.update(relative.encode("utf-8"))
+                digest.update(b"\0")
+                digest.update(path.read_bytes())
+                digest.update(b"\0")
+            copied.append(
+                {
+                    "skill_id": skill_id,
+                    "slug": slug,
+                    "sha256": digest.hexdigest(),
+                }
+            )
+
+        audit = {
+            "schema_version": 1,
+            "task_id": task.task_id,
+            "runtime_basename": runtime_basename,
+            "role": task.role,
+            "oracle_skill_ids": skill_ids,
+            "skills": copied,
+            "library_hash": self.runtime.library.compute_hash(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        audit_path = views_root / f"{runtime_basename}.audit.json"
+        audit_path.write_text(
+            json.dumps(audit, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        self.runtime.event_store.record(
+            "oracle_skill_view_staged",
+            {
+                "task_id": task.task_id,
+                "oracle_skill_ids": skill_ids,
+                "library_hash": audit["library_hash"],
+            },
         )
 
     async def _create_zero_shot_skill(self, task: Any) -> None:

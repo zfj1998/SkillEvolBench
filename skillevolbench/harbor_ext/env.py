@@ -113,6 +113,7 @@ class GlobalLibraryEnvironment(DockerEnvironment):
         library_root: str,
         run_root: str,
         library_scope: str = "global",
+        oracle_skill_view: bool = False,
         *,
         # Standard Harbor 0.6+ DockerEnvironment ctor args. Listed
         # explicitly so the merge with our extra mounts can read
@@ -130,6 +131,7 @@ class GlobalLibraryEnvironment(DockerEnvironment):
         self.library_root = Path(library_root)
         self.library_scope = library_scope
         self.run_root = Path(run_root)
+        self.oracle_skill_view = oracle_skill_view
 
         # Recover task_id from trial_paths so we can build the per-trial
         # injection-context.json mount. Harbor names trial dirs as
@@ -155,6 +157,15 @@ class GlobalLibraryEnvironment(DockerEnvironment):
         else:
             self.library_active_path = self.library_root / "active"
             self.library_readonly_marker = self.library_root / ".frozen"
+
+        # The oracle diagnostic mounts a task-specific projection instead of
+        # the whole environment library. The directory is created here (before
+        # Harbor constructs the container); the START hook fills it with the
+        # annotated gold skills before the container starts.
+        if self.oracle_skill_view:
+            self.library_active_path = (
+                self.run_root / "oracle-skill-views" / task_id
+            )
 
         # Defensive: harness creates these but a partial init could miss
         # them. Make a placeholder rather than fail container startup.
@@ -218,8 +229,12 @@ class GlobalLibraryEnvironment(DockerEnvironment):
 
         _LOG.info(
             "GlobalLibraryEnvironment init: task_id=%s library_active=%s "
-            "frozen=%s n_mounts=%d",
-            task_id, self.library_active_path, is_frozen, len(merged_mounts),
+            "frozen=%s oracle_skill_view=%s n_mounts=%d",
+            task_id,
+            self.library_active_path,
+            is_frozen,
+            self.oracle_skill_view,
+            len(merged_mounts),
         )
 
         # Harbor 0.7+ passes ``mounts`` and BaseEnvironment consumes only that

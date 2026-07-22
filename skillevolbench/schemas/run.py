@@ -146,6 +146,15 @@ class RunConfig(BaseModel):
     # environment order's first six tasks are T1-T3 from two families, not one
     # family's T1-T6 sequence.
     family_smoke_id: Optional[str] = None
+    # Non-canonical diagnostic slice containing the five families' T4-T6
+    # tasks (15 primaries) for one environment.  This is used for matched
+    # no-skill versus curated-oracle solvability controls and is never a
+    # benchmark score.
+    evaluation_only_t4_t6: bool = False
+    # Replace the normal whole-library skill mounts with a per-trial view that
+    # contains exactly primary_skill for T4/T5 and required_skills for T6.
+    # Only valid for the curated evaluation-only diagnostic above.
+    oracle_skill_view: bool = False
     workspace_root: Path = Path("workspace/runs")
 
     # ===== Execution =====
@@ -253,6 +262,40 @@ class RunConfig(BaseModel):
                     "replay_eval=False so the smoke contains exactly T1-T6"
                 )
 
+        if self.evaluation_only_t4_t6:
+            if self.environment_id is None:
+                raise ValueError(
+                    "evaluation_only_t4_t6 requires environment_id"
+                )
+            if self.family_smoke_id is not None or self.max_tasks is not None:
+                raise ValueError(
+                    "evaluation_only_t4_t6 is mutually exclusive with "
+                    "family_smoke_id and max_tasks"
+                )
+            if self.baseline.within_env_replay or self.baseline.replay_eval:
+                raise ValueError(
+                    "evaluation_only_t4_t6 requires within_env_replay=False "
+                    "and replay_eval=False"
+                )
+            if self.baseline.dual_t6_retrieval:
+                raise ValueError(
+                    "evaluation_only_t4_t6 requires dual_t6_retrieval=False"
+                )
+
+        if self.oracle_skill_view:
+            if not self.evaluation_only_t4_t6:
+                raise ValueError(
+                    "oracle_skill_view requires evaluation_only_t4_t6=True"
+                )
+            if (
+                self.baseline.skill_init != "curated"
+                or not self.baseline.allow_curated_inject
+                or not self.baseline.use_skill_library
+            ):
+                raise ValueError(
+                    "oracle_skill_view requires a curated skill-library baseline"
+                )
+
         # ---- 2. baseline.default_strategy <-> strategy.name ----
         # The baseline's "default_strategy" lives in its yaml as a hint about
         # which strategy yaml is expected to be paired with it. RunConfig's
@@ -310,6 +353,8 @@ class RunConfig(BaseModel):
         order_seed: OrderSeed = "A",
         environment_id: Optional[EnvironmentId] = None,
         family_smoke_id: Optional[str] = None,
+        evaluation_only_t4_t6: bool = False,
+        oracle_skill_view: bool = False,
         workspace_root: Path | str = "workspace/runs",
         api_base: Optional[str] = None,
         api_key_env_var: str = "ANTHROPIC_API_KEY",
@@ -326,6 +371,8 @@ class RunConfig(BaseModel):
             order_seed=order_seed,
             environment_id=environment_id,
             family_smoke_id=family_smoke_id,
+            evaluation_only_t4_t6=evaluation_only_t4_t6,
+            oracle_skill_view=oracle_skill_view,
             workspace_root=Path(workspace_root),
             api_base=api_base,
             api_key_env_var=api_key_env_var,
