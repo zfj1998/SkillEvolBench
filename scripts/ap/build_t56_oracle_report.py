@@ -708,14 +708,29 @@ def derivability_analysis(
         match = re.match(r"^(E\d+-LS\d+)-T[456]$", task_id)
         if not match:
             continue
-        family_id = match.group(1)
+        primary_family_id = match.group(1)
+        family_ids = list(
+            dict.fromkeys(
+                str(skill_id).split(".", 1)[0]
+                for skill_id in (task.get("oracle_skill_ids") or [])
+                if str(skill_id).strip()
+            )
+        ) or [primary_family_id]
         for model in MODELS:
-            family = families.get((model, family_id))
-            if not family:
+            task_families = [families.get((model, family_id)) for family_id in family_ids]
+            if any(family is None for family in task_families):
                 continue
-            learning_concepts = set(family.get("learning_concepts") or [])
-            generated_concepts = set(family.get("generated_concepts") or [])
-            curated_concepts = set(family.get("curated_concepts") or [])
+            learning_concepts = {
+                concept
+                for family in task_families
+                for concept in (family or {}).get("learning_concepts", [])
+            }
+            generated_concepts = {
+                concept
+                for family in task_families
+                for concept in (family or {}).get("generated_concepts", [])
+            }
+            curated_concepts = set(task.get("oracle_concepts") or [])
             author_gap_concepts = set(task.get("author_gap_concepts") or [])
             for concept in task.get("task_concepts") or []:
                 in_learning = concept in learning_concepts
@@ -741,7 +756,8 @@ def derivability_analysis(
                     {
                         "model": model,
                         "environment_id": task.get("environment_id"),
-                        "family_id": family_id,
+                        "family_id": primary_family_id,
+                        "source_family_ids": family_ids,
                         "task_id": task_id,
                         "tier": task.get("tier"),
                         "concept": concept,

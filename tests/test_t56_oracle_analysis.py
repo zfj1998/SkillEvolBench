@@ -578,6 +578,11 @@ def test_derivability_analysis_keeps_all_three_sources_distinct() -> None:
             "environment_id": "E1",
             "tier": 5,
             "task_concepts": concepts,
+            "oracle_concepts": [
+                "visible-oracle-only",
+                "unseen-both-skills",
+                "unseen-oracle-only",
+            ],
             "author_gap_concepts": ["unseen-oracle-only", "missing-everywhere"],
         }],
     }
@@ -603,3 +608,45 @@ def test_derivability_analysis_keeps_all_three_sources_distinct() -> None:
     assert qwen["author_gap_metadata_hits"] == 2
     assert qwen["author_gap_unseen_in_t1_t3"] == 2
     assert qwen["author_gap_missing_from_all_model_visible_sources"] == 1
+
+
+def test_t6_derivability_unions_all_required_skill_families() -> None:
+    learning = {
+        "families": [
+            {
+                "model": "qwen3.7-max",
+                "family_id": "E3-LS2",
+                "learning_concepts": [],
+                "generated_concepts": [],
+            },
+            {
+                "model": "qwen3.7-max",
+                "family_id": "E3-LS3",
+                "learning_concepts": ["deduplication"],
+                "generated_concepts": ["deduplication"],
+            },
+        ]
+    }
+    oracle_scope = {
+        "rows": [{
+            "task_id": "E3-LS2-T6",
+            "environment_id": "E3",
+            "tier": 6,
+            "oracle_skill_ids": [
+                "E3-LS2.type-normalization-before-sort",
+                "E3-LS3.key-alignment-before-merge",
+            ],
+            "task_concepts": ["deduplication"],
+            "oracle_concepts": [],
+            "author_gap_concepts": ["deduplication"],
+        }]
+    }
+
+    result = REPORT.derivability_analysis(learning, oracle_scope)
+
+    assert len(result["records"]) == 1
+    row = result["records"][0]
+    assert row["category"] == "captured_from_visible_evidence"
+    assert row["source_family_ids"] == ["E3-LS2", "E3-LS3"]
+    assert row["in_t1_t3_evidence"] is True
+    assert row["in_generated_skill"] is True
