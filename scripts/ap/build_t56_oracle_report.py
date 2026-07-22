@@ -345,6 +345,30 @@ def task_comparisons(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     verdict = "oracle_rescues_strict_only"
                 else:
                     verdict = "no_oracle_rescue_needed_or_observed"
+            condition_payload = {
+                name: ({
+                    "strict": row.get("strict_pass"),
+                    "outcome": row.get("outcome_pass"),
+                    "process": row.get("process_pass"),
+                    "score": row.get("normalized_score"),
+                    "classification": row.get("classification"),
+                    "oracle_injection_exact": row.get("oracle_injection_exact"),
+                    "oracle_skill_ids": row.get("oracle_skill_ids") or [],
+                    "no_skill_empty": row.get("no_skill_empty"),
+                    "curated_all_library_complete": row.get(
+                        "curated_all_library_complete"
+                    ),
+                    "curated_all_visible_slugs": row.get(
+                        "curated_all_visible_slugs"
+                    ) or [],
+                    "failed_tests": row.get("failed_tests") or [],
+                    "job_id": row.get("job_id"),
+                    "record_path": row.get("record_path"),
+                    "trajectory_path": row.get("local_trajectory_path"),
+                    "artifact_path": row.get("local_artifact_task_path"),
+                } if row else None)
+                for name, row in conditions.items()
+            }
             result.append({
                 "model": model,
                 "task_id": task_id,
@@ -354,32 +378,98 @@ def task_comparisons(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "primary_skill": base.get("primary_skill"),
                 "required_skills": base.get("required_skills") or [],
                 "verdict": verdict,
-                "conditions": {
-                    name: ({
-                        "strict": row.get("strict_pass"),
-                        "outcome": row.get("outcome_pass"),
-                        "process": row.get("process_pass"),
-                        "score": row.get("normalized_score"),
-                        "classification": row.get("classification"),
-                        "oracle_injection_exact": row.get("oracle_injection_exact"),
-                        "oracle_skill_ids": row.get("oracle_skill_ids") or [],
-                        "no_skill_empty": row.get("no_skill_empty"),
-                        "curated_all_library_complete": row.get(
-                            "curated_all_library_complete"
-                        ),
-                        "curated_all_visible_slugs": row.get(
-                            "curated_all_visible_slugs"
-                        ) or [],
-                        "failed_tests": row.get("failed_tests") or [],
-                        "job_id": row.get("job_id"),
-                        "record_path": row.get("record_path"),
-                        "trajectory_path": row.get("local_trajectory_path"),
-                        "artifact_path": row.get("local_artifact_task_path"),
-                    } if row else None)
-                    for name, row in conditions.items()
-                },
+                "conditions": condition_payload,
+                "causal": causal_diagnosis(condition_payload),
             })
     return result
+
+
+def causal_diagnosis(
+    conditions: dict[str, dict[str, Any] | None],
+) -> dict[str, Any]:
+    if any(conditions.get(name) is None for name in CONDITIONS):
+        observed = sum(conditions.get(name) is not None for name in CONDITIONS)
+        return {
+            "complete": False,
+            "category": "awaiting_four_conditions",
+            "label": "等待四条件",
+            "pattern": None,
+            "explanation": f"当前只有 {observed}/4 个匹配条件，禁止作因果判定。",
+        }
+
+    outcomes = {
+        name: conditions[name].get("outcome") is True  # type: ignore[union-attr]
+        for name in CONDITIONS
+    }
+    self_pass = outcomes["self_generated"]
+    exact_pass = outcomes["exact_oracle"]
+    all_pass = outcomes["curated_all"]
+    no_skill_pass = outcomes["no_skill"]
+    pattern = " ".join(
+        f"{short}={'1' if outcomes[name] else '0'}"
+        for short, name in (
+            ("S", "self_generated"),
+            ("E", "exact_oracle"),
+            ("A", "curated_all"),
+            ("N", "no_skill"),
+        )
+    )
+
+    if no_skill_pass:
+        if self_pass and exact_pass and all_pass:
+            category = "low_skill_demand"
+            label = "无需 skill 也能做"
+            explanation = "四条件均通过；该题不能提供强 skill-evolve 增益证据。"
+        elif not self_pass:
+            category = "self_generated_harm"
+            label = "生成 skill 造成干扰"
+            explanation = "无 skill 通过而 self-generated 失败，生成 skill 对本题产生负迁移。"
+        else:
+            category = "curated_skill_harm_or_selection_noise"
+            label = "Curated/选择造成干扰"
+            explanation = "无 skill 已通过，但至少一种 curated 条件失败；skill 内容或选择引入干扰。"
+    elif self_pass:
+        category = "self_evolution_benefit"
+        label = "生成 skill 带来增益"
+        explanation = "无 skill 失败而 self-generated 通过，是直接的 skill-evolve 正向证据。"
+    elif exact_pass and all_pass:
+        category = "curated_content_benefit_generated_gap"
+        label = "Curated 内容有效，生成 skill 不足"
+        explanation = "无 skill 与 self-generated 失败，但 exact 和 curated-all 均通过；主要差距在生成 skill 内容。"
+    elif exact_pass and not all_pass:
+        category = "annotation_selection_prior"
+        label = "Gold skill 映射先验"
+        explanation = "只有 exact-oracle 通过；标注者提供的 task→skill 子集选择是关键增益。"
+    elif all_pass:
+        category = "all_library_helps_gold_subset_insufficient"
+        label = "全库有益，Gold 子集不足"
+        explanation = "curated-all 通过但 exact-oracle 失败；gold 子集可能遗漏有用 skill，或选择造成干扰。"
+    else:
+        category = "all_model_conditions_fail"
+        label = "四种模型条件都失败"
+        explanation = "官方标准解可通过时，这表示模型执行上限、oracle scope 不足或任务难度；不能单凭此判题目坏。"
+    return {
+        "complete": True,
+        "category": category,
+        "label": label,
+        "pattern": pattern,
+        "explanation": explanation,
+    }
+
+
+def causal_diagnosis_summary(
+    comparisons: list[dict[str, Any]],
+) -> dict[str, Any]:
+    records = [row for row in comparisons if int(row["tier"]) in (5, 6)]
+    complete = [row for row in records if row["causal"]["complete"]]
+    return {
+        "expected": len(MODELS) * len(ENVS) * 5 * 2,
+        "observed": len(records),
+        "complete": len(complete),
+        "category_counts": dict(
+            Counter(row["causal"]["category"] for row in complete)
+        ),
+    }
 
 
 def matched_effects(comparisons: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1550,6 +1640,7 @@ def build_payload(
         "aggregates": aggregates(rows),
         "tasks": rows,
         "comparisons": comparisons,
+        "causal_diagnosis": causal_diagnosis_summary(comparisons),
         "effects": matched_effects(comparisons),
         "model_comparisons": model_comparisons(rows),
         "failure_map": failure_map(rows),
@@ -1663,6 +1754,29 @@ def render_markdown(data: dict[str, Any]) -> str:
         lines.append(
             f"| {item['model']} | T{item['tier']} | {item['metric']} | {CONDITION_ZH[item['treatment']]} − {CONDITION_ZH[item['reference']]} | {item['n']} | {item['treatment_pass']}/{item['n']} | {item['reference_pass']}/{item['n']} | {pct(item['delta'])} | {item['rescued']} / {item['harmed']} |"
         )
+    causal = data["causal_diagnosis"]
+    lines += [
+        "",
+        "## 四条件逐题因果判定",
+        "",
+        f"T5/T6 共期望 `{causal['expected']}` 个模型×任务配对；当前已有 "
+        f"`{causal['complete']}` 个同时具备 Self / Exact / Curated-all / No-skill 四条件。"
+        "不完整的配对一律显示为等待，不用缺失值推断效果。",
+        "",
+        "| 关键 outcome 模式 | 判定 | 能回答什么 |",
+        "|---|---|---|",
+        "| N=1，四条件都过 | 无需 skill 也能做 | 该题 skill 需求弱，不能作为强 evolve 证据 |",
+        "| N=0，S=1 | 生成 skill 带来增益 | 直接支持模型从 T1–T3 总结的 skill 帮助迁移 |",
+        "| N=1，S=0 | 生成 skill 造成干扰 | 直接说明 self-generated skill 发生负迁移 |",
+        "| N=0，S=0，E=1，A=1 | Curated 内容有效，生成 skill 不足 | 差距主要来自 skill 内容质量 |",
+        "| N=0，S=0，E=1，A=0 | Gold skill 映射先验 | task→skill 标注选择本身带来关键帮助 |",
+        "| N=0，E=0，A=1 | 全库有益，Gold 子集不足 | gold 子集遗漏有用 skill 或选择造成干扰 |",
+        "| S=E=A=N=0 | 四种模型条件都失败 | 模型执行上限、oracle scope 或任务难度；reference 通过时不能直接判题目坏 |",
+        "",
+        "当前完整配对分类：`"
+        + json.dumps(causal["category_counts"], ensure_ascii=False)
+        + "`。",
+    ]
     lines += [
         "",
         "## 六环境诊断总览",
@@ -1941,6 +2055,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>题目资产完整性：官方标准解能否通过？</h2><p>这不是模型 baseline：Harbor oracle 直接执行仓库的 <code>solution/solve.sh</code>，再运行原 verifier，用来识别题目、标准解、容器或 verifier 的内部不一致。</p><div id="referenceIntegrity"></div></section>
 <section class="panel"><h2>Pass rate 热力图</h2><div class="filters"><select id="hmModel"></select><select id="hmCond"></select><select id="hmMetric"><option value="strict">Strict</option><option value="outcome">Outcome</option><option value="process">Process</option></select><select id="hmTier"><option value="4">T4</option><option value="5" selected>T5</option><option value="6">T6</option></select></div><div class="heat" id="heatmap"></div><p class="small">每格最多 5 题；显示通过数/观测数，不能把小样本百分比当作稳定总体性能。</p></section>
 <section class="grid two"><div class="panel"><h2>Qwen vs Fable 配对比较</h2><div class="tablebox"><table><thead><tr><th>条件/Tier/指标</th><th>n</th><th>Qwen</th><th>Fable</th><th>only Q/F</th><th>p</th></tr></thead><tbody id="modelCmpRows"></tbody></table></div></div><div class="panel"><h2>Skill 条件配对效应</h2><div class="tablebox"><table><thead><tr><th>模型/Tier/指标</th><th>对照</th><th>n</th><th>Δ</th><th>救回/损害</th></tr></thead><tbody id="effectRows"></tbody></table></div></div></section>
+<section class="panel"><h2>四条件逐题因果判定</h2><p>每题同时看 Self-generated（S）、Exact oracle（E）、Curated-all（A）和 No-skill（N）的 outcome。四个条件不齐时保持“等待”，不把缺失记录当失败。</p><div id="causalDecision"></div></section>
 <section class="panel"><h2>六环境诊断总览</h2><p class="small">每张卡把 self-generated 的真实功能失败、process-only 噪声、双模型一致失败、官方标准解以及三组匹配对照放在一起。对照未齐的文字明确标为暂定。</p><div class="grid two" id="envCards"></div></section>
 <section class="panel"><h2>逐 Env 的 T5/T6 失败地图</h2><div class="tablebox"><table><thead><tr><th>Env / Tier</th><th>Qwen 3.7 Max</th><th>SIG Fable</th></tr></thead><tbody id="failureRows"></tbody></table></div></section>
 <section class="panel"><h2>失败归因总览</h2><p class="small">“已核实假阴性”要求逐代码证据；“形态敏感”只是筛查标签，仍需结合 exact-oracle/no-skill 与轨迹复核。</p><div class="tablebox"><table><thead><tr><th>Env/Tier</th><th>模型</th><th>覆盖/Strict</th><th>功能 gap</th><th>已核实假阴性</th><th>实质过程 gap</th><th>形态敏感</th><th>未决过程</th></tr></thead><tbody id="attributionRows"></tbody></table></div></section>
@@ -1968,6 +2083,7 @@ options(hmModel,['qwen3.7-max','sig-fable']);options(hmCond,['self_generated','e
 function renderHeat(){{let m=hmModel.value,c=hmCond.value,k=hmMetric.value,t=+hmTier.value;let rows=['E1','E2','E3','E4','E5','E6'].map(e=>D.aggregates.find(x=>x.model===m&&x.condition===c&&x.environment_id===e&&x.tier===t));heatmap.innerHTML='<div class="head">'+m+' · '+zh[c]+'</div>'+['E1','E2','E3','E4','E5','E6'].map(x=>`<div class="head">${{x}}</div>`).join('')+`<div>T${{t}} · ${{k}}</div>`+rows.map(x=>{{if(!x)return '<div class="v none">—</div>';let p=x[k]/x.n,cl=p>=.8?'high':p>=.4?'mid':'low';return `<div class="v ${{cl}}">${{x[k]}}/${{x.n}}</div>`}}).join('')}};[hmModel,hmCond,hmMetric,hmTier].forEach(x=>x.onchange=renderHeat);renderHeat();
 modelCmpRows.innerHTML=D.model_comparisons.filter(x=>x.n).map(x=>`<tr><td>${{zh[x.condition]}} / T${{x.tier}} / ${{x.metric}}</td><td>${{x.n}}</td><td>${{x.qwen_pass}}</td><td>${{x.fable_pass}}</td><td>${{x.qwen_only}} / ${{x.fable_only}}</td><td>${{x.sign_test_p==null?'—':x.sign_test_p.toFixed(4)}}</td></tr>`).join('');
 effectRows.innerHTML=D.effects.filter(x=>x.n).map(x=>`<tr><td>${{x.model}} / T${{x.tier}} / ${{x.metric}}</td><td>${{zh[x.treatment]}} − ${{zh[x.reference]}}</td><td>${{x.n}}</td><td>${{(100*x.delta).toFixed(1)}}pp</td><td>${{x.rescued}} / ${{x.harmed}}</td></tr>`).join('')||'<tr><td colspan="5" class="small">等待 oracle/no-skill 匹配结果</td></tr>';
+let cd=D.causal_diagnosis;let cdCounts=Object.entries(cd.category_counts).map(([k,v])=>`<div class="case"><h3>${{esc(D.comparisons.find(x=>x.causal.category===k)?.causal.label||k)}}</h3><b style="font-size:24px">${{v}}</b><div class="small">个完整 T5/T6 模型×任务配对</div></div>`).join('');causalDecision.innerHTML=`<div class="grid cards"><div class="card"><span class="label">完整四条件</span><b>${{cd.complete}}/${{cd.expected}}</b></div><div class="card"><span class="label">已出现任务配对</span><b>${{cd.observed}}/${{cd.expected}}</b></div></div><div class="grid two">${{cdCounts||'<div class="case small">等待 matched controls</div>'}}</div><details><summary>判定规则</summary><div class="tablebox"><table><thead><tr><th>模式</th><th>解释</th></tr></thead><tbody><tr><td>N=1 且全部通过</td><td>无需 skill 也能做，skill 需求弱</td></tr><tr><td>N=0, S=1</td><td>生成 skill 带来直接正向迁移</td></tr><tr><td>N=1, S=0</td><td>生成 skill 造成负迁移</td></tr><tr><td>N=0, S=0, E=1, A=1</td><td>curated 内容有效，生成 skill 不足</td></tr><tr><td>N=0, S=0, E=1, A=0</td><td>gold task→skill 映射提供选择先验</td></tr><tr><td>S=E=A=N=0</td><td>模型执行上限、oracle scope 或难度；reference 通过时不能直接判题目坏</td></tr></tbody></table></div></details>`;
 envCards.innerHTML=D.environment_diagnostics.map(x=>{{let m=Object.fromEntries(x.self_generated_by_model.map(y=>[y.model,y]));let ctrl=['exact_oracle','curated_all','no_skill'].map(c=>{{let y=x.controls[c];return `<span class="metric ${{y.observed===20?'pass':'missing'}}">${{zh[c]}} O ${{y.outcome_passed}}/${{y.observed}}</span>`}}).join(' ');return `<article class="case"><span class="kind">${{x.status==='matched_controls_complete'?'匹配对照完整':'暂定结论'}}</span><h3>${{x.environment_id}} · ${{esc(x.name)}}</h3><p>${{esc(x.capability)}}</p><div class="grid two"><div><b>Qwen</b><div class="small">覆盖 ${{m['qwen3.7-max'].observed}}/10 · Outcome ${{m['qwen3.7-max'].outcome_passed}} · Strict ${{m['qwen3.7-max'].strict_passed}} · Process-only ${{m['qwen3.7-max'].process_only_failures}}</div></div><div><b>Fable</b><div class="small">覆盖 ${{m['sig-fable'].observed}}/10 · Outcome ${{m['sig-fable'].outcome_passed}} · Strict ${{m['sig-fable'].strict_passed}} · Process-only ${{m['sig-fable'].process_only_failures}}</div></div></div><p class="small">双模型同题 outcome 失败 ${{x.both_models_outcome_fail}}/${{x.paired_task_count}} · reference ${{x.reference_strict_passed}}/${{x.reference_total}} · scope ${{esc(JSON.stringify(x.scope_risk_counts))}}</p><p>${{esc(x.current_read)}}</p><div>${{ctrl}}</div></article>`}}).join('');
 function failureCell(x){{if(!x.observed)return '<span class="metric missing">0/5 未完成</span>';let details=x.tasks.map(t=>`<div><b>${{t.task_id}}</b> · ${{esc(t.task_slug)}} · ${{esc(t.classification)}}<br><span class="small">Skill: ${{esc((t.required_skills.length?t.required_skills:[t.primary_skill]).join(', '))}}<br>O: ${{t.failed_outcome.map(z=>esc(z.name+': '+z.message)).join('; ')||'无'}}<br>P: ${{t.failed_process.map(z=>esc(z.name+': '+z.message)).join('; ')||'无'}}</span></div>`).join('');return `<span class="metric ${{x.strict_failures?'fail':'pass'}}">失败 ${{x.strict_failures}}/${{x.observed}}</span>${{details}}`}};
 failureRows.innerHTML=['E1','E2','E3','E4','E5','E6'].flatMap(e=>[5,6].map(t=>{{let q=D.failure_map.find(x=>x.model==='qwen3.7-max'&&x.environment_id===e&&x.tier===t),f=D.failure_map.find(x=>x.model==='sig-fable'&&x.environment_id===e&&x.tier===t);return `<tr><td><b>${{e}} / T${{t}}</b></td><td>${{failureCell(q)}}</td><td>${{failureCell(f)}}</td></tr>`}})).join('');
@@ -1982,8 +2098,8 @@ function renderDerivability(){{let q=derivabilitySearch.value.toLowerCase();let 
 let cv=D.oracle_scope.concept_visibility;scopeVisibility.innerHTML=[['受控概念实例',cv.concept_instances],['Instruction 明示',cv.instruction_explicit_instances],['Verifier-only',cv.verifier_only_instances],['Author gap meta 命中',cv.author_gap_metadata_instances],['涉及任务',cv.tasks_with_controlled_concepts+'/60']].map(x=>`<div class="card"><span class="label">${{x[0]}}</span><b>${{x[1]}}</b></div>`).join('');
 scopeCounts.innerHTML=Object.entries(D.oracle_scope.counts).map(([k,v])=>`<span class="metric ${{k==='high'?'fail':k==='medium'?'proc':'pass'}}">${{k}}: ${{v}}</span>`).join(' ');scopeRows.innerHTML=D.oracle_scope.rows.filter(x=>x.scope_risk!=='low'||x.verifier_only_concepts.length).map(x=>`<tr><td><b>${{x.task_id}}</b><br><span class="small">${{esc(x.task_slug)}}</span></td><td>${{esc(x.oracle_skill_ids.join(', '))}}</td><td><span class="metric ${{x.scope_risk==='high'?'fail':'proc'}}">${{x.scope_risk}}</span></td><td>${{esc(x.missing_concepts.join(', ')||'—')}}</td><td>${{esc(x.task_concepts_in_author_gaps.join(', ')||'—')}}</td><td>${{esc(x.verifier_only_concepts.join(', ')||'—')}}</td><td>${{esc(x.scope_lines.join('; ')||'—')}}</td></tr>`).join('');
 scopeOutcomes.innerHTML=D.scope_condition_outcomes.filter(x=>x.n).map(x=>`<div>${{x.model}} · ${{x.scope_risk}} · n=${{x.n}} · strict ${{x.oracle_strict_passes}}/${{x.n}} · outcome ${{x.oracle_outcome_passes}}/${{x.n}} · process ${{x.oracle_process_passes}}/${{x.n}}</div>`).join('')||'等待 exact-oracle 结果';
-function renderTasks(){{let q=taskSearch.value.toLowerCase();let rows=D.comparisons.filter(x=>(taskModel.value==='all'||x.model===taskModel.value)&&(taskEnv.value==='all'||x.environment_id===taskEnv.value)&&(taskTier.value==='all'||x.tier==taskTier.value)&&JSON.stringify(x).toLowerCase().includes(q));taskRows.innerHTML=rows.map((x,i)=>`<tr class="click" data-key="${{x.model}}|${{x.task_id}}"><td><b>${{x.task_id}}</b><br><span class="small">${{esc(x.task_slug)}} · ${{esc(x.primary_skill)}}</span></td><td>${{x.model}}</td><td>${{status(x.conditions.self_generated)}}</td><td>${{status(x.conditions.exact_oracle)}}</td><td>${{status(x.conditions.curated_all)}}</td><td>${{status(x.conditions.no_skill)}}</td><td>${{verdict[x.verdict]}}</td></tr>`).join('');taskRows.querySelectorAll('tr').forEach(tr=>tr.onclick=()=>showTask(...tr.dataset.key.split('|')))}};[taskModel,taskEnv,taskTier].forEach(x=>x.onchange=renderTasks);taskSearch.oninput=renderTasks;renderTasks();
-function showTask(model,id){{let x=D.comparisons.find(x=>x.model===model&&x.task_id===id);let blocks=Object.entries(x.conditions).map(([name,c])=>`<h3>${{zh[name]}}</h3>${{c?`<p>${{status(c)}} score=${{c.score??'—'}} · job=${{esc(c.job_id)}}</p><p class="small">record: ${{esc(c.record_path)}}<br>trajectory: ${{esc(c.trajectory_path)}}</p><details><summary>失败测试 (${{c.failed_tests.length}})</summary><pre>${{esc(JSON.stringify(c.failed_tests,null,2))}}</pre></details>`:'<p class="small">尚无结果</p>'}}`).join('');drawerBody.innerHTML=`<h2>${{x.task_id}}</h2><p>${{esc(x.task_slug)}} · T${{x.tier}} · ${{x.environment_id}}</p><p><b>需要的 skills</b><br>${{esc(x.required_skills.join(', ')||x.primary_skill)}}</p>${{blocks}}`;drawer.classList.add('open')}}
+function renderTasks(){{let q=taskSearch.value.toLowerCase();let rows=D.comparisons.filter(x=>(taskModel.value==='all'||x.model===taskModel.value)&&(taskEnv.value==='all'||x.environment_id===taskEnv.value)&&(taskTier.value==='all'||x.tier==taskTier.value)&&JSON.stringify(x).toLowerCase().includes(q));taskRows.innerHTML=rows.map((x,i)=>`<tr class="click" data-key="${{x.model}}|${{x.task_id}}"><td><b>${{x.task_id}}</b><br><span class="small">${{esc(x.task_slug)}} · ${{esc(x.primary_skill)}}</span></td><td>${{x.model}}</td><td>${{status(x.conditions.self_generated)}}</td><td>${{status(x.conditions.exact_oracle)}}</td><td>${{status(x.conditions.curated_all)}}</td><td>${{status(x.conditions.no_skill)}}</td><td><b>${{esc(x.causal.label)}}</b><br><span class="small">${{esc(x.causal.pattern||verdict[x.verdict])}}</span></td></tr>`).join('');taskRows.querySelectorAll('tr').forEach(tr=>tr.onclick=()=>showTask(...tr.dataset.key.split('|')))}};[taskModel,taskEnv,taskTier].forEach(x=>x.onchange=renderTasks);taskSearch.oninput=renderTasks;renderTasks();
+function showTask(model,id){{let x=D.comparisons.find(x=>x.model===model&&x.task_id===id);let blocks=Object.entries(x.conditions).map(([name,c])=>`<h3>${{zh[name]}}</h3>${{c?`<p>${{status(c)}} score=${{c.score??'—'}} · job=${{esc(c.job_id)}}</p><p class="small">record: ${{esc(c.record_path)}}<br>trajectory: ${{esc(c.trajectory_path)}}</p><details><summary>失败测试 (${{c.failed_tests.length}})</summary><pre>${{esc(JSON.stringify(c.failed_tests,null,2))}}</pre></details>`:'<p class="small">尚无结果</p>'}}`).join('');drawerBody.innerHTML=`<h2>${{x.task_id}}</h2><p>${{esc(x.task_slug)}} · T${{x.tier}} · ${{x.environment_id}}</p><div class="conclusion ${{x.causal.complete?'good':'pending'}}"><h3>${{esc(x.causal.label)}} · ${{esc(x.causal.pattern||'')}}</h3>${{esc(x.causal.explanation)}}</div><p><b>需要的 skills</b><br>${{esc(x.required_skills.join(', ')||x.primary_skill)}}</p>${{blocks}}`;drawer.classList.add('open')}}
 let a=D.verifier_audit.summary;audit.innerHTML=`<div class="card"><span class="label">过程 / 功能 checks</span><b>${{a.process_checks_total}} / ${{a.outcome_checks_total}}</b></div><p><b>${{a.tasks_with_literal_or_regex_process_checks}}/90</b> 含源码字面量或正则检查；<b>${{a.tasks_with_effective_process_weight_50_percent}}/90</b> 的过程权重为 50%。</p><p>形态敏感度：${{Object.entries(a.process_shape_sensitivity).map(([k,v])=>`${{k}}=${{v}}`).join(' · ')}}</p><h3>Process-only 分层</h3>${{D.verifier_shape_outcomes.filter(x=>x.n).map(x=>`<div class="small">${{zh[x.condition]}} · ${{x.shape_risk}} · process-only ${{x.process_only_failures}}/${{x.n}} · outcome ${{x.outcome_passes}}/${{x.n}} · process ${{x.process_passes}}/${{x.n}}</div>`).join('')}}`;
 skills.innerHTML=Object.entries(D.skills.by_model).map(([m,x])=>`<div class="case"><h3>${{m}}</h3><p>skill 对数 <b>${{x.n}}</b> · 改名 ${{x.renamed}} · 完全相同 ${{x.exact_equal}}</p><div class="small">中位 word Jaccard ${{x.median_word_jaccard?.toFixed(3)??'—'}} · 长度比 ${{x.median_length_ratio?.toFixed(2)??'—'}}</div></div>`).join('')+'<p class="small">词面相似度低只说明表达和覆盖范围不同，不能单独证明 skill 质量差；最终要结合 matched oracle rescue。</p>';
 cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}} · ${{o.failed_process_tests.map(t=>t.name).join(', ')}}</p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}`).join('')}}<details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details></article>`).join('');

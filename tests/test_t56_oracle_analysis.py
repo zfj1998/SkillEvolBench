@@ -200,6 +200,33 @@ def test_task_comparison_marks_oracle_outcome_rescue() -> None:
 
     assert comparison["verdict"] == "oracle_rescues_outcome"
     assert comparison["conditions"]["no_skill"] is None
+    assert comparison["causal"]["category"] == "awaiting_four_conditions"
+
+
+def causal_conditions(self_pass: bool, exact: bool, all_skills: bool, none: bool):
+    return {
+        "self_generated": {"outcome": self_pass},
+        "exact_oracle": {"outcome": exact},
+        "curated_all": {"outcome": all_skills},
+        "no_skill": {"outcome": none},
+    }
+
+
+def test_four_condition_causal_diagnosis_distinguishes_skill_effects() -> None:
+    cases = {
+        (True, True, True, True): "low_skill_demand",
+        (True, False, False, False): "self_evolution_benefit",
+        (False, True, True, False): "curated_content_benefit_generated_gap",
+        (False, True, False, False): "annotation_selection_prior",
+        (False, False, True, False): "all_library_helps_gold_subset_insufficient",
+        (False, False, False, True): "self_generated_harm",
+        (False, False, False, False): "all_model_conditions_fail",
+    }
+    for outcomes, expected in cases.items():
+        diagnosis = REPORT.causal_diagnosis(causal_conditions(*outcomes))
+        assert diagnosis["complete"] is True
+        assert diagnosis["category"] == expected
+        assert diagnosis["pattern"].startswith("S=")
 
 
 def test_coverage_is_fail_closed_for_missing_conditions() -> None:
