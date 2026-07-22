@@ -28,7 +28,7 @@ import stat
 from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Iterable, Sequence
 
 
@@ -134,6 +134,32 @@ CREDENTIAL_ASSIGNMENT_RE = re.compile(
     """,
     re.IGNORECASE | re.VERBOSE,
 )
+_SYSTEM_PYTHON_TARGET = re.compile(r"/usr/bin/python3(?:\.\d+)?")
+
+
+def _safe_external_venv_interpreter_link(
+    path: Path,
+    target: str,
+    resolved_root: Path,
+) -> bool:
+    """Allow only the inert absolute interpreter link made by ``venv``.
+
+    The scanner never follows links.  This exception preserves auditable task
+    snapshots containing ``.venv/bin/python -> /usr/bin/python3.X`` while all
+    other root-escaping links remain findings.
+    """
+
+    try:
+        relative = PurePosixPath(path.relative_to(resolved_root).as_posix())
+    except ValueError:
+        return False
+    return (
+        not relative.is_absolute()
+        and ".." not in relative.parts
+        and len(relative.parts) >= 3
+        and relative.parts[-3:] == (".venv", "bin", "python")
+        and _SYSTEM_PYTHON_TARGET.fullmatch(target) is not None
+    )
 
 PLACEHOLDER_PREFIXES = (
     b"changeme",
@@ -446,7 +472,9 @@ def _scan_symlink(
         findings=findings,
         surface="symlink_target",
     )
-    if _is_outside_root(path, target, resolved_root):
+    if _is_outside_root(path, target, resolved_root) and not (
+        _safe_external_venv_interpreter_link(path, target, resolved_root)
+    ):
         findings.add("symlink_escapes_root", "symlink_safety")
 
 

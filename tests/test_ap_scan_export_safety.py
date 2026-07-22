@@ -92,6 +92,47 @@ def test_filename_and_symlink_target_are_scanned_without_following(
     assert link.is_symlink()
 
 
+def test_standard_dot_venv_python_link_is_preserved_and_clean(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "export"
+    link = root / "runs" / "trial" / "artifacts" / "root" / "task"
+    link = link / "project" / ".venv" / "bin" / "python"
+    link.parent.mkdir(parents=True)
+    link.symlink_to("/usr/bin/python3.12")
+
+    report = scanner.scan_tree(root, environment={})
+
+    assert report["clean"] is True
+    assert report["category_counts"]["symlink_escapes_root"] == 0  # type: ignore[index]
+    assert report["scan_counts"]["symlinks"] == 1  # type: ignore[index]
+    assert link.is_symlink()
+
+
+@pytest.mark.parametrize(
+    ("relative", "target"),
+    [
+        ("runs/trial/artifacts/root/task/project/venv/bin/python", "/usr/bin/python3.12"),
+        ("runs/trial/artifacts/root/task/project/.venv/bin/pip", "/usr/bin/python3.12"),
+        ("runs/trial/artifacts/root/task/project/.venv/bin/python", "/bin/sh"),
+    ],
+)
+def test_lookalike_external_venv_link_remains_unsafe(
+    tmp_path: Path,
+    relative: str,
+    target: str,
+) -> None:
+    root = tmp_path / "export"
+    link = root / relative
+    link.parent.mkdir(parents=True)
+    link.symlink_to(target)
+
+    report = scanner.scan_tree(root, environment={})
+
+    assert report["clean"] is False
+    assert report["category_counts"]["symlink_escapes_root"] == 1  # type: ignore[index]
+
+
 def test_generic_assignment_ignores_placeholders_and_references(tmp_path: Path) -> None:
     root = tmp_path / "export"
     root.mkdir()

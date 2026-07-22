@@ -587,6 +587,44 @@ def test_mask_tree_allows_internal_symlinks_without_following_them(
     assert (tmp_path / "linked.log").is_symlink()
 
 
+def test_mask_tree_allows_only_standard_dot_venv_python_link(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "model-secret-123")
+    link = tmp_path / "runs" / "trial" / "artifacts" / "root" / "task"
+    link = link / "project" / ".venv" / "bin" / "python"
+    link.parent.mkdir(parents=True)
+    link.symlink_to("/usr/bin/python3.12")
+
+    assert mask_tree(tmp_path) == 0
+    assert link.is_symlink()
+    assert link.readlink() == Path("/usr/bin/python3.12")
+
+
+@pytest.mark.parametrize(
+    ("relative", "target"),
+    [
+        ("runs/trial/artifacts/root/task/project/venv/bin/python", "/usr/bin/python3.12"),
+        ("runs/trial/artifacts/root/task/project/.venv/bin/pip", "/usr/bin/python3.12"),
+        ("runs/trial/artifacts/root/task/project/.venv/bin/python", "/bin/sh"),
+    ],
+)
+def test_mask_tree_rejects_lookalike_external_venv_links(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    relative: str,
+    target: str,
+) -> None:
+    monkeypatch.setenv("MODEL_API_KEY", "model-secret-123")
+    link = tmp_path / relative
+    link.parent.mkdir(parents=True)
+    link.symlink_to(target)
+
+    with pytest.raises(RuntimeError, match="symlink outside output root"):
+        mask_tree(tmp_path)
+
+
 def test_mask_tree_manifest_seals_tree_against_later_changes(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

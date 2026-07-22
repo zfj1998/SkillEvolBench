@@ -59,6 +59,28 @@ _UNQUOTED_SECRET_VALUE = re.compile(
     r"(Bearer\s+)?(?![\"'])([^\s,#}\r\n]+)"
 )
 
+_SYSTEM_PYTHON_TARGET = re.compile(r"/usr/bin/python3(?:\.\d+)?")
+
+
+def _safe_external_venv_interpreter_link(relative: str, target: str) -> bool:
+    """Recognize the one inert external link created by ``python -m venv``.
+
+    Task solutions may create ``.venv/bin/python`` as an absolute link to the
+    container's system interpreter.  The evidence tree preserves links without
+    following or executing them, so this exact shape is safe to retain.  Keep
+    the exception deliberately narrow: arbitrary virtualenv names, binaries,
+    relative escapes, and non-system targets remain rejected.
+    """
+
+    path = PurePosixPath(relative)
+    return (
+        not path.is_absolute()
+        and ".." not in path.parts
+        and len(path.parts) >= 3
+        and path.parts[-3:] == (".venv", "bin", "python")
+        and _SYSTEM_PYTHON_TARGET.fullmatch(target) is not None
+    )
+
 
 def _mask_keyed_values(text: str) -> str:
     """Mask JSON, YAML, header, and shell-style credential assignments."""
@@ -269,9 +291,10 @@ def mask_tree(root: Path) -> int:
             try:
                 path.resolve(strict=False).relative_to(resolved_root)
             except ValueError as exc:
-                raise RuntimeError(
-                    f"refusing artifact symlink outside output root: {path}"
-                ) from exc
+                if not _safe_external_venv_interpreter_link(relative, link_target):
+                    raise RuntimeError(
+                        f"refusing artifact symlink outside output root: {path}"
+                    ) from exc
             continue
         if (
             not path.is_file()
