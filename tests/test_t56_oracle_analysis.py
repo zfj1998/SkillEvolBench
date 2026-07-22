@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
 
 ROOT = Path(__file__).parents[1]
@@ -20,6 +21,7 @@ COLLECTOR = load_script("build_t56_oracle_study.py")
 AUDITOR = load_script("audit_t56_verifiers.py")
 REPORT = load_script("build_t56_oracle_report.py")
 MATRIX = load_script("watch_t56_oracle_matrix.py")
+QWEN_REPAIR = load_script("watch_qwen_e6_then_e1.py")
 
 
 def run(job: str, run_id: str, *, status: str, updated: str, env: str = "E1") -> dict:
@@ -71,6 +73,58 @@ def test_matrix_watcher_fable_gate_does_not_block_qwen_lane() -> None:
             },
         )
     ]
+
+
+def qwen_repair_watcher(tmp_path: Path):
+    watcher = object.__new__(QWEN_REPAIR.Watcher)
+    watcher.args = SimpleNamespace(cluster="hk-benchmark-dev", poll_sec=45)
+    watcher.state_dir = tmp_path
+    watcher.control_path = tmp_path / "control.json"
+    watcher.control = {}
+    watcher.secrets = []
+    return watcher
+
+
+def test_qwen_repair_watcher_retries_failed_ap_job(tmp_path: Path) -> None:
+    watcher = qwen_repair_watcher(tmp_path)
+    old_key = "00000000-0000-4000-8000-000000000001"
+    (tmp_path / "idempotency_key.txt").write_text(old_key + "\n", encoding="utf-8")
+    QWEN_REPAIR.write_json(
+        tmp_path / "submission.json",
+        {"job_id": "failed-e1", "status": "Running"},
+    )
+    watcher.get_job = lambda job_id: {"job_id": job_id, "status": "Failed"}
+
+    completed = watcher.monitor_e1("failed-e1")
+
+    assert completed is False
+    assert not (tmp_path / "submission.json").exists()
+    assert not (tmp_path / "idempotency_key.txt").exists()
+    assert watcher.control["failed_e1_jobs"][0]["job_id"] == "failed-e1"
+    assert "repair_exhausted" not in watcher.control
+    heartbeat = QWEN_REPAIR.read_json(tmp_path / "heartbeat.json", {})
+    assert heartbeat["watcher_phase"] == "e1_repair_backoff"
+
+
+def test_qwen_repair_watcher_stays_alive_after_retry_budget(tmp_path: Path) -> None:
+    watcher = qwen_repair_watcher(tmp_path)
+    watcher.control["failed_e1_jobs"] = [
+        {"job_id": "failed-1", "status": "Failed"},
+        {"job_id": "failed-2", "status": "Failed"},
+    ]
+    QWEN_REPAIR.write_json(
+        tmp_path / "submission.json",
+        {"job_id": "failed-3", "status": "Running"},
+    )
+    watcher.get_job = lambda job_id: {"job_id": job_id, "status": "Failed"}
+
+    completed = watcher.monitor_e1("failed-3")
+
+    assert completed is False
+    assert watcher.control["repair_exhausted"] is True
+    assert (tmp_path / "submission.json").exists()
+    heartbeat = QWEN_REPAIR.read_json(tmp_path / "heartbeat.json", {})
+    assert heartbeat["watcher_phase"] == "repair_exhausted"
 
 
 def test_run_selection_never_blends_stateful_episodes() -> None:

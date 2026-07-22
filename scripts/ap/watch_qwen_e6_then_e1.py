@@ -27,6 +27,7 @@ OLD_E1_CREATED_AT = "2026-07-22T19:24:05.200"
 AGENTHUB_REF = "a32ea0ecd2daf6661dd3212d973d0f8e222f3a77"
 TERMINAL_STATUSES = {"Succeeded", "Failed", "Cancelled"}
 ACTIVE_STATUSES = {"Queued", "Pending", "Running"}
+MAX_E1_REPAIR_JOBS = 3
 DEFAULT_STATE_DIR = Path(
     "/cpfs02/user/zhangfengji.zfj/skillevolbench_stability_20260722/"
     "watch-qwen-e6-then-e1"
@@ -209,12 +210,19 @@ class Watcher:
         )
 
     def find_existing_e1(self) -> dict[str, Any] | None:
+        failed_job_ids = {
+            str(item.get("job_id"))
+            for item in self.control.get("failed_e1_jobs", [])
+            if isinstance(item, dict) and item.get("job_id")
+        }
         for job in self.list_jobs("E1"):
             created_at = str(job.get("created_at") or "")
             if (
                 self.is_qwen_repair(job)
                 and created_at > OLD_E1_CREATED_AT
                 and job.get("job_id")
+                and job.get("job_id") not in failed_job_ids
+                and job.get("status") in {*ACTIVE_STATUSES, "Succeeded"}
             ):
                 return job
         return None
@@ -240,6 +248,12 @@ class Watcher:
             value = str(uuid.uuid4())
             atomic_write(path, value + "\n")
             return value
+
+    def rotate_idempotency_key(self) -> None:
+        try:
+            (self.state_dir / "idempotency_key.txt").unlink()
+        except FileNotFoundError:
+            pass
 
     def submit_command(self, *, dry_run: bool) -> list[str]:
         command = [
@@ -357,7 +371,7 @@ class Watcher:
     def monitor_e1(self, job_id: str) -> bool:
         job = self.get_job(job_id)
         status = str(job.get("status") or "Unknown")
-        if status in TERMINAL_STATUSES:
+        if status == "Succeeded":
             completed = {
                 "completed_at_utc": utc_now(),
                 "watcher_status": "completed",
@@ -378,6 +392,8 @@ class Watcher:
             )
             self.event("watcher_completed", **completed)
             return True
+        if status in {"Failed", "Cancelled"}:
+            return self.handle_unsuccessful_e1(job_id, status)
         self.heartbeat(
             "monitoring_e1",
             e1_job_id=job_id,
@@ -386,7 +402,77 @@ class Watcher:
         )
         return False
 
+    def handle_unsuccessful_e1(self, job_id: str, status: str) -> bool:
+        failures = self.control.setdefault("failed_e1_jobs", [])
+        if not isinstance(failures, list):
+            failures = []
+            self.control["failed_e1_jobs"] = failures
+        known_ids = {
+            str(item.get("job_id"))
+            for item in failures
+            if isinstance(item, dict) and item.get("job_id")
+        }
+        if job_id not in known_ids:
+            failures.append(
+                {
+                    "job_id": job_id,
+                    "status": status,
+                    "observed_at_utc": utc_now(),
+                }
+            )
+
+        if status == "Cancelled" or len(failures) >= MAX_E1_REPAIR_JOBS:
+            self.control["repair_exhausted"] = True
+            self.control["repair_exhausted_at_utc"] = utc_now()
+            self.save_control()
+            self.heartbeat(
+                "repair_exhausted",
+                e1_job_id=job_id,
+                e1_status=status,
+                next_action="manual review required; watcher remains active",
+            )
+            self.event(
+                "e1_repair_exhausted",
+                e1_job_id=job_id,
+                e1_status=status,
+                failed_repair_jobs=len(failures),
+            )
+            return False
+
+        self.control["next_submit_attempt_epoch"] = time.time() + 300
+        self.control["last_failed_e1_job_id"] = job_id
+        self.control["last_failed_e1_status"] = status
+        self.save_control()
+        try:
+            (self.state_dir / "submission.json").unlink()
+        except FileNotFoundError:
+            pass
+        self.rotate_idempotency_key()
+        self.heartbeat(
+            "e1_repair_backoff",
+            e1_job_id=job_id,
+            e1_status=status,
+            next_action="submit a fresh E1 repair in 300 seconds",
+        )
+        self.event(
+            "e1_repair_retry_scheduled",
+            e1_job_id=job_id,
+            e1_status=status,
+            next_repair_number=len(failures) + 1,
+        )
+        return False
+
     def step(self) -> bool:
+        if self.control.get("repair_exhausted") is True:
+            failures = self.control.get("failed_e1_jobs", [])
+            last = failures[-1] if isinstance(failures, list) and failures else {}
+            self.heartbeat(
+                "repair_exhausted",
+                e1_job_id=str(last.get("job_id") or "") or None,
+                e1_status=str(last.get("status") or "") or None,
+                next_action="manual review required; watcher remains active",
+            )
+            return False
         existing_job_id = self.submitted_e1_job_id()
         if existing_job_id:
             return self.monitor_e1(existing_job_id)
