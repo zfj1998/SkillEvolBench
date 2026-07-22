@@ -258,6 +258,51 @@ CASE_DEFINITIONS = {
             "output.json",
         ],
     },
+    "E3-LS2-T6": {
+        "title": "三次实现的 767 行语义与顺序全对，只因题面允许的 count 字段被 dict 全等拒绝",
+        "kind": "隐藏 record shape 合同（强任务缺陷）",
+        "interpretation": (
+            "Qwen self-generated、Fable self-generated 与 Fable exact-oracle 都只失败同一个名为"
+            "date_sort_correct 的 outcome check，且 natural product order、semantic dedup、aggregate totals"
+            "和全部 process checks 均通过。独立复算把 Fable self 的每条 record 投影到 verifier 期待的"
+            "product_id/date/total_amount 后，767/767 行逐项完全相等；唯一差异是模型按 Required Output"
+            "Schema 中“and the aggregate/count fields produced by the transaction pipeline”加入了"
+            "transaction_count，Fable self 还加入 total_quantity。Hidden check 却用 records == expected"
+            "做完整 dict 全等，而 expected 只保留三个字段，再用误导性的 composite ordering mismatch"
+            "报错。官方 reference 通过删掉 count 字段规避。这里三种 skill 路径的共同 outcome failure"
+            "不是日期排序能力不足，而是题面允许/暗示扩展字段与未声明 exact-shape verifier 冲突。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "process_transaction_log.py",
+            "date_normalizer.py",
+            "product_ordering.py",
+            "dedup_policy.py",
+            "output.json",
+        ],
+    },
+    "E3-LS3-T6": {
+        "title": "Self 的 segment totals 只差未声明数组顺序；Exact 则长分析后完全未修改",
+        "kind": "隐藏数组顺序合同 + 独立的模型执行停滞（强任务缺陷）",
+        "interpretation": (
+            "Fable self-generated 已通过 records_match_ground_truth、coverage、no_fanout 和全部 process"
+            "checks，唯一失败是 category_totals_correct。独立复算显示三个 segment 的数值逐项一致；self"
+            "按题面列举/业务顺序 enterprise→mid_market→growth 输出，verifier 用 sort_values('segment')"
+            "生成 enterprise→growth→mid_market 后直接比较 list，题面没有声明数组顺序。这个 0.9375"
+            "是纯序列形状假阴性。Fable exact-oracle 则是另一种原因：它实际读取两个指定 curated skills，"
+            "消耗 54,551 input / 17,351 output tokens，执行 12 次 read 和 2 次只读 bash，却没有任何"
+            "edit/write，保留 starter 后大量失败；轨迹显示它被额外 alias 与 coverage 定义的歧义拖入"
+            "反复分析。Exact failure 因而主要是模型执行停滞，不能反证 oracle 内容；同时也不能用 exact"
+            "停滞来掩盖 self 路径中已证实的 hidden order contract。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "company_normalizer.py",
+            "dedup_policy.py",
+            "process_customer_totals.py",
+            "output.json",
+        ],
+    },
     "E3-LS4-T6": {
         "title": "Oracle 的数值与语义正确，却因增加题面要求的 audit 字段被判 outcome 失败",
         "kind": "隐藏输出形状合同（强任务缺陷）",
@@ -1205,6 +1250,161 @@ def reproduce_e3_ls5_active_counts(task_root: Path) -> dict[str, Any]:
     }
 
 
+def reproduce_e3_ls2_record_shape(
+    task_root: Path, artifact_task_root: Path
+) -> dict[str, Any]:
+    """Show that the alleged sort mismatch is only extra record fields."""
+
+    import pandas as pd
+
+    csv_path = task_root / "environment" / "transaction_log.csv"
+    output_path = artifact_task_root / "output.json"
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    observed = payload.get("records") or []
+
+    frame = pd.read_csv(csv_path, dtype={"product_id": str})
+    frame["parsed_date"] = pd.to_datetime(frame["date"], errors="coerce")
+    frame["amount_clean"] = (
+        frame["amount"]
+        .astype(str)
+        .str.replace("$", "", regex=False)
+        .str.replace(",", "", regex=False)
+        .astype(float)
+    )
+    deduplicated = frame.drop_duplicates(
+        subset=[
+            "date",
+            "product_id",
+            "customer_id",
+            "amount",
+            "quantity",
+            "channel",
+        ]
+    ).copy()
+    expected = (
+        deduplicated.groupby(["parsed_date", "product_id"], as_index=False)[
+            "amount_clean"
+        ]
+        .sum()
+        .rename(columns={"amount_clean": "total_amount"})
+    )
+    expected["_product_order"] = expected["product_id"].map(
+        lambda value: int(str(value).strip().removeprefix("P"))
+    )
+    expected = expected.sort_values(
+        ["parsed_date", "_product_order"],
+        ascending=[True, True],
+        kind="mergesort",
+    ).reset_index(drop=True)
+    expected["date"] = expected["parsed_date"].dt.strftime("%Y-%m-%d")
+    expected_records = expected.drop(
+        columns=["_product_order", "parsed_date"]
+    ).to_dict(orient="records")
+    expected_keys = ("product_id", "date", "total_amount")
+    projected = [
+        {key: record.get(key) for key in expected_keys} for record in observed
+    ]
+    observed_keys = sorted(observed[0]) if observed else []
+    return {
+        "method": (
+            "Recompute the verifier's semantic dedup, aggregation, and composite "
+            "sort; then compare both the full dictionaries and a projection onto "
+            "the three verifier/reference fields."
+        ),
+        "observed_rows": len(observed),
+        "expected_rows": len(expected_records),
+        "full_record_dicts_equal": observed == expected_records,
+        "projected_semantic_records_equal": projected == expected_records,
+        "observed_record_keys": observed_keys,
+        "verifier_expected_keys": list(expected_keys),
+        "extra_record_keys": sorted(set(observed_keys) - set(expected_keys)),
+        "artifact_output_path": str(output_path.resolve()),
+        "fixture_path": str(csv_path.resolve()),
+    }
+
+
+def reproduce_e3_ls3_category_order(
+    task_root: Path, artifact_task_root: Path
+) -> dict[str, Any]:
+    """Recompute category totals and isolate the list-order-only mismatch."""
+
+    import pandas as pd
+
+    environment = task_root / "environment"
+    output_path = artifact_task_root / "output.json"
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    observed = payload.get("category_totals") or []
+
+    def canonical(value: object) -> str:
+        normalized = re.sub(
+            r"[^a-z0-9]+", " ", str(value).strip().lower()
+        )
+        normalized = re.sub(r"\s+", " ", normalized).strip()
+        aliases = {
+            "acme": "acme corp",
+            "acme corporation": "acme corp",
+            "globaltech": "global tech",
+            "premier sol": "premier solutions",
+        }
+        return aliases.get(normalized, normalized)
+
+    def segment(value: float) -> str:
+        if value >= 3_500_000:
+            return "enterprise"
+        if value >= 1_500_000:
+            return "mid_market"
+        return "growth"
+
+    crm = pd.read_csv(environment / "crm_contacts.csv")
+    crm["canonical_company"] = crm["company_name"].map(canonical)
+    crm["segment"] = crm["annual_revenue"].astype(float).map(segment)
+    crm = crm.drop_duplicates(subset=["canonical_company"], keep="first")
+    ratings = pd.read_csv(environment / "external_ratings.csv")
+    ratings["canonical_company"] = ratings["company"].map(canonical)
+    ratings = ratings.drop_duplicates(
+        subset=["canonical_company"], keep="first"
+    )
+    erp = pd.read_csv(environment / "erp_orders.csv")
+    erp["canonical_company"] = erp["company_name"].map(canonical)
+    erp["order_amount"] = erp["order_amount"].astype(float)
+    erp = erp.groupby("canonical_company", as_index=False)["order_amount"].sum()
+    merged = crm.merge(
+        ratings, on="canonical_company", how="left", validate="1:1"
+    ).merge(erp, on="canonical_company", how="left", validate="1:1")
+    merged["order_amount"] = merged["order_amount"].fillna(0.0)
+    expected = (
+        merged.groupby("segment", as_index=False)["order_amount"]
+        .sum()
+        .rename(columns={"order_amount": "total_order_amount"})
+        .sort_values("segment", kind="mergesort")
+        .reset_index(drop=True)
+        .to_dict(orient="records")
+    )
+    observed_by_segment = {
+        row["segment"]: row["total_order_amount"] for row in observed
+    }
+    expected_by_segment = {
+        row["segment"]: row["total_order_amount"] for row in expected
+    }
+    return {
+        "method": (
+            "Recompute the official category totals; compare the ordered JSON "
+            "array and the same values indexed by segment."
+        ),
+        "ordered_lists_equal": observed == expected,
+        "values_equal_when_keyed_by_segment": (
+            observed_by_segment == expected_by_segment
+        ),
+        "observed_segment_order": [row["segment"] for row in observed],
+        "verifier_expected_segment_order": [
+            row["segment"] for row in expected
+        ],
+        "observed_totals": observed,
+        "verifier_expected_totals": expected,
+        "artifact_output_path": str(output_path.resolve()),
+    }
+
+
 def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Path) -> list[dict[str, Any]]:
     audit_by_id = {row["task_id"]: row for row in audit.get("tasks", [])}
     result = []
@@ -1253,6 +1453,9 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                 "failed_outcome_tests": row.get("failed_outcome_tests") or [],
                 "failed_process_tests": row.get("failed_process_tests") or [],
                 "files": files,
+                "artifact_task_path": (
+                    str(task_root.resolve()) if rel and task_root.is_dir() else None
+                ),
                 "trajectory_path": (
                     str(trajectory_path.resolve())
                     if trajectory_path and trajectory_path.is_file()
@@ -1298,6 +1501,32 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
         reproduction: dict[str, Any] = {}
         if task_id == "E3-LS5-T5" and task_root:
             reproduction = reproduce_e3_ls5_active_counts(task_root)
+        self_artifact_path = next(
+            (
+                Path(str(observation["artifact_task_path"]))
+                for observation in observations
+                if observation.get("condition") == "self_generated"
+                and observation.get("model") == "sig-fable"
+                and observation.get("artifact_task_path")
+            ),
+            None,
+        )
+        if (
+            task_id == "E3-LS2-T6"
+            and task_root
+            and self_artifact_path
+        ):
+            reproduction = reproduce_e3_ls2_record_shape(
+                task_root, self_artifact_path
+            )
+        if (
+            task_id == "E3-LS3-T6"
+            and task_root
+            and self_artifact_path
+        ):
+            reproduction = reproduce_e3_ls3_category_order(
+                task_root, self_artifact_path
+            )
         result.append({
             "task_id": task_id,
             **definition,
@@ -2921,6 +3150,8 @@ def conclusions(
                 "E3-LS4-T6 对 source_null_summary 做隐藏 dict 全等，把题面要求的额外 marker audit 当错误；"
                 "E3-LS5-T5 的 generator 明确生成 700 active 并把 1,2,3 标为 bad_amount，verifier 却复用"
                 "宽松 parser 将其当 123 并硬认 706，导致语义正确的 exact 实现失败；"
+                "E3-LS2-T6 的 767 行内容和排序完全正确，仅因题面允许的 count 字段被 record dict 全等"
+                "拒绝；E3-LS3-T6 的 segment totals 数值一致，仅数组顺序未匹配未声明的字母序；"
                 "E4-LS1-T5 的题面输出路径与 verifier 的父目录合同冲突，"
                 "语义正确输出被全部判为 outcome 失败；E6-LS4-T6 的四人工作时段没有共同正长度交集，"
                 "verifier 却要求题面未声明的固定时间和数组顺序。90/90 reference pass 只能证明官方脚本能满足"
