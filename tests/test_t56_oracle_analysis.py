@@ -850,6 +850,20 @@ def test_case_study_recovers_final_edits_from_trajectory(tmp_path: Path) -> None
     assert activity["bash_commands"] == []
 
 
+def test_e3_ls5_reproduction_exposes_generator_verifier_conflict() -> None:
+    task_root = ROOT / "benchmark" / "tasks" / "correct-syntax-wrong-logic-trap"
+
+    result = REPORT.reproduce_e3_ls5_active_counts(task_root)
+
+    assert result["generator_declared_active"] == 700
+    assert result["generator_labels_1_2_3_bad"] is True
+    assert result["loose_parser_active"] == 706
+    assert result["strict_parser_active"] == 700
+    assert result["extra_active_from_loose_parser"] == 6
+    assert result["malformed_qualified_rows_under_loose_parser"] == 38
+    assert result["malformed_qualified_rows_under_strict_parser"] == 0
+
+
 def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path) -> None:
     tasks_root = tmp_path / "benchmark/tasks"
     skill_root = tmp_path / "benchmark/skills/retry"

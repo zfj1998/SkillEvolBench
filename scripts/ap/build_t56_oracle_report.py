@@ -8,8 +8,10 @@ import html
 import json
 import math
 import re
+import sqlite3
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from statistics import median
 from typing import Any
@@ -254,6 +256,61 @@ CASE_DEFINITIONS = {
             "merge_user_spending.py",
             "schema_cleaner.py",
             "output.json",
+        ],
+    },
+    "E3-LS4-T6": {
+        "title": "Oracle 的数值与语义正确，却因增加题面要求的 audit 字段被判 outcome 失败",
+        "kind": "隐藏输出形状合同（强任务缺陷）",
+        "interpretation": (
+            "Fable self-generated 与 exact-oracle 都正确实现了 supplier/column-aware null policy：A/B 的 0"
+            "保留，C 的 price=0 判缺失但 stock=0 保留，-1/-999 按字典归一化；两者的顶层汇总和"
+            "category totals 相同。Exact 还逐 marker 统计 normalized_by_marker，并把它加入每个 source 的"
+            "source_null_summary，正面满足题面“enough audit information”及“show that all source-specific"
+            "markers were normalized”。唯一 outcome 失败来自 hidden test 对整个 source_null_summary 做 dict"
+            "全等，任何额外 audit key 都会触发 per-source null summary mismatch；题面没有声明这个对象"
+            "禁止扩展。Self 把同类明细放在另一个 null_standardization_audit 顶层字段，碰巧避开全等比较。"
+            "Exact 的 0.8125 因而不是 oracle skill 的功能伤害，而是合理输出布局撞上隐藏 schema；process"
+            "侧两者还共同被 null_policy.py 的脆弱字符串切片误判。该题可以测试 null 语义，但当前 verifier"
+            "不能把合法的 audit 扩展与错误结果区分开。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "null_policy.py",
+            "merge_inventory.py",
+            "quality_summary.py",
+            "merge_supplier_inventory.py",
+        ],
+        "task_source_files": [
+            "environment/data_dictionary.md",
+            "environment/quality_summary.py",
+        ],
+    },
+    "E3-LS5-T5": {
+        "title": "Oracle 模型修对 malformed amount 得到 700，却被错误 ground truth 强制为 706",
+        "kind": "数据生成意图与 verifier ground truth 冲突（强任务缺陷）",
+        "interpretation": (
+            "任务生成器在 line 76–79 把字符串 1,2,3 明确列入 bad_amount()，并在 line 222–223 明确"
+            "抽取 700 个 active、300 个 inactive logical customers。Fable exact-oracle 读到该证据后，"
+            "把 parse_amount 改为只接受合法千分位分组；运行得到 logical=1000、active=700、inactive=300，"
+            "并独立重算 active set 完全一致。Self-generated 沿用 starter 的 replace(',', '')，会把 malformed"
+            "1,2,3 解析成 123，因而把 6 个本应 inactive 的客户误判 active。Hidden verifier 复制了同一宽松"
+            "parser，并硬断言 expected active == 706；官方 reference 也只修 activity_guard、不修 parser，"
+            "所以错误实现反而通过。对固定 store.db 的独立复算结果是：宽松 parser=706，严格 parser=700；"
+            "共有 38 条 malformed rows，最终额外激活 6 个 inactive customers。这里 exact-oracle 的 outcome"
+            "harm 是 benchmark ground truth 与 generator 语义冲突，不是模型能力下降，也不是 curated skill"
+            "质量不足；这是“oracle 仍失败”必须逐题查资产、不能直接归因为题难的最强案例之一。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "customer_identity.py",
+            "order_validity.py",
+            "activity_guard.py",
+            "count_active_customers.py",
+        ],
+        "task_source_files": [
+            "environment/generate_data.py",
+            "environment/order_validity.py",
+            "environment/README.md",
         ],
     },
     "E4-LS1-T5": {
@@ -1033,6 +1090,121 @@ def trajectory_final_edits(path: Path) -> list[dict[str, str]]:
     return trajectory_tool_activity(path)["final_edits"]
 
 
+def reproduce_e3_ls5_active_counts(task_root: Path) -> dict[str, Any]:
+    """Recompute the malformed-amount ground-truth conflict independently."""
+
+    database = task_root / "environment" / "store.db"
+    generator = task_root / "environment" / "generate_data.py"
+    generator_text = generator.read_text(encoding="utf-8", errors="replace")
+
+    zero_width = ("\u200b", "\u200c", "\u200d", "\ufeff")
+
+    def normalize_email(value: object) -> str | None:
+        if value is None:
+            return None
+        text = str(value)
+        for character in zero_width:
+            text = text.replace(character, "")
+        text = text.strip().lower()
+        return None if text in {"", "null", "none", "na"} else text
+
+    def valid_status(value: object) -> bool:
+        return str(value).strip().lower() in {"paid", "shipped"}
+
+    def valid_date(value: object) -> bool:
+        if value is None:
+            return False
+        for format_string in ("%Y-%m-%d", "%Y/%m/%d", "%m/%d/%Y"):
+            try:
+                datetime.strptime(str(value).strip(), format_string)
+                return True
+            except ValueError:
+                pass
+        return False
+
+    strict_pattern = re.compile(
+        r"^(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?$"
+    )
+
+    def amount(value: object, *, strict: bool) -> Decimal | None:
+        if value is None:
+            return None
+        text = str(value).strip().replace("$", "").strip()
+        if not text or (strict and strict_pattern.fullmatch(text) is None):
+            return None
+        try:
+            parsed = Decimal(text.replace(",", ""))
+        except InvalidOperation:
+            return None
+        return parsed if parsed > 0 else None
+
+    connection = sqlite3.connect(database)
+    connection.row_factory = sqlite3.Row
+    try:
+        customers = connection.execute(
+            "SELECT id, email FROM customers ORDER BY id"
+        ).fetchall()
+        orders = connection.execute(
+            "SELECT customer_id, amount, order_date, status FROM orders ORDER BY id"
+        ).fetchall()
+    finally:
+        connection.close()
+
+    by_email: dict[str, int] = {}
+    canonical: dict[int, int] = {}
+    for row in customers:
+        customer_id = int(row["id"])
+        email = normalize_email(row["email"])
+        if email is None:
+            canonical[customer_id] = customer_id
+        else:
+            canonical[customer_id] = by_email.setdefault(email, customer_id)
+
+    def active_ids(*, strict: bool) -> tuple[set[int], list[int]]:
+        active: set[int] = set()
+        malformed_qualified: list[int] = []
+        for row in orders:
+            canonical_id = canonical.get(int(row["customer_id"]))
+            if canonical_id is None:
+                continue
+            if not valid_status(row["status"]) or not valid_date(row["order_date"]):
+                continue
+            if amount(row["amount"], strict=strict) is None:
+                continue
+            active.add(canonical_id)
+            if row["amount"] == "1,2,3":
+                malformed_qualified.append(canonical_id)
+        return active, malformed_qualified
+
+    loose, malformed_qualified = active_ids(strict=False)
+    strict, strict_malformed = active_ids(strict=True)
+    sample_match = re.search(
+        r"active_indices\s*=\s*set\(random\.sample\([^\n]+,\s*(\d+)\)\)",
+        generator_text,
+    )
+    bad_amount_body = generator_text.split("def bad_amount", 1)[-1].split(
+        "def status_variant", 1
+    )[0]
+    return {
+        "method": (
+            "Read store.db directly; normalize identities; compare the starter/"
+            "verifier comma-stripping parser with a valid-thousands-group parser."
+        ),
+        "generator_declared_active": (
+            int(sample_match.group(1)) if sample_match else None
+        ),
+        "generator_labels_1_2_3_bad": '"1,2,3"' in bad_amount_body,
+        "loose_parser_active": len(loose),
+        "strict_parser_active": len(strict),
+        "extra_active_from_loose_parser": len(loose - strict),
+        "malformed_qualified_rows_under_loose_parser": len(malformed_qualified),
+        "malformed_qualified_unique_customers": len(set(malformed_qualified)),
+        "malformed_qualified_rows_under_strict_parser": len(strict_malformed),
+        "database_path": str(database.resolve()),
+        "generator_path": str(generator.resolve()),
+    }
+
+
 def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Path) -> list[dict[str, Any]]:
     audit_by_id = {row["task_id"]: row for row in audit.get("tasks", [])}
     result = []
@@ -1123,6 +1295,9 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                             ),
                         }
                     )
+        reproduction: dict[str, Any] = {}
+        if task_id == "E3-LS5-T5" and task_root:
+            reproduction = reproduce_e3_ls5_active_counts(task_root)
         result.append({
             "task_id": task_id,
             **definition,
@@ -1140,6 +1315,7 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                 else ""
             ),
             "task_source_files": task_source_files,
+            "reproduction": reproduction,
             "process_verifier_path": str(process_path) if process_path else None,
             "process_verifier": (
                 process_path.read_text(encoding="utf-8", errors="replace")
@@ -2742,6 +2918,9 @@ def conclusions(
                 "E2-LS1-T6 的项目自带 public test 要求 3 个结果，但四条 fixture 都是有效输入，官方"
                 "reference 产生 4 个结果并因此无法通过该 public test，正式 Fable self/exact 都被矛盾信号"
                 "拖入无修改的分析停滞；"
+                "E3-LS4-T6 对 source_null_summary 做隐藏 dict 全等，把题面要求的额外 marker audit 当错误；"
+                "E3-LS5-T5 的 generator 明确生成 700 active 并把 1,2,3 标为 bad_amount，verifier 却复用"
+                "宽松 parser 将其当 123 并硬认 706，导致语义正确的 exact 实现失败；"
                 "E4-LS1-T5 的题面输出路径与 verifier 的父目录合同冲突，"
                 "语义正确输出被全部判为 outcome 失败；E6-LS4-T6 的四人工作时段没有共同正长度交集，"
                 "verifier 却要求题面未声明的固定时间和数组顺序。90/90 reference pass 只能证明官方脚本能满足"
@@ -3563,6 +3742,15 @@ def render_markdown(data: dict[str, Any]) -> str:
                 f"outcome={obs['outcome']}，process={obs['process']}；"
                 f"outcome failures `{outcome_failures}`；process failures `{process_failures}`。"
             )
+        if case.get("reproduction"):
+            lines += [
+                "",
+                "独立复算证据：",
+                "",
+                "```json",
+                json.dumps(case["reproduction"], ensure_ascii=False, indent=2),
+                "```",
+            ]
         lines.append("")
     lines += [
         "## 可靠性限制与下一步",
@@ -3675,7 +3863,7 @@ function renderTasks(){{let q=taskSearch.value.toLowerCase();let rows=D.comparis
 function showTask(model,id){{let x=D.comparisons.find(x=>x.model===model&&x.task_id===id);let v=D.measurement_validity.records.find(v=>v.model===model&&v.task_id===id);let blocks=Object.entries(x.conditions).map(([name,c])=>`<h3>${{zh[name]}}</h3>${{c?`<p>${{status(c)}} score=${{c.score??'—'}} · job=${{esc(c.job_id)}}</p><p class="small">实际读取 skills: ${{esc(c.skills_actually_used.join(', ')||'none')}}<br>Oracle 内容证明: ${{esc(Object.entries(c.oracle_content_verification||{{}}).map(([k,v])=>k+': '+v).join(', ')||'—')}}<br>record: ${{esc(c.record_path)}}<br>trajectory: ${{esc(c.trajectory_path)}}</p><details><summary>失败测试 (${{c.failed_tests.length}})</summary><pre>${{esc(JSON.stringify(c.failed_tests,null,2))}}</pre></details>`:'<p class="small">尚无结果</p>'}}`).join('');let validityBlock=v?`<div class="case"><h3>历史 Skill 测量有效性：${{esc(validityZh[v.category]||v.category)}}</h3><p>${{v.eligible_for_causal_skill_claim?'该题可进入历史 skill 的四条件因果检验。':'该题当前不能把成功归因于 T1–T3 形成的历史 skill。'}}</p><p class="small">受控概念：${{esc(v.controlled_concepts.join(', ')||'—')}}<br>T1–T3 历史命中：${{v.history_visible_count}} · 当前题面明示：${{v.instruction_explicit_count}} · generated 覆盖：${{v.generated_coverage}} · oracle 覆盖：${{v.oracle_coverage}}</p></div>`:'';drawerBody.innerHTML=`<h2>${{x.task_id}}</h2><p>${{esc(x.task_slug)}} · T${{x.tier}} · ${{x.environment_id}}</p><div class="conclusion ${{x.causal.complete?'good':'pending'}}"><h3>${{esc(x.causal.label)}} · ${{esc(x.causal.pattern||'')}}</h3>${{esc(x.causal.explanation)}}</div>${{validityBlock}}<p><b>需要的 skills</b><br>${{esc(x.required_skills.join(', ')||x.primary_skill)}}</p>${{blocks}}`;drawer.classList.add('open')}}
 let a=D.verifier_audit.summary;audit.innerHTML=`<div class="card"><span class="label">过程 / 功能 checks</span><b>${{a.process_checks_total}} / ${{a.outcome_checks_total}}</b></div><p><b>${{a.tasks_with_literal_or_regex_process_checks}}/90</b> 含源码字面量或正则检查；<b>${{a.tasks_with_effective_process_weight_50_percent}}/90</b> 的过程权重为 50%。</p><p>形态敏感度：${{Object.entries(a.process_shape_sensitivity).map(([k,v])=>`${{k}}=${{v}}`).join(' · ')}}</p><h3>Process-only 分层</h3>${{D.verifier_shape_outcomes.filter(x=>x.n).map(x=>`<div class="small">${{zh[x.condition]}} · ${{x.shape_risk}} · process-only ${{x.process_only_failures}}/${{x.n}} · outcome ${{x.outcome_passes}}/${{x.n}} · process ${{x.process_passes}}/${{x.n}}</div>`).join('')}}`;
 skills.innerHTML=Object.entries(D.skills.by_model).map(([m,x])=>`<div class="case"><h3>${{m}}</h3><p>skill 对数 <b>${{x.n}}</b> · 改名 ${{x.renamed}} · 完全相同 ${{x.exact_equal}}</p><div class="small">中位 word Jaccard ${{x.median_word_jaccard?.toFixed(3)??'—'}} · 长度比 ${{x.median_length_ratio?.toFixed(2)??'—'}}</div></div>`).join('')+'<p class="small">词面相似度低只说明表达和覆盖范围不同，不能单独证明 skill 质量差；最终要结合 matched oracle rescue。</p>';
-cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}}<br><span class="small">Outcome failures: ${{o.failed_outcome_tests.map(t=>t.name).join(', ')||'无'}}<br>Process failures: ${{o.failed_process_tests.map(t=>t.name).join(', ')||'无'}}<br>Agent tokens: input=${{o.agent_result.n_input_tokens??'—'}} output=${{o.agent_result.n_output_tokens??'—'}} · tools: ${{Object.entries(o.tool_counts).map(([k,v])=>k+'='+v).join(', ')||'none'}} · explicit mutation calls=${{o.mutation_call_count}}</span></p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}${{o.bash_commands.length?`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / bash commands (${{o.bash_commands.length}})</summary><div class="small">${{esc(o.trajectory_path)}}</div><pre>${{esc(o.bash_commands.join(String.fromCharCode(10,10)))}}</pre></details>`:''}}${{o.final_edits.length?`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / trajectory 中的最终 edits (${{o.final_edits.length}})</summary><div class="small">${{esc(o.trajectory_path)}}</div><pre>${{esc(o.final_edits.map(e=>`### ${{e.file_path}}\n${{e.new}}`).join(String.fromCharCode(10,10)))}}</pre></details>`:''}}`).join('')}}${{x.task_source_files.map(f=>`<details><summary>任务资产 / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}<details><summary>任务正文</summary><div class="small">${{esc(x.instruction_path)}}</div><pre>${{esc(x.instruction)}}</pre></details><details><summary>Outcome verifier 源码</summary><div class="small">${{esc(x.outcome_verifier_path)}}</div><pre>${{esc(x.outcome_verifier)}}</pre></details><details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details><details><summary>官方 reference solution</summary><div class="small">${{esc(x.reference_solution_path)}}</div><pre>${{esc(x.reference_solution)}}</pre></details></article>`).join('');
+cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}}<br><span class="small">Outcome failures: ${{o.failed_outcome_tests.map(t=>t.name).join(', ')||'无'}}<br>Process failures: ${{o.failed_process_tests.map(t=>t.name).join(', ')||'无'}}<br>Agent tokens: input=${{o.agent_result.n_input_tokens??'—'}} output=${{o.agent_result.n_output_tokens??'—'}} · tools: ${{Object.entries(o.tool_counts).map(([k,v])=>k+'='+v).join(', ')||'none'}} · explicit mutation calls=${{o.mutation_call_count}}</span></p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}${{o.bash_commands.length?`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / bash commands (${{o.bash_commands.length}})</summary><div class="small">${{esc(o.trajectory_path)}}</div><pre>${{esc(o.bash_commands.join(String.fromCharCode(10,10)))}}</pre></details>`:''}}${{o.final_edits.length?`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / trajectory 中的最终 edits (${{o.final_edits.length}})</summary><div class="small">${{esc(o.trajectory_path)}}</div><pre>${{esc(o.final_edits.map(e=>`### ${{e.file_path}}\n${{e.new}}`).join(String.fromCharCode(10,10)))}}</pre></details>`:''}}`).join('')}}${{Object.keys(x.reproduction||{{}}).length?`<details open><summary>独立复算证据</summary><pre>${{esc(JSON.stringify(x.reproduction,null,2))}}</pre></details>`:''}}${{x.task_source_files.map(f=>`<details><summary>任务资产 / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}<details><summary>任务正文</summary><div class="small">${{esc(x.instruction_path)}}</div><pre>${{esc(x.instruction)}}</pre></details><details><summary>Outcome verifier 源码</summary><div class="small">${{esc(x.outcome_verifier_path)}}</div><pre>${{esc(x.outcome_verifier)}}</pre></details><details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details><details><summary>官方 reference solution</summary><div class="small">${{esc(x.reference_solution_path)}}</div><pre>${{esc(x.reference_solution)}}</pre></details></article>`).join('');
 </script></body></html>'''
 
 
