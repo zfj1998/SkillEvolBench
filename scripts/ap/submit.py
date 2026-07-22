@@ -284,6 +284,15 @@ class Submission:
 def build_submission(
     args: argparse.Namespace, environ: Mapping[str, str]
 ) -> Submission:
+    if args.reference_solution_audit:
+        if args.scope not in {"environment", "full"}:
+            raise ValueError(
+                "--reference-solution-audit requires --scope environment or full"
+            )
+        if args.evaluation_only_t4_t6 or args.oracle_skill_view:
+            raise ValueError(
+                "--reference-solution-audit is mutually exclusive with model diagnostics"
+            )
     if args.model_api_protocol == "anthropic" and args.harbor_agent != "opencode":
         raise ValueError(
             "--model-api-protocol anthropic currently requires --harbor-agent opencode"
@@ -292,14 +301,38 @@ def build_submission(
         raise ValueError(
             "--model-proxy-enabled requires --model-api-protocol anthropic"
         )
+    if args.evaluation_only_t4_t6:
+        if args.scope not in {"environment", "full"}:
+            raise ValueError(
+                "--evaluation-only-t4-t6 requires --scope environment or full"
+            )
+        if args.within_env_replay is True or args.replay_eval is True:
+            raise ValueError(
+                "--evaluation-only-t4-t6 requires replay disabled"
+            )
+    if args.oracle_skill_view:
+        if not args.evaluation_only_t4_t6:
+            raise ValueError(
+                "--oracle-skill-view requires --evaluation-only-t4-t6"
+            )
+        if args.baseline_name != "curated_static":
+            raise ValueError(
+                "--oracle-skill-view requires --baseline-name curated_static"
+            )
     ap_api_key = _required(environ.get("AP_API_KEY"), "AP_API_KEY")
-    model_api_key = _required(environ.get("MODEL_API_KEY"), "MODEL_API_KEY")
-    model_base_urls = _model_base_urls(args, environ)
-    model_base_url = model_base_urls[0]
-    model = _required(
-        args.model or environ.get("MODEL_NAME") or environ.get("MODEL"),
-        "MODEL_NAME (or MODEL)",
-    )
+    if args.reference_solution_audit:
+        model_api_key = "NOT_REQUIRED"
+        model_base_urls = ["http://reference-audit.invalid/v1"]
+        model_base_url = model_base_urls[0]
+        model = "harbor-oracle"
+    else:
+        model_api_key = _required(environ.get("MODEL_API_KEY"), "MODEL_API_KEY")
+        model_base_urls = _model_base_urls(args, environ)
+        model_base_url = model_base_urls[0]
+        model = _required(
+            args.model or environ.get("MODEL_NAME") or environ.get("MODEL"),
+            "MODEL_NAME (or MODEL)",
+        )
     agenthub_ref = _required(
         args.agenthub_ref or environ.get("AP_AGENTHUB_REF"),
         "AP_AGENTHUB_REF (or --agenthub-ref)",
@@ -331,6 +364,10 @@ def build_submission(
         "runtime_timeout_sec": args.runtime_timeout_sec,
         "episode_retry_max_attempts": args.episode_retry_max_attempts,
         "episode_retry_backoff_sec": args.episode_retry_backoff_sec,
+        "evaluation_only_t4_t6": args.evaluation_only_t4_t6,
+        "oracle_skill_view": args.oracle_skill_view,
+        "reference_solution_audit": args.reference_solution_audit,
+        "reference_audit_concurrency": args.reference_audit_concurrency,
     }
     # Tri-state CLI flags: omission means "use the selected baseline's yaml".
     # In particular, the same-session baseline intentionally disables replay;
@@ -390,15 +427,26 @@ def build_submission(
         command.extend(
             ["--dataset", dataset_version, "--concurrency", str(args.concurrency)]
         )
-        if len(model_base_urls) > 1:
+        if len(model_base_urls) > 1 and not args.reference_solution_audit:
             command.extend(
                 [
                     "--model-base-url-collection",
                     json.dumps(model_base_urls, separators=(",", ":")),
                 ]
             )
-        command.append("--enable-post-process")
-        description = f"full six-environment dataset {dataset_version}"
+        if args.reference_solution_audit:
+            description = (
+                "non-scoreable six-environment official reference-solution audit "
+                f"for dataset {dataset_version}"
+            )
+        elif not args.evaluation_only_t4_t6:
+            command.append("--enable-post-process")
+            description = f"full six-environment dataset {dataset_version}"
+        else:
+            description = (
+                "non-scoreable six-environment T4-T6 diagnostic "
+                f"for dataset {dataset_version}"
+            )
     else:
         environment_id = (
             args.family_id.split("-", 1)[0]
@@ -414,6 +462,16 @@ def build_submission(
             description = (
                 f"non-scoreable {args.family_id} T1-T6 family smoke "
                 f"in one stateful session sequence"
+            )
+        elif args.reference_solution_audit:
+            description = (
+                f"non-scoreable {environment_id} official reference-solution "
+                "audit for T4-T6"
+            )
+        elif args.evaluation_only_t4_t6:
+            description = (
+                f"non-scoreable {environment_id} T4-T6 diagnostic "
+                f"(oracle_skill_view={args.oracle_skill_view})"
             )
         else:
             description = f"complete {environment_id} environment episode"
@@ -523,6 +581,36 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--strategy-name", default="chain")
     parser.add_argument("--order-seed", choices=("A", "B", "C"), default="A")
     parser.add_argument(
+        "--evaluation-only-t4-t6",
+        action="store_true",
+        help=(
+            "run only the 15 T4-T6 primary tasks for a matched, non-scoreable "
+            "solvability diagnostic"
+        ),
+    )
+    parser.add_argument(
+        "--oracle-skill-view",
+        action="store_true",
+        help=(
+            "mount exactly primary_skill for T4/T5 and required_skills for T6; "
+            "requires curated_static and --evaluation-only-t4-t6"
+        ),
+    )
+    parser.add_argument(
+        "--reference-solution-audit",
+        action="store_true",
+        help=(
+            "run checked-in solution/solve.sh with Harbor's oracle agent "
+            "against all 15 T4-T6 tasks; no model endpoint is used"
+        ),
+    )
+    parser.add_argument(
+        "--reference-audit-concurrency",
+        type=int,
+        default=2,
+        help="concurrent Harbor oracle trials within each AP job (1-4)",
+    )
+    parser.add_argument(
         "--learning-max-attempts",
         type=int,
         default=3,
@@ -574,11 +662,12 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--concurrency",
         type=int,
-        default=6,
+        default=1,
         help=(
             "maximum concurrent environment jobs for a full group (1-6); "
-            "six maps to at most three environment sessions per endpoint "
-            "when two model URLs are supplied"
+            "the fail-safe default is 1 because API-key and endpoint quotas "
+            "must be measured before raising it; pass 6 explicitly for a "
+            "validated two-endpoint deployment"
         ),
     )
     parser.add_argument("--queue", default=os.environ.get("AP_QUEUE_ID", ""))
@@ -678,6 +767,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--episode-retry-backoff-sec must be between 0 and 300")
     if not 1 <= args.concurrency <= 6:
         parser.error("--concurrency must be between 1 and 6")
+    if not 1 <= args.reference_audit_concurrency <= 4:
+        parser.error("--reference-audit-concurrency must be between 1 and 4")
     if args.probe_timeout <= 0:
         parser.error("--probe-timeout must be > 0")
     if not 5 <= args.model_probe_timeout_sec <= 300:
@@ -685,21 +776,23 @@ def main(argv: list[str] | None = None) -> int:
     if not 1 <= args.model_proxy_retry_attempts <= 10:
         parser.error("--model-proxy-retry-attempts must be between 1 and 10")
     if not 30 <= args.model_proxy_request_timeout_sec <= 3600:
-        parser.error(
-            "--model-proxy-request-timeout-sec must be between 30 and 3600"
-        )
+        parser.error("--model-proxy-request-timeout-sec must be between 30 and 3600")
 
     try:
         submission = build_submission(args, os.environ)
-        model_api_key = _required(os.environ.get("MODEL_API_KEY"), "MODEL_API_KEY")
-        model_base_urls = _model_base_urls(args, os.environ)
-        model = _required(
-            args.model or os.environ.get("MODEL_NAME") or os.environ.get("MODEL"),
-            "MODEL_NAME (or MODEL)",
-        )
-        if args.skip_local_probe:
+        if args.reference_solution_audit:
+            print("Reference-solution audit: model probe is not applicable")
+        elif args.skip_local_probe:
             print("Local model probe skipped; AP host and DinD probes remain mandatory")
         else:
+            model_api_key = _required(
+                os.environ.get("MODEL_API_KEY"), "MODEL_API_KEY"
+            )
+            model_base_urls = _model_base_urls(args, os.environ)
+            model = _required(
+                args.model or os.environ.get("MODEL_NAME") or os.environ.get("MODEL"),
+                "MODEL_NAME (or MODEL)",
+            )
             available_by_url = [
                 probe_model(
                     base_url=model_base_url,

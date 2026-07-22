@@ -98,12 +98,105 @@ def test_full_submission_uses_dataset_and_no_smoke_truncation() -> None:
     assert "--dry-run" not in submission.command
 
 
-def test_full_submission_defaults_to_six_concurrent_jobs() -> None:
+def test_full_submission_defaults_to_one_concurrent_job() -> None:
     default_args = submit._parser().parse_args(["--scope", "full"])
     default_submission = submit.build_submission(default_args, _environment())
-    assert default_submission.command[
-        default_submission.command.index("--concurrency") + 1
-    ] == "6"
+    assert (
+        default_submission.command[
+            default_submission.command.index("--concurrency") + 1
+        ]
+        == "1"
+    )
+
+
+def test_full_submission_allows_explicit_concurrency_six() -> None:
+    args = submit._parser().parse_args(["--scope", "full", "--concurrency", "6"])
+    submission = submit.build_submission(args, _environment())
+    assert submission.command[submission.command.index("--concurrency") + 1] == "6"
+
+
+def test_full_oracle_t4_t6_diagnostic_disables_canonical_postprocess() -> None:
+    args = submit._parser().parse_args(
+        [
+            "--scope",
+            "full",
+            "--baseline-name",
+            "curated_static",
+            "--evaluation-only-t4-t6",
+            "--oracle-skill-view",
+            "--no-within-env-replay",
+            "--no-replay-eval",
+            "--concurrency",
+            "2",
+        ]
+    )
+    submission = submit.build_submission(args, _environment())
+    params = _params(submission.command)
+
+    assert params["evaluation_only_t4_t6"] is True
+    assert params["oracle_skill_view"] is True
+    assert params["baseline_name"] == "curated_static"
+    assert "--enable-post-process" not in submission.command
+    assert "non-scoreable six-environment T4-T6 diagnostic" in submission.description
+
+
+def test_oracle_skill_view_requires_curated_t4_t6_diagnostic() -> None:
+    args = submit._parser().parse_args(["--oracle-skill-view"])
+    with pytest.raises(ValueError, match="requires --evaluation-only-t4-t6"):
+        submit.build_submission(args, _environment())
+
+    args = submit._parser().parse_args(
+        ["--scope", "environment", "--evaluation-only-t4-t6", "--oracle-skill-view"]
+    )
+    with pytest.raises(ValueError, match="requires --baseline-name curated_static"):
+        submit.build_submission(args, _environment())
+
+
+def test_reference_solution_audit_needs_no_model_credentials() -> None:
+    args = submit._parser().parse_args(
+        [
+            "--scope",
+            "full",
+            "--reference-solution-audit",
+            "--reference-audit-concurrency",
+            "3",
+            "--concurrency",
+            "6",
+        ]
+    )
+    environment = {
+        "AP_API_KEY": "ap-secret-for-test",
+        "AP_AGENTHUB_REF": "feat/skillevolbench",
+    }
+    submission = submit.build_submission(args, environment)
+    params = _params(submission.command)
+
+    assert params["reference_solution_audit"] is True
+    assert params["reference_audit_concurrency"] == 3
+    assert params["model"] == "harbor-oracle"
+    assert params["model_api_key"] == "NOT_REQUIRED"
+    assert params["model_base_url"] == "http://reference-audit.invalid/v1"
+    assert "--enable-post-process" not in submission.command
+    assert "--model-base-url-collection" not in submission.command
+    assert submission.command[submission.command.index("--concurrency") + 1] == "6"
+    assert "official reference-solution audit" in submission.description
+
+
+def test_reference_solution_audit_rejects_smoke_and_model_diagnostic() -> None:
+    args = submit._parser().parse_args(["--reference-solution-audit"])
+    with pytest.raises(ValueError, match="requires --scope environment or full"):
+        submit.build_submission(args, _environment())
+
+    args = submit._parser().parse_args(
+        [
+            "--scope",
+            "environment",
+            "--reference-solution-audit",
+            "--evaluation-only-t4-t6",
+        ]
+    )
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        submit.build_submission(args, _environment())
 
 
 def test_main_rejects_concurrency_above_six() -> None:
@@ -254,9 +347,7 @@ def test_anthropic_submission_enables_bounded_transport_proxy() -> None:
     assert params["model_proxy_retry_attempts"] == 4
     assert params["model_proxy_request_timeout_sec"] == 900
     assert params["model_proxy_image"] == "registry.example/model-proxy:immutable"
-    assert json.loads(params["model_proxy_envs"]) == {
-        "NATIVE_FORCE_NON_STREAM": "true"
-    }
+    assert json.loads(params["model_proxy_envs"]) == {"NATIVE_FORCE_NON_STREAM": "true"}
 
 
 def test_model_proxy_rejects_openai_protocol() -> None:
