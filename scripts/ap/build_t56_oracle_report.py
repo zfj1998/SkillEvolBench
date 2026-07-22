@@ -152,6 +152,63 @@ CONCEPT_PATTERNS = {
     "content fingerprint": r"fingerprint",
 }
 
+ENVIRONMENT_PROFILES = {
+    "E1": {
+        "name": "软件调试、依赖与多文件修复",
+        "capability": "从症状定位根因，并在依赖升级、重构和跨层修改中保持行为与测试一致。",
+        "provisional_read": (
+            "现有 Fable 结果里，T5/T6 多数功能测试已经通过，strict 失败主要来自指定文件、"
+            "指定 API 或覆盖率形态；真正的功能失败集中在数据库会话迁移与跨文件错误传播。"
+            "因此 E1 当前更像 verifier 形态敏感与少量组合执行失败的混合，而不是 T5/T6 普遍不可解。"
+        ),
+    },
+    "E2": {
+        "name": "API 客户端可靠性与编排",
+        "capability": "验证、鉴权、重试、分页、响应回退以及多步 API pipeline 的组合。",
+        "provisional_read": (
+            "两模型的 T5 outcome 均为 5/5，T6 outcome 均为 4/5；大量 strict 失败来自"
+            "verifier 只扫描固定文件或要求特定字面量。E2 是目前最强的证据：低 strict 并不等于"
+            "模型没有掌握功能。唯一稳定的功能缺口是 validate-normalize-enrich pipeline。"
+        ),
+    },
+    "E3": {
+        "name": "表格数据清洗、合并与校验",
+        "capability": "schema 检查、类型归一化、join key 对齐、空值语义与结果一致性校验。",
+        "provisional_read": (
+            "T5 只有同一个 wrong-join-key trap 被两模型共同做错；T6 则在复合排序、模糊合并和"
+            "多源空值规则上出现真实功能失败。这里更像单项 skill 能写进 library，但模型在组合任务中"
+            "没有把多个不变量同时落实。"
+        ),
+    },
+    "E4": {
+        "name": "文档抽取、格式迁移与版本比较",
+        "capability": "结构化抽取、跨格式保真、上下文填表、多版本 diff 与冲突保留。",
+        "provisional_read": (
+            "已审计的 Qwen run 中，T5/T6 outcome 都是 3/5。失败集中在矛盾值必须并列保留、缺失字段"
+            "不得臆造、PDF→JSON→DOCX 数值保真和多轮版本变化覆盖，属于真实的文档语义与链式执行缺口。"
+            "需等待 Fable 与 oracle/no-skill 对照判断是 skill 质量还是模型执行上限。"
+        ),
+    },
+    "E5": {
+        "name": "研究检索、证据归因与综合",
+        "capability": "多源筛选、证据化比较、引用核验、受约束总结与矛盾审计。",
+        "provisional_read": (
+            "已审计的 Qwen run 中，T5 outcome 3/5、T6 outcome 1/5。主要问题是没有读取 grounding files、"
+            "丢失 provenance、引用问题标签不精确，以及一个 pipeline 直接运行失败；这不是单纯"
+            "process verifier 噪声。"
+        ),
+    },
+    "E6": {
+        "name": "邮件、会议与行动项工作流",
+        "capability": "优先级判断、上下文回复、行动项抽取、时区排期以及 thread 级综合。",
+        "provisional_read": (
+            "两模型 T6 outcome 都是 0/5，且失败横跨优先级、必含内容、隐式行动、DST 排期和状态汇总。"
+            "generated skills 往往已经写到这些概念，但执行产物仍不符合契约；同时部分 curated oracle"
+            "只覆盖基础 fixed-offset/explicit-action 流程。E6 是最需要 exact-oracle 与 no-skill 解耦的环境。"
+        ),
+    },
+}
+
 
 def load_json(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
@@ -1022,6 +1079,203 @@ def failure_attribution(
     }
 
 
+def environment_diagnostics(
+    rows: list[dict[str, Any]],
+    comparisons: list[dict[str, Any]],
+    oracle_scope: dict[str, Any],
+    attribution: dict[str, Any],
+    reference_integrity: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Summarize the evidence needed to reason about each environment.
+
+    This intentionally keeps observed facts separate from the prose profile.
+    In particular, an official reference solution pass only establishes
+    internal solvability; it is not counted as an oracle-skill model pass.
+    """
+
+    attribution_rows = [
+        row
+        for row in attribution.get("failures", [])
+        if isinstance(row, dict)
+    ]
+    scope_rows = [
+        row
+        for row in oracle_scope.get("rows", [])
+        if isinstance(row, dict)
+    ]
+    reference_rows = [
+        row
+        for row in reference_integrity.get("rows", [])
+        if isinstance(row, dict)
+    ]
+    result = []
+    for environment_id in ENVS:
+        profile = ENVIRONMENT_PROFILES[environment_id]
+        self_rows = [
+            row
+            for row in rows
+            if row.get("environment_id") == environment_id
+            and row.get("condition") == "self_generated"
+            and int(row.get("tier", -1)) in (5, 6)
+        ]
+        env_comparisons = [
+            row
+            for row in comparisons
+            if row.get("environment_id") == environment_id
+            and int(row.get("tier", -1)) in (5, 6)
+        ]
+        by_model = []
+        for model in MODELS:
+            observed = [row for row in self_rows if row.get("model") == model]
+            by_model.append(
+                {
+                    "model": model,
+                    "observed": len(observed),
+                    "strict_passed": sum(
+                        row.get("strict_pass") is True for row in observed
+                    ),
+                    "outcome_passed": sum(
+                        row.get("outcome_pass") is True for row in observed
+                    ),
+                    "process_passed": sum(
+                        row.get("process_pass") is True for row in observed
+                    ),
+                    "functional_failures": sum(
+                        row.get("outcome_pass") is not True for row in observed
+                    ),
+                    "process_only_failures": sum(
+                        row.get("classification") == "process_only_failure"
+                        for row in observed
+                    ),
+                }
+            )
+
+        paired = defaultdict(dict)
+        for row in self_rows:
+            paired[str(row.get("task_id"))][str(row.get("model"))] = row
+        paired_tasks = [
+            pair for pair in paired.values() if all(model in pair for model in MODELS)
+        ]
+        both_outcome_fail = sum(
+            all(pair[model].get("outcome_pass") is not True for model in MODELS)
+            for pair in paired_tasks
+        )
+        both_process_only = sum(
+            all(
+                pair[model].get("classification") == "process_only_failure"
+                for model in MODELS
+            )
+            for pair in paired_tasks
+        )
+
+        controls: dict[str, dict[str, int]] = {}
+        for condition in ("exact_oracle", "curated_all", "no_skill"):
+            condition_rows = [
+                row
+                for row in rows
+                if row.get("environment_id") == environment_id
+                and row.get("condition") == condition
+                and int(row.get("tier", -1)) in (5, 6)
+            ]
+            controls[condition] = {
+                "observed": len(condition_rows),
+                "strict_passed": sum(
+                    row.get("strict_pass") is True for row in condition_rows
+                ),
+                "outcome_passed": sum(
+                    row.get("outcome_pass") is True for row in condition_rows
+                ),
+                "process_passed": sum(
+                    row.get("process_pass") is True for row in condition_rows
+                ),
+            }
+
+        oracle_rescues = sum(
+            row.get("verdict") == "oracle_rescues_outcome"
+            for row in env_comparisons
+        )
+        oracle_outcome_failures = sum(
+            row.get("conditions", {}).get("exact_oracle") is not None
+            and row["conditions"]["exact_oracle"].get("outcome") is not True
+            for row in env_comparisons
+        )
+        env_scope = [
+            row for row in scope_rows if row.get("environment_id") == environment_id
+        ]
+        env_attribution = [
+            row
+            for row in attribution_rows
+            if row.get("environment_id") == environment_id
+        ]
+        reference = [
+            row
+            for row in reference_rows
+            if row.get("environment_id") == environment_id
+            and int(row.get("tier", -1)) in (5, 6)
+        ]
+        control_complete = len(self_rows) == 20 and all(
+            controls[name]["observed"] == 20
+            for name in ("exact_oracle", "curated_all", "no_skill")
+        )
+        self_outcome_passed = sum(row["outcome_passed"] for row in by_model)
+        if control_complete:
+            exact = controls["exact_oracle"]["outcome_passed"]
+            curated = controls["curated_all"]["outcome_passed"]
+            no_skill = controls["no_skill"]["outcome_passed"]
+            current_read = (
+                f"两模型 T5+T6 的 matched outcome 为 self-generated "
+                f"{self_outcome_passed}/20、exact-oracle {exact}/20、"
+                f"curated-all {curated}/20、no-skill {no_skill}/20。"
+                f"Exact 相对 self 效应 {exact - self_outcome_passed:+d} 题，"
+                f"curated-all 相对 no-skill 效应 {curated - no_skill:+d} 题，"
+                f"exact 相对 curated-all 的选择先验效应 {exact - curated:+d} 题；"
+                f"exact-oracle 仍有 {20 - exact} 个功能失败。"
+            )
+        else:
+            current_read = profile["provisional_read"]
+        result.append(
+            {
+                "environment_id": environment_id,
+                "name": profile["name"],
+                "capability": profile["capability"],
+                "provisional_read": profile["provisional_read"],
+                "current_read": current_read,
+                "status": "matched_controls_complete" if control_complete else "provisional",
+                "self_generated_by_model": by_model,
+                "paired_task_count": len(paired_tasks),
+                "both_models_outcome_fail": both_outcome_fail,
+                "both_models_process_only_fail": both_process_only,
+                "failure_cause_counts": dict(
+                    Counter(str(row.get("cause")) for row in env_attribution)
+                ),
+                "scope_risk_counts": dict(
+                    Counter(str(row.get("scope_risk")) for row in env_scope)
+                ),
+                "instruction_concept_instances": sum(
+                    len(row.get("instruction_concepts") or []) for row in env_scope
+                ),
+                "verifier_only_concept_instances": sum(
+                    len(row.get("verifier_only_concepts") or []) for row in env_scope
+                ),
+                "controls": controls,
+                "oracle_outcome_rescues": oracle_rescues,
+                "oracle_outcome_failures": oracle_outcome_failures,
+                "reference_strict_passed": sum(
+                    int(row.get("passed") or 0) for row in reference
+                ),
+                "reference_total": sum(int(row.get("total") or 0) for row in reference),
+            }
+        )
+    return result
+
+
+def compact_message(value: Any, limit: int = 260) -> str:
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip() + "…"
+
+
 def conclusions(
     coverage: list[dict[str, Any]],
     comparisons: list[dict[str, Any]],
@@ -1156,6 +1410,13 @@ def build_payload(
     derivability = derivability_analysis(learning, oracle_scope)
     reference_integrity = reference_integrity_analysis(reference_audit or {})
     attribution = failure_attribution(rows, audit, reference_integrity)
+    environment_summary = environment_diagnostics(
+        rows,
+        comparisons,
+        oracle_scope,
+        attribution,
+        reference_integrity,
+    )
     return {
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "is_complete": all(row["complete"] for row in coverage),
@@ -1175,6 +1436,7 @@ def build_payload(
         "scope_condition_outcomes": scope_condition_outcomes(comparisons, oracle_scope),
         "reference_integrity": reference_integrity,
         "failure_attribution": attribution,
+        "environment_diagnostics": environment_summary,
         "verifier_audit": audit,
         "conclusions": conclusions(
             coverage,
@@ -1275,6 +1537,53 @@ def render_markdown(data: dict[str, Any]) -> str:
         lines.append(
             f"| {item['model']} | T{item['tier']} | {item['metric']} | {CONDITION_ZH[item['treatment']]} − {CONDITION_ZH[item['reference']]} | {item['n']} | {item['treatment_pass']}/{item['n']} | {item['reference_pass']}/{item['n']} | {pct(item['delta'])} | {item['rescued']} / {item['harmed']} |"
         )
+    lines += [
+        "",
+        "## 六环境诊断总览",
+        "",
+        "这一节先给出可扫描的 Env 级判断。`当前解读`在三组匹配对照未齐时明确属于 provisional；"
+        "官方 reference 只证明任务内部可解，不能代替模型拿 oracle skill 的结果。每个模型在一个 Env 的 T5+T6 共 10 题，"
+        "因此每个对照条件两模型合计期望 20 条记录。",
+        "",
+    ]
+    for item in data["environment_diagnostics"]:
+        lines += [
+            f"### {item['environment_id']} · {item['name']}",
+            "",
+            f"**能力对象：** {item['capability']}",
+            "",
+            f"**当前解读（{'匹配对照已齐' if item['status'] == 'matched_controls_complete' else '暂定'}）：** "
+            f"{item['current_read']}",
+            "",
+            "| 证据 | Qwen | Fable / 合计 |",
+            "|---|---:|---:|",
+        ]
+        model_rows = {row["model"]: row for row in item["self_generated_by_model"]}
+        qwen = model_rows["qwen3.7-max"]
+        fable = model_rows["sig-fable"]
+        lines += [
+            f"| Self-generated T5+T6 覆盖 | {qwen['observed']}/10 | {fable['observed']}/10 |",
+            f"| Outcome 通过 | {qwen['outcome_passed']}/{qwen['observed']} | {fable['outcome_passed']}/{fable['observed']} |",
+            f"| Strict 通过 | {qwen['strict_passed']}/{qwen['observed']} | {fable['strict_passed']}/{fable['observed']} |",
+            f"| Process-only 失败 | {qwen['process_only_failures']} | {fable['process_only_failures']} |",
+            f"| 双模型同题 outcome 失败 | — | {item['both_models_outcome_fail']}/{item['paired_task_count']} 对齐题 |",
+            f"| 官方 reference strict | — | {item['reference_strict_passed']}/{item['reference_total']} |",
+        ]
+        for condition in ("exact_oracle", "curated_all", "no_skill"):
+            control = item["controls"][condition]
+            lines.append(
+                f"| {CONDITION_ZH[condition]} outcome | — | "
+                f"{control['outcome_passed']}/{control['observed']}（期望 20） |"
+            )
+        lines += [
+            "",
+            f"Oracle scope 风险：`{item['scope_risk_counts']}`；"
+            f"题面明示受控概念 `{item['instruction_concept_instances']}` 个，"
+            f"verifier-only `{item['verifier_only_concept_instances']}` 个；"
+            f"当前 oracle outcome rescue `{item['oracle_outcome_rescues']}`，"
+            f"oracle outcome failure `{item['oracle_outcome_failures']}`。",
+            "",
+        ]
     lines += ["", "## Self-generated 条件下逐 Env 的 T5/T6 失败原因", ""]
     for env in ENVS:
         lines += [f"### {env}", ""]
@@ -1287,10 +1596,12 @@ def render_markdown(data: dict[str, Any]) -> str:
                 lines.append(f"- **{model} / T{tier}**：观测 {item['observed']}/5，strict 失败 {item['strict_failures']}。")
                 for task in item["tasks"]:
                     outcome_names = "; ".join(
-                        f"{check['name']}: {check['message']}" for check in task["failed_outcome"]
+                        f"{check['name']}: {compact_message(check['message'])}"
+                        for check in task["failed_outcome"]
                     ) or "无"
                     process_names = "; ".join(
-                        f"{check['name']}: {check['message']}" for check in task["failed_process"]
+                        f"{check['name']}: {compact_message(check['message'])}"
+                        for check in task["failed_process"]
                     ) or "无"
                     lines.append(
                         f"  - `{task['task_id']}`（{task['task_slug']}；skill: `{', '.join(task['required_skills']) or task['primary_skill']}`）{CLASS_ZH.get(str(task['classification']), task['classification'])}；outcome: `{outcome_names}`；process: `{process_names}`。"
@@ -1501,6 +1812,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>题目资产完整性：官方标准解能否通过？</h2><p>这不是模型 baseline：Harbor oracle 直接执行仓库的 <code>solution/solve.sh</code>，再运行原 verifier，用来识别题目、标准解、容器或 verifier 的内部不一致。</p><div id="referenceIntegrity"></div></section>
 <section class="panel"><h2>Pass rate 热力图</h2><div class="filters"><select id="hmModel"></select><select id="hmCond"></select><select id="hmMetric"><option value="strict">Strict</option><option value="outcome">Outcome</option><option value="process">Process</option></select><select id="hmTier"><option value="4">T4</option><option value="5" selected>T5</option><option value="6">T6</option></select></div><div class="heat" id="heatmap"></div><p class="small">每格最多 5 题；显示通过数/观测数，不能把小样本百分比当作稳定总体性能。</p></section>
 <section class="grid two"><div class="panel"><h2>Qwen vs Fable 配对比较</h2><div class="tablebox"><table><thead><tr><th>条件/Tier/指标</th><th>n</th><th>Qwen</th><th>Fable</th><th>only Q/F</th><th>p</th></tr></thead><tbody id="modelCmpRows"></tbody></table></div></div><div class="panel"><h2>Skill 条件配对效应</h2><div class="tablebox"><table><thead><tr><th>模型/Tier/指标</th><th>对照</th><th>n</th><th>Δ</th><th>救回/损害</th></tr></thead><tbody id="effectRows"></tbody></table></div></div></section>
+<section class="panel"><h2>六环境诊断总览</h2><p class="small">每张卡把 self-generated 的真实功能失败、process-only 噪声、双模型一致失败、官方标准解以及三组匹配对照放在一起。对照未齐的文字明确标为暂定。</p><div class="grid two" id="envCards"></div></section>
 <section class="panel"><h2>逐 Env 的 T5/T6 失败地图</h2><div class="tablebox"><table><thead><tr><th>Env / Tier</th><th>Qwen 3.7 Max</th><th>SIG Fable</th></tr></thead><tbody id="failureRows"></tbody></table></div></section>
 <section class="panel"><h2>失败归因总览</h2><p class="small">“已核实假阴性”要求逐代码证据；“形态敏感”只是筛查标签，仍需结合 exact-oracle/no-skill 与轨迹复核。</p><div class="tablebox"><table><thead><tr><th>Env/Tier</th><th>模型</th><th>覆盖/Strict</th><th>功能 gap</th><th>已核实假阴性</th><th>实质过程 gap</th><th>形态敏感</th><th>未决过程</th></tr></thead><tbody id="attributionRows"></tbody></table></div></section>
 <section class="panel"><h2>T1–T3 学习与 Skill 来源审计</h2><div class="grid two" id="learningCards"></div><div class="filters" style="margin-top:16px"><select id="skillModel"></select><select id="skillEnv"></select><input id="skillSearch" placeholder="搜索 family / skill"></div><div class="tablebox"><table><thead><tr><th>Family</th><th>学习结果</th><th>生成 skill</th><th>Best Jaccard</th><th>Oracle evidence recall</th><th>Verifier markers</th></tr></thead><tbody id="skillRows"></tbody></table></div><p class="small">Evidence recall 仅是词面覆盖率，不代表逻辑可推导性。点击 family 查看 T1–T3 证据摘录、generated skill 与 curated oracle 全文。</p></section>
@@ -1527,6 +1839,7 @@ options(hmModel,['qwen3.7-max','sig-fable']);options(hmCond,['self_generated','e
 function renderHeat(){{let m=hmModel.value,c=hmCond.value,k=hmMetric.value,t=+hmTier.value;let rows=['E1','E2','E3','E4','E5','E6'].map(e=>D.aggregates.find(x=>x.model===m&&x.condition===c&&x.environment_id===e&&x.tier===t));heatmap.innerHTML='<div class="head">'+m+' · '+zh[c]+'</div>'+['E1','E2','E3','E4','E5','E6'].map(x=>`<div class="head">${{x}}</div>`).join('')+`<div>T${{t}} · ${{k}}</div>`+rows.map(x=>{{if(!x)return '<div class="v none">—</div>';let p=x[k]/x.n,cl=p>=.8?'high':p>=.4?'mid':'low';return `<div class="v ${{cl}}">${{x[k]}}/${{x.n}}</div>`}}).join('')}};[hmModel,hmCond,hmMetric,hmTier].forEach(x=>x.onchange=renderHeat);renderHeat();
 modelCmpRows.innerHTML=D.model_comparisons.filter(x=>x.n).map(x=>`<tr><td>${{zh[x.condition]}} / T${{x.tier}} / ${{x.metric}}</td><td>${{x.n}}</td><td>${{x.qwen_pass}}</td><td>${{x.fable_pass}}</td><td>${{x.qwen_only}} / ${{x.fable_only}}</td><td>${{x.sign_test_p==null?'—':x.sign_test_p.toFixed(4)}}</td></tr>`).join('');
 effectRows.innerHTML=D.effects.filter(x=>x.n).map(x=>`<tr><td>${{x.model}} / T${{x.tier}} / ${{x.metric}}</td><td>${{zh[x.treatment]}} − ${{zh[x.reference]}}</td><td>${{x.n}}</td><td>${{(100*x.delta).toFixed(1)}}pp</td><td>${{x.rescued}} / ${{x.harmed}}</td></tr>`).join('')||'<tr><td colspan="5" class="small">等待 oracle/no-skill 匹配结果</td></tr>';
+envCards.innerHTML=D.environment_diagnostics.map(x=>{{let m=Object.fromEntries(x.self_generated_by_model.map(y=>[y.model,y]));let ctrl=['exact_oracle','curated_all','no_skill'].map(c=>{{let y=x.controls[c];return `<span class="metric ${{y.observed===20?'pass':'missing'}}">${{zh[c]}} O ${{y.outcome_passed}}/${{y.observed}}</span>`}}).join(' ');return `<article class="case"><span class="kind">${{x.status==='matched_controls_complete'?'匹配对照完整':'暂定结论'}}</span><h3>${{x.environment_id}} · ${{esc(x.name)}}</h3><p>${{esc(x.capability)}}</p><div class="grid two"><div><b>Qwen</b><div class="small">覆盖 ${{m['qwen3.7-max'].observed}}/10 · Outcome ${{m['qwen3.7-max'].outcome_passed}} · Strict ${{m['qwen3.7-max'].strict_passed}} · Process-only ${{m['qwen3.7-max'].process_only_failures}}</div></div><div><b>Fable</b><div class="small">覆盖 ${{m['sig-fable'].observed}}/10 · Outcome ${{m['sig-fable'].outcome_passed}} · Strict ${{m['sig-fable'].strict_passed}} · Process-only ${{m['sig-fable'].process_only_failures}}</div></div></div><p class="small">双模型同题 outcome 失败 ${{x.both_models_outcome_fail}}/${{x.paired_task_count}} · reference ${{x.reference_strict_passed}}/${{x.reference_total}} · scope ${{esc(JSON.stringify(x.scope_risk_counts))}}</p><p>${{esc(x.current_read)}}</p><div>${{ctrl}}</div></article>`}}).join('');
 function failureCell(x){{if(!x.observed)return '<span class="metric missing">0/5 未完成</span>';let details=x.tasks.map(t=>`<div><b>${{t.task_id}}</b> · ${{esc(t.task_slug)}} · ${{esc(t.classification)}}<br><span class="small">Skill: ${{esc((t.required_skills.length?t.required_skills:[t.primary_skill]).join(', '))}}<br>O: ${{t.failed_outcome.map(z=>esc(z.name+': '+z.message)).join('; ')||'无'}}<br>P: ${{t.failed_process.map(z=>esc(z.name+': '+z.message)).join('; ')||'无'}}</span></div>`).join('');return `<span class="metric ${{x.strict_failures?'fail':'pass'}}">失败 ${{x.strict_failures}}/${{x.observed}}</span>${{details}}`}};
 failureRows.innerHTML=['E1','E2','E3','E4','E5','E6'].flatMap(e=>[5,6].map(t=>{{let q=D.failure_map.find(x=>x.model==='qwen3.7-max'&&x.environment_id===e&&x.tier===t),f=D.failure_map.find(x=>x.model==='sig-fable'&&x.environment_id===e&&x.tier===t);return `<tr><td><b>${{e}} / T${{t}}</b></td><td>${{failureCell(q)}}</td><td>${{failureCell(f)}}</td></tr>`}})).join('');
 attributionRows.innerHTML=D.failure_attribution.summaries.map(x=>{{let c=x.cause_counts;return `<tr><td><b>${{x.environment_id}} / T${{x.tier}}</b></td><td>${{x.model}}</td><td>${{x.observed}}/5 · ${{x.strict_passed}}/${{x.observed}}</td><td>${{c.functional_gap||0}}</td><td>${{c.verified_verifier_false_negative||0}}</td><td>${{c.substantive_process_gap||0}}</td><td>${{c.shape_sensitive_process_only||0}}</td><td>${{c.unresolved_process_only||0}}</td></tr>`}}).join('');

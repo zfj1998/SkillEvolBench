@@ -343,6 +343,103 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
     }
 
 
+def test_environment_diagnostics_keeps_reference_and_model_controls_distinct() -> None:
+    rows = [
+        {
+            "model": model,
+            "condition": "self_generated",
+            "environment_id": "E2",
+            "task_id": "E2-LS1-T5",
+            "tier": 5,
+            "strict_pass": False,
+            "outcome_pass": False,
+            "process_pass": True,
+            "classification": "outcome_only_failure",
+        }
+        for model in REPORT.MODELS
+    ] + [
+        {
+            "model": model,
+            "condition": "exact_oracle",
+            "environment_id": "E2",
+            "task_id": "E2-LS1-T5",
+            "tier": 5,
+            "strict_pass": True,
+            "outcome_pass": True,
+            "process_pass": True,
+            "classification": "strict_pass",
+        }
+        for model in REPORT.MODELS
+    ]
+    comparisons = [{
+        "environment_id": "E2",
+        "tier": 5,
+        "verdict": "oracle_rescues_outcome",
+        "conditions": {"exact_oracle": {"outcome": True}},
+    }]
+    oracle_scope = {"rows": [{
+        "environment_id": "E2",
+        "scope_risk": "high",
+        "instruction_concepts": ["jitter"],
+        "verifier_only_concepts": [],
+    }]}
+    attribution = {"failures": [{
+        "environment_id": "E2",
+        "cause": "functional_gap",
+    }]}
+    reference = {"rows": [
+        {"environment_id": "E2", "tier": 5, "passed": 5, "total": 5},
+        {"environment_id": "E2", "tier": 6, "passed": 5, "total": 5},
+    ]}
+
+    result = REPORT.environment_diagnostics(
+        rows, comparisons, oracle_scope, attribution, reference
+    )
+    e2 = next(row for row in result if row["environment_id"] == "E2")
+
+    assert e2["both_models_outcome_fail"] == 1
+    assert e2["reference_strict_passed"] == 10
+    assert e2["reference_total"] == 10
+    assert e2["controls"]["exact_oracle"] == {
+        "observed": 2,
+        "strict_passed": 2,
+        "outcome_passed": 2,
+        "process_passed": 2,
+    }
+    assert e2["status"] == "provisional"
+    assert e2["oracle_outcome_rescues"] == 1
+    assert REPORT.compact_message("a\n  b", limit=10) == "a b"
+
+    complete_rows = [
+        {
+            "model": model,
+            "condition": condition,
+            "environment_id": "E2",
+            "task_id": f"E2-LS{index % 5 + 1}-T{5 + index // 5}",
+            "tier": 5 + index // 5,
+            "strict_pass": condition == "exact_oracle",
+            "outcome_pass": condition in {"self_generated", "exact_oracle"},
+            "process_pass": condition == "exact_oracle",
+            "classification": (
+                "strict_pass" if condition == "exact_oracle"
+                else "process_only_failure" if condition == "self_generated"
+                else "outcome_and_process_failure"
+            ),
+        }
+        for condition in ("self_generated", "exact_oracle", "curated_all", "no_skill")
+        for model in REPORT.MODELS
+        for index in range(10)
+    ]
+    complete = REPORT.environment_diagnostics(
+        complete_rows, [], oracle_scope, attribution, reference
+    )
+    e2_complete = next(row for row in complete if row["environment_id"] == "E2")
+    assert e2_complete["status"] == "matched_controls_complete"
+    assert "self-generated 20/20" in e2_complete["current_read"]
+    assert "exact-oracle 20/20" in e2_complete["current_read"]
+    assert "选择先验效应 +20 题" in e2_complete["current_read"]
+
+
 def test_oracle_case_studies_use_only_the_declared_condition(tmp_path: Path) -> None:
     common = {
         "task_id": "E2-LS1-T6",
