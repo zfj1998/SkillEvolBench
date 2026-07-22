@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+"""Fail-closed validation for an exported exact-oracle T4-T6 AP job."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError(f"expected JSON object: {path}")
+    return value
+
+
+def tree_digest(root: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(
+        (item for item in root.rglob("*") if item.is_file()),
+        key=lambda item: item.relative_to(root).as_posix(),
+    ):
+        relative = path.relative_to(root).as_posix()
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        raise ValueError(message)
+
+
+def validate(export_root: Path, tasks_root: Path) -> dict[str, Any]:
+    run_dirs = sorted(export_root.glob("artifacts/output/runs/*"))
+    require(len(run_dirs) == 1, f"expected exactly one run directory, got {len(run_dirs)}")
+    run_dir = run_dirs[0]
+    config = load_json(run_dir / "config.json")
+    manifest = load_json(export_root / "artifacts/output/ap_run_manifest.json")
+    metrics = load_json(export_root / "artifacts/output/metrics.json")
+
+    require(config.get("environment_id") == "E2", "smoke must target E2")
+    require(config.get("evaluation_only_t4_t6") is True, "T4-T6 mode is not enabled")
+    require(config.get("oracle_skill_view") is True, "exact oracle view is not enabled")
+    require((config.get("baseline") or {}).get("name") == "curated_static", "baseline is not curated_static")
+    require(manifest.get("canonical") is False, "diagnostic must be noncanonical")
+    require(manifest.get("execution_scope") == "t4_t6_diagnostic", "wrong execution scope")
+    require(manifest.get("benchmark_revision") == "d13fb39db6d5593d972fb70f07b56e7060438ee5", "unexpected benchmark revision")
+    require(metrics.get("scoreable") is False, "diagnostic must be non-scoreable")
+    require(metrics.get("task_score") == 0.0, "diagnostic task_score must be zero")
+    require(metrics.get("expected_primary_trials") == 15, "expected_primary_trials must be 15")
+    require(metrics.get("n_primary_trials") == 15, "n_primary_trials must be 15")
+
+    specs: dict[str, dict[str, Any]] = {}
+    for path in tasks_root.glob("*/task-spec.yaml"):
+        spec = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if isinstance(spec, dict) and spec.get("environment_id") == "E2":
+            specs[str(spec["task_id"])] = spec
+
+    records_dir = run_dir / "stores/replay/records"
+    record_paths = sorted(records_dir.glob("E2-LS*-T*.json"))
+    task_ids = [path.stem for path in record_paths]
+    expected = sorted(
+        task_id
+        for task_id, spec in specs.items()
+        if int(spec.get("task_index", 0)) in {4, 5, 6}
+    )
+    require(task_ids == expected, "records are not exactly the 15 E2 T4-T6 tasks")
+    require(not any("-T1" in task or "-T2" in task or "-T3" in task for task in task_ids), "learning task leaked into diagnostic")
+
+    views_root = run_dir / "oracle-skill-views"
+    audit_paths = sorted(views_root.glob("E2-LS*-T*.audit.json"))
+    require(len(audit_paths) == 15, f"expected 15 oracle audits, got {len(audit_paths)}")
+    verified_views: list[dict[str, Any]] = []
+    for audit_path in audit_paths:
+        audit = load_json(audit_path)
+        task_id = str(audit.get("task_id"))
+        require(task_id in expected, f"unexpected oracle audit task: {task_id}")
+        spec = specs[task_id]
+        expected_ids = (
+            list(spec.get("required_skills") or [])
+            if int(spec["task_index"]) == 6
+            else [str(spec["primary_skill"])]
+        )
+        require(audit.get("oracle_skill_ids") == expected_ids, f"wrong oracle IDs for {task_id}")
+        skills = audit.get("skills") or []
+        require(len(skills) == len(expected_ids), f"wrong oracle skill count for {task_id}")
+        view_dir = views_root / task_id
+        require(view_dir.is_dir(), f"missing oracle view directory for {task_id}")
+        visible_slugs = sorted(path.name for path in view_dir.iterdir() if path.is_dir())
+        require(visible_slugs == sorted(skill.split(".", 1)[1] for skill in expected_ids), f"oracle view leaks or omits skills for {task_id}")
+        for skill in skills:
+            skill_dir = view_dir / str(skill["slug"])
+            require(tree_digest(skill_dir) == skill.get("sha256"), f"oracle content hash mismatch for {task_id}/{skill.get('slug')}")
+        verified_views.append({"task_id": task_id, "oracle_skill_ids": expected_ids})
+
+    return {
+        "valid": True,
+        "run_id": config.get("run_id"),
+        "environment_id": "E2",
+        "benchmark_revision": manifest.get("benchmark_revision"),
+        "record_count": len(record_paths),
+        "oracle_audit_count": len(audit_paths),
+        "scoreable": metrics.get("scoreable"),
+        "task_score": metrics.get("task_score"),
+        "verified_views": verified_views,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("export_root", type=Path)
+    parser.add_argument("--tasks-root", type=Path, default=Path("benchmark/tasks"))
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    try:
+        result = validate(args.export_root, args.tasks_root)
+    except (ValueError, OSError, json.JSONDecodeError, yaml.YAMLError) as exc:
+        result = {"valid": False, "error": str(exc)}
+        status = 1
+    else:
+        status = 0
+    content = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(content, encoding="utf-8")
+    print(content, end="")
+    return status
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
