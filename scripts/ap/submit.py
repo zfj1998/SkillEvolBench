@@ -315,6 +315,7 @@ def build_submission(
         "model_provider": args.model_provider,
         "model_api_protocol": args.model_api_protocol,
         "model_probe_mode": args.probe_mode,
+        "model_probe_timeout_sec": args.model_probe_timeout_sec,
         "baseline_name": args.baseline_name,
         "strategy_name": args.strategy_name,
         "order_seed": args.order_seed,
@@ -537,6 +538,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--probe-timeout", type=float, default=10.0)
     parser.add_argument(
+        "--model-probe-timeout-sec",
+        type=int,
+        default=30,
+        help="per-request timeout for model probes inside AP main and DinD containers",
+    )
+    parser.add_argument(
         "--probe-mode",
         choices=("models", "chat", "auto"),
         default="models",
@@ -579,6 +586,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--harbor-agent-timeout-multiplier must be between 1 and 4")
     if args.probe_timeout <= 0:
         parser.error("--probe-timeout must be > 0")
+    if not 5 <= args.model_probe_timeout_sec <= 300:
+        parser.error("--model-probe-timeout-sec must be between 5 and 300")
 
     try:
         submission = build_submission(args, os.environ)

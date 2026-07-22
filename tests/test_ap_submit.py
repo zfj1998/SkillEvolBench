@@ -51,6 +51,7 @@ def test_default_submission_is_one_task_e1_smoke() -> None:
     assert params["learning_max_attempts"] == 3
     assert params["model_api_protocol"] == "openai"
     assert params["model_probe_mode"] == "models"
+    assert params["model_probe_timeout_sec"] == 30
     assert params["harbor_agent_timeout_multiplier"] == 1.0
     assert "codex_wire_api" not in params
     assert "within_env_replay" not in params
@@ -197,6 +198,8 @@ def test_anthropic_submission_selects_native_protocol() -> None:
             "anthropic",
             "--probe-mode",
             "auto",
+            "--model-probe-timeout-sec",
+            "120",
         ]
     )
     params = _params(submit.build_submission(args, _environment()).command)
@@ -205,6 +208,7 @@ def test_anthropic_submission_selects_native_protocol() -> None:
     assert params["model_api_protocol"] == "anthropic"
     assert params["model_provider"] == "anthropic"
     assert params["model_probe_mode"] == "auto"
+    assert params["model_probe_timeout_sec"] == 120
 
 
 def test_anthropic_submission_rejects_codex_harness() -> None:
