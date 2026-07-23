@@ -570,6 +570,46 @@ CASE_DEFINITIONS = {
             "environment/policy_v3.md",
         ],
     },
+    "E4-LS5-T5": {
+        "title": "Exact 已删除 shallow gate 调用且 outcome 全过，unused import 名仍触发 process failure",
+        "kind": "源码符号存在性 process 假阴性",
+        "interpretation": (
+            "Qwen exact-oracle 把 orchestrator 中 `if should_skip_nested_diff(...): continue` 整段删除，"
+            "逐 record 无条件执行 recursive deep_diff，nested address/phone/compensation 差异和输出 schema"
+            "全部通过 outcome。它只留下一个未使用的 `should_skip_nested_diff` import；process test 并不"
+            "检查调用图或 AST，而是断言整个源码字符串完全不含该 symbol，因此 strict 从 1.0 降到 0.75。"
+            "题面要求的是 do not rely on the guard，不是禁止 dormant import。这个 failure 至多反映"
+            "未清理 unused import 的代码卫生，不反映 nested reconciliation 或 skill transfer 功能失败。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "reconcile_nested_differences.py",
+            "deep_compare.py",
+            "reconciliation_report.json",
+        ],
+        "task_source_files": ["tests/test_process.py", "tests/test_outcome.py"],
+    },
+    "E4-LS5-T6": {
+        "title": "Exact 有真实 nickname map 与 phone fallback，却因变量不叫 nickname_map 且无 bobby 被拒",
+        "kind": "固定变量名/fixture alias process 假阴性",
+        "interpretation": (
+            "Qwen exact-oracle 的 entity_matcher 定义 `NICKNAMES`，包含 bob→robert、tom→thomas、"
+            "beth→elizabeth 等真实 alias；same_entity 同时实现 normalized email、phone equality 和"
+            "names_match，master dataset/conflict log 的全部 outcome 通过，其他 4/5 process checks 也过。"
+            "唯一失败的 test 只接受源码出现变量名 `nickname_map` 或 fixture 外字面量 `bobby`。"
+            "把同一映射变量从 NICKNAMES 重命名为 nickname_map 就会过，无需改变任何行为；反过来只写"
+            "一个无用的 bobby 字符串也能过。该检查不能证明 nickname matching 泛化能力，不能把 exact"
+            "strict 0.9 解读为 curated skill 未教会三系统 reconciliation。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "entity_matcher.py",
+            "run_full_reconciliation.py",
+            "master_dataset.json",
+            "conflict_log.json",
+        ],
+        "task_source_files": ["tests/test_process.py", "tests/test_outcome.py"],
+    },
     "E5-LS1-T6": {
         "title": "同一学习证据产生相反抽象：Qwen 过度泛化分类规则，Fable self 满分",
         "kind": "生成 skill 负迁移 + 独立的 oracle 采样退化",
