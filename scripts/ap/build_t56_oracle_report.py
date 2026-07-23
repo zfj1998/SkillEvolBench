@@ -10,11 +10,12 @@ import math
 import re
 import sqlite3
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from statistics import median
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import yaml
 
@@ -75,6 +76,7 @@ VERIFIED_OUTCOME_FALSE_NEGATIVE_PAIRS = frozenset({
     ("qwen3.7-max", "E5-LS4-T6"),
     ("sig-fable", "E5-LS4-T6"),
     ("qwen3.7-max", "E6-LS2-T6"),
+    ("sig-fable", "E6-LS2-T5"),
     ("sig-fable", "E6-LS1-T6"),
     ("sig-fable", "E6-LS2-T6"),
 })
@@ -91,7 +93,7 @@ MIXED_BENCHMARK_MODEL_GAP_PAIRS = frozenset({
     ("qwen3.7-max", "E6-LS3-T6"),
     ("sig-fable", "E6-LS3-T6"),
 })
-INVALID_OR_UNDERDETERMINED_TASKS = frozenset({"E6-LS4-T6"})
+INVALID_OR_UNDERDETERMINED_TASKS = frozenset({"E6-LS4-T5", "E6-LS4-T6"})
 DERIVABILITY_ZH = {
     "captured_from_visible_evidence": "T1–T3 可见且 generated 捕获",
     "oracle_captures_visible_generated_misses": "T1–T3 可见，oracle 捕获但 generated 漏掉",
@@ -653,6 +655,26 @@ CASE_DEFINITIONS = {
             "environment/calendar/today.json",
         ],
     },
+    "E6-LS2-T5": {
+        "title": "回复完整正确，仅因 rationale 没复述隐藏关键词 timeline 被判失败",
+        "kind": "隐藏 rationale 字面量合同（强任务缺陷）",
+        "interpretation": (
+            "Fable 的 reply/ack/ignore 集合、四组正文要求、禁用承诺、CC 和全部五项 process checks"
+            "都通过；正文还逐字写了 scope and timeline、不能在 Friday 前完成、完整重写需 three months，"
+            "并给出 design brief plus compatibility patch 的 staged alternative。唯一失败是 rationale 虽已"
+            "引用 Friday、three months、safe_friday_scope、phased/staged strategy 和日历窗口，却没有再"
+            "复述单词 timeline。题面只要求 rationale 说明 context used，没有规定这个隐藏关键词。"
+            "因此官方 8/9 outcome 是固定字符串假阴性，不是 context-aware reply 能力缺失。"
+        ),
+        "files": [
+            "reply_policy.py",
+            "output/replies.json",
+        ],
+        "task_source_files": [
+            "tests/ground_truth.json",
+            "environment/context/project_state.json",
+        ],
+    },
     "E6-LS2-T6": {
         "title": "两模型的路由、CC 与回复语义都正确，却因两个未公开固定短语被判 outcome 失败",
         "kind": "隐藏措辞白名单与源码 marker 造成的语义假阴性（强任务缺陷）",
@@ -718,6 +740,25 @@ CASE_DEFINITIONS = {
             "因此该题当前不能可靠区分 skill quality；即使 oracle skill 合理，模型也可能因选择另一个等价/更合理解而失败。"
         ),
         "files": ["scheduling_policy.py", "output/schedule.json"],
+    },
+    "E6-LS4-T5": {
+        "title": "四个等价 DST-safe 时段中，verifier 任意指定 14:00 和隐藏 slot id",
+        "kind": "欠规定 tie-break 与隐藏 semantic-ID（强任务缺陷）",
+        "interpretation": (
+            "输入只有两位参与者、09:00–17:00 本地工作时段、空日历、60 分钟会议，且没有任何 soft"
+            "preference。2023-03-15 纽约为 EDT、伦敦为 GMT，所以 13:00、14:00、15:00、16:00 UTC"
+            "四个整点开始时段都同样满足硬约束、score=2、soft_preferences_met=0。题面允许 candidate or"
+            "generated slot id，也没有首选最早/中间时段的 tie-break；输入里从未出现 dst_safe。两模型都"
+            "正确给出 DST evidence 和多个合法时段，且都包含 14:00 UTC，却因为第一项不是隐藏 id"
+            "dst_safe、以及 score map 只按该 id lookup 而失败。这不能用来判断 oracle 或 generated skill"
+            "质量；官方 reference 只是注入了题面外的任意答案。"
+        ),
+        "files": ["scheduling_policy.py", "output/schedule.json"],
+        "task_source_files": [
+            "tests/ground_truth.json",
+            "environment/scheduling_request.json",
+            "environment/calendar/participants.json",
+        ],
     },
 }
 
@@ -917,7 +958,10 @@ ENVIRONMENT_PROFILES = {
             "固定短语而失败；E6-LS3-T6 中两模型都抽出 8/8 actions，核心字段分别命中"
             "23/24 与 22/24，却因题面未公开的 action ID 名称被报大量 missing；E6-LS4-T6 则是"
             "欠规定题，四人工作时段无共同正长度交集，verifier 仍要求未声明的固定日期、时间和数组顺序。"
-            "其余优先级、回复内容与 thread parsing 仍有真实执行 gap。因此 E6 的 0/5 既不是纯模型失败，"
+            "T5 也存在同类污染：Fable 的 E6-LS2-T5 正文和 rationale 已使用全部项目、时间、scope 与"
+            "日历证据，只因 rationale 没复述隐藏词 timeline 失败；E6-LS4-T5 在无偏好、空日历下有"
+            "四个等价合法整点，两个模型都包含 14:00 并正确解释 EDT/GMT，却因首项不是隐藏 id dst_safe"
+            "失败。其余优先级、行动抽取与 thread parsing 仍有真实执行 gap。因此 E6 的 0/5 既不是纯模型失败，"
             "也不是纯坏题；需在 exact/no-skill 到齐后按题剔除合同缺陷再估计 skill 效应。"
         ),
     },
@@ -2641,6 +2685,136 @@ def reproduce_e5_ls4_hierarchy_semantics(
     }
 
 
+def reproduce_e6_ls4_t5_tie_break(
+    task_root: Path,
+    observations: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Recompute the feasible DST window without using hidden answer choices."""
+
+    request_path = task_root / "environment" / "scheduling_request.json"
+    participants_path = (
+        task_root / "environment" / "calendar" / "participants.json"
+    )
+    ground_truth_path = task_root / "tests" / "ground_truth.json"
+    request = json.loads(request_path.read_text(encoding="utf-8"))
+    participants = json.loads(participants_path.read_text(encoding="utf-8"))[
+        "participants"
+    ]
+    ground_truth = json.loads(ground_truth_path.read_text(encoding="utf-8"))
+
+    meeting_date = datetime.fromisoformat(str(request["date_range"][0])).date()
+    duration = timedelta(minutes=int(request["duration_minutes"]))
+    utc_starts: list[datetime] = []
+    utc_ends: list[datetime] = []
+    participant_windows = []
+    for participant in participants:
+        zone = ZoneInfo(str(participant["timezone"]))
+        start_clock = datetime.strptime(
+            str(participant["work_hours"]["start"]), "%H:%M"
+        ).time()
+        end_clock = datetime.strptime(
+            str(participant["work_hours"]["end"]), "%H:%M"
+        ).time()
+        local_start = datetime.combine(meeting_date, start_clock, tzinfo=zone)
+        local_end = datetime.combine(meeting_date, end_clock, tzinfo=zone)
+        utc_start = local_start.astimezone(timezone.utc)
+        utc_end = local_end.astimezone(timezone.utc)
+        utc_starts.append(utc_start)
+        utc_ends.append(utc_end)
+        participant_windows.append({
+            "participant_id": participant["id"],
+            "timezone": participant["timezone"],
+            "local_abbreviation": local_start.tzname(),
+            "utc_start": utc_start.isoformat().replace("+00:00", "Z"),
+            "utc_end": utc_end.isoformat().replace("+00:00", "Z"),
+        })
+
+    earliest = max(utc_starts)
+    latest = min(utc_ends) - duration
+    valid_hourly_starts: list[str] = []
+    cursor = earliest
+    while cursor <= latest:
+        valid_hourly_starts.append(cursor.isoformat().replace("+00:00", "Z"))
+        cursor += timedelta(hours=1)
+
+    public_surface = "\n".join([
+        (task_root / "instruction.md").read_text(
+            encoding="utf-8", errors="replace"
+        ),
+        request_path.read_text(encoding="utf-8", errors="replace"),
+        participants_path.read_text(encoding="utf-8", errors="replace"),
+    ]).lower()
+    hidden_slot_ids = [str(value) for value in ground_truth.get(
+        "expected_ranked_slot_ids", []
+    )]
+    required_starts = {
+        str(value) for value in ground_truth.get("required_start_utc", [])
+    }
+
+    rows = []
+    for observation in observations:
+        artifact_raw = observation.get("artifact_task_path")
+        if not artifact_raw:
+            continue
+        artifact_root = Path(str(artifact_raw))
+        output_path = artifact_root / "output" / "schedule.json"
+        if not output_path.is_file():
+            continue
+        output = json.loads(output_path.read_text(encoding="utf-8"))
+        slots = list(output.get("recommendations") or []) + list(
+            output.get("scheduled_meetings") or []
+        )
+        starts = {str(slot.get("start_utc") or "") for slot in slots}
+        slot_ids = {
+            str(slot.get("slot_id") or slot.get("meeting_id") or "")
+            for slot in slots
+        }
+        normalized_text = json.dumps(output, ensure_ascii=False).lower()
+        rows.append({
+            "model": observation.get("model"),
+            "condition": observation.get("condition"),
+            "slot_count": len(slots),
+            "includes_hidden_required_start": bool(required_starts & starts),
+            "uses_hidden_slot_id": bool(set(hidden_slot_ids) & slot_ids),
+            "all_scores_equal_two": bool(slots)
+            and all(slot.get("score") == 2 for slot in slots),
+            "all_soft_counts_zero": bool(slots)
+            and all(slot.get("soft_preferences_met") == 0 for slot in slots),
+            "contains_edt_gmt_four_hour_evidence": all(
+                token in normalized_text for token in ("edt", "gmt", "4 hour")
+            ),
+            "artifact_output_path": str(output_path.resolve()),
+        })
+
+    return {
+        "method": (
+            "Convert both participants' stated local work windows with IANA "
+            "ZoneInfo, intersect them, subtract the stated duration, and "
+            "enumerate equal hourly starts without consulting hidden answers."
+        ),
+        "participant_windows": participant_windows,
+        "feasible_start_utc": earliest.isoformat().replace("+00:00", "Z"),
+        "feasible_last_start_utc": latest.isoformat().replace("+00:00", "Z"),
+        "valid_hourly_starts": valid_hourly_starts,
+        "equal_hourly_option_count": len(valid_hourly_starts),
+        "public_input_has_soft_preferences": any(
+            bool(participant.get("preferences")) for participant in participants
+        ),
+        "public_input_has_calendar_events": any(
+            bool(participant.get("events")) for participant in participants
+        ),
+        "hidden_slot_ids": hidden_slot_ids,
+        "hidden_slot_ids_appear_in_public_surface": all(
+            slot_id.lower() in public_surface for slot_id in hidden_slot_ids
+        ),
+        "hidden_required_starts": sorted(required_starts),
+        "models": rows,
+        "request_path": str(request_path.resolve()),
+        "participants_path": str(participants_path.resolve()),
+        "ground_truth_path": str(ground_truth_path.resolve()),
+    }
+
+
 def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Path) -> list[dict[str, Any]]:
     audit_by_id = {row["task_id"]: row for row in audit.get("tasks", [])}
     result = []
@@ -2803,6 +2977,10 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
             )
         if task_id == "E6-LS1-T6" and task_root:
             reproduction = reproduce_e6_ls1_hidden_reply_contract(
+                task_root, observations
+            )
+        if task_id == "E6-LS4-T5" and task_root:
+            reproduction = reproduce_e6_ls4_t5_tie_break(
                 task_root, observations
             )
         result.append({
@@ -4729,7 +4907,11 @@ def conclusions(
                 "优先级/P0/draft 全对，但被从未公开的 10:30/Immediate/response-list exact set 拒绝，"
                 "Qwen 同题另有真实优先级错误；E6-LS2-T6 的两模型"
                 "路由、CC 和拒绝过度承诺语义都正确，hidden verifier 却只接受 `not promise`/"
-                "`thread context` 两个固定短语；E6-LS4-T6 的四人工作时段没有共同正长度交集，"
+                "`thread context` 两个固定短语；E6-LS2-T5 中 Fable 的正文与 rationale 已完整引用"
+                "scope、Friday、three-month estimate、staged alternative 和 calendar，只因 rationale"
+                "没复述隐藏词 `timeline` 失败；E6-LS4-T5 的 13:00–16:00 UTC 四个整点都是等价"
+                "DST-safe 解，两模型都包含 14:00，却因未公开 id `dst_safe` 和任意首项 tie-break 被拒；"
+                "E6-LS4-T6 的四人工作时段没有共同正长度交集，"
                 "verifier 却要求题面未声明的固定时间和数组顺序。90/90 reference pass 只能证明官方脚本能满足"
                 "官方 verifier，不能排除 reference 利用隐藏合同或任意 tie-break。最终任务质量结论必须把这类题"
                 "从纯模型/skill failure 中单独报告。"

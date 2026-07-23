@@ -675,6 +675,28 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
             **common,
             "model": "sig-fable",
             "environment_id": "E6",
+            "tier": 5,
+            "task_id": "E6-LS2-T5",
+            "task_slug": "hidden-rationale-literal",
+            "outcome_pass": False,
+            "process_pass": True,
+            "classification": "outcome_only_failure",
+        },
+        {
+            **common,
+            "model": "qwen3.7-max",
+            "environment_id": "E6",
+            "tier": 5,
+            "task_id": "E6-LS4-T5",
+            "task_slug": "underdetermined-dst-tie-break",
+            "outcome_pass": False,
+            "process_pass": True,
+            "classification": "outcome_only_failure",
+        },
+        {
+            **common,
+            "model": "sig-fable",
+            "environment_id": "E6",
             "tier": 6,
             "task_id": "E6-LS4-T6",
             "task_slug": "invalid-schedule",
@@ -689,7 +711,9 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
             {"task_id": "E2-LS3-T5", "process_shape_sensitivity": "low"},
             {"task_id": "E5-LS2-T6", "process_shape_sensitivity": "medium"},
             {"task_id": "E6-LS2-T6", "process_shape_sensitivity": "medium"},
+            {"task_id": "E6-LS2-T5", "process_shape_sensitivity": "low"},
             {"task_id": "E6-LS3-T6", "process_shape_sensitivity": "medium"},
+            {"task_id": "E6-LS4-T5", "process_shape_sensitivity": "low"},
             {"task_id": "E6-LS4-T6", "process_shape_sensitivity": "low"},
         ]
     }
@@ -704,7 +728,9 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
         "E2-LS3-T5": "verified_verifier_false_negative",
         "E5-LS2-T6": "verified_verifier_false_negative",
         "E6-LS2-T6": "verified_benchmark_false_negative",
+        "E6-LS2-T5": "verified_benchmark_false_negative",
         "E6-LS3-T6": "mixed_benchmark_and_model_gap",
+        "E6-LS4-T5": "invalid_or_underdetermined_task",
         "E6-LS4-T6": "invalid_or_underdetermined_task",
     }
 
@@ -1931,6 +1957,111 @@ def test_e6_ls1_reproduction_separates_hidden_literals_from_public_contract(
     assert row["checkout_has_hidden_10_30_literal"] is False
     assert row["checkout_reason_has_hidden_immediate_literal"] is False
     assert row["checkout_reason_has_semantic_incident_evidence"] is True
+
+
+def test_e6_ls4_t5_reproduction_proves_dst_tie_break_is_underdetermined(
+    tmp_path: Path,
+) -> None:
+    task_root = tmp_path / "task"
+    environment = task_root / "environment"
+    participants_dir = environment / "calendar"
+    tests_dir = task_root / "tests"
+    participants_dir.mkdir(parents=True)
+    tests_dir.mkdir(parents=True)
+    (task_root / "instruction.md").write_text(
+        "Schedule a 60-minute meeting on March 15 with real IANA time zones. "
+        "Generated slot ids are allowed.\n",
+        encoding="utf-8",
+    )
+    (environment / "scheduling_request.json").write_text(
+        json.dumps({
+            "duration_minutes": 60,
+            "date_range": ["2023-03-15", "2023-03-15"],
+        }),
+        encoding="utf-8",
+    )
+    (participants_dir / "participants.json").write_text(
+        json.dumps({
+            "participants": [
+                {
+                    "id": "ny",
+                    "timezone": "America/New_York",
+                    "work_hours": {"start": "09:00", "end": "17:00"},
+                    "preferences": {},
+                    "events": [],
+                },
+                {
+                    "id": "ldn",
+                    "timezone": "Europe/London",
+                    "work_hours": {"start": "09:00", "end": "17:00"},
+                    "preferences": {},
+                    "events": [],
+                },
+            ]
+        }),
+        encoding="utf-8",
+    )
+    (tests_dir / "ground_truth.json").write_text(
+        json.dumps({
+            "expected_ranked_slot_ids": ["dst_safe"],
+            "required_start_utc": ["2023-03-15T14:00:00Z"],
+        }),
+        encoding="utf-8",
+    )
+    artifact = tmp_path / "artifact"
+    (artifact / "output").mkdir(parents=True)
+    (artifact / "output" / "schedule.json").write_text(
+        json.dumps({
+            "recommendations": [
+                {
+                    "slot_id": "generated_13",
+                    "start_utc": "2023-03-15T13:00:00Z",
+                    "end_utc": "2023-03-15T14:00:00Z",
+                    "score": 2,
+                    "soft_preferences_met": 0,
+                    "local_times": ["09:00 EDT", "13:00 GMT"],
+                    "reasons": ["4 hours offset"],
+                },
+                {
+                    "slot_id": "generated_14",
+                    "start_utc": "2023-03-15T14:00:00Z",
+                    "end_utc": "2023-03-15T15:00:00Z",
+                    "score": 2,
+                    "soft_preferences_met": 0,
+                    "local_times": ["10:00 EDT", "14:00 GMT"],
+                    "reasons": ["4 hours offset"],
+                },
+            ],
+            "scheduled_meetings": [],
+        }),
+        encoding="utf-8",
+    )
+
+    result = REPORT.reproduce_e6_ls4_t5_tie_break(
+        task_root,
+        [{
+            "model": "qwen3.7-max",
+            "condition": "self_generated",
+            "artifact_task_path": str(artifact),
+        }],
+    )
+
+    assert result["valid_hourly_starts"] == [
+        "2023-03-15T13:00:00Z",
+        "2023-03-15T14:00:00Z",
+        "2023-03-15T15:00:00Z",
+        "2023-03-15T16:00:00Z",
+    ]
+    assert result["equal_hourly_option_count"] == 4
+    assert result["public_input_has_soft_preferences"] is False
+    assert result["public_input_has_calendar_events"] is False
+    assert result["hidden_slot_ids_appear_in_public_surface"] is False
+    row = result["models"][0]
+    assert row["includes_hidden_required_start"] is True
+    assert row["uses_hidden_slot_id"] is False
+    assert row["all_scores_equal_two"] is True
+    assert row["all_soft_counts_zero"] is True
+    assert row["contains_edt_gmt_four_hour_evidence"] is True
 
 
 def test_pearson_correlation_handles_signal_and_constant() -> None:
