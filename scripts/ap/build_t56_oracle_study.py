@@ -11,7 +11,9 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import io
 import json
+import os
 import re
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
@@ -22,6 +24,15 @@ import yaml
 
 
 TASK_ID_RE = re.compile(r"^(E[1-6])-LS([1-5])-T([1-6])$")
+
+
+def atomic_write_text(path: Path, content: str) -> None:
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        temporary.write_text(content, encoding="utf-8")
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -908,7 +919,8 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "record_path", "local_trial_path", "local_artifact_task_path",
         "local_trajectory_path",
     ]
-    with path.open("w", encoding="utf-8", newline="") as handle:
+    handle = io.StringIO(newline="")
+    try:
         writer = csv.DictWriter(handle, fieldnames=columns)
         writer.writeheader()
         for source in rows:
@@ -923,6 +935,9 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
             ):
                 row[key] = json.dumps(row[key], ensure_ascii=False)
             writer.writerow(row)
+        atomic_write_text(path, handle.getvalue())
+    finally:
+        handle.close()
 
 
 def main() -> int:
@@ -938,7 +953,9 @@ def main() -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     json_path = args.output_dir / "t56_evidence.json"
     csv_path = args.output_dir / "t56_tasks.csv"
-    json_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    atomic_write_text(
+        json_path, json.dumps(result, ensure_ascii=False, indent=2) + "\n"
+    )
     write_csv(csv_path, result["tasks"])
     print(json.dumps({
         "json": str(json_path.resolve()),

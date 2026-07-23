@@ -7,6 +7,7 @@ import argparse
 import html
 import json
 import math
+import os
 import re
 import sqlite3
 import zipfile
@@ -19,6 +20,15 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import yaml
+
+
+def atomic_write_text(path: Path, content: str) -> None:
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        temporary.write_text(content, encoding="utf-8")
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 MODELS = ("qwen3.7-max", "sig-fable")
@@ -7190,9 +7200,11 @@ def main() -> int:
     data_path = args.output_dir / "t56_report_data.json"
     md_path = args.output_dir / "t56_oracle_study_report_zh.md"
     html_path = args.output_dir / "t56_oracle_study_report_zh.html"
-    data_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    md_path.write_text(render_markdown(data), encoding="utf-8")
-    html_path.write_text(render_html(data), encoding="utf-8")
+    atomic_write_text(
+        data_path, json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+    )
+    atomic_write_text(md_path, render_markdown(data))
+    atomic_write_text(html_path, render_html(data))
     print(json.dumps({
         "data": str(data_path.resolve()), "markdown": str(md_path.resolve()),
         "html": str(html_path.resolve()), "is_complete": data["is_complete"],

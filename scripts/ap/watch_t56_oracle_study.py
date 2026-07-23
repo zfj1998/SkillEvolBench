@@ -18,6 +18,7 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -28,6 +29,16 @@ from typing import Any
 
 
 TERMINAL_STATUSES = {"Succeeded", "Failed", "Cancelled"}
+ANALYSIS_SIGNATURE_VERSION = 2
+ANALYSIS_OUTPUT_NAMES = (
+    "t56_evidence.json",
+    "t56_tasks.csv",
+    "t56_verifier_audit.json",
+    "t56_verifier_audit.csv",
+    "t56_report_data.json",
+    "t56_oracle_study_report_zh.md",
+    "t56_oracle_study_report_zh.html",
+)
 DEFAULT_STATE_DIR = Path(
     "/cpfs02/user/zhangfengji.zfj/skillevolbench_t56_oracle_study_20260723/"
     "watcher"
@@ -488,6 +499,7 @@ class Watcher:
 
     def refresh_analysis(self, inventory: dict[str, dict[str, Any]]) -> None:
         """Refresh derived evidence only when its AP/export inputs changed."""
+        self.analysis_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
         collector = self.args.repo_root / "scripts/ap/build_t56_oracle_study.py"
         verifier_audit = self.args.repo_root / "scripts/ap/audit_t56_verifiers.py"
         report_builder = self.args.repo_root / "scripts/ap/build_t56_oracle_report.py"
@@ -496,7 +508,6 @@ class Watcher:
             {
                 "job_id": job_id,
                 "status": job.get("status"),
-                "updated_at": job.get("updated_at"),
                 "export_state": self.export_state(job_id),
             }
             for job_id, job in sorted(inventory.items())
@@ -514,6 +525,7 @@ class Watcher:
         signature = hashlib.sha256(
             json.dumps(
                 {
+                    "signature_version": ANALYSIS_SIGNATURE_VERSION,
                     "jobs": signature_rows,
                     "analysis_scripts": analysis_script_hashes,
                     "reference_audit": reference_audit_hash,
@@ -526,7 +538,10 @@ class Watcher:
         if (
             isinstance(previous, dict)
             and previous.get("input_signature") == signature
-            and (self.analysis_dir / "t56_evidence.json").exists()
+            and all(
+                (self.analysis_dir / name).is_file()
+                for name in ANALYSIS_OUTPUT_NAMES
+            )
         ):
             return
 
@@ -592,6 +607,11 @@ class Watcher:
             diagnostic = (report_result.stderr.strip() or report_result.stdout.strip())[-1000:]
             self.event("report_build_failed", diagnostic=diagnostic)
             return
+        try:
+            validation = self.validate_analysis_outputs()
+        except WatcherError as exc:
+            self.event("analysis_validation_failed", diagnostic=str(exc)[-1000:])
+            return
         payload: dict[str, Any] = {}
         try:
             payload = json.loads(result.stdout)
@@ -611,14 +631,96 @@ class Watcher:
             marker_path,
             {
                 "input_signature": signature,
+                "signature_version": ANALYSIS_SIGNATURE_VERSION,
                 "refreshed_at_utc": utc_now(),
                 "collector_result": payload,
                 "analysis_script_hashes": analysis_script_hashes,
                 "verifier_audit_result": audit_payload,
                 "report_result": report_payload,
+                "validation": validation,
             },
         )
         self.event("analysis_refreshed", **payload)
+
+    def validate_analysis_outputs(self) -> dict[str, Any]:
+        """Fail closed before marking a derived report refresh complete."""
+        paths = {name: self.analysis_dir / name for name in ANALYSIS_OUTPUT_NAMES}
+        missing = [name for name, path in paths.items() if not path.is_file()]
+        empty = [
+            name
+            for name, path in paths.items()
+            if path.is_file() and path.stat().st_size == 0
+        ]
+        if missing or empty:
+            raise WatcherError(
+                f"analysis outputs missing={missing!r} empty={empty!r}"
+            )
+
+        parsed: dict[str, dict[str, Any]] = {}
+        for name in (
+            "t56_evidence.json",
+            "t56_verifier_audit.json",
+            "t56_report_data.json",
+        ):
+            try:
+                value = json.loads(paths[name].read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise WatcherError(f"invalid analysis JSON {name}: {exc}") from exc
+            if not isinstance(value, dict):
+                raise WatcherError(f"analysis JSON root is not an object: {name}")
+            parsed[name] = value
+
+        coverage = parsed["t56_report_data.json"].get("coverage")
+        if not isinstance(coverage, list) or len(coverage) != 48:
+            raise WatcherError(
+                "report data must contain exactly 48 model-condition-env cells"
+            )
+
+        markdown = paths["t56_oracle_study_report_zh.md"].read_text(
+            encoding="utf-8"
+        )
+        html = paths["t56_oracle_study_report_zh.html"].read_text(encoding="utf-8")
+        if not markdown.lstrip().startswith("#"):
+            raise WatcherError("Markdown report does not start with a heading")
+        if "<!doctype html>" not in html.lower() or "</html>" not in html.lower():
+            raise WatcherError("HTML report is not a complete document")
+
+        node_status = "not_available"
+        inline_scripts = re.findall(
+            r"<script(?:\s[^>]*)?>(.*?)</script>", html, flags=re.IGNORECASE | re.DOTALL
+        )
+        if not inline_scripts:
+            raise WatcherError("HTML report contains no inline script")
+        node = shutil.which("node")
+        if node:
+            check_path = self.state_dir / ".analysis-inline-check.js"
+            atomic_write(check_path, "\n".join(inline_scripts) + "\n")
+            try:
+                check = self.run_command(
+                    [node, "--check", str(check_path)],
+                    timeout=min(60, self.args.analysis_timeout_sec),
+                    phase="validating_report_javascript",
+                )
+            finally:
+                check_path.unlink(missing_ok=True)
+            if check.returncode != 0:
+                diagnostic = (check.stderr.strip() or check.stdout.strip())[-1000:]
+                raise WatcherError(f"HTML inline JavaScript is invalid: {diagnostic}")
+            node_status = "passed"
+
+        return {
+            "validated_at_utc": utc_now(),
+            "coverage_cell_count": len(coverage),
+            "inline_script_count": len(inline_scripts),
+            "node_check": node_status,
+            "outputs": {
+                name: {
+                    "bytes": path.stat().st_size,
+                    "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                }
+                for name, path in paths.items()
+            },
+        }
 
     def step(self) -> None:
         inventory = self.discover_jobs()

@@ -6,13 +6,24 @@ from __future__ import annotations
 import argparse
 import ast
 import csv
+import io
 import json
+import os
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+
+def atomic_write_text(path: Path, content: str) -> None:
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        temporary.write_text(content, encoding="utf-8")
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -519,7 +530,8 @@ def write_csv(path: Path, tasks: list[dict[str, Any]]) -> None:
         "effective_scoring_mode", "effective_process_weight_percent",
         "rubric_yaml_referenced",
     ]
-    with path.open("w", encoding="utf-8", newline="") as handle:
+    handle = io.StringIO(newline="")
+    try:
         writer = csv.DictWriter(handle, fieldnames=columns)
         writer.writeheader()
         for task in tasks:
@@ -550,6 +562,9 @@ def write_csv(path: Path, tasks: list[dict[str, Any]]) -> None:
                 "process_path": task["process"]["path"],
                 "outcome_path": task["outcome"]["path"],
             })
+        atomic_write_text(path, handle.getvalue())
+    finally:
+        handle.close()
 
 
 def main() -> int:
@@ -562,7 +577,9 @@ def main() -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     json_path = args.output_dir / "t56_verifier_audit.json"
     csv_path = args.output_dir / "t56_verifier_audit.csv"
-    json_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    atomic_write_text(
+        json_path, json.dumps(result, ensure_ascii=False, indent=2) + "\n"
+    )
     write_csv(csv_path, result["tasks"])
     print(json.dumps({"json": str(json_path.resolve()), "csv": str(csv_path.resolve()), **result["summary"]}, ensure_ascii=False, indent=2))
     return 0
