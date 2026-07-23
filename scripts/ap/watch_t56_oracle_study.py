@@ -766,11 +766,25 @@ class Watcher:
             if job.get("status") not in TERMINAL_STATUSES
             or job.get("export_state") == "not_started"
         )
+        quarantined = sum(
+            1
+            for job in inventory.values()
+            if job.get("export_state") == "unsafe_quarantine"
+        )
         self.heartbeat(
-            "idle_waiting_for_jobs" if pending == 0 else "monitoring_jobs",
+            (
+                "attention_required"
+                if quarantined
+                else "idle_waiting_for_jobs"
+                if pending == 0
+                else "monitoring_jobs"
+            ),
             pending_jobs_or_exports=pending,
+            quarantined_exports=quarantined,
             next_action=(
-                "wait for new manifest entries"
+                f"review {quarantined} quarantined export(s); do not promote unsafely"
+                if quarantined
+                else "wait for new manifest entries"
                 if pending == 0
                 else "poll AP and export newly terminal jobs"
             ),
