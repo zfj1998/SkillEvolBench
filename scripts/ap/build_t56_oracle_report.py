@@ -1171,15 +1171,17 @@ ENVIRONMENT_PROFILES = {
         "name": "文档抽取、格式迁移与版本比较",
         "capability": "结构化抽取、跨格式保真、上下文填表、多版本 diff 与冲突保留。",
         "provisional_read": (
-            "Qwen self 的 T5/T6 raw outcome 都是 3/5；新完成的 Fable exact-oracle 则是 T5 3/5、T6 4/5。"
-            "两项 T5 raw 失败和两模型共同的 E4-LS4-T6 raw 失败都是明确 benchmark 合同问题。"
-            "E4-LS1-T5 不是文档语义失败："
-            "模型已正确输出两笔 revenue、source 与 conflict，三项 process 也全过，只因题面要求的输出路径"
-            "与 verifier 实际父目录合同冲突而被判 0/5 outcome；E4-LS3-T5 则使用题面明确允许的 MISSING，"
-            "隐藏 verifier 却只接受 N/A、字符串 null 或 TODO，甚至拒绝真正 JSON null；E4-LS4-T6 两模型"
-            "都列全五项首轮变化，却因 hidden token 的标点/单位写法与原始文档不一致而失败。剔除这三项"
-            "假阴性后，Fable exact 的 T5/T6 核心语义为 10/10；Qwen self 为 9/10，剩余 PDF→DOCX"
-            "数值表面保真是真实 gap。Fable self repair 与另外两 control 到齐前，尚不能把跨模型差异当 oracle 因果效应。"
+            "Qwen self 的 T5/T6 raw outcome 都是 3/5；Qwen exact 是 2/5、4/5，总数同为 6/10，"
+            "但出现一个 rescue 和一个 harm。逐 artifacts 复算后两次都是 verifier 假翻转：PDF→DOCX"
+            "的 self JSON 精确正确，DOCX 12/12 数字只因千分位逗号被 hidden raw-string test 拒绝；"
+            "page-reference exact 已明确写出 118.3、page 47 和 page 23→FY2022，只因 `pointed to`"
+            "不匹配 `points to page 23`。其余 raw failures 也都是已复现合同问题：E4-LS1-T5 的"
+            "输出父目录错位、E4-LS3-T5 的 missing-marker 白名单矛盾、E4-LS4-T6 的 hidden token"
+            "标点/单位与原文冲突。故 contract-aware 看，Qwen self/exact 及 Fable exact 的 T5/T6"
+            "核心语义均为 10/10。Qwen exact 的两个额外 strict/process failure 又分别来自 dormant"
+            "import symbol 和固定 `nickname_map|bobby` 源码 token，而非 reconciliation outcome。"
+            "E4 不支持“题太难、oracle 也做不出”；相反，它暴露的是 verifier 可靠性问题。Fable self"
+            "repair 与 no-skill/curated-all 到齐前，仍不能判断成功是否依赖 skill。"
         ),
     },
     "E5": {
@@ -5525,8 +5527,8 @@ def conclusions(
             )
         elif rescued or harmed:
             outcome_note = (
-                f"Outcome 已出现 {rescued + harmed} 个 discordant pairs，必须逐题查代码后"
-                "再判断是 skill 效应、执行随机性还是 benchmark 合同缺陷。"
+                f"Outcome 已出现 {rescued + harmed} 个 discordant pairs，需结合下方已完成的"
+                "逐题代码审计，区分 skill 效应、执行随机性与 benchmark 合同缺陷。"
             )
         else:
             outcome_note = (
@@ -5555,9 +5557,9 @@ def conclusions(
                     f"exact={exact_strict}/{len(matched_exact)}，救回 {strict_rescued}、"
                     f"损害 {strict_harmed}。{outcome_note}{strict_note}Exact 条件在已导出的 T4–T6 中有 "
                     f"{exact_compliant}/{len(exact_assigned)} 题实际打开了全部指定 skill，"
-                    "所以当前零增益不能归因于 treatment 普遍没挂载；目前仅覆盖上述 "
+                    "所以 raw matched 差异不能归因于 treatment 普遍没挂载；目前仅覆盖上述 "
                     f"{len(set((row['model'], row['environment_id']) for row in matched_exact))} 个"
-                    "模型×环境 slice，且有个别 T6 只读取了指定 skill 子集。No-skill 与 curated-all"
+                    "模型×环境 slice，且有个别 T6 只读取了指定 skill 子集。No-skill 与 curated-all "
                     "仍未齐，不能外推为最终结论。"
                 ),
             }
