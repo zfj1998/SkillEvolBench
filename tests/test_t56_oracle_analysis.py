@@ -687,6 +687,17 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
             "model": "sig-fable",
             "environment_id": "E6",
             "tier": 5,
+            "task_id": "E6-LS1-T5",
+            "task_slug": "priority-rubric-conflict",
+            "outcome_pass": False,
+            "process_pass": True,
+            "classification": "outcome_only_failure",
+        },
+        {
+            **common,
+            "model": "sig-fable",
+            "environment_id": "E6",
+            "tier": 5,
             "task_id": "E6-LS2-T5",
             "task_slug": "hidden-rationale-literal",
             "outcome_pass": False,
@@ -733,6 +744,7 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
             {"task_id": "E2-LS3-T5", "process_shape_sensitivity": "low"},
             {"task_id": "E5-LS2-T6", "process_shape_sensitivity": "medium"},
             {"task_id": "E6-LS2-T6", "process_shape_sensitivity": "medium"},
+            {"task_id": "E6-LS1-T5", "process_shape_sensitivity": "low"},
             {"task_id": "E6-LS2-T5", "process_shape_sensitivity": "low"},
             {"task_id": "E6-LS3-T6", "process_shape_sensitivity": "medium"},
             {"task_id": "E6-LS3-T5", "process_shape_sensitivity": "low"},
@@ -752,6 +764,7 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
         "E2-LS3-T5": "verified_verifier_false_negative",
         "E5-LS2-T6": "verified_verifier_false_negative",
         "E6-LS2-T6": "verified_benchmark_false_negative",
+        "E6-LS1-T5": "mixed_benchmark_and_model_gap",
         "E6-LS2-T5": "verified_benchmark_false_negative",
         "E6-LS3-T5": "verified_benchmark_false_negative",
         "E6-LS3-T6": "mixed_benchmark_and_model_gap",
@@ -1043,6 +1056,99 @@ def test_case_study_recovers_final_edits_from_trajectory(tmp_path: Path) -> None
     assert activity["tool_counts"] == {"edit": 1, "read": 1}
     assert activity["mutation_call_count"] == 1
     assert activity["bash_commands"] == []
+    assert activity["step_count"] == 0
+    assert activity["terminal_completion_tokens"] is None
+    assert activity["terminal_reasoning_chars"] == 0
+
+
+def test_trajectory_activity_exposes_terminal_output_cap_without_tools(
+    tmp_path: Path,
+) -> None:
+    trajectory = tmp_path / "trajectory.json"
+    trajectory.write_text(
+        json.dumps(
+            {
+                "steps": [
+                    {"step_id": 1, "source": "user", "message": "task"},
+                    {
+                        "step_id": 2,
+                        "source": "agent",
+                        "reasoning_content": "x" * 47_013,
+                        "metrics": {"completion_tokens": 16_384},
+                        "tool_calls": [],
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    activity = REPORT.trajectory_tool_activity(trajectory)
+
+    assert activity["step_count"] == 2
+    assert activity["agent_step_count"] == 1
+    assert activity["max_step_completion_tokens"] == 16_384
+    assert activity["terminal_completion_tokens"] == 16_384
+    assert activity["terminal_reasoning_chars"] == 47_013
+    assert activity["terminal_has_tool_calls"] is False
+
+
+def test_e5_ls5_reproduction_proves_provenance_keys_were_public(
+    tmp_path: Path,
+) -> None:
+    task_root = ROOT / "benchmark" / "tasks" / "false-contradiction-different-timeframes-trap"
+    artifact_root = tmp_path / "task"
+    output_dir = artifact_root / "output"
+    output_dir.mkdir(parents=True)
+    (output_dir / "consistency_audit.json").write_text(
+        json.dumps(
+            {
+                "results": [
+                    {
+                        "reason": "same context but incompatible values",
+                        "provenance": {
+                            "source_ids": ["source-a"],
+                            "source_urls": ["https://example.test/a"],
+                            "method": "schema-shaped replacement",
+                        },
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = REPORT.reproduce_e5_ls5_provenance_contract(
+        task_root,
+        [
+            {
+                "model": "sig-fable",
+                "condition": "self_generated",
+                "outcome": False,
+                "process": False,
+                "artifact_task_path": str(artifact_root),
+                "final_edits": [
+                    {
+                        "new": "provenance_block(source_ids, method, limitations)",
+                    }
+                ],
+                "trajectory_step_count": 14,
+                "mutation_call_count": 4,
+            }
+        ],
+    )
+
+    assert result["required_keys_are_public_in_starter_pipeline"] is True
+    assert result["required_keys_are_public_in_outcome_test"] is True
+    model = result["models"][0]
+    assert model["artifact_provenance_keys"] == [
+        "method",
+        "source_ids",
+        "source_urls",
+    ]
+    assert model["artifact_has_all_required_keys"] is False
+    assert model["edits_touch_load_provenance"] is False
+    assert model["effective_has_all_required_keys"] is False
 
 
 def test_e3_ls5_reproduction_exposes_generator_verifier_conflict() -> None:
