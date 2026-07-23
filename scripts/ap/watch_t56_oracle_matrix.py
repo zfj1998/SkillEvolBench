@@ -31,6 +31,7 @@ FABLE_E4_LABEL = "sig-fable-e4-repair-v1-15"
 MAX_FABLE_E4_REPAIR_JOBS = 3
 FABLE_E4_RETRY_BACKOFF_SEC = 300
 MAX_STAGE_GROUP_JOBS = 3
+MAX_STAGE_ENV_REPAIR_JOBS = 3
 STAGE_RETRY_BACKOFF_SEC = 300
 STAGE_NAMES = (
     "fable_exact_oracle",
@@ -163,6 +164,9 @@ class MatrixWatcher:
                 )
                 stage.setdefault("failed_groups", [])
                 stage.setdefault("max_groups", MAX_STAGE_GROUP_JOBS)
+                stage.setdefault("successful_instances", {})
+                stage.setdefault("repair_environment_ids", [])
+                stage.setdefault("repair_jobs", {})
             state.setdefault(
                 "fable_e4_repair",
                 {
@@ -185,6 +189,9 @@ class MatrixWatcher:
                 "group_id": None,
                 "failed_groups": [],
                 "max_groups": MAX_STAGE_GROUP_JOBS,
+                "successful_instances": {},
+                "repair_environment_ids": [],
+                "repair_jobs": {},
             }
         state = {
             "schema_version": 1,
@@ -223,6 +230,14 @@ class MatrixWatcher:
                     name: {
                         "status": stage.get("status"),
                         "group_id": stage.get("group_id"),
+                        "repair_environment_ids": stage.get(
+                            "repair_environment_ids", []
+                        ),
+                        "repair_job_ids": {
+                            env: repair.get("job_id")
+                            for env, repair in stage.get("repair_jobs", {}).items()
+                            if isinstance(repair, dict) and repair.get("job_id")
+                        },
                     }
                     for name, stage in self.state["stages"].items()
                 },
@@ -274,8 +289,161 @@ class MatrixWatcher:
             raise RuntimeError(f"unexpected AP job response for {job_id}")
         return value
 
+    def register_stage_repair(
+        self, stage_name: str, environment_id: str, job_id: str
+    ) -> None:
+        label = (
+            f"{stage_name.replace('_', '-')}-v1-16-"
+            f"{environment_id}-repair"
+        )
+        register = self.run(
+            [
+                sys.executable,
+                str(self.repo / "scripts/ap/watch_t56_oracle_study.py"),
+                "--state-dir", str(self.root / "watcher"),
+                "--register-job", job_id,
+                "--label", label,
+            ],
+            timeout=60,
+        )
+        if register.returncode != 0:
+            raise RuntimeError(
+                f"failed to register {stage_name}/{environment_id} repair "
+                f"{job_id}: {register.stderr or register.stdout}"
+            )
+        repair = self.state["stages"][stage_name]["repair_jobs"][environment_id]
+        repair["registered_with_evidence_watcher"] = True
+        self.save()
+        self.event(
+            "stage_environment_repair_registered",
+            stage=stage_name,
+            environment_id=environment_id,
+            job_id=job_id,
+        )
+
+    def update_stage_repair_jobs(
+        self, stage_name: str, stage: dict[str, Any]
+    ) -> bool:
+        """Advance serialized single-environment repairs for a partial group."""
+
+        repair_ids = [
+            str(value)
+            for value in stage.get("repair_environment_ids", [])
+            if str(value) in {f"E{i}" for i in range(1, 7)}
+        ]
+        if not repair_ids:
+            return False
+        successful = stage.setdefault("successful_instances", {})
+        repairs = stage.setdefault("repair_jobs", {})
+        active = False
+        next_attempts: list[float] = []
+        for environment_id in repair_ids:
+            if environment_id in successful:
+                continue
+            repair = repairs.setdefault(
+                environment_id,
+                {
+                    "status": "pending",
+                    "job_id": None,
+                    "idempotency_key": str(uuid.uuid4()),
+                    "failed_jobs": [],
+                },
+            )
+            job_id = repair.get("job_id")
+            if not job_id:
+                retry_at = repair.get("next_submit_attempt_epoch")
+                if isinstance(retry_at, (int, float)):
+                    next_attempts.append(float(retry_at))
+                continue
+            if repair.get("registered_with_evidence_watcher") is not True:
+                self.register_stage_repair(
+                    stage_name, environment_id, str(job_id)
+                )
+            job = self.get_job(str(job_id))
+            status = str(job.get("status") or "Unknown")
+            repair["job_status"] = status
+            if status == "Succeeded":
+                repair["status"] = "succeeded"
+                repair.setdefault("terminal_at_utc", utc_now())
+                successful[environment_id] = {
+                    "job_id": str(job_id),
+                    "source": "environment_repair",
+                    "observed_at_utc": utc_now(),
+                }
+                self.event(
+                    "stage_environment_repair_succeeded",
+                    stage=stage_name,
+                    environment_id=environment_id,
+                    job_id=job_id,
+                )
+                continue
+            if status in {"Failed", "Cancelled"}:
+                failures = repair.setdefault("failed_jobs", [])
+                known = {
+                    str(item.get("job_id"))
+                    for item in failures
+                    if isinstance(item, dict) and item.get("job_id")
+                }
+                if str(job_id) not in known:
+                    failures.append({
+                        "job_id": str(job_id),
+                        "status": status,
+                        "observed_at_utc": utc_now(),
+                        "idempotency_key": repair.get("idempotency_key"),
+                    })
+                if len(failures) >= MAX_STAGE_ENV_REPAIR_JOBS:
+                    stage["status"] = "repair_exhausted"
+                    stage["repair_exhausted"] = True
+                    stage["terminal_at_utc"] = utc_now()
+                    self.event(
+                        "stage_environment_repair_exhausted",
+                        stage=stage_name,
+                        environment_id=environment_id,
+                        failed_job_count=len(failures),
+                    )
+                    return True
+                retry_at = time.time() + STAGE_RETRY_BACKOFF_SEC
+                repair.update({
+                    "status": "retry_backoff",
+                    "job_id": None,
+                    "job_status": status,
+                    "idempotency_key": str(uuid.uuid4()),
+                    "registered_with_evidence_watcher": False,
+                    "next_submit_attempt_epoch": retry_at,
+                    "last_failed_job_id": str(job_id),
+                })
+                next_attempts.append(retry_at)
+                self.event(
+                    "stage_environment_repair_retry_scheduled",
+                    stage=stage_name,
+                    environment_id=environment_id,
+                    job_id=job_id,
+                    failed_job_count=len(failures),
+                )
+                continue
+            active = True
+
+        if len(successful) == 6:
+            stage["status"] = "succeeded"
+            stage["terminal_at_utc"] = utc_now()
+            self.event(
+                "stage_repaired",
+                stage=stage_name,
+                successful_instances=sorted(successful),
+            )
+        elif active:
+            stage["status"] = "repair_submitted"
+        else:
+            stage["status"] = "retry_backoff"
+            stage["next_submit_attempt_epoch"] = (
+                min(next_attempts) if next_attempts else 0
+            )
+        return True
+
     def update_submitted_stages(self) -> None:
         for name, stage in self.state["stages"].items():
+            if self.update_stage_repair_jobs(name, stage):
+                continue
             group_id = stage.get("group_id")
             if not group_id:
                 continue
@@ -284,8 +452,21 @@ class MatrixWatcher:
             jobs = self.group_jobs(str(group_id))
             statuses = [str(job.get("status") or "Unknown") for job in jobs]
             stage["job_statuses"] = {status: statuses.count(status) for status in sorted(set(statuses))}
+            successful = stage.setdefault("successful_instances", {})
+            for job in jobs:
+                environment_id = str(job.get("instance_id") or "")
+                if (
+                    environment_id in {f"E{i}" for i in range(1, 7)}
+                    and str(job.get("status") or "") == "Succeeded"
+                ):
+                    successful[environment_id] = {
+                        "job_id": str(job.get("job_id") or ""),
+                        "group_id": str(group_id),
+                        "source": "group",
+                        "observed_at_utc": utc_now(),
+                    }
             if len(jobs) == 6 and all(status in TERMINAL for status in statuses):
-                if all(status == "Succeeded" for status in statuses):
+                if len(successful) == 6:
                     if stage.get("status") != "succeeded":
                         stage["status"] = "succeeded"
                         stage["terminal_at_utc"] = utc_now()
@@ -316,6 +497,41 @@ class MatrixWatcher:
                             "idempotency_key": stage.get("idempotency_key"),
                         }
                     )
+                failed_environment_ids = sorted(
+                    {f"E{i}" for i in range(1, 7)} - set(successful)
+                )
+                if successful and failed_environment_ids:
+                    repairs = stage.setdefault("repair_jobs", {})
+                    for environment_id in failed_environment_ids:
+                        repairs.setdefault(
+                            environment_id,
+                            {
+                                "status": "pending",
+                                "job_id": None,
+                                "idempotency_key": str(uuid.uuid4()),
+                                "failed_jobs": [],
+                            },
+                        )
+                    stage.update({
+                        "status": "retry_backoff",
+                        "group_id": None,
+                        "repair_environment_ids": failed_environment_ids,
+                        "next_submit_attempt_epoch": (
+                            time.time() + STAGE_RETRY_BACKOFF_SEC
+                        ),
+                        "last_failed_group_id": str(group_id),
+                    })
+                    stage.pop("submitted_at_utc", None)
+                    stage.pop("terminal_at_utc", None)
+                    self.event(
+                        "partial_group_environment_repairs_scheduled",
+                        stage=name,
+                        group_id=group_id,
+                        successful_environment_ids=sorted(successful),
+                        failed_environment_ids=failed_environment_ids,
+                        backoff_seconds=STAGE_RETRY_BACKOFF_SEC,
+                    )
+                    continue
                 if len(failures) >= MAX_STAGE_GROUP_JOBS:
                     stage["status"] = "repair_exhausted"
                     stage["repair_exhausted"] = True
@@ -593,8 +809,165 @@ class MatrixWatcher:
             return False, "waiting for serialized Qwen E1 repair"
         return True, "ready"
 
+    def submit_stage_environment_repair(self, stage_name: str) -> None:
+        """Submit at most one failed Env, preserving successful group cells."""
+
+        stage = self.state["stages"][stage_name]
+        successful = stage.setdefault("successful_instances", {})
+        repairs = stage.setdefault("repair_jobs", {})
+        environment_id = next(
+            (
+                value
+                for value in stage.get("repair_environment_ids", [])
+                if value not in successful
+                and isinstance(repairs.get(value), dict)
+                and not repairs[value].get("job_id")
+                and (
+                    not isinstance(
+                        repairs[value].get("next_submit_attempt_epoch"),
+                        (int, float),
+                    )
+                    or time.time()
+                    >= float(repairs[value]["next_submit_attempt_epoch"])
+                )
+            ),
+            None,
+        )
+        if not environment_id:
+            return
+        repair = repairs[environment_id]
+        model = (
+            "qwen3.7-max"
+            if stage_name.startswith("qwen")
+            else "serve-3.8-maxp-cpt-s1-0715-fable-1ep"
+        )
+        is_oracle = stage_name.endswith("exact_oracle")
+        is_curated_all = stage_name.endswith("curated_all")
+        command = [
+            sys.executable,
+            str(self.repo / "scripts/ap/submit.py"),
+            "--scope", "environment",
+            "--environment-id", str(environment_id),
+            "--cluster", self.args.cluster,
+            "--split", "v1@16",
+            "--agenthub-ref", AGENTHUB_REF,
+            "--harbor-agent", "opencode",
+            "--model", model,
+            "--probe-mode", "chat",
+            "--evaluation-only-t4-t6",
+            "--no-within-env-replay",
+            "--no-replay-eval",
+            "--runtime-timeout-sec", "172800",
+            "--learning-max-attempts", "1",
+            "--episode-retry-max-attempts", "2",
+            "--episode-retry-backoff-sec", "30",
+            "--harbor-agent-timeout-multiplier", "6",
+            "--idempotency-key", str(repair["idempotency_key"]),
+        ]
+        child = dict(self.environment)
+        if stage_name.startswith("fable"):
+            key = child.get("ROUTIFY_KEY_sig")
+            if not key:
+                raise RuntimeError("ROUTIFY_KEY_sig is required")
+            child.update({
+                "MODEL_API_KEY": key,
+                "MODEL_BASE_URL": FABLE_ENDPOINTS[0],
+                "MODEL_NAME": model,
+            })
+            command.extend(["--model-provider", "sglang", "--concurrency", "1"])
+        else:
+            required = {
+                "MODEL_API_KEY": child.get("DASHSCOPE_API_KEY"),
+                "MODEL_BASE_URL": child.get("DASHSCOPE_API_URL"),
+                "MODEL_NAME": child.get("QWEN37_MODEL_NAME") or model,
+            }
+            if not all(required.values()):
+                raise RuntimeError(
+                    "DASHSCOPE_API_KEY, DASHSCOPE_API_URL, and "
+                    "QWEN37_MODEL_NAME are required"
+                )
+            child.update({key: str(value) for key, value in required.items()})
+            command.extend(
+                ["--model-provider", "dashscope", "--concurrency", "1"]
+            )
+        if is_oracle:
+            command.extend(
+                ["--baseline-name", "curated_static", "--oracle-skill-view"]
+            )
+        elif is_curated_all:
+            command.extend(["--baseline-name", "curated_static"])
+        else:
+            command.extend(["--baseline-name", "no_skill"])
+
+        self.heartbeat(
+            "submitting_stage_environment_repair",
+            stage=stage_name,
+            environment_id=environment_id,
+        )
+        dry_run = self.run([*command, "--dry-run"], env=child, timeout=300)
+        if dry_run.returncode != 0:
+            repair["last_submit_error"] = (
+                dry_run.stdout + "\n" + dry_run.stderr
+            )[-2000:]
+            repair["last_submit_attempt_utc"] = utc_now()
+            repair["next_submit_attempt_epoch"] = time.time() + 300
+            self.event(
+                "stage_environment_repair_dry_run_retryable_failure",
+                stage=stage_name,
+                environment_id=environment_id,
+                returncode=dry_run.returncode,
+            )
+            self.save()
+            return
+        result = self.run(command, env=child, timeout=300)
+        combined = result.stdout + "\n" + result.stderr
+        job_id = next(
+            (
+                found
+                for value in json_values(combined)
+                if (found := find_job_id(value, str(environment_id)))
+            ),
+            None,
+        )
+        if result.returncode != 0 or not job_id:
+            repair["last_submit_error"] = combined[-2000:]
+            repair["last_submit_attempt_utc"] = utc_now()
+            repair["next_submit_attempt_epoch"] = time.time() + 300
+            self.event(
+                "stage_environment_repair_submission_retryable_failure",
+                stage=stage_name,
+                environment_id=environment_id,
+                returncode=result.returncode,
+            )
+            self.save()
+            return
+        repair.update({
+            "status": "submitted",
+            "job_id": job_id,
+            "job_status": "Queued",
+            "registered_with_evidence_watcher": False,
+            "submitted_at_utc": utc_now(),
+        })
+        repair.pop("last_submit_error", None)
+        repair.pop("next_submit_attempt_epoch", None)
+        stage["status"] = "repair_submitted"
+        stage.pop("next_submit_attempt_epoch", None)
+        self.save()
+        self.register_stage_repair(
+            stage_name, str(environment_id), str(job_id)
+        )
+        self.event(
+            "stage_environment_repair_submitted",
+            stage=stage_name,
+            environment_id=environment_id,
+            job_id=job_id,
+        )
+
     def submit(self, stage_name: str) -> None:
         stage = self.state["stages"][stage_name]
+        if stage.get("repair_environment_ids"):
+            self.submit_stage_environment_repair(stage_name)
+            return
         model = "qwen3.7-max" if stage_name.startswith("qwen") else "serve-3.8-maxp-cpt-s1-0715-fable-1ep"
         is_oracle = stage_name.endswith("exact_oracle")
         is_curated_all = stage_name.endswith("curated_all")

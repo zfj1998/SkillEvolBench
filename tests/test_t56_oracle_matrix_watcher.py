@@ -79,6 +79,9 @@ def test_existing_matrix_state_is_migrated_with_durable_e4_repair(
     assert persisted["stages"]["qwen_curated_all"]["status"] == "pending"
     assert persisted["stages"]["fable_exact_oracle"]["failed_groups"] == []
     assert persisted["stages"]["fable_exact_oracle"]["max_groups"] == 3
+    assert persisted["stages"]["fable_exact_oracle"]["successful_instances"] == {}
+    assert persisted["stages"]["fable_exact_oracle"]["repair_environment_ids"] == []
+    assert persisted["stages"]["fable_exact_oracle"]["repair_jobs"] == {}
 
 
 def test_failed_e4_repair_schedules_fresh_job_after_backoff(
@@ -255,4 +258,164 @@ def test_failed_group_is_retried_with_fresh_idempotency_key(
             "observed_at_utc": stage["failed_groups"][0]["observed_at_utc"],
             "idempotency_key": old_key,
         }
+    ]
+
+
+def test_partial_group_repairs_only_failed_environment(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("AP_API_KEY", "test-only-key")
+    args = argparse.Namespace(
+        study_root=tmp_path,
+        repo_root=ROOT,
+        cluster="test-cluster",
+        ap_cli="ap",
+    )
+    watcher = MATRIX.MatrixWatcher(args)
+    stage = watcher.state["stages"]["qwen_exact_oracle"]
+    stage.update(
+        {
+            "status": "submitted",
+            "group_id": "group-partial",
+            "registered_with_evidence_watcher": True,
+        }
+    )
+    monkeypatch.setattr(
+        watcher,
+        "group_jobs",
+        lambda group_id: [
+            {
+                "job_id": f"ap-{index}",
+                "instance_id": f"E{index}",
+                "status": "Succeeded" if index < 6 else "Failed",
+            }
+            for index in range(1, 7)
+        ],
+    )
+
+    watcher.update_submitted_stages()
+
+    assert stage["status"] == "retry_backoff"
+    assert stage["group_id"] is None
+    assert sorted(stage["successful_instances"]) == [
+        "E1", "E2", "E3", "E4", "E5"
+    ]
+    assert stage["repair_environment_ids"] == ["E6"]
+    assert stage["repair_jobs"]["E6"]["status"] == "pending"
+    assert stage["repair_jobs"]["E6"]["job_id"] is None
+
+
+def test_stage_environment_repair_submits_single_environment(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("AP_API_KEY", "test-only-key")
+    monkeypatch.setenv("DASHSCOPE_API_KEY", "test-only-model-key")
+    monkeypatch.setenv("DASHSCOPE_API_URL", "http://qwen.test/v1")
+    monkeypatch.setenv("QWEN37_MODEL_NAME", "qwen-test")
+    args = argparse.Namespace(
+        study_root=tmp_path,
+        repo_root=ROOT,
+        cluster="test-cluster",
+        ap_cli="ap",
+    )
+    watcher = MATRIX.MatrixWatcher(args)
+    stage = watcher.state["stages"]["qwen_exact_oracle"]
+    stage.update(
+        {
+            "status": "retry_backoff",
+            "group_id": None,
+            "repair_environment_ids": ["E6"],
+            "successful_instances": {
+                f"E{index}": {"job_id": f"ap-{index}"}
+                for index in range(1, 6)
+            },
+            "repair_jobs": {
+                "E6": {
+                    "status": "pending",
+                    "job_id": None,
+                    "idempotency_key": "repair-key",
+                    "failed_jobs": [],
+                }
+            },
+        }
+    )
+    commands: list[list[str]] = []
+
+    def fake_run(command, *, env=None, timeout=300):
+        del env, timeout
+        commands.append(command)
+        payload = (
+            {}
+            if "--dry-run" in command
+            else {
+                "submission": {
+                    "job_id": "ap-e6-repair",
+                    "instance_id": "E6",
+                }
+            }
+        )
+        return MATRIX.subprocess.CompletedProcess(
+            command, 0, json.dumps(payload), ""
+        )
+
+    monkeypatch.setattr(watcher, "run", fake_run)
+    monkeypatch.setattr(watcher, "register_stage_repair", lambda *_: None)
+
+    watcher.submit("qwen_exact_oracle")
+
+    assert len(commands) == 2
+    submission = commands[1]
+    assert submission[submission.index("--scope") + 1] == "environment"
+    assert submission[submission.index("--environment-id") + 1] == "E6"
+    assert "--suite-name" not in submission
+    assert stage["repair_jobs"]["E6"]["job_id"] == "ap-e6-repair"
+    assert stage["status"] == "repair_submitted"
+
+
+def test_successful_environment_repair_settles_stage(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("AP_API_KEY", "test-only-key")
+    args = argparse.Namespace(
+        study_root=tmp_path,
+        repo_root=ROOT,
+        cluster="test-cluster",
+        ap_cli="ap",
+    )
+    watcher = MATRIX.MatrixWatcher(args)
+    stage = watcher.state["stages"]["fable_exact_oracle"]
+    stage.update(
+        {
+            "status": "repair_submitted",
+            "group_id": None,
+            "repair_environment_ids": ["E6"],
+            "successful_instances": {
+                f"E{index}": {"job_id": f"ap-{index}"}
+                for index in range(1, 6)
+            },
+            "repair_jobs": {
+                "E6": {
+                    "status": "submitted",
+                    "job_id": "ap-e6-repair",
+                    "registered_with_evidence_watcher": True,
+                    "idempotency_key": "repair-key",
+                    "failed_jobs": [],
+                }
+            },
+        }
+    )
+    monkeypatch.setattr(
+        watcher,
+        "get_job",
+        lambda job_id: {"job_id": job_id, "status": "Succeeded"},
+    )
+
+    watcher.update_submitted_stages()
+
+    assert stage["status"] == "succeeded"
+    assert sorted(stage["successful_instances"]) == [
+        "E1", "E2", "E3", "E4", "E5", "E6"
     ]
