@@ -474,7 +474,7 @@ CASE_DEFINITIONS = {
     },
     "E4-LS2-T6": {
         "title": "表格和 JSON 都正确，self 仅因千分位逗号被隐藏 raw-number test 拒绝",
-        "kind": "隐藏数值表面格式假阴性（伪 oracle rescue）",
+        "kind": "隐藏数值表面格式假阴性（强任务缺陷；伪 oracle rescue）",
         "interpretation": (
             "Qwen self-generated 与 exact-oracle 都完整实现 PDF→JSON→DOCX 链：四个季度的 revenue、"
             "expenses、动态 profit 全部正确，DOCX 有标题、四列表格和逐季度文字。唯一 outcome 翻转"
@@ -522,7 +522,7 @@ CASE_DEFINITIONS = {
     },
     "E4-LS4-T5": {
         "title": "Exact 正确指出 page 23 是旧数据，却因 pointed to 不匹配 points to 被判失败",
-        "kind": "隐藏措辞正则假阴性（伪 oracle harm）",
+        "kind": "隐藏措辞正则假阴性（强任务缺陷；伪 oracle harm）",
         "interpretation": (
             "Qwen exact-oracle 最终报告明确写出 FY2023 revenue 118.3、正确 page 47，并说明"
             "`The internal reference on page 23 pointed to FY2022 data ... The correct current-year ... table is on page 47`。"
