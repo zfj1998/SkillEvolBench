@@ -9,6 +9,7 @@ import json
 import math
 import re
 import sqlite3
+import zipfile
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
@@ -70,6 +71,7 @@ VERIFIED_OUTCOME_FALSE_NEGATIVE_PAIRS = frozenset({
     ("sig-fable", "E3-LS3-T6"),
     ("qwen3.7-max", "E3-LS4-T6"),
     ("qwen3.7-max", "E4-LS1-T5"),
+    ("qwen3.7-max", "E4-LS2-T6"),
     ("qwen3.7-max", "E4-LS3-T5"),
     ("qwen3.7-max", "E4-LS4-T6"),
     ("qwen3.7-max", "E5-LS3-T6"),
@@ -470,6 +472,35 @@ CASE_DEFINITIONS = {
             "output.json",
         ],
     },
+    "E4-LS2-T6": {
+        "title": "表格和 JSON 都正确，self 仅因千分位逗号被隐藏 raw-number test 拒绝",
+        "kind": "隐藏数值表面格式假阴性（伪 oracle rescue）",
+        "interpretation": (
+            "Qwen self-generated 与 exact-oracle 都完整实现 PDF→JSON→DOCX 链：四个季度的 revenue、"
+            "expenses、动态 profit 全部正确，DOCX 有标题、四列表格和逐季度文字。唯一 outcome 翻转"
+            "来自表面格式：self 用面向人的 `$125,000`，hidden test 却逐个执行"
+            "`assertIn(str(value), doc_text)`，因此在 `$125,000` 中找不到连续字符串 `125000`；"
+            "exact 恰好用未格式化的 `125000` 而通过。题面只要求 mention each quarter and value，"
+            "没有禁止千分位分隔符。去掉逗号后，self 的 12/12 数字与 4/4 quarter 全部命中。"
+            "两条件共同的 process failure 也只是 verifier 只扫描 pipeline.py，却把真实分布在"
+            "pdf_extract.py 的 profit 计算和 docx_writer.py 的 add_table 视为缺失。故 raw 分数中的"
+            "oracle rescue 不是 skill 帮模型学会了链式迁移，而是 exact 输出偶然匹配隐藏字符串格式。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "pipeline.py",
+            "pdf_extract.py",
+            "json_bridge.py",
+            "docx_writer.py",
+            "extracted.json",
+            "report.docx",
+        ],
+        "task_source_files": [
+            "tests/expected_financials.json",
+            "tests/test_outcome.py",
+            "tests/test_process.py",
+        ],
+    },
     "E4-LS3-T5": {
         "title": "模型使用题面明确允许的 MISSING，却被 verifier 的另一套 marker 白名单拒绝",
         "kind": "题面与 verifier 的缺失值集合冲突（强任务缺陷）",
@@ -487,6 +518,30 @@ CASE_DEFINITIONS = {
             "fill_patient_form.py",
             "missing_policy.py",
             "intake_extractor.py",
+        ],
+    },
+    "E4-LS4-T5": {
+        "title": "Exact 正确指出 page 23 是旧数据，却因 pointed to 不匹配 points to 被判失败",
+        "kind": "隐藏措辞正则假阴性（伪 oracle harm）",
+        "interpretation": (
+            "Qwen exact-oracle 最终报告明确写出 FY2023 revenue 118.3、正确 page 47，并说明"
+            "`The internal reference on page 23 pointed to FY2022 data ... The correct current-year ... table is on page 47`。"
+            "这已经满足题面要求的 call out or account for the incorrect internal page reference。"
+            "hidden verifier 却只接受 `not the latest|incorrect|points to page 23` 三种固定表面；"
+            "语义更完整的过去式 `reference on page 23 pointed to` 不匹配其中任何一个。Self 的"
+            "`points to page 23` 恰好命中而满分。因此这个 self→exact outcome harm 是措辞正则"
+            "造成的假翻转，不是 curated document-diff skill 让模型退化，也不是模型漏掉错误引用。"
+        ),
+        "conditions": ["self_generated", "exact_oracle"],
+        "files": [
+            "extract_latest_revenue.py",
+            "reference_resolver.py",
+            "table_validator.py",
+            "output/revenue_analysis.md",
+        ],
+        "task_source_files": [
+            "tests/test_outcome.py",
+            "environment/annual_report.md",
         ],
     },
     "E4-LS4-T6": {
@@ -2388,6 +2443,216 @@ def reproduce_e6_ls1_hidden_reply_contract(
     }
 
 
+def _docx_plain_text(path: Path) -> str:
+    """Extract paragraph and table text from a DOCX without runtime deps."""
+
+    with zipfile.ZipFile(path) as archive:
+        xml = archive.read("word/document.xml").decode(
+            "utf-8", errors="replace"
+        )
+    text = re.sub(r"</w:(?:p|tr|tc)>", "\n", xml)
+    text = re.sub(r"<[^>]+>", "", text)
+    return html.unescape(text)
+
+
+def reproduce_e4_ls2_docx_number_surface(
+    task_root: Path, observations: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Separate semantic financial correctness from raw-number formatting."""
+
+    expected_path = task_root / "tests" / "expected_financials.json"
+    expected = json.loads(expected_path.read_text(encoding="utf-8"))
+    values = [
+        int(value)
+        for quarter in expected.values()
+        for value in quarter.values()
+    ]
+    rows = []
+    for observation in observations:
+        if observation.get("model") != "qwen3.7-max":
+            continue
+        artifact_raw = observation.get("artifact_task_path")
+        if not artifact_raw:
+            rows.append({
+                "condition": observation.get("condition"),
+                "artifact_available": False,
+                "official_outcome": observation.get("outcome"),
+            })
+            continue
+        artifact = Path(str(artifact_raw))
+        json_path = artifact / "extracted.json"
+        docx_path = artifact / "report.docx"
+        if not json_path.is_file() or not docx_path.is_file():
+            rows.append({
+                "condition": observation.get("condition"),
+                "artifact_available": False,
+                "official_outcome": observation.get("outcome"),
+            })
+            continue
+
+        actual = json.loads(json_path.read_text(encoding="utf-8"))
+        docx_text = _docx_plain_text(docx_path)
+        normalized = docx_text.replace(",", "")
+        pipeline = (artifact / "pipeline.py").read_text(
+            encoding="utf-8", errors="replace"
+        ).lower()
+        helper_text = "\n".join(
+            (artifact / name).read_text(encoding="utf-8", errors="replace")
+            for name in ("pdf_extract.py", "docx_writer.py")
+        ).lower()
+        rows.append({
+            "condition": observation.get("condition"),
+            "artifact_available": True,
+            "official_outcome": observation.get("outcome"),
+            "json_exact_expected": actual == expected,
+            "quarters_present": sum(quarter in docx_text for quarter in expected),
+            "raw_integer_strings_present": sum(
+                str(value) in docx_text for value in values
+            ),
+            "integer_strings_present_after_comma_normalization": sum(
+                str(value) in normalized for value in values
+            ),
+            "expected_numeric_value_count": len(values),
+            "pipeline_literal_profit": "profit" in pipeline,
+            "pipeline_literal_add_table": "add_table" in pipeline,
+            "helpers_implement_profit_and_add_table": (
+                "profit" in helper_text and "add_table" in helper_text
+            ),
+            "artifact_json_path": str(json_path.resolve()),
+            "artifact_docx_path": str(docx_path.resolve()),
+        })
+
+    instruction = (task_root / "instruction.md").read_text(
+        encoding="utf-8", errors="replace"
+    ).lower()
+    outcome_verifier = (task_root / "tests" / "test_outcome.py").read_text(
+        encoding="utf-8", errors="replace"
+    )
+    process_verifier = (task_root / "tests" / "test_process.py").read_text(
+        encoding="utf-8", errors="replace"
+    )
+    return {
+        "method": (
+            "Compare extracted.json exactly with expected_financials.json, then "
+            "count every expected numeric value in raw DOCX text before and "
+            "after removing thousands separators. Audit whether the process "
+            "verifier scans only pipeline.py while implementation lives in helpers."
+        ),
+        "instruction_requires_raw_unformatted_integer_strings": (
+            "unformatted" in instruction or "without commas" in instruction
+        ),
+        "outcome_verifier_uses_assert_in_str_value": (
+            "self.assertIn(str(value), text)" in outcome_verifier
+        ),
+        "process_verifier_reads_pipeline_only": (
+            '"pipeline.py"' in process_verifier
+            and '"pdf_extract.py"' not in process_verifier
+            and '"docx_writer.py"' not in process_verifier
+        ),
+        "models": rows,
+        "expected_path": str(expected_path.resolve()),
+    }
+
+
+def _trajectory_final_markdown(
+    trajectory_path: Path, required_tokens: tuple[str, ...]
+) -> str:
+    """Return the last plain observation that looks like the requested output."""
+
+    try:
+        trajectory = json.loads(
+            trajectory_path.read_text(encoding="utf-8", errors="replace")
+        )
+    except (OSError, json.JSONDecodeError):
+        return ""
+    candidates = []
+    for step in trajectory.get("steps", []):
+        for result in (step.get("observation") or {}).get("results", []):
+            content = result.get("content")
+            if not isinstance(content, str):
+                continue
+            stripped = content.strip()
+            lowered = stripped.lower()
+            if stripped.startswith("# ") and all(
+                token.lower() in lowered for token in required_tokens
+            ):
+                candidates.append(stripped)
+    return candidates[-1] if candidates else ""
+
+
+def reproduce_e4_ls4_t5_reference_wording(
+    task_root: Path, observations: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Compare semantic stale-reference disclosure with the hidden regex."""
+
+    hidden_pattern = re.compile(
+        r"not the latest|incorrect|points to page 23", flags=re.IGNORECASE
+    )
+    rows = []
+    for observation in observations:
+        if observation.get("model") != "qwen3.7-max":
+            continue
+        report = ""
+        report_path: Path | None = None
+        artifact_raw = observation.get("artifact_task_path")
+        if artifact_raw:
+            candidate = Path(str(artifact_raw)).parent / "output" / "revenue_analysis.md"
+            if candidate.is_file():
+                report_path = candidate
+                report = candidate.read_text(encoding="utf-8", errors="replace")
+        if not report and observation.get("trajectory_path"):
+            trajectory_path = Path(str(observation["trajectory_path"]))
+            report = _trajectory_final_markdown(
+                trajectory_path, ("118.3", "page", "23", "47")
+            )
+        lowered = report.lower()
+        rows.append({
+            "condition": observation.get("condition"),
+            "official_outcome": observation.get("outcome"),
+            "report_recovered": bool(report),
+            "has_current_revenue_118_3": "118.3" in lowered,
+            "has_correct_page_47": "47" in lowered,
+            "has_stale_page_23": "23" in lowered,
+            "identifies_prior_year_or_wrong_reference": any(
+                token in lowered
+                for token in (
+                    "fy2022", "prior-year", "prior year", "incorrect",
+                    "stale", "not the latest", "rejected",
+                )
+            ),
+            "hidden_regex_matches": bool(hidden_pattern.search(report)),
+            "semantic_contract_satisfied": (
+                "118.3" in lowered
+                and "47" in lowered
+                and "23" in lowered
+                and any(
+                    token in lowered
+                    for token in (
+                        "fy2022", "prior-year", "prior year", "incorrect",
+                        "stale", "not the latest", "rejected",
+                    )
+                )
+            ),
+            "report_excerpt": report[:1200],
+            "artifact_report_path": (
+                str(report_path.resolve()) if report_path else None
+            ),
+        })
+    return {
+        "method": (
+            "Recover each final report, check the public semantic contract "
+            "(118.3, page 47, page 23, and prior-year/wrong-reference meaning), "
+            "then apply the hidden verifier's exact wording regex."
+        ),
+        "public_instruction_requires_fixed_phrase": False,
+        "hidden_regex": hidden_pattern.pattern,
+        "models": rows,
+        "outcome_verifier_path": str(
+            (task_root / "tests" / "test_outcome.py").resolve()
+        ),
+    }
+
+
 def reproduce_e4_ls3_missing_markers(
     task_root: Path, artifact_task_root: Path
 ) -> dict[str, Any]:
@@ -2492,8 +2757,14 @@ def reproduce_e4_ls4_literal_surface(
                 if isinstance(content, str):
                     lowered = content.lower()
                     if (
-                        "policy history analysis" in lowered
-                        and "net v1 -> v3 changes" in lowered
+                        (
+                            "policy history analysis" in lowered
+                            or "policy history report" in lowered
+                        )
+                        and (
+                            "net v1 -> v3 changes" in lowered
+                            or "net v1 → v3 changes" in lowered
+                        )
                     ):
                         text_candidates.append(content)
                 for child in node.values():
@@ -2506,7 +2777,7 @@ def reproduce_e4_ls4_literal_surface(
         if not text_candidates:
             continue
 
-        def candidate_score(value: str) -> tuple[int, int]:
+        def candidate_score(value: str) -> tuple[int, int, int]:
             lowered = value.lower()
             signals = {
                 variant
@@ -2514,10 +2785,12 @@ def reproduce_e4_ls4_literal_surface(
                 for variant in variants
                 if variant in lowered
             }
-            return len(signals), len(value)
+            is_rendered_report = int(value.lstrip().startswith("# Policy History"))
+            return is_rendered_report, len(signals), len(value)
 
         report = max(text_candidates, key=candidate_score)
         lowered = report.lower()
+        normalized_sections = lowered.replace("→", "->")
         exact_hits = [token for token in verifier_tokens if token in lowered]
         semantic_hits = [
             label
@@ -2535,7 +2808,7 @@ def reproduce_e4_ls4_literal_surface(
             "hidden_literal_check_passes": len(exact_hits) >= 4,
             "source_normalized_check_passes": len(semantic_hits) >= 4,
             "required_sections_present": all(
-                heading in lowered
+                heading in normalized_sections
                 for heading in (
                     "v1 -> v2",
                     "v2 -> v3",
@@ -3435,6 +3708,14 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
         ):
             reproduction = reproduce_e4_ls3_missing_markers(
                 task_root, qwen_self_artifact_path
+            )
+        if task_id == "E4-LS2-T6" and task_root:
+            reproduction = reproduce_e4_ls2_docx_number_surface(
+                task_root, observations
+            )
+        if task_id == "E4-LS4-T5" and task_root:
+            reproduction = reproduce_e4_ls4_t5_reference_wording(
+                task_root, observations
             )
         if task_id == "E4-LS4-T6" and task_root:
             reproduction = reproduce_e4_ls4_literal_surface(
@@ -5221,7 +5502,11 @@ def conclusions(
         result.append(
             {
                 "level": "warn",
-                "title": "当前 Exact Oracle matched slices 尚无 outcome 救回",
+                "title": (
+                    "当前 Exact Oracle matched slices 已出现 outcome 翻转"
+                    if rescued or harmed
+                    else "当前 Exact Oracle matched slices 尚无 outcome 救回"
+                ),
                 "body": (
                     f"目前只有 {slices} 形成 {len(matched_exact)} 个 T5/T6 self/exact 配对："
                     f"self-generated outcome {self_outcome}/{len(matched_exact)}，"
@@ -5237,6 +5522,26 @@ def conclusions(
                 ),
             }
         )
+    e5_ls1_t6 = next(
+        (case for case in cases if case.get("task_id") == "E5-LS1-T6"),
+        None,
+    )
+    if e5_ls1_t6:
+        result.append({
+            "level": "good",
+            "title": "E5-LS1-T6 捕捉到真实的 skill 抽象质量差异",
+            "body": (
+                "Qwen 与 Fable 面对相同结构的 T1–T3 学习证据，却生成了不同适用边界："
+                "Qwen 把 T2 的 evidence/opinion 分类上升为无条件的 `Classify before ranking`，"
+                "在 T6 错删 relevance 最高的 FDA M04、选入 must-exclude M12；Fable 则先按"
+                "输出 schema 判断当前是 ranking/classification/estimation 哪种 variant，"
+                "在 self-generated 条件下得到 7/7。两者差异不只是 skill 文本长短，而是能否把"
+                "异构经验抽象成带适用条件的规则。这是 benchmark 确实测到 skill evolve 质量的"
+                "直接机制证据。与此同时，Fable exact 的失败来自单轮 16,384-token 推理耗尽且"
+                "零文件修改，属于独立的执行采样退化，不能反向解释成 oracle skill 不足。"
+                "完整因果估计仍需等 no-skill 与 curated-all 对照到齐。"
+            ),
+        })
     qwen_e2 = next(
         (
             row
@@ -5385,7 +5690,10 @@ def conclusions(
                 "E4-LS1-T5 的题面输出路径与 verifier 的父目录合同冲突，"
                 "语义正确输出被全部判为 outcome 失败；E4-LS3-T5 的题面明确允许 UNKNOWN、MISSING、"
                 "空字符串或 null，隐藏 verifier 却只接受 N/A、字符串 null 和 TODO，且实际 JSON null"
-                "经 str(None) 后也会被拒绝；"
+                "经 str(None) 后也会被拒绝；E4-LS2-T6 的 self JSON 与 DOCX 数值语义全对，只因"
+                "人类可读千分位 `$125,000` 不包含 hidden test 要求的连续 raw token `125000`；"
+                "E4-LS4-T5 的 exact 明确写出 page 23 指向 FY2022、正确表在 page 47，却因过去式"
+                "`pointed to` 不匹配 hidden regex 的 `points to page 23` 被拒绝；"
                 "E4-LS4-T6 中两模型都报告了五项首轮变化，但 hidden test 的 `10 am - 4 pm` 与"
                 "`$150/month` 两个 token 和原始 policy_v2 的 en-dash、`$150 per month` 写法冲突；"
                 "E6-LS3-T6 中两模型都抽取了 8/8 个真实 action，核心"
@@ -5442,6 +5750,53 @@ def conclusions(
                     "contract-aware 的能力解释中，这 5 个 T5 都显示了任务核心功能完成证据；这是一项"
                     "诊断性语义结论，不是把官方 3/5 改写成新的 benchmark 分数。若不单列这两题，会把"
                     "E4 的 T5 skill-evolve/模型能力低估 40 个百分点。"
+                ),
+            })
+    qwen_e4_matched = [
+        row
+        for row in comparisons
+        if row["model"] == "qwen3.7-max"
+        and row["environment_id"] == "E4"
+        and int(row["tier"]) in (5, 6)
+        and row["conditions"]["self_generated"] is not None
+        and row["conditions"]["exact_oracle"] is not None
+    ]
+    if len(qwen_e4_matched) == 10:
+        self_passed = sum(
+            row["conditions"]["self_generated"]["outcome"] is True
+            for row in qwen_e4_matched
+        )
+        exact_passed = sum(
+            row["conditions"]["exact_oracle"]["outcome"] is True
+            for row in qwen_e4_matched
+        )
+        rescues = {
+            str(row["task_id"])
+            for row in qwen_e4_matched
+            if row["conditions"]["self_generated"]["outcome"] is not True
+            and row["conditions"]["exact_oracle"]["outcome"] is True
+        }
+        harms = {
+            str(row["task_id"])
+            for row in qwen_e4_matched
+            if row["conditions"]["self_generated"]["outcome"] is True
+            and row["conditions"]["exact_oracle"]["outcome"] is not True
+        }
+        if rescues == {"E4-LS2-T6"} and harms == {"E4-LS4-T5"}:
+            result.append({
+                "level": "good",
+                "title": "Qwen/E4：self 与 exact raw 都是 6/10，唯一 rescue/harm 均为 verifier 假翻转",
+                "body": (
+                    f"Qwen/E4 的 10 个 matched T5/T6 中，self outcome={self_passed}/10、"
+                    f"exact={exact_passed}/10。表面上 exact 在 E4-LS2-T6 救回一题，又在"
+                    "E4-LS4-T5 损害一题；逐 artifacts 复算后，两次翻转都不是真 skill 效应："
+                    "前者 self 的 JSON 精确等于 expected，DOCX 去掉千分位逗号后 12/12 数字全中；"
+                    "后者 exact 已正确写出 118.3、page 47 和 page 23→FY2022，只因 `pointed to`"
+                    "未命中固定措辞正则。两条件其余 raw failures——E4-LS1-T5、E4-LS3-T5、"
+                    "E4-LS4-T6——也分别是输出目录、missing marker 和源文档表面写法合同缺陷。"
+                    "因此 contract-aware 看，这 10 题在 self 与 exact 下都有核心语义完成证据；"
+                    "E4 并非 T5/T6 太难，也没有证据说明 exact curated 比 generated 更有效。"
+                    "No-skill 到齐前，仍不能区分两类 skill 都有用与题面本身已足够。"
                 ),
             })
     fable_e4_exact = [

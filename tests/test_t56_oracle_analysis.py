@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import zipfile
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -1370,6 +1371,108 @@ def test_e4_ls3_reproduction_exposes_missing_marker_contract_conflict(
     assert result["model_marker"] == "MISSING"
     assert result["model_marker_accepted"] is False
     assert result["verifier_uses_str_value_membership"] is True
+
+
+def test_e4_ls2_reproduction_separates_commas_from_numeric_correctness(
+    tmp_path: Path,
+) -> None:
+    task_root = ROOT / "benchmark" / "tasks" / "pdf-json-docx-chain"
+    artifact = tmp_path / "task"
+    artifact.mkdir()
+    expected = json.loads(
+        (task_root / "tests" / "expected_financials.json").read_text()
+    )
+    (artifact / "extracted.json").write_text(
+        json.dumps(expected), encoding="utf-8"
+    )
+    (artifact / "pipeline.py").write_text(
+        "extract_financials(); build_docx(JSON_OUT)\n", encoding="utf-8"
+    )
+    (artifact / "pdf_extract.py").write_text(
+        "profit = revenue - expenses\n", encoding="utf-8"
+    )
+    (artifact / "docx_writer.py").write_text(
+        "doc.add_table(rows=1, cols=4)\n", encoding="utf-8"
+    )
+    flattened = " ".join(
+        item
+        for quarter, values in expected.items()
+        for item in [quarter, *(f"{int(value):,}" for value in values.values())]
+    )
+    with zipfile.ZipFile(artifact / "report.docx", "w") as archive:
+        archive.writestr(
+            "word/document.xml",
+            f'<w:document xmlns:w="x"><w:body><w:p><w:r><w:t>{flattened}</w:t>'
+            "</w:r></w:p></w:body></w:document>",
+        )
+
+    result = REPORT.reproduce_e4_ls2_docx_number_surface(
+        task_root,
+        [{
+            "model": "qwen3.7-max",
+            "condition": "self_generated",
+            "outcome": False,
+            "artifact_task_path": str(artifact),
+        }],
+    )
+
+    row = result["models"][0]
+    assert row["json_exact_expected"] is True
+    assert row["quarters_present"] == 4
+    assert row["raw_integer_strings_present"] == 0
+    assert row["integer_strings_present_after_comma_normalization"] == 12
+    assert row["helpers_implement_profit_and_add_table"] is True
+    assert result["instruction_requires_raw_unformatted_integer_strings"] is False
+    assert result["outcome_verifier_uses_assert_in_str_value"] is True
+
+
+def test_e4_ls4_t5_reproduction_exposes_tense_sensitive_hidden_regex(
+    tmp_path: Path,
+) -> None:
+    task_root = ROOT / "benchmark" / "tasks" / "page-number-reference-error-trap"
+    self_artifact = tmp_path / "self" / "task"
+    (self_artifact.parent / "output").mkdir(parents=True)
+    (self_artifact.parent / "output" / "revenue_analysis.md").write_text(
+        "# Revenue Analysis\n118.3 FY2023 page 47; the stale pointer points to page 23.",
+        encoding="utf-8",
+    )
+    exact_trajectory = tmp_path / "exact.json"
+    exact_report = (
+        "# Revenue Analysis\n118.3 FY2023; source page 47. "
+        "The internal reference on page 23 pointed to FY2022 prior-year data."
+    )
+    exact_trajectory.write_text(
+        json.dumps({
+            "steps": [{
+                "observation": {"results": [{"content": exact_report}]}
+            }]
+        }),
+        encoding="utf-8",
+    )
+
+    result = REPORT.reproduce_e4_ls4_t5_reference_wording(
+        task_root,
+        [
+            {
+                "model": "qwen3.7-max",
+                "condition": "self_generated",
+                "outcome": True,
+                "artifact_task_path": str(self_artifact),
+            },
+            {
+                "model": "qwen3.7-max",
+                "condition": "exact_oracle",
+                "outcome": False,
+                "trajectory_path": str(exact_trajectory),
+            },
+        ],
+    )
+
+    self_row, exact_row = result["models"]
+    assert self_row["semantic_contract_satisfied"] is True
+    assert self_row["hidden_regex_matches"] is True
+    assert exact_row["semantic_contract_satisfied"] is True
+    assert exact_row["hidden_regex_matches"] is False
 
 
 def test_oracle_scope_audit_flags_explicit_basic_vs_advanced_gap(tmp_path: Path) -> None:
