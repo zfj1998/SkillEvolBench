@@ -5846,6 +5846,32 @@ def conclusions(
         and row["conditions"]["exact_oracle"] is not None
     ]
     if len(qwen_e4_matched) == 10:
+        qwen_e4_skill = next(
+            (
+                row
+                for row in matched_skill_content
+                if row["model"] == "qwen3.7-max"
+                and row["environment_id"] == "E4"
+                and row["complete_t5_t6_slice"]
+            ),
+            None,
+        )
+        skill_content_note = ""
+        if qwen_e4_skill:
+            ratio = qwen_e4_skill.get("generated_to_curated_char_ratio")
+            ratio_text = f"{float(ratio):.2f}×" if ratio is not None else "未知"
+            jaccard = qwen_e4_skill.get("median_best_word_jaccard")
+            jaccard_text = (
+                f"{float(jaccard):.3f}" if jaccard is not None else "未知"
+            )
+            skill_content_note = (
+                f"内容层面，T1–T3 生成 {qwen_e4_skill['generated_skill_count']} 份 active skills、"
+                f"{qwen_e4_skill['generated_chars']:,} 字符，是 curated 的 {ratio_text}；"
+                f"中位 best word Jaccard 仅 {jaccard_text}，generated/curated 的 verifier markers "
+                f"为 {qwen_e4_skill['generated_verifier_marker_hits']}/"
+                f"{qwen_e4_skill['oracle_verifier_marker_hits']}。文本差异很大却没有真实行为差异，"
+                "说明这个 matched slice 对 skill 内容不敏感。"
+            )
         self_passed = sum(
             row["conditions"]["self_generated"]["outcome"] is True
             for row in qwen_e4_matched
@@ -5872,14 +5898,14 @@ def conclusions(
                 "title": "Qwen/E4：self 与 exact raw 都是 6/10，唯一 rescue/harm 均为 verifier 假翻转",
                 "body": (
                     f"Qwen/E4 的 10 个 matched T5/T6 中，self outcome={self_passed}/10、"
-                    f"exact={exact_passed}/10。表面上 exact 在 E4-LS2-T6 救回一题，又在"
+                    f"exact={exact_passed}/10。表面上 exact 在 E4-LS2-T6 救回一题，又在 "
                     "E4-LS4-T5 损害一题；逐 artifacts 复算后，两次翻转都不是真 skill 效应："
                     "前者 self 的 JSON 精确等于 expected，DOCX 去掉千分位逗号后 12/12 数字全中；"
-                    "后者 exact 已正确写出 118.3、page 47 和 page 23→FY2022，只因 `pointed to`"
+                    "后者 exact 已正确写出 118.3、page 47 和 page 23→FY2022，只因 `pointed to` "
                     "未命中固定措辞正则。两条件其余 raw failures——E4-LS1-T5、E4-LS3-T5、"
                     "E4-LS4-T6——也分别是输出目录、missing marker 和源文档表面写法合同缺陷。"
                     "因此 contract-aware 看，这 10 题在 self 与 exact 下都有核心语义完成证据；"
-                    "E4 并非 T5/T6 太难，也没有证据说明 exact curated 比 generated 更有效。"
+                    f"E4 并非 T5/T6 太难，也没有证据说明 exact curated 比 generated 更有效。{skill_content_note}"
                     "No-skill 到齐前，仍不能区分两类 skill 都有用与题面本身已足够。"
                 ),
             })
