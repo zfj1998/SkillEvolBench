@@ -78,6 +78,9 @@ VERIFIED_OUTCOME_FALSE_NEGATIVE_PAIRS = frozenset({
     ("sig-fable", "E6-LS1-T6"),
     ("sig-fable", "E6-LS2-T6"),
 })
+VERIFIED_PROCESS_FALSE_NEGATIVE_PAIRS = frozenset({
+    ("qwen3.7-max", "E2-LS3-T5"),
+})
 MIXED_BENCHMARK_MODEL_GAP_PAIRS = frozenset({
     ("qwen3.7-max", "E2-LS1-T6"),
     ("sig-fable", "E2-LS1-T6"),
@@ -209,7 +212,7 @@ CASE_DEFINITIONS = {
         ],
     },
     "E2-LS3-T5": {
-        "title": "Generated strict 胜出来自 verifier 位置过拟合，功能上与 Oracle 相同",
+        "title": "分页功能正确，strict 差异只来自 verifier 位置过拟合",
         "kind": "Generated skill 的 verifier-specific 过拟合反例",
         "interpretation": (
             "Fable self-generated 与 exact-oracle 都通过全部 outcome tests：都跟随运行期 metadata，"
@@ -223,6 +226,10 @@ CASE_DEFINITIONS = {
             "没有该固定文件扫描先验；generated skill 则大篇幅总结了 grep、literal token 和 file-location"
             "陷阱。这个 self>oracle 的 strict harm 是 T1–T3 verifier 细节迁移/测试过拟合，不是更强的"
             "分页语义能力；也直接证明只看 strict reward 会把 skill evolve 与 verifier gaming 混在一起。"
+            "Qwen 的 self-generated 和 exact-oracle 则都把 fresh metadata 判断拆进 page_plan.py：两次都实际"
+            "抓到 8 页、80 行，trace 中 page 1–3 的 total_pages=5、page 4–8 动态增长为 8，最终"
+            "has_more=false；但同一个 process test 仍只扫描 solution.py，所以两次都被判到 0.75。"
+            "因此 Qwen self 的这项 strict failure 是经 artifacts 独立核实的 process verifier 假阴性。"
         ),
         "conditions": ["self_generated", "exact_oracle"],
         "files": [
@@ -3923,6 +3930,8 @@ def failure_attribution(
                 cause = "mixed_benchmark_and_model_gap"
             else:
                 cause = "functional_gap"
+        elif model_task in VERIFIED_PROCESS_FALSE_NEGATIVE_PAIRS:
+            cause = "verified_verifier_false_negative"
         elif task_id in verified_false_negatives:
             cause = "verified_verifier_false_negative"
         elif task_id in substantive_process:

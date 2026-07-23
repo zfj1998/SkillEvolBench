@@ -634,10 +634,10 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
         {
             **common,
             "task_id": "E2-LS3-T5",
-            "task_slug": "functional-case",
-            "outcome_pass": False,
-            "process_pass": True,
-            "classification": "outcome_only_failure",
+            "task_slug": "model-specific-process-false-negative",
+            "outcome_pass": True,
+            "process_pass": False,
+            "classification": "process_only_failure",
         },
         {
             **common,
@@ -701,7 +701,7 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
     causes = {row["task_id"]: row["cause"] for row in result["failures"]}
     assert causes == {
         "E2-LS1-T5": "verified_verifier_false_negative",
-        "E2-LS3-T5": "functional_gap",
+        "E2-LS3-T5": "verified_verifier_false_negative",
         "E5-LS2-T6": "verified_verifier_false_negative",
         "E6-LS2-T6": "verified_benchmark_false_negative",
         "E6-LS3-T6": "mixed_benchmark_and_model_gap",
