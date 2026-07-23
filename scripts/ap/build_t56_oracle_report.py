@@ -1523,6 +1523,125 @@ def aggregates(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return result
 
 
+def self_generated_t1_t6_heatmap(
+    evidence: dict[str, Any],
+    scientific_rows: list[dict[str, Any]],
+    eligible_cells: set[tuple[str, str, str]],
+) -> dict[str, Any]:
+    """Aggregate protocol-valid self-generated final outcomes across T1-T6.
+
+    T1-T3 come from the terminal result after the benchmark's same-session
+    retry loop. T4-T6 come from the frozen-library evaluation.  A learning
+    slice is admitted only when the same model/Env self-generated episode also
+    passes the complete T4-T6 protocol gate; partial failed episodes therefore
+    never fill an otherwise missing heatmap row.
+    """
+
+    self_cells = {
+        (model, environment_id)
+        for model, condition, environment_id in eligible_cells
+        if condition == "self_generated"
+    }
+    learning_rows = [
+        row
+        for row in evidence.get("learning_tasks", [])
+        if isinstance(row, dict)
+        and row.get("selected_run", True)
+        and row.get("condition") == "self_generated"
+        and (str(row.get("model")), str(row.get("environment_id")))
+        in self_cells
+    ]
+    evaluation_rows = [
+        row
+        for row in scientific_rows
+        if row.get("condition") == "self_generated"
+        and int(row.get("tier") or 0) in (4, 5, 6)
+    ]
+    indexed: dict[tuple[str, str, int, str], dict[str, Any]] = {}
+    duplicate_task_ids: list[str] = []
+    for row in [*learning_rows, *evaluation_rows]:
+        tier = int(row.get("tier") or 0)
+        if tier not in range(1, 7):
+            continue
+        key = (
+            str(row.get("model")),
+            str(row.get("environment_id")),
+            tier,
+            str(row.get("task_id")),
+        )
+        if key in indexed:
+            duplicate_task_ids.append(key[-1])
+            continue
+        indexed[key] = row
+
+    records: list[dict[str, Any]] = []
+    for model in MODELS:
+        for environment_id in ENVS:
+            cell_eligible = (model, environment_id) in self_cells
+            for tier in range(1, 7):
+                group = [
+                    row
+                    for (row_model, row_env, row_tier, _), row in indexed.items()
+                    if row_model == model
+                    and row_env == environment_id
+                    and row_tier == tier
+                ]
+                observed = len(group)
+                complete = cell_eligible and observed == 5
+                records.append({
+                    "model": model,
+                    "environment_id": environment_id,
+                    "tier": tier,
+                    "observed": observed,
+                    "expected": 5,
+                    "complete": complete,
+                    "status": (
+                        "complete"
+                        if complete
+                        else "awaiting_protocol_valid_self_cell"
+                        if not cell_eligible
+                        else "incomplete_task_grid"
+                    ),
+                    "strict": sum(row.get("strict_pass") is True for row in group),
+                    "outcome": sum(row.get("outcome_pass") is True for row in group),
+                    "process": sum(row.get("process_pass") is True for row in group),
+                    "task_ids": sorted(str(row.get("task_id")) for row in group),
+                    "result_semantics": (
+                        "terminal_after_same_session_retry"
+                        if tier <= 3
+                        else "frozen_library_evaluation"
+                    ),
+                })
+
+    summaries = []
+    for model in MODELS:
+        model_records = [
+            row for row in records if row["model"] == model and row["complete"]
+        ]
+        observed = sum(row["observed"] for row in model_records)
+        summaries.append({
+            "model": model,
+            "complete_cells": len(model_records),
+            "expected_cells": 36,
+            "observed": observed,
+            "expected": 180,
+            "strict": sum(row["strict"] for row in model_records),
+            "outcome": sum(row["outcome"] for row in model_records),
+            "process": sum(row["process"] for row in model_records),
+        })
+    return {
+        "records": records,
+        "summaries": summaries,
+        "duplicate_task_ids": sorted(set(duplicate_task_ids)),
+        "all_task_grids_valid": not duplicate_task_ids
+        and all(row["observed"] in (0, 5) for row in records),
+        "comparison_boundary": (
+            "T1-T3 show the terminal result after up to three same-session "
+            "attempts; T4-T6 show frozen-library evaluation results."
+        ),
+    }
+
+
 def task_comparisons(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     indexed = {(row["model"], row["condition"], row["task_id"]): row for row in rows}
     result = []
@@ -6304,6 +6423,9 @@ def build_payload(
         if (row["model"], row["condition"], row["environment_id"])
         in eligible_cells
     ]
+    full_tier_heatmap = self_generated_t1_t6_heatmap(
+        evidence, scientific_rows, eligible_cells
+    )
     comparisons = task_comparisons(scientific_rows)
     protocol_equivalence = protocol_equivalence_analysis(coverage)
     protocol_design = protocol_design_audit(audit)
@@ -6345,6 +6467,7 @@ def build_payload(
         "is_complete": all(row["complete"] for row in coverage),
         "coverage": coverage,
         "aggregates": aggregates(scientific_rows),
+        "self_generated_t1_t6": full_tier_heatmap,
         "tasks": scientific_rows,
         "comparisons": comparisons,
         "protocol_design": protocol_design,
@@ -6428,6 +6551,40 @@ def render_markdown(data: dict[str, Any]) -> str:
         for condition in CONDITIONS:
             rows = [row for row in data["coverage"] if row["model"] == model and row["condition"] == condition]
             lines.append(f"| {model} | {CONDITION_ZH[condition]} | {sum(row['complete'] for row in rows)}/6 | {sum(row['observed'] for row in rows)}/90 |")
+    lines += [
+        "",
+        "## Self-generated 主实验 T1–T6 严格通过率",
+        "",
+        "每格为最终严格通过数/5。T1–T3 是最多三次 same-session attempt 后的终态；"
+        "T4–T6 是 skill library 冻结后的 evaluation，不能把两个阶段的数值直接当作同一尝试预算下的难度曲线。"
+        "交互 HTML 可切换 Outcome 与 Process。",
+        "",
+    ]
+    heatmap_records = data["self_generated_t1_t6"]["records"]
+    for model in MODELS:
+        lines += [
+            f"### {model}",
+            "",
+            "| Env | T1 | T2 | T3 | T4 | T5 | T6 |",
+            "|---|---:|---:|---:|---:|---:|---:|",
+        ]
+        for environment_id in ENVS:
+            cells = []
+            for tier in range(1, 7):
+                row = next(
+                    item
+                    for item in heatmap_records
+                    if item["model"] == model
+                    and item["environment_id"] == environment_id
+                    and item["tier"] == tier
+                )
+                cells.append(
+                    f"{row['strict']}/{row['observed']}"
+                    if row["complete"]
+                    else "—"
+                )
+            lines.append(f"| {environment_id} | " + " | ".join(cells) + " |")
+        lines.append("")
     protocol = data["protocol_equivalence"]
     lines += [
         "",
@@ -7089,15 +7246,17 @@ def render_html(data: dict[str, Any]) -> str:
 .filters{{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}} select,input{{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink)}} table{{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}} th{{position:sticky;top:0;background:#f6f8fc;color:#475467;text-align:left;padding:9px;border-bottom:1px solid var(--line)}} td{{padding:9px;border-bottom:1px solid #edf0f5;vertical-align:top}} tr.click{{cursor:pointer}} tr.click:hover{{background:#f7f9ff}} .tablebox{{overflow:auto;max-height:620px;border:1px solid var(--line);border-radius:12px}}
 .metric{{display:inline-flex;min-width:58px;justify-content:center;padding:4px 7px;border-radius:7px;font-weight:700}} .pass{{background:#e8f7ef;color:var(--green)}} .fail{{background:#fff0ef;color:var(--red)}} .missing{{background:#f1f3f6;color:#98a2b3}} .proc{{background:#fff6df;color:#9a6700}}
 .heat{{display:grid;grid-template-columns:150px repeat(6,1fr);gap:5px;min-width:850px}} .heat>div{{padding:9px;border-radius:8px;text-align:center;background:#f3f5f9}} .heat .head{{font-weight:700;background:#eaf0ff}} .heat .v{{color:#fff;font-weight:800}} .v.high{{background:#16845b}} .v.mid{{background:#dc8c00}} .v.low{{background:#c84035}} .v.none{{background:#b3bac6}}
+.full-heatmaps{{display:grid;grid-template-columns:1fr 1fr;gap:18px;overflow:auto}} .model-heat{{min-width:560px;border:1px solid var(--line);border-radius:14px;padding:14px}} .model-heat h3{{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:10px}} .tierheat{{display:grid;grid-template-columns:72px repeat(6,minmax(68px,1fr));gap:5px}} .tierheat>div{{min-height:58px;padding:7px;border-radius:8px;text-align:center;display:flex;flex-direction:column;justify-content:center}} .tierheat .head{{min-height:auto;background:#eaf0ff;font-weight:750}} .tierheat .v{{color:#fff;font-weight:850}} .tierheat .v span{{display:block;font-size:11px;font-weight:600;opacity:.9}} .tierheat .none{{background:#b3bac6;color:#fff}}
 .two{{grid-template-columns:1fr 1fr}} .case{{padding:16px;border:1px solid var(--line);border-radius:14px;margin:10px 0}} .case .kind{{font-size:12px;color:var(--purple);font-weight:700}} details{{margin-top:8px}} pre{{white-space:pre-wrap;word-break:break-word;background:#111827;color:#dbeafe;padding:14px;border-radius:10px;max-height:420px;overflow:auto;font:12px/1.5 ui-monospace,SFMono-Regular,monospace}}
 .drawer{{position:fixed;right:0;top:0;height:100vh;width:min(720px,95vw);background:#fff;box-shadow:-18px 0 45px rgba(18,29,55,.2);padding:24px;overflow:auto;transform:translateX(102%);transition:.25s;z-index:10}} .drawer.open{{transform:none}} .close{{float:right;border:0;background:#eef2f8;border-radius:20px;width:34px;height:34px;cursor:pointer}} .small{{font-size:12px;color:var(--muted)}} .bar{{height:9px;background:#e9edf4;border-radius:10px;overflow:hidden}} .bar span{{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan))}}
-@media(max-width:900px){{.wrap{{padding:14px}}.cards,.two{{grid-template-columns:1fr 1fr}}}} @media(max-width:600px){{.cards,.two{{grid-template-columns:1fr}}.hero{{padding:24px}}}}
+@media(max-width:1100px){{.full-heatmaps{{grid-template-columns:1fr}}}} @media(max-width:900px){{.wrap{{padding:14px}}.cards,.two{{grid-template-columns:1fr 1fr}}}} @media(max-width:600px){{.cards,.two{{grid-template-columns:1fr}}.hero{{padding:24px}}}}
 </style></head><body><div class="wrap">
 <section class="hero"><span class="badge">{status}</span><h1>T5/T6 为什么做不出来？</h1><p>Qwen 3.7 Max × SIG Fable · Self-generated / Exact Oracle / No skill / Curated-all-library 匹配对照。严格区分功能失败、过程 verifier 失败与 AP 执行失败。</p><div class="small" style="color:#dce5ff;margin-top:12px">生成于 {html.escape(data['generated_at_utc'])}</div></section>
 <section class="grid cards" id="cards"></section>
 <section class="panel"><h2>先看结论</h2><div id="conclusions"></div></section>
 <section class="panel"><h2>先校正 “Oracle” 的含义</h2><p><code>exact_oracle</code> 是按 gold task→skill 映射注入仓库 curated 子集，不是任务 solution 或完整能力上界。curated skill 本身被设计为 gap-exposed scaffold，模型应从 T1–T3 补全它。</p><div class="grid cards" id="protocolDesign"></div></section>
 <section class="panel"><h2>实验覆盖</h2><div class="heat" id="coverage"></div></section>
+<section class="panel"><h2>Self-generated 主实验 · T1–T6 整体通过率</h2><div class="filters"><label>指标 <select id="fullHmMetric"><option value="strict" selected>Strict（Outcome + Process）</option><option value="outcome">Outcome（功能）</option><option value="process">Process（过程）</option></select></label></div><div class="full-heatmaps" id="fullHeatmaps"></div><p class="small">每格 5 题，显示通过数与百分比。T1–T3 是最多三次 same-session attempt 后的终态；T4–T6 是 skill library freeze 后的 evaluation，因此不应把 T3→T4 的变化直接解释为纯难度跳变。灰格表示该模型/Env 的完整 self-generated episode 尚未通过协议 gate。</p></section>
 <section class="panel"><h2>四条件协议等价性 Gate</h2><p class="small">只有 AP 成功、15/15、无 replay、environment-scoped library、eval 前冻结且 T4–T6 library hash 始终相同的 cell 才进入科学比较。No-skill 对比估计“提供并要求使用 skill library”的整体处理效应，不是纯文本效应。</p><div id="protocolEquivalence"></div></section>
 <section class="panel"><h2>运行中的完整对照矩阵</h2><p class="small">把 AP 生命周期与科学证据分开：Queued/Running/Succeeded 不等于已有可用结果；只有终态导出、artifact 审计通过且单元达到 15/15，才计入实验覆盖。</p><div id="runtimeProgress"></div></section>
 <section class="panel"><h2>实验执行健康</h2><p class="small">AP 失败尝试与模型 T5/T6 结果分层展示。失败尝试保留作审计；只有完整、可复核的 episode 才能形成 15/15 科学单元。</p><div id="executionHealth"></div></section>
@@ -7138,6 +7297,8 @@ let rp=D.runtime_progress;let stageRows=rp.stages.map(x=>{{let counts=Object.ent
 let eh=D.execution_attempts;executionHealth.innerHTML=`<div class="grid cards"><div class="card"><span class="label">失败 AP 尝试</span><b>${{eh.failed_attempt_count}}</b></div><div class="card"><span class="label">未纳入统计</span><b>${{eh.excluded_attempt_count}}</b></div><div class="card"><span class="label">贡献 T4–T6 的失败尝试</span><b>${{eh.failed_attempts_contributing_t56}}</b></div><div class="card"><span class="label">失败类型</span><b>${{Object.keys(eh.failure_counts).length}}</b></div></div><div>${{Object.entries(eh.failure_counts).map(([k,v])=>`<span class="metric fail">${{esc(k)}}: ${{v}}</span>`).join(' ')}}</div><details><summary>查看失败尝试证据</summary><div class="tablebox"><table><thead><tr><th>Label / Job</th><th>类型</th><th>Stage</th><th>进入 T4–T6</th><th>诊断</th></tr></thead><tbody>${{eh.failures.map(x=>`<tr><td>${{esc(x.label)}}<br><span class="small">${{esc(x.job_id)}}</span></td><td>${{esc(x.failure_kind)}}</td><td>${{esc(x.error_stage||'—')}}</td><td>${{x.contributes_t56_results?'是':'否'}}</td><td>${{esc(x.message||'—')}}</td></tr>`).join('')}}</tbody></table></div></details>`;
 let ri=D.reference_integrity;let riRows=['E1','E2','E3','E4','E5','E6'].map(e=>{{let cells=[4,5,6].map(t=>ri.rows.find(x=>x.environment_id===e&&x.tier===t));return `<tr><td><b>${{e}}</b></td>${{cells.map(x=>`<td>${{x.passed}}/${{x.total}}</td>`).join('')}}</tr>`}}).join('');let riFailures=ri.failures.length?`<details><summary>查看 ${{ri.failures.length}} 个失败标准解</summary><pre>${{esc(JSON.stringify(ri.failures,null,2))}}</pre></details>`:'<p class="small">当前没有已观测的标准解失败。</p>';referenceIntegrity.innerHTML=`<div class="grid cards"><div class="card"><span class="label">覆盖</span><b>${{ri.total}}/90</b></div><div class="card"><span class="label">严格通过</span><b>${{ri.passed}}/${{ri.total||0}}</b></div><div class="card"><span class="label">状态</span><b style="font-size:20px">${{ri.all_reference_solutions_pass?'全部通过':ri.complete?'存在失败':'运行中'}}</b></div></div><div class="tablebox"><table><thead><tr><th>Env</th><th>T4</th><th>T5</th><th>T6</th></tr></thead><tbody>${{riRows}}</tbody></table></div>${{riFailures}}`;
 options(hmModel,['qwen3.7-max','sig-fable']);options(hmCond,['self_generated','exact_oracle','curated_all','no_skill'],zh);options(taskModel,['qwen3.7-max','sig-fable'],null,true);options(taskEnv,['E1','E2','E3','E4','E5','E6'],null,true);
+function fullHeatColor(p){{return `hsl(${{8+132*p}} 58% ${{p>.7?36:43}}%)`}}
+function renderFullHeatmaps(){{let metric=fullHmMetric.value;let models=['qwen3.7-max','sig-fable'];fullHeatmaps.innerHTML=models.map(model=>{{let records=D.self_generated_t1_t6.records.filter(x=>x.model===model);let complete=records.filter(x=>x.complete);let passed=complete.reduce((n,x)=>n+x[metric],0),observed=complete.reduce((n,x)=>n+x.observed,0);let overall=observed?`${{passed}}/${{observed}} (${{(100*passed/observed).toFixed(1)}}%)`:'等待完整 episode';let grid='<div class="head">Env \\ Tier</div>'+[1,2,3,4,5,6].map(t=>`<div class="head">T${{t}}</div>`).join('');for(let env of ['E1','E2','E3','E4','E5','E6']){{grid+=`<div class="head">${{env}}</div>`;for(let tier of [1,2,3,4,5,6]){{let x=records.find(r=>r.environment_id===env&&r.tier===tier);if(!x||!x.complete){{grid+=`<div class="none" title="等待完整、协议有效的 self-generated episode">等待<br><span>repair / artifact</span></div>`;continue}}let p=x[metric]/x.observed;grid+=`<div class="v" style="background:${{fullHeatColor(p)}}" title="${{env}} T${{tier}} · ${{metric}} · ${{x.task_ids.join(', ')}}"><b>${{x[metric]}}/${{x.observed}}</b><span>${{(100*p).toFixed(0)}}%</span></div>`}}}}return `<article class="model-heat"><h3><span>${{model}}</span><span class="small">Overall ${{metric}}：${{overall}}</span></h3><div class="tierheat">${{grid}}</div></article>`}}).join('')}};fullHmMetric.onchange=renderFullHeatmaps;renderFullHeatmaps();
 function renderHeat(){{let m=hmModel.value,c=hmCond.value,k=hmMetric.value,t=+hmTier.value;let rows=['E1','E2','E3','E4','E5','E6'].map(e=>D.aggregates.find(x=>x.model===m&&x.condition===c&&x.environment_id===e&&x.tier===t));heatmap.innerHTML='<div class="head">'+m+' · '+zh[c]+'</div>'+['E1','E2','E3','E4','E5','E6'].map(x=>`<div class="head">${{x}}</div>`).join('')+`<div>T${{t}} · ${{k}}</div>`+rows.map(x=>{{if(!x)return '<div class="v none">—</div>';let p=x[k]/x.n,cl=p>=.8?'high':p>=.4?'mid':'low';return `<div class="v ${{cl}}">${{x[k]}}/${{x.n}}</div>`}}).join('')}};[hmModel,hmCond,hmMetric,hmTier].forEach(x=>x.onchange=renderHeat);renderHeat();
 modelCmpRows.innerHTML=D.model_comparisons.filter(x=>x.n).map(x=>`<tr><td>${{zh[x.condition]}} / T${{x.tier}} / ${{x.metric}}</td><td>${{x.n}}</td><td>${{x.qwen_pass}}</td><td>${{x.fable_pass}}</td><td>${{x.qwen_only}} / ${{x.fable_only}}</td><td>${{x.sign_test_p==null?'—':x.sign_test_p.toFixed(4)}}</td></tr>`).join('');
 effectRows.innerHTML=D.effects.filter(x=>x.n).map(x=>`<tr><td>${{x.model}} / T${{x.tier}} / ${{x.metric}}</td><td>${{zh[x.treatment]}} − ${{zh[x.reference]}}</td><td>${{x.n}}</td><td>${{(100*x.delta).toFixed(1)}}pp</td><td>${{x.rescued}} / ${{x.harmed}}</td></tr>`).join('')||'<tr><td colspan="5" class="small">等待 oracle/no-skill 匹配结果</td></tr>';

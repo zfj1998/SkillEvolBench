@@ -613,6 +613,80 @@ def test_learning_analysis_tracks_repair_and_verifier_overfit_markers() -> None:
     assert family["oracle_token_recall_from_learning_evidence"] is not None
 
 
+def test_t1_t6_heatmap_uses_only_protocol_valid_self_generated_cells() -> None:
+    learning_tasks = []
+    evaluation_tasks = []
+    for model, environment_id in (
+        ("qwen3.7-max", "E1"),
+        ("sig-fable", "E2"),
+    ):
+        for tier in range(1, 4):
+            for family in range(1, 6):
+                learning_tasks.append({
+                    "selected_run": True,
+                    "condition": "self_generated",
+                    "model": model,
+                    "environment_id": environment_id,
+                    "tier": tier,
+                    "task_id": f"{environment_id}-LS{family}-T{tier}",
+                    "strict_pass": family <= 4,
+                    "outcome_pass": True,
+                    "process_pass": family <= 4,
+                })
+        for tier in range(4, 7):
+            for family in range(1, 6):
+                evaluation_tasks.append({
+                    "condition": "self_generated",
+                    "model": model,
+                    "environment_id": environment_id,
+                    "tier": tier,
+                    "task_id": f"{environment_id}-LS{family}-T{tier}",
+                    "strict_pass": family <= 3,
+                    "outcome_pass": family <= 4,
+                    "process_pass": family <= 3,
+                })
+
+    result = REPORT.self_generated_t1_t6_heatmap(
+        {"learning_tasks": learning_tasks},
+        evaluation_tasks,
+        {("qwen3.7-max", "self_generated", "E1")},
+    )
+
+    qwen_t1 = next(
+        row
+        for row in result["records"]
+        if row["model"] == "qwen3.7-max"
+        and row["environment_id"] == "E1"
+        and row["tier"] == 1
+    )
+    assert qwen_t1["complete"] is True
+    assert (qwen_t1["strict"], qwen_t1["outcome"], qwen_t1["process"]) == (
+        4,
+        5,
+        4,
+    )
+    assert qwen_t1["result_semantics"] == "terminal_after_same_session_retry"
+    qwen_t6 = next(
+        row
+        for row in result["records"]
+        if row["model"] == "qwen3.7-max"
+        and row["environment_id"] == "E1"
+        and row["tier"] == 6
+    )
+    assert qwen_t6["complete"] is True
+    assert qwen_t6["result_semantics"] == "frozen_library_evaluation"
+    fable_t1 = next(
+        row
+        for row in result["records"]
+        if row["model"] == "sig-fable"
+        and row["environment_id"] == "E2"
+        and row["tier"] == 1
+    )
+    assert fable_t1["complete"] is False
+    assert fable_t1["observed"] == 0
+    assert fable_t1["status"] == "awaiting_protocol_valid_self_cell"
+
+
 def test_matched_skill_content_separates_text_distance_from_behavior() -> None:
     learning = {
         "families": [
