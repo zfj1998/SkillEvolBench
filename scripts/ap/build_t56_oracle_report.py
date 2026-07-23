@@ -71,6 +71,9 @@ VERIFIED_OUTCOME_FALSE_NEGATIVE_PAIRS = frozenset({
     ("qwen3.7-max", "E4-LS1-T5"),
     ("qwen3.7-max", "E4-LS3-T5"),
     ("qwen3.7-max", "E4-LS4-T6"),
+    ("qwen3.7-max", "E5-LS3-T6"),
+    ("qwen3.7-max", "E5-LS4-T6"),
+    ("sig-fable", "E5-LS4-T6"),
     ("qwen3.7-max", "E6-LS2-T6"),
     ("sig-fable", "E6-LS1-T6"),
     ("sig-fable", "E6-LS2-T6"),
@@ -78,6 +81,8 @@ VERIFIED_OUTCOME_FALSE_NEGATIVE_PAIRS = frozenset({
 MIXED_BENCHMARK_MODEL_GAP_PAIRS = frozenset({
     ("qwen3.7-max", "E2-LS1-T6"),
     ("sig-fable", "E2-LS1-T6"),
+    ("qwen3.7-max", "E5-LS3-T5"),
+    ("sig-fable", "E5-LS3-T5"),
     ("qwen3.7-max", "E5-LS5-T6"),
     ("qwen3.7-max", "E6-LS1-T6"),
     ("qwen3.7-max", "E6-LS3-T6"),
@@ -355,19 +360,19 @@ CASE_DEFINITIONS = {
         ],
     },
     "E3-LS4-T6": {
-        "title": "Oracle 的数值与语义正确，却因增加题面要求的 audit 字段被判 outcome 失败",
+        "title": "四条运行路径核心 null 语义一致，outcome 成败只由 audit 字段放置决定",
         "kind": "隐藏输出形状合同（强任务缺陷）",
         "interpretation": (
-            "Fable self-generated 与 exact-oracle 都正确实现了 supplier/column-aware null policy：A/B 的 0"
-            "保留，C 的 price=0 判缺失但 stock=0 保留，-1/-999 按字典归一化；两者的顶层汇总和"
-            "category totals 相同。Exact 还逐 marker 统计 normalized_by_marker，并把它加入每个 source 的"
-            "source_null_summary，正面满足题面“enough audit information”及“show that all source-specific"
-            "markers were normalized”。唯一 outcome 失败来自 hidden test 对整个 source_null_summary 做 dict"
-            "全等，任何额外 audit key 都会触发 per-source null summary mismatch；题面没有声明这个对象"
-            "禁止扩展。Self 把同类明细放在另一个 null_standardization_audit 顶层字段，碰巧避开全等比较。"
-            "Exact 的 0.8125 因而不是 oracle skill 的功能伤害，而是合理输出布局撞上隐藏 schema；process"
-            "侧两者还共同被 null_policy.py 的脆弱字符串切片误判。该题可以测试 null 语义，但当前 verifier"
-            "不能把合法的 audit 扩展与错误结果区分开。"
+            "Qwen/Fable 的 self-generated 与 exact-oracle 都正确实现 supplier/column-aware null policy："
+            "A/B 的 0 保留，C 的 price=0 判缺失但 stock=0 保留，-1/-999 按字典归一化；顶层汇总和"
+            "category totals 一致。四条路径 outcome 恰好交叉：Fable self 与 Qwen exact 通过，Fable exact"
+            "与 Qwen self 失败。差异不是数值或 null 规则，而是后两者把 valid counts、out-of-stock 或"
+            "normalized_by_marker 等题面要求的 audit 明细加入每个 source 的 source_null_summary；前两者"
+            "把同类信息放在独立 null_standardization_audit。Hidden test 对 source_null_summary 做整个 dict"
+            "全等，任何额外 audit key 都触发 mismatch，题面/schema 却没有禁止扩展。故 Qwen exact 的"
+            "outcome rescue 与 Fable exact 的 harm 都只是输出布局偶然性，不是 oracle skill 的功能增益/伤害；"
+            "process 侧还存在 null_policy.py 字符串切片误判。该题可测试 null 语义，但当前 verifier 不能"
+            "把合法 audit 扩展与错误结果区分开。"
         ),
         "conditions": ["self_generated", "exact_oracle"],
         "files": [
@@ -382,11 +387,11 @@ CASE_DEFINITIONS = {
         ],
     },
     "E3-LS5-T5": {
-        "title": "Oracle 模型修对 malformed amount 得到 700，却被错误 ground truth 强制为 706",
+        "title": "两模型用 Oracle 都修对 malformed amount 得到 700，却被错误 ground truth 强制为 706",
         "kind": "数据生成意图与 verifier ground truth 冲突（强任务缺陷）",
         "interpretation": (
             "任务生成器在 line 76–79 把字符串 1,2,3 明确列入 bad_amount()，并在 line 222–223 明确"
-            "抽取 700 个 active、300 个 inactive logical customers。Fable exact-oracle 读到该证据后，"
+            "抽取 700 个 active、300 个 inactive logical customers。Qwen 与 Fable exact-oracle 都读到该证据后，"
             "把 parse_amount 改为只接受合法千分位分组；运行得到 logical=1000、active=700、inactive=300，"
             "并独立重算 active set 完全一致。Self-generated 沿用 starter 的 replace(',', '')，会把 malformed"
             "1,2,3 解析成 123，因而把 6 个本应 inactive 的客户误判 active。Hidden verifier 复制了同一宽松"
@@ -494,6 +499,106 @@ CASE_DEFINITIONS = {
             "environment/policy_v1.md",
             "environment/policy_v2.md",
             "environment/policy_v3.md",
+        ],
+    },
+    "E5-LS2-T6": {
+        "title": "两模型完整使用 10/2 evidence split，却被 startswith 与循环变量名的固定 token 拒绝",
+        "kind": "强假阴性证据",
+        "interpretation": (
+            "Qwen 与 Fable 的 outcome tests 全部通过：12 个 manifest source 各出现一次，10 个 vendor、"
+            "2 个 independent 标签全对，decision basis 明确写入两类数量、ID、独立 review 的 usability/"
+            "tradeoff 权重，并由加载后的 evidence 动态生成。Qwen 唯一两项 process failure 中，第一项是"
+            "label_audit 用 source_type.startswith('vendor') 正确覆盖 vendor_doc/vendor_community，却因源码"
+            "没有这两个字面量被判 blind；第二项是它先用 list comprehension 生成 labels，再遍历 vendor_ids/"
+            "independent_ids 汇总 dimensions，verifier 却只接受 counter/defaultdict 或连续字面"
+            "`for source in sources`。Fable 的 board_pipeline 明确 `for s in sources`、按 label split、计算"
+            "independent usability score 并得出 winner，也只因变量不叫 source 而失败同一检查。真实 output"
+            "已经直接证明数据依赖和 provenance split；这些 process failures 只测 reference 源码表面。"
+        ),
+        "files": [
+            "label_audit.py",
+            "board_pipeline.py",
+            "output/board_report.json",
+        ],
+    },
+    "E5-LS3-T5": {
+        "title": "同一缺失 source id 被隐藏答案同时标成 fake 与 invalid，公开资产无法决定标签",
+        "kind": "欠规定的标签边界与真实模型分类 gap 混合（强任务缺陷）",
+        "interpretation": (
+            "R09 与 R13 使用完全相同的 MED_NATURE_TABLE3_DEPLOYMENT，且该 id 同样不存在于"
+            "source_manifest、evidence_index、source_cards 和 references.bib；hidden ground truth 却把"
+            "R09 标 fake、R13 标 invalid。R08/R10 也只呈现为 registry miss，却要求 fake。题面要求"
+            "区分 invalid 与 fabricated，但没有定义两者边界或提供外部真实性结果；唯一可区分信号是"
+            "citation_packet 的 article_claim 自己写了 Fake/Invalid/Selective/Misrepresented 等标签词，"
+            "这会把任务退化成复制泄漏标签。Qwen 与 Fable 把 registry miss 一致标 invalid 是可辩护的"
+            "证据驱动策略，不能把 fake/invalid 错位全算成 skill 不足；但两模型也确有真实 gap，例如都"
+            "没有稳定区分 selective 与 misrepresented，Fable 基本保留 starter。因此这是题目欠规定"
+            "和模型执行不足的混合失败，oracle 是否 rescue 也必须在这个测量缺陷下解释。"
+        ),
+        "files": [
+            "citation_policy.py",
+            "audit_pipeline.py",
+            "output/citation_audit.json",
+        ],
+        "task_source_files": [
+            "environment/citation_packet.json",
+            "environment/source_manifest.json",
+            "environment/evidence_index.json",
+            "environment/references.bib",
+            "tests/ground_truth.json",
+        ],
+    },
+    "E5-LS3-T6": {
+        "title": "Qwen 完成 14/15 标签和全部审计维度，却被合理 scope 判断与固定理由词表误判",
+        "kind": "Qwen 的语义正确实现被隐藏标签/措辞与源码 token 放大（强任务缺陷）",
+        "interpretation": (
+            "Qwen 对 15 条 citation 的 14 条标签与 hidden answer 完全一致，唯一分歧 S02 是"
+            "`AI can detect diabetic retinopathy from retinal images`：该 claim 已保留 source card 所说"
+            "的 image-based scope，没有声称普适诊断，判 valid 至少与题面定义同样合理；hidden answer"
+            "仍强制 selective。M02 已正确判 misrepresented，reason 明确写 water intake 与 AI ethics"
+            "`unrelated`，但 verifier 的 reason 白名单不接受 unrelated/topic mismatch，只接受"
+            "misrepresented/not/self-reported/significant/attribution。Process 又要求 citation_policy.py"
+            "同时出现 authenticity 与 doi/journal 字面量；Qwen 实际用 manifest 的 authentic=false 和"
+            "source_type=fake_citation 做更直接的真实性判断，却因没有 doi/journal token 失败。故 Qwen"
+            "的 raw outcome/process failure 是 verifier 假阴性；Fable 同题几乎未改 starter、把大多数"
+            "问题都判 valid，仍是明确的真实执行失败，必须按模型分开归因。"
+        ),
+        "files": [
+            "citation_policy.py",
+            "audit_pipeline.py",
+            "output/citation_audit.json",
+        ],
+        "task_source_files": [
+            "environment/citation_packet.json",
+            "environment/source_manifest.json",
+            "environment/evidence_index.json",
+            "tests/ground_truth.json",
+        ],
+    },
+    "E5-LS4-T6": {
+        "title": "两模型都完成层级摘要；一个被数组顺序卡住，一个被 validation/skin 词形卡住",
+        "kind": "隐藏位置合同与无词形归一的概念检查（强任务缺陷）",
+        "interpretation": (
+            "Qwen 与 Fable 都生成了 5 个 article summaries、2 个 group summaries 和 1 个 overall，"
+            "所有 must_select、word limits、forbidden terms 与主题内容均满足。Qwen 将 application group"
+            "排在 method 前并显式写 group_id；verifier 不读取 group_id，却硬要求数组第 0 项含 method、"
+            "第 1 项含 application。题面和 schema 都没有规定 group 数组顺序，所以这是位置敏感假阴性。"
+            "Fable 顺序正确，raw test 在第一个缺词 `validation` 就停止；独立复算还发现裸词 `skin`"
+            "也未出现。但全文分别保留了 `validated diagnostic tasks`、`visual dermatology`，对应的"
+            "selected_sections 又含 `a1_method_validation` 与 `a5_application_skin`。verifier 只在 summary"
+            "text 做裸 substring，不做词形/领域同义归一，也不看 section id。两者在任务语义上均已完成；当前 0.9091 不能解释为 skill evolve"
+            "失败，也不能说明 oracle skill 仍不足。"
+        ),
+        "files": [
+            "summarizer.py",
+            "priority_policy.py",
+            "audience_policy.py",
+            "output/summary.json",
+        ],
+        "task_source_files": [
+            "environment/dossier.json",
+            "environment/schemas/output_schema.json",
+            "tests/ground_truth.json",
         ],
     },
     "E5-LS5-T6": {
@@ -754,8 +859,12 @@ ENVIRONMENT_PROFILES = {
         "provisional_read": (
             "T5 只有同一个 wrong-join-key trap 被两模型共同做错，但逐代码看二者其实都选对了 join key；"
             "真正问题是额外改写 schema cleaner、按 user id 去重，破坏了 starter/reference 保留的重复 master rows。"
-            "T6 则在复合排序、模糊合并和多源空值规则上出现真实功能失败。E3 同时暴露过度修复与组合不变量"
-            "未同时落实，不宜仅按测试名归因为“不会选 join key”。"
+            "两模型的 self/exact 已形成 20 个匹配对：raw oracle outcome rescue=1、harm=3，但全部 discordant"
+            "都来自已核实的 benchmark 缺陷。Qwen 在 null unification 上的 rescue 只是把 audit 明细移出"
+            "hidden dict 全等字段；Qwen/Fable 在 active-customer trap 上的 harm 则是正确拒绝 malformed `1,2,3`"
+            "后得到 generator 声明的 700，而 hidden parser 错认 706。对复合排序、wrong-join 与模糊合并这些"
+            "真实功能失败，exact oracle 没有救回。E3 因而既暴露过度修复与组合不变量 gap，也证明 raw"
+            "self↔oracle 翻转可能完全由 verifier/ground truth 造成，不能仅按分数解释为 skill 效应。"
         ),
     },
     "E4": {
@@ -778,7 +887,12 @@ ENVIRONMENT_PROFILES = {
         "capability": "多源筛选、证据化比较、引用核验、受约束总结与矛盾审计。",
         "provisional_read": (
             "Qwen 的 T5/T6 outcome 为 3/5、1/5，Fable 为 3/5、3/5；两模型仍共同做错 4/10 个对齐任务。"
-            "失败集中在没有读取 grounding files、provenance 合同、引用问题标签和 pipeline 执行。"
+            "失败集中在没有读取 grounding files、provenance 合同、引用问题标签和 pipeline 执行，但逐题审计"
+            "发现 raw 分数又混入明显测量缺陷：citation T5 让同一缺失 source id 同时对应 fake/invalid；"
+            "citation T6 中 Qwen 已做对 14/15 标签，唯一 S02 已保留 retinal-image scope，却被强制 selective，"
+            "正确的 `unrelated` 理由和 manifest authenticity 判断又因固定 token 被拒；hierarchical summary"
+            "两模型都完成 5/2/1 结构、must-select 与主题语义，分别只撞上 group 数组顺序和"
+            "validation/validated、skin/dermatology 的裸 substring。"
             "但 E5-LS5-T6 中 Qwen 已找全 9/9 真矛盾与 3/3 非矛盾，strict 失败主要是 internal 类型、"
             "evidence_index 调用和未公开的 source_cards_chars 形态；不能把它算成完全不会审计。"
             "Fable 在复合检索总结上较强，但差距是否来自 skill 仍需同模型四条件对照。"
@@ -2164,6 +2278,362 @@ def reproduce_e4_ls4_literal_surface(
     }
 
 
+def reproduce_e5_ls3_t5_label_identifiability(
+    task_root: Path, observations: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Show when fake versus invalid cannot be recovered from public metadata."""
+
+    packet_path = task_root / "environment" / "citation_packet.json"
+    manifest_path = task_root / "environment" / "source_manifest.json"
+    evidence_path = task_root / "environment" / "evidence_index.json"
+    ground_truth_path = task_root / "tests" / "ground_truth.json"
+    packet = json.loads(packet_path.read_text(encoding="utf-8"))
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    ground_truth = json.loads(ground_truth_path.read_text(encoding="utf-8"))
+    public_source_ids = {
+        str(row.get("id")) for row in manifest if isinstance(row, dict)
+    } | {str(row.get("source_id")) for row in evidence if isinstance(row, dict)}
+    by_source: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    absent_rows = []
+    for citation in packet:
+        citation_id = str(citation["citation_id"])
+        source_id = str(citation.get("source_id") or "")
+        row = {
+            "citation_id": citation_id,
+            "source_id": source_id,
+            "expected_label": ground_truth["labels"].get(citation_id),
+            "article_claim": str(citation.get("article_claim") or ""),
+        }
+        by_source[source_id].append(row)
+        if source_id not in public_source_ids:
+            absent_rows.append(row)
+    contradictory_source_labels = [
+        {
+            "source_id": source_id,
+            "citation_ids": [row["citation_id"] for row in group],
+            "expected_labels": sorted({str(row["expected_label"]) for row in group}),
+        }
+        for source_id, group in sorted(by_source.items())
+        if source_id not in public_source_ids
+        and len({row["expected_label"] for row in group}) > 1
+    ]
+    leaked_label_words = ("fake", "invalid", "selective", "misrepresented")
+    claim_label_leak = {
+        row["citation_id"]: [
+            label
+            for label in leaked_label_words
+            if re.search(rf"\b{re.escape(label)}\b", row["article_claim"], re.I)
+        ]
+        for group in by_source.values()
+        for row in group
+    }
+
+    models = []
+    for observation in observations:
+        artifact_raw = observation.get("artifact_task_path")
+        if not artifact_raw:
+            continue
+        output_path = Path(str(artifact_raw)) / "output" / "citation_audit.json"
+        if not output_path.is_file():
+            continue
+        output = json.loads(output_path.read_text(encoding="utf-8"))
+        actual = {
+            str(row.get("citation_id")): str(row.get("label"))
+            for row in output.get("results", [])
+            if isinstance(row, dict)
+        }
+        models.append(
+            {
+                "model": observation.get("model"),
+                "condition": observation.get("condition"),
+                "missing_registry_labels": {
+                    row["citation_id"]: actual.get(row["citation_id"])
+                    for row in absent_rows
+                },
+                "missing_registry_labels_are_consistent": len(
+                    {actual.get(row["citation_id"]) for row in absent_rows}
+                )
+                <= 1,
+                "artifact_output_path": str(output_path.resolve()),
+            }
+        )
+
+    return {
+        "method": (
+            "Join citation_packet, source_manifest, evidence_index and hidden "
+            "labels by source_id; test whether identical public source evidence "
+            "maps to contradictory fake/invalid labels."
+        ),
+        "absent_from_public_registry": absent_rows,
+        "absent_source_expected_label_counts": dict(
+            sorted(Counter(str(row["expected_label"]) for row in absent_rows).items())
+        ),
+        "same_source_id_with_conflicting_hidden_labels": contradictory_source_labels,
+        "article_claim_label_word_leak": claim_label_leak,
+        "models": models,
+        "packet_path": str(packet_path.resolve()),
+        "manifest_path": str(manifest_path.resolve()),
+        "evidence_path": str(evidence_path.resolve()),
+        "ground_truth_path": str(ground_truth_path.resolve()),
+    }
+
+
+def reproduce_e5_ls3_t6_semantic_audit(
+    task_root: Path, observations: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Separate semantic citation auditing from hidden lexical contracts."""
+
+    packet_path = task_root / "environment" / "citation_packet.json"
+    manifest_path = task_root / "environment" / "source_manifest.json"
+    ground_truth_path = task_root / "tests" / "ground_truth.json"
+    packet = {
+        str(row["citation_id"]): row
+        for row in json.loads(packet_path.read_text(encoding="utf-8"))
+    }
+    manifest = {
+        str(row["id"]): row
+        for row in json.loads(manifest_path.read_text(encoding="utf-8"))
+    }
+    ground_truth = json.loads(ground_truth_path.read_text(encoding="utf-8"))
+    s02 = packet["S02"]
+    s02_source = manifest[str(s02["source_id"])]
+
+    models = []
+    for observation in observations:
+        artifact_raw = observation.get("artifact_task_path")
+        if not artifact_raw:
+            continue
+        artifact_root = Path(str(artifact_raw))
+        output_path = artifact_root / "output" / "citation_audit.json"
+        policy_path = artifact_root / "citation_policy.py"
+        if not output_path.is_file():
+            continue
+        output = json.loads(output_path.read_text(encoding="utf-8"))
+        results = {
+            str(row.get("citation_id")): row
+            for row in output.get("results", [])
+            if isinstance(row, dict)
+        }
+        mismatches = [
+            {
+                "citation_id": citation_id,
+                "expected": expected,
+                "actual": (results.get(citation_id) or {}).get("label"),
+            }
+            for citation_id, expected in ground_truth["labels"].items()
+            if (results.get(citation_id) or {}).get("label") != expected
+        ]
+        m02_reason = str((results.get("M02") or {}).get("reason") or "").lower()
+        official_m02_terms = [
+            str(term).lower() for term in ground_truth["reason_terms"]["M02"]
+        ]
+        policy_text = (
+            policy_path.read_text(encoding="utf-8", errors="replace").lower()
+            if policy_path.is_file()
+            else ""
+        )
+        models.append(
+            {
+                "model": observation.get("model"),
+                "condition": observation.get("condition"),
+                "exact_label_count": len(ground_truth["labels"]) - len(mismatches),
+                "total_label_count": len(ground_truth["labels"]),
+                "label_mismatches": mismatches,
+                "m02_reason": m02_reason,
+                "m02_official_reason_word_match": any(
+                    term in m02_reason for term in official_m02_terms
+                ),
+                "m02_semantic_topic_mismatch_match": any(
+                    term in m02_reason
+                    for term in (
+                        "unrelated",
+                        "off-topic",
+                        "topic mismatch",
+                        "water intake",
+                    )
+                ),
+                "policy_checks_manifest_authenticity_semantics": (
+                    "authentic" in policy_text
+                    and ("fake_citation" in policy_text or "source_type" in policy_text)
+                ),
+                "policy_satisfies_hidden_authenticity_token_shape": (
+                    "authenticity" in policy_text
+                    and ("doi" in policy_text or "journal" in policy_text)
+                ),
+                "artifact_output_path": str(output_path.resolve()),
+                "artifact_policy_path": str(policy_path.resolve()),
+            }
+        )
+
+    s02_claim = str(s02.get("article_claim") or "").lower()
+    s02_notes = str(s02_source.get("notes") or "").lower()
+    return {
+        "method": (
+            "Recompute exact label agreement; then independently test whether "
+            "S02 already carries the source scope, whether M02 states a semantic "
+            "topic mismatch, and whether authenticity is checked via manifest fields."
+        ),
+        "s02_claim": s02.get("article_claim"),
+        "s02_source_note": s02_source.get("notes"),
+        "s02_claim_preserves_image_scope": (
+            "retinal image" in s02_claim
+            and ("image-based" in s02_notes or "retinal" in s02_notes)
+        ),
+        "s02_claim_makes_universal_or_all_settings_claim": bool(
+            re.search(r"\b(?:universal|all settings|all patients|every)\b", s02_claim)
+        ),
+        "models": models,
+        "packet_path": str(packet_path.resolve()),
+        "manifest_path": str(manifest_path.resolve()),
+        "ground_truth_path": str(ground_truth_path.resolve()),
+    }
+
+
+def reproduce_e5_ls4_hierarchy_semantics(
+    task_root: Path, observations: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Compare positional/lexical checks with the actual hierarchy semantics."""
+
+    ground_truth_path = task_root / "tests" / "ground_truth.json"
+    schema_path = task_root / "environment" / "schemas" / "output_schema.json"
+    ground_truth = json.loads(ground_truth_path.read_text(encoding="utf-8"))
+    rows = []
+    for observation in observations:
+        artifact_raw = observation.get("artifact_task_path")
+        if not artifact_raw:
+            continue
+        output_path = Path(str(artifact_raw)) / "output" / "summary.json"
+        if not output_path.is_file():
+            continue
+        output = json.loads(output_path.read_text(encoding="utf-8"))
+        article_summaries = output.get("article_summaries") or []
+        group_summaries = output.get("group_summaries") or []
+        overall = output.get("overall_summary") or {}
+        summaries = [*article_summaries, *group_summaries, overall]
+        joined = " ".join(
+            str(summary.get("text") or "")
+            for summary in summaries
+            if isinstance(summary, dict)
+        ).lower()
+        selected = {
+            str(section_id)
+            for summary in summaries
+            if isinstance(summary, dict)
+            for section_id in summary.get("selected_sections", [])
+        }
+        group_semantics = []
+        for index, summary in enumerate(group_summaries):
+            text = str(summary.get("text") or "").lower()
+            declared = str(
+                summary.get("group_id") or summary.get("theme") or ""
+            ).lower()
+            inferred = declared
+            if not inferred:
+                if "method" in text:
+                    inferred = "method"
+                elif "application" in text:
+                    inferred = "application"
+            group_semantics.append(
+                {
+                    "index": index,
+                    "declared_or_inferred_theme": inferred,
+                    "text_contains_theme": bool(inferred and inferred in text),
+                }
+            )
+        exact_required = {
+            term: term.lower() in joined for term in ground_truth["required_terms"]
+        }
+        semantic_required = dict(exact_required)
+        semantic_required["validation"] = (
+            semantic_required.get("validation", False)
+            or "validated" in joined
+            or any("validation" in section_id.lower() for section_id in selected)
+        )
+        semantic_required["skin"] = (
+            semantic_required.get("skin", False)
+            or "dermatolog" in joined
+            or any("skin" in section_id.lower() for section_id in selected)
+        )
+        word_limits_ok = (
+            all(
+                int(summary.get("word_count", 10**9))
+                <= int(ground_truth["limits"]["article"])
+                for summary in article_summaries
+            )
+            and all(
+                int(summary.get("word_count", 10**9))
+                <= int(ground_truth["limits"]["group"])
+                for summary in group_summaries
+            )
+            and int(overall.get("word_count", 10**9))
+            <= int(ground_truth["limits"]["overall"])
+        )
+        rows.append(
+            {
+                "model": observation.get("model"),
+                "condition": observation.get("condition"),
+                "article_summary_count": len(article_summaries),
+                "group_summary_count": len(group_summaries),
+                "has_overall_summary": isinstance(overall, dict) and bool(overall),
+                "word_limits_ok": word_limits_ok,
+                "must_select_complete": set(ground_truth["must_select"]) <= selected,
+                "forbidden_terms_absent": all(
+                    str(term).lower() not in joined
+                    for term in ground_truth.get("forbidden_terms", [])
+                ),
+                "exact_required_terms": exact_required,
+                "exact_required_terms_complete": all(exact_required.values()),
+                "source_normalized_required_terms": semantic_required,
+                "source_normalized_required_terms_complete": all(
+                    semantic_required.values()
+                ),
+                "group_semantics": group_semantics,
+                "semantic_group_set_complete": {
+                    row["declared_or_inferred_theme"] for row in group_semantics
+                }
+                == {"method", "application"},
+                "hidden_positional_group_check_passes": (
+                    len(group_summaries) >= 2
+                    and "method" in str(group_summaries[0].get("text") or "").lower()
+                    and "application"
+                    in str(group_summaries[1].get("text") or "").lower()
+                ),
+                "artifact_output_path": str(output_path.resolve()),
+            }
+        )
+
+    instruction = (
+        (task_root / "instruction.md")
+        .read_text(encoding="utf-8", errors="replace")
+        .lower()
+    )
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    group_item_properties = (
+        schema.get("properties", {})
+        .get("group_summaries", {})
+        .get("items", {})
+        .get("properties", {})
+    )
+    return {
+        "method": (
+            "Recompute hierarchy cardinalities, selections, word limits and "
+            "theme coverage; compare semantic group identity and validation "
+            "word-family evidence with the verifier's array-position and exact "
+            "substring checks."
+        ),
+        "instruction_explicitly_prescribes_method_first_group_order": bool(
+            re.search(r"method.{0,40}(?:first|index\s*0|group\s*0)", instruction)
+        ),
+        "schema_requires_group_theme_or_id": (
+            "theme" in group_item_properties or "group_id" in group_item_properties
+        ),
+        "models": rows,
+        "ground_truth_path": str(ground_truth_path.resolve()),
+        "schema_path": str(schema_path.resolve()),
+    }
+
+
 def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Path) -> list[dict[str, Any]]:
     audit_by_id = {row["task_id"]: row for row in audit.get("tasks", [])}
     result = []
@@ -2308,6 +2778,14 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
             reproduction = reproduce_e4_ls4_literal_surface(
                 task_root, observations
             )
+        if task_id == "E5-LS3-T5" and task_root:
+            reproduction = reproduce_e5_ls3_t5_label_identifiability(
+                task_root, observations
+            )
+        if task_id == "E5-LS3-T6" and task_root:
+            reproduction = reproduce_e5_ls3_t6_semantic_audit(task_root, observations)
+        if task_id == "E5-LS4-T6" and task_root:
+            reproduction = reproduce_e5_ls4_hierarchy_semantics(task_root, observations)
         if task_id == "E6-LS3-T6" and task_root:
             reproduction = reproduce_e6_ls3_action_identity(
                 task_root, observations

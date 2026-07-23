@@ -641,6 +641,16 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
         },
         {
             **common,
+            "environment_id": "E5",
+            "tier": 6,
+            "task_id": "E5-LS2-T6",
+            "task_slug": "verified-process-false-negative",
+            "outcome_pass": True,
+            "process_pass": False,
+            "classification": "process_only_failure",
+        },
+        {
+            **common,
             "model": "qwen3.7-max",
             "environment_id": "E6",
             "tier": 6,
@@ -677,6 +687,7 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
         "tasks": [
             {"task_id": "E2-LS1-T5", "process_shape_sensitivity": "high"},
             {"task_id": "E2-LS3-T5", "process_shape_sensitivity": "low"},
+            {"task_id": "E5-LS2-T6", "process_shape_sensitivity": "medium"},
             {"task_id": "E6-LS2-T6", "process_shape_sensitivity": "medium"},
             {"task_id": "E6-LS3-T6", "process_shape_sensitivity": "medium"},
             {"task_id": "E6-LS4-T6", "process_shape_sensitivity": "low"},
@@ -691,6 +702,7 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
     assert causes == {
         "E2-LS1-T5": "verified_verifier_false_negative",
         "E2-LS3-T5": "functional_gap",
+        "E5-LS2-T6": "verified_verifier_false_negative",
         "E6-LS2-T6": "verified_benchmark_false_negative",
         "E6-LS3-T6": "mixed_benchmark_and_model_gap",
         "E6-LS4-T6": "invalid_or_underdetermined_task",
@@ -1572,6 +1584,198 @@ def test_e4_ls4_reproduction_distinguishes_literals_from_source_semantics(
     assert row["source_normalized_semantic_hit_count"] == 5
     assert row["source_normalized_check_passes"] is True
     assert row["required_sections_present"] is True
+
+
+def test_e5_ls3_t5_reproduction_exposes_unidentifiable_fake_invalid_boundary(
+    tmp_path: Path,
+) -> None:
+    task_root = ROOT / "benchmark" / "tasks" / "fake-real-mixed-citations"
+    artifact = tmp_path / "artifact"
+    (artifact / "output").mkdir(parents=True)
+    packet = json.loads(
+        (task_root / "environment" / "citation_packet.json").read_text()
+    )
+    (artifact / "output" / "citation_audit.json").write_text(
+        json.dumps(
+            {
+                "results": [
+                    {
+                        "citation_id": row["citation_id"],
+                        "label": "invalid"
+                        if row["citation_id"] in {"R08", "R09", "R10", "R13"}
+                        else "valid",
+                    }
+                    for row in packet
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = REPORT.reproduce_e5_ls3_t5_label_identifiability(
+        task_root,
+        [
+            {
+                "model": "qwen3.7-max",
+                "condition": "self_generated",
+                "artifact_task_path": str(artifact),
+            }
+        ],
+    )
+
+    assert result["absent_source_expected_label_counts"] == {
+        "fake": 3,
+        "invalid": 1,
+    }
+    assert result["same_source_id_with_conflicting_hidden_labels"] == [
+        {
+            "source_id": "MED_NATURE_TABLE3_DEPLOYMENT",
+            "citation_ids": ["R09", "R13"],
+            "expected_labels": ["fake", "invalid"],
+        }
+    ]
+    assert result["models"][0]["missing_registry_labels_are_consistent"] is True
+    assert result["article_claim_label_word_leak"]["R10"] == ["fake"]
+    assert result["article_claim_label_word_leak"]["R13"] == ["invalid"]
+
+
+def test_e5_ls3_t6_reproduction_separates_semantics_from_token_contract(
+    tmp_path: Path,
+) -> None:
+    task_root = ROOT / "benchmark" / "tasks" / "full-citation-audit"
+    artifact = tmp_path / "artifact"
+    (artifact / "output").mkdir(parents=True)
+    ground_truth = json.loads((task_root / "tests" / "ground_truth.json").read_text())
+    results = [
+        {
+            "citation_id": citation_id,
+            "label": "valid" if citation_id == "S02" else expected,
+            "reason": (
+                "Water intake is unrelated to AI ethics; topic mismatch."
+                if citation_id == "M02"
+                else "evidence-backed reason"
+            ),
+        }
+        for citation_id, expected in ground_truth["labels"].items()
+    ]
+    (artifact / "output" / "citation_audit.json").write_text(
+        json.dumps({"results": results}), encoding="utf-8"
+    )
+    (artifact / "citation_policy.py").write_text(
+        "if source.get('source_type') == 'fake_citation' or not "
+        "source.get('authentic', True): return {'label': 'fake'}\n",
+        encoding="utf-8",
+    )
+
+    result = REPORT.reproduce_e5_ls3_t6_semantic_audit(
+        task_root,
+        [
+            {
+                "model": "qwen3.7-max",
+                "condition": "self_generated",
+                "artifact_task_path": str(artifact),
+            }
+        ],
+    )
+
+    assert result["s02_claim_preserves_image_scope"] is True
+    assert result["s02_claim_makes_universal_or_all_settings_claim"] is False
+    row = result["models"][0]
+    assert row["exact_label_count"] == 14
+    assert row["label_mismatches"] == [
+        {
+            "citation_id": "S02",
+            "expected": "selective",
+            "actual": "valid",
+        }
+    ]
+    assert row["m02_official_reason_word_match"] is False
+    assert row["m02_semantic_topic_mismatch_match"] is True
+    assert row["policy_checks_manifest_authenticity_semantics"] is True
+    assert row["policy_satisfies_hidden_authenticity_token_shape"] is False
+
+
+def test_e5_ls4_reproduction_accepts_theme_identity_and_word_family(
+    tmp_path: Path,
+) -> None:
+    task_root = ROOT / "benchmark" / "tasks" / "hierarchical-series-summarization"
+    artifact = tmp_path / "artifact"
+    (artifact / "output").mkdir(parents=True)
+    article_summaries = [
+        {
+            "text": text,
+            "selected_sections": [section_id],
+            "word_count": len(text.split()),
+        }
+        for section_id, text in (
+            ("a1_method_validation", "Validated diagnostic method."),
+            ("a2_method_governance", "Governance method."),
+            ("a3_method_monitoring", "Monitoring method."),
+            ("a4_application_retina", "Retinal application."),
+            ("a5_application_skin", "Skin application."),
+        )
+    ]
+    group_summaries = [
+        {
+            "group_id": "application",
+            "text": "Retinal and skin application.",
+            "selected_sections": ["a4_application_retina", "a5_application_skin"],
+            "word_count": 4,
+        },
+        {
+            "group_id": "method",
+            "text": "Validated diagnostic method with governance and monitoring.",
+            "selected_sections": [
+                "a1_method_validation",
+                "a2_method_governance",
+                "a3_method_monitoring",
+            ],
+            "word_count": 7,
+        },
+    ]
+    overall = {
+        "text": "Validated diagnostic method, governance, retinal skin application.",
+        "selected_sections": [
+            "a1_method_validation",
+            "a2_method_governance",
+            "a3_method_monitoring",
+            "a4_application_retina",
+            "a5_application_skin",
+        ],
+        "word_count": 7,
+    }
+    (artifact / "output" / "summary.json").write_text(
+        json.dumps(
+            {
+                "article_summaries": article_summaries,
+                "group_summaries": group_summaries,
+                "overall_summary": overall,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = REPORT.reproduce_e5_ls4_hierarchy_semantics(
+        task_root,
+        [
+            {
+                "model": "qwen3.7-max",
+                "condition": "self_generated",
+                "artifact_task_path": str(artifact),
+            }
+        ],
+    )
+
+    assert result["instruction_explicitly_prescribes_method_first_group_order"] is False
+    assert result["schema_requires_group_theme_or_id"] is False
+    row = result["models"][0]
+    assert row["article_summary_count"] == 5
+    assert row["group_summary_count"] == 2
+    assert row["must_select_complete"] is True
+    assert row["exact_required_terms_complete"] is False
+    assert row["source_normalized_required_terms_complete"] is True
+    assert row["semantic_group_set_complete"] is True
+    assert row["hidden_positional_group_check_passes"] is False
 
 
 def test_e6_ls2_reproduction_accepts_explicit_semantic_equivalents(
