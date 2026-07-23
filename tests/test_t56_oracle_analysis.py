@@ -1151,6 +1151,67 @@ def test_e5_ls5_reproduction_proves_provenance_keys_were_public(
     assert model["effective_has_all_required_keys"] is False
 
 
+def test_e5_ls1_reproduction_distinguishes_unconditional_classification_rule(
+    tmp_path: Path,
+) -> None:
+    task_root = ROOT / "benchmark" / "tasks" / "multi-dimension-filter-rank"
+    qwen_task = tmp_path / "qwen"
+    fable_task = tmp_path / "fable"
+    for path, selected in (
+        (qwen_task, ["M01", "M05", "M02", "M12", "M06"]),
+        (fable_task, ["M01", "M02", "M04", "M03", "M05"]),
+    ):
+        (path / "output").mkdir(parents=True)
+        (path / "output" / "selection.json").write_text(
+            json.dumps({"selected": selected}), encoding="utf-8"
+        )
+
+    result = REPORT.reproduce_e5_ls1_skill_transfer(
+        task_root,
+        [
+            {
+                "model": "qwen3.7-max",
+                "condition": "self_generated",
+                "outcome": False,
+                "process": True,
+                "artifact_task_path": str(qwen_task),
+                "used_skill_files": [
+                    {
+                        "content": "Core Principle: Classify before ranking."
+                    }
+                ],
+                "trajectory_step_count": 18,
+                "mutation_call_count": 4,
+            },
+            {
+                "model": "sig-fable",
+                "condition": "self_generated",
+                "outcome": True,
+                "process": True,
+                "artifact_task_path": str(fable_task),
+                "used_skill_files": [
+                    {
+                        "content": "Pick the variant from the output schema. Ranking variant."
+                    }
+                ],
+                "trajectory_step_count": 13,
+                "mutation_call_count": 3,
+            },
+        ],
+    )
+
+    assert result["required_entrypoint_is_public_in_outcome_test"] is True
+    assert result["starter_pipeline_compiles"] is False
+    assert result["schema_requires_only_selected"] is True
+    by_model = {row["model"]: row for row in result["models"]}
+    assert by_model["qwen3.7-max"]["skill_says_classify_before_ranking"] is True
+    assert by_model["qwen3.7-max"]["must_exclude_selected"] == ["M12"]
+    assert by_model["qwen3.7-max"]["preferred_selected_count"] == 3
+    assert by_model["sig-fable"]["skill_says_pick_variant_from_schema"] is True
+    assert by_model["sig-fable"]["must_exclude_selected"] == []
+    assert by_model["sig-fable"]["preferred_selected_count"] == 5
+
+
 def test_e3_ls5_reproduction_exposes_generator_verifier_conflict() -> None:
     task_root = ROOT / "benchmark" / "tasks" / "correct-syntax-wrong-logic-trap"
 

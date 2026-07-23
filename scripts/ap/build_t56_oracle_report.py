@@ -516,10 +516,20 @@ CASE_DEFINITIONS = {
         ],
     },
     "E5-LS1-T6": {
-        "title": "Oracle 运行在首次改代码前耗尽单轮输出预算，self 同题满分",
-        "kind": "模型执行采样退化，不是题目或 oracle 不可解",
+        "title": "同一学习证据产生相反抽象：Qwen 过度泛化分类规则，Fable self 满分",
+        "kind": "生成 skill 负迁移 + 独立的 oracle 采样退化",
         "interpretation": (
-            "Fable self-generated 与 exact-oracle 使用同一模型、同一 task checksum；self 以 13 个"
+            "Qwen 与 Fable 的 E5-LS1 学习证据结构相同：T1 outcome 已对但 process 未过，T2 的任务是"
+            "evidence/opinion 分类，T3 是 current market estimate，之后各生成一份同名 skill。Qwen 的"
+            "skill 长 492 行，把 T2 经验错误提升成无条件 Core Principle：`Classify before ranking`；"
+            "Fable 的 180 行 skill 则先要求按 output schema 区分 ranking/classification/estimation 三种"
+            "variant。T6 的 schema 只要求 selected，题面也只要求 relevance/evidence/recency 排名。Qwen"
+            "仍先做 evidence/opinion gate，把全体中 relevance 最高的 FDA M04 判 opinion 后排除，反而"
+            "选入明确 must_exclude 的 off-topic M12；还改了辅助 run_pipeline.py，却没修公开 test 明示"
+            "会执行的 multi_factor_pipeline.py。Fable self 按 ranking variant 选出 M01/M02/M04/M03/M05，"
+            "7/7 全过。这是目前很具体的 skill-evolution 质量差异：不是有没有写 skill，而是能否把 T1–T3"
+            "异构经验抽象成带适用条件的规则。"
+            "另一个翻转机制必须分开：Fable self-generated 与 exact-oracle 使用同一模型、同一 task checksum；self 以 13 个"
             "trajectory steps 完成修改、运行 pipeline 与检查，7/7 tests 全过。Exact 先读取 curated"
             "的 multi-source-search-filter 与 constrained-summarization 以及任务资产，随后在一个 agent"
             "step 中写了 47,013 字符内部推理，反复权衡 relevance/evidence/recency 权重与 M02/M04 排序，"
@@ -527,7 +537,8 @@ CASE_DEFINITIONS = {
             "multi_factor_pipeline.py 仍是 starter 并退出 1，selection.json/summary.md 都不存在；"
             "process 2/2 只是 starter 源码已经含三维关键词。Exact 的 0/5 outcome 因而是一次 terminal"
             "deliberation/output-cap 退化，而不是 oracle skill 仍不足或题目太难。单次 matched flip 不能"
-            "估计 skill 因果效应，必须结合 no-skill/all-library 或重复采样。"
+            "估计 skill 因果效应，必须结合 no-skill/all-library 或重复采样；但 Qwen/Fable 两份 learned"
+            "skill 的规则、实际选择和失败路径已经构成可审计的机制证据。"
         ),
         "conditions": ["self_generated", "exact_oracle"],
         "files": [
@@ -3037,6 +3048,97 @@ def reproduce_e6_ls4_t5_tie_break(
     }
 
 
+def reproduce_e5_ls1_skill_transfer(
+    task_root: Path,
+    observations: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Compare the learned ranking rule with each model's concrete output."""
+
+    ground_truth_path = task_root / "tests" / "ground_truth.json"
+    outcome_test_path = task_root / "tests" / "test_outcome.py"
+    schema_path = task_root / "environment" / "schemas" / "output_schema.json"
+    starter_path = task_root / "environment" / "multi_factor_pipeline.py"
+    ground_truth = load_json_optional(ground_truth_path)
+    preferred = {str(value) for value in ground_truth.get("preferred", [])}
+    must_exclude = {str(value) for value in ground_truth.get("must_exclude", [])}
+    starter_text = starter_path.read_text(encoding="utf-8", errors="replace")
+    try:
+        compile(starter_text, str(starter_path), "exec")
+        starter_compiles = True
+        starter_compile_error = None
+    except SyntaxError as error:
+        starter_compiles = False
+        starter_compile_error = f"{error.__class__.__name__}: {error.msg} at line {error.lineno}"
+
+    models = []
+    for observation in observations:
+        artifact_raw = observation.get("artifact_task_path")
+        selection_path = (
+            Path(str(artifact_raw)) / "output" / "selection.json"
+            if artifact_raw
+            else None
+        )
+        selected: list[str] = []
+        if selection_path and selection_path.is_file():
+            payload = load_json_optional(selection_path)
+            selected = [str(value) for value in payload.get("selected", [])]
+        skill_text = "\n\n".join(
+            str(item.get("content") or "")
+            for item in observation.get("used_skill_files") or []
+            if isinstance(item, dict)
+        )
+        models.append({
+            "model": observation.get("model"),
+            "condition": observation.get("condition"),
+            "outcome": observation.get("outcome"),
+            "process": observation.get("process"),
+            "selected": selected,
+            "preferred_selected": sorted(preferred & set(selected)),
+            "preferred_selected_count": len(preferred & set(selected)),
+            "must_exclude_selected": sorted(must_exclude & set(selected)),
+            "skill_chars": len(skill_text),
+            "skill_lines": len(skill_text.splitlines()),
+            "skill_says_classify_before_ranking": bool(
+                re.search(r"classify before ranking", skill_text, re.IGNORECASE)
+            ),
+            "skill_says_pick_variant_from_schema": bool(
+                re.search(
+                    r"pick the variant from the output schema|ranking variant",
+                    skill_text,
+                    re.IGNORECASE,
+                )
+            ),
+            "trajectory_steps": observation.get("trajectory_step_count"),
+            "mutation_calls": observation.get("mutation_call_count"),
+            "terminal_completion_tokens": observation.get(
+                "terminal_completion_tokens"
+            ),
+            "terminal_reasoning_chars": observation.get(
+                "terminal_reasoning_chars"
+            ),
+            "terminal_has_tool_calls": observation.get("terminal_has_tool_calls"),
+        })
+    return {
+        "required_entrypoint": "multi_factor_pipeline.py",
+        "required_entrypoint_is_public_in_outcome_test": (
+            "multi_factor_pipeline.py"
+            in outcome_test_path.read_text(encoding="utf-8", errors="replace")
+        ),
+        "starter_pipeline_compiles": starter_compiles,
+        "starter_compile_error": starter_compile_error,
+        "schema_requires_only_selected": (
+            load_json_optional(schema_path).get("required") == ["selected"]
+        ),
+        "preferred": sorted(preferred),
+        "must_exclude": sorted(must_exclude),
+        "models": models,
+        "ground_truth_path": str(ground_truth_path.resolve()),
+        "outcome_test_path": str(outcome_test_path.resolve()),
+        "schema_path": str(schema_path.resolve()),
+        "starter_path": str(starter_path.resolve()),
+    }
+
+
 def reproduce_e5_ls5_provenance_contract(
     task_root: Path,
     observations: list[dict[str, Any]],
@@ -3188,6 +3290,33 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                 if trial_result_path and trial_result_path.is_file()
                 else {}
             )
+            used_skill_files = []
+            run_rel = row.get("run_path")
+            if run_rel:
+                run_root = raw_root / str(run_rel)
+                for skill_id in row.get("skills_actually_used") or []:
+                    slug = str(skill_id).split(".", 1)[-1]
+                    if row.get("condition") == "exact_oracle":
+                        skill_path = (
+                            run_root / "oracle-skill-views" / task_id / slug / "SKILL.md"
+                        )
+                    else:
+                        skill_path = (
+                            run_root
+                            / "library"
+                            / str(row.get("environment_id") or task_id.split("-", 1)[0])
+                            / "active"
+                            / slug
+                            / "SKILL.md"
+                        )
+                    if skill_path.is_file():
+                        used_skill_files.append({
+                            "skill_id": str(skill_id),
+                            "path": str(skill_path.resolve()),
+                            "content": skill_path.read_text(
+                                encoding="utf-8", errors="replace"
+                            ),
+                        })
             observations.append({
                 "model": row["model"],
                 "condition": row.get("condition"),
@@ -3228,6 +3357,7 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
                 "terminal_has_tool_calls": trajectory_activity[
                     "terminal_has_tool_calls"
                 ],
+                "used_skill_files": used_skill_files,
                 "agent_result": trial_result.get("agent_result") or {},
             })
         if not observations:
@@ -3318,6 +3448,8 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
             reproduction = reproduce_e5_ls3_t6_semantic_audit(task_root, observations)
         if task_id == "E5-LS4-T6" and task_root:
             reproduction = reproduce_e5_ls4_hierarchy_semantics(task_root, observations)
+        if task_id == "E5-LS1-T6" and task_root:
+            reproduction = reproduce_e5_ls1_skill_transfer(task_root, observations)
         if task_id in {"E5-LS5-T5", "E5-LS5-T6"} and task_root:
             reproduction = reproduce_e5_ls5_provenance_contract(
                 task_root, observations
@@ -6322,7 +6454,7 @@ function renderTasks(){{let q=taskSearch.value.toLowerCase();let rows=D.comparis
 function showTask(model,id){{let x=D.comparisons.find(x=>x.model===model&&x.task_id===id);let v=D.measurement_validity.records.find(v=>v.model===model&&v.task_id===id);let blocks=Object.entries(x.conditions).map(([name,c])=>`<h3>${{zh[name]}}</h3>${{c?`<p>${{status(c)}} score=${{c.score??'—'}} · job=${{esc(c.job_id)}}</p><p class="small">实际读取 skills: ${{esc(c.skills_actually_used.join(', ')||'none')}}<br>Oracle 内容证明: ${{esc(Object.entries(c.oracle_content_verification||{{}}).map(([k,v])=>k+': '+v).join(', ')||'—')}}<br>record: ${{esc(c.record_path)}}<br>trajectory: ${{esc(c.trajectory_path)}}</p><details><summary>失败测试 (${{c.failed_tests.length}})</summary><pre>${{esc(JSON.stringify(c.failed_tests,null,2))}}</pre></details>`:'<p class="small">尚无结果</p>'}}`).join('');let validityBlock=v?`<div class="case"><h3>历史 Skill 测量有效性：${{esc(validityZh[v.category]||v.category)}}</h3><p>${{v.eligible_for_causal_skill_claim?'该题可进入历史 skill 的四条件因果检验。':'该题当前不能把成功归因于 T1–T3 形成的历史 skill。'}}</p><p class="small">受控概念：${{esc(v.controlled_concepts.join(', ')||'—')}}<br>T1–T3 历史命中：${{v.history_visible_count}} · 当前题面明示：${{v.instruction_explicit_count}} · generated 覆盖：${{v.generated_coverage}} · oracle 覆盖：${{v.oracle_coverage}}</p></div>`:'';drawerBody.innerHTML=`<h2>${{x.task_id}}</h2><p>${{esc(x.task_slug)}} · T${{x.tier}} · ${{x.environment_id}}</p><div class="conclusion ${{x.causal.complete?'good':'pending'}}"><h3>${{esc(x.causal.label)}} · ${{esc(x.causal.pattern||'')}}</h3>${{esc(x.causal.explanation)}}</div>${{validityBlock}}<p><b>需要的 skills</b><br>${{esc(x.required_skills.join(', ')||x.primary_skill)}}</p>${{blocks}}`;drawer.classList.add('open')}}
 let a=D.verifier_audit.summary;audit.innerHTML=`<div class="card"><span class="label">过程 / 功能 checks</span><b>${{a.process_checks_total}} / ${{a.outcome_checks_total}}</b></div><p><b>${{a.tasks_with_literal_or_regex_process_checks}}/90</b> 含源码字面量或正则检查；<b>${{a.tasks_with_effective_process_weight_50_percent}}/90</b> 的过程权重为 50%。</p><p>形态敏感度：${{Object.entries(a.process_shape_sensitivity).map(([k,v])=>`${{k}}=${{v}}`).join(' · ')}}</p><h3>Process-only 分层</h3>${{D.verifier_shape_outcomes.filter(x=>x.n).map(x=>`<div class="small">${{zh[x.condition]}} · ${{x.shape_risk}} · process-only ${{x.process_only_failures}}/${{x.n}} · outcome ${{x.outcome_passes}}/${{x.n}} · process ${{x.process_passes}}/${{x.n}}</div>`).join('')}}`;
 skills.innerHTML=Object.entries(D.skills.by_model).map(([m,x])=>`<div class="case"><h3>${{m}}</h3><p>skill 对数 <b>${{x.n}}</b> · 改名 ${{x.renamed}} · 完全相同 ${{x.exact_equal}}</p><div class="small">中位 word Jaccard ${{x.median_word_jaccard?.toFixed(3)??'—'}} · 长度比 ${{x.median_length_ratio?.toFixed(2)??'—'}}</div></div>`).join('')+'<p class="small">词面相似度低只说明表达和覆盖范围不同，不能单独证明 skill 质量差；最终要结合 matched oracle rescue。</p>';
-cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}}<br><span class="small">Outcome failures: ${{o.failed_outcome_tests.map(t=>t.name).join(', ')||'无'}}<br>Process failures: ${{o.failed_process_tests.map(t=>t.name).join(', ')||'无'}}<br>Agent tokens: input=${{o.agent_result.n_input_tokens??'—'}} output=${{o.agent_result.n_output_tokens??'—'}} · tools: ${{Object.entries(o.tool_counts).map(([k,v])=>k+'='+v).join(', ')||'none'}} · explicit mutation calls=${{o.mutation_call_count}}<br>Trajectory: steps=${{o.trajectory_step_count}} · max step completion=${{o.max_step_completion_tokens??'—'}} · terminal completion=${{o.terminal_completion_tokens??'—'}} · terminal reasoning chars=${{o.terminal_reasoning_chars}} · terminal has tools=${{o.terminal_has_tool_calls}}</span></p>${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}${{o.bash_commands.length?`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / bash commands (${{o.bash_commands.length}})</summary><div class="small">${{esc(o.trajectory_path)}}</div><pre>${{esc(o.bash_commands.join(String.fromCharCode(10,10)))}}</pre></details>`:''}}${{o.final_edits.length?`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / trajectory 中的最终 edits (${{o.final_edits.length}})</summary><div class="small">${{esc(o.trajectory_path)}}</div><pre>${{esc(o.final_edits.map(e=>`### ${{e.file_path}}\n${{e.new}}`).join(String.fromCharCode(10,10)))}}</pre></details>`:''}}`).join('')}}${{Object.keys(x.reproduction||{{}}).length?`<details open><summary>独立复算证据</summary><pre>${{esc(JSON.stringify(x.reproduction,null,2))}}</pre></details>`:''}}${{x.task_source_files.map(f=>`<details><summary>任务资产 / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}<details><summary>任务正文</summary><div class="small">${{esc(x.instruction_path)}}</div><pre>${{esc(x.instruction)}}</pre></details><details><summary>Outcome verifier 源码</summary><div class="small">${{esc(x.outcome_verifier_path)}}</div><pre>${{esc(x.outcome_verifier)}}</pre></details><details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details><details><summary>官方 reference solution</summary><div class="small">${{esc(x.reference_solution_path)}}</div><pre>${{esc(x.reference_solution)}}</pre></details></article>`).join('');
+cases.innerHTML=D.cases.map((x,i)=>`<article class="case"><span class="kind">${{x.kind}}</span><h3>${{x.task_id}} · ${{x.title}}</h3><p>${{x.interpretation}}</p>${{x.observations.map(o=>`<p><b>${{o.model}} / ${{zh[o.condition]||o.condition}}</b> · strict=${{o.strict}} outcome=${{o.outcome}} process=${{o.process}}<br><span class="small">Outcome failures: ${{o.failed_outcome_tests.map(t=>t.name).join(', ')||'无'}}<br>Process failures: ${{o.failed_process_tests.map(t=>t.name).join(', ')||'无'}}<br>Agent tokens: input=${{o.agent_result.n_input_tokens??'—'}} output=${{o.agent_result.n_output_tokens??'—'}} · tools: ${{Object.entries(o.tool_counts).map(([k,v])=>k+'='+v).join(', ')||'none'}} · explicit mutation calls=${{o.mutation_call_count}}<br>Trajectory: steps=${{o.trajectory_step_count}} · max step completion=${{o.max_step_completion_tokens??'—'}} · terminal completion=${{o.terminal_completion_tokens??'—'}} · terminal reasoning chars=${{o.terminal_reasoning_chars}} · terminal has tools=${{o.terminal_has_tool_calls}}</span></p>${{o.used_skill_files.map(s=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / 实际使用 skill：${{s.skill_id}}</summary><div class="small">${{esc(s.path)}}</div><pre>${{esc(s.content)}}</pre></details>`).join('')}}${{o.files.map(f=>`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}${{o.bash_commands.length?`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / bash commands (${{o.bash_commands.length}})</summary><div class="small">${{esc(o.trajectory_path)}}</div><pre>${{esc(o.bash_commands.join(String.fromCharCode(10,10)))}}</pre></details>`:''}}${{o.final_edits.length?`<details><summary>${{o.model}} / ${{zh[o.condition]||o.condition}} / trajectory 中的最终 edits (${{o.final_edits.length}})</summary><div class="small">${{esc(o.trajectory_path)}}</div><pre>${{esc(o.final_edits.map(e=>`### ${{e.file_path}}\n${{e.new}}`).join(String.fromCharCode(10,10)))}}</pre></details>`:''}}`).join('')}}${{Object.keys(x.reproduction||{{}}).length?`<details open><summary>独立复算证据</summary><pre>${{esc(JSON.stringify(x.reproduction,null,2))}}</pre></details>`:''}}${{x.task_source_files.map(f=>`<details><summary>任务资产 / ${{f.name}}</summary><div class="small">${{esc(f.path)}}</div><pre>${{esc(f.content)}}</pre></details>`).join('')}}<details><summary>任务正文</summary><div class="small">${{esc(x.instruction_path)}}</div><pre>${{esc(x.instruction)}}</pre></details><details><summary>Outcome verifier 源码</summary><div class="small">${{esc(x.outcome_verifier_path)}}</div><pre>${{esc(x.outcome_verifier)}}</pre></details><details><summary>Process verifier 源码</summary><div class="small">${{esc(x.process_verifier_path)}}</div><pre>${{esc(x.process_verifier)}}</pre></details><details><summary>官方 reference solution</summary><div class="small">${{esc(x.reference_solution_path)}}</div><pre>${{esc(x.reference_solution)}}</pre></details></article>`).join('');
 </script></body></html>'''
 
 
