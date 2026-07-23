@@ -248,8 +248,11 @@ def curated_all_evidence(
             errors.append(f"missing source curated skill: {slug}")
         elif active_skill.read_bytes() != curated_skill.read_bytes():
             errors.append(f"curated content mismatch: {slug}")
-    if not (active_dir.parent / ".frozen").is_file():
-        errors.append("curated environment library is not frozen")
+    lifecycle = lifecycle_protocol_evidence(run_dir)
+    if lifecycle["library_frozen_before_evaluation"] is not True:
+        errors.append("curated environment library was not frozen before evaluation")
+    if lifecycle["evaluation_library_hash_stable"] is not True:
+        errors.append("curated environment library hash changed or is unobserved")
     return {
         "curated_all_library_complete": not errors,
         "curated_all_visible_slugs": visible_slugs,
@@ -277,6 +280,78 @@ def load_inventory(path: Path) -> dict[str, dict[str, Any]]:
         str(row["job_id"]): row
         for row in inventory.get("jobs", [])
         if isinstance(row, dict) and row.get("job_id")
+    }
+
+
+def lifecycle_protocol_evidence(run_dir: Path) -> dict[str, Any]:
+    """Recover the evaluation freeze boundary from append-only events.
+
+    A successful run removes ``library/<env>/.frozen`` during finalisation, so
+    the final filesystem state cannot prove that T4--T6 actually saw one
+    immutable library.  The lifecycle stream records the freeze event and the
+    library hash at every trial start; use that durable history instead.
+    """
+    path = run_dir / "stores" / "events" / "lifecycle.jsonl"
+    events: list[dict[str, Any]] = []
+    parse_errors: list[str] = []
+    if not path.is_file():
+        parse_errors.append("missing lifecycle.jsonl")
+    else:
+        for line_number, line in enumerate(
+            path.read_text(encoding="utf-8", errors="replace").splitlines(),
+            1,
+        ):
+            if not line.strip():
+                continue
+            try:
+                value = json.loads(line)
+            except json.JSONDecodeError as exc:
+                parse_errors.append(f"line {line_number}: {exc.msg}")
+                continue
+            if not isinstance(value, dict):
+                parse_errors.append(f"line {line_number}: expected object")
+                continue
+            events.append(value)
+
+    eval_starts = [
+        (index, event)
+        for index, event in enumerate(events)
+        if event.get("event_type") == "trial_started"
+        and event.get("phase") == "evaluation"
+        and TASK_ID_RE.match(str(event.get("task_id") or ""))
+    ]
+    eval_ends = [
+        event
+        for event in events
+        if event.get("event_type") == "trial_ended_eval"
+        and TASK_ID_RE.match(str(event.get("task_id") or ""))
+    ]
+    freeze_indexes = [
+        index
+        for index, event in enumerate(events)
+        if event.get("event_type") == "library_frozen"
+    ]
+    first_eval_index = eval_starts[0][0] if eval_starts else None
+    frozen_before_eval = bool(
+        first_eval_index is not None
+        and any(index < first_eval_index for index in freeze_indexes)
+    )
+    hashes = sorted({
+        str(event.get("library_hash"))
+        for _, event in eval_starts
+        if event.get("library_hash")
+    })
+    task_ids = [str(event.get("task_id")) for _, event in eval_starts]
+    return {
+        "lifecycle_path": str(path.resolve()) if path.exists() else None,
+        "lifecycle_parse_errors": parse_errors,
+        "evaluation_task_start_count": len(eval_starts),
+        "evaluation_task_end_count": len(eval_ends),
+        "evaluation_task_ids": task_ids,
+        "library_freeze_event_count": len(freeze_indexes),
+        "library_frozen_before_evaluation": frozen_before_eval,
+        "evaluation_library_hashes": hashes,
+        "evaluation_library_hash_stable": len(hashes) == 1 and bool(eval_starts),
     }
 
 
@@ -462,6 +537,7 @@ def collect(
         export_label = job_dir.parent.name
         job = inventory.get(job_id, {})
         baseline = config.get("baseline") or {}
+        lifecycle = lifecycle_protocol_evidence(run_dir)
         condition = condition_name(config)
         model = model_family(export_label, str(baseline.get("model_name") or ""))
         run_row = {
@@ -479,6 +555,21 @@ def collect(
             "condition": condition,
             "evaluation_only_t4_t6": bool(config.get("evaluation_only_t4_t6")),
             "oracle_skill_view": bool(config.get("oracle_skill_view")),
+            "order_seed": config.get("order_seed"),
+            "harbor_agent_timeout_multiplier": config.get(
+                "harbor_agent_timeout_multiplier"
+            ),
+            "library_scope": baseline.get("library_scope"),
+            "within_env_replay": baseline.get("within_env_replay"),
+            "replay_eval": baseline.get("replay_eval"),
+            "use_skill_library": baseline.get("use_skill_library"),
+            "use_trajectory_rag": baseline.get("use_trajectory_rag"),
+            "use_history_context": baseline.get("use_history_context"),
+            "skill_init": baseline.get("skill_init"),
+            "allow_curated_inject": baseline.get("allow_curated_inject"),
+            "allow_revision": baseline.get("allow_revision"),
+            "learning_max_attempts": baseline.get("learning_max_attempts"),
+            **lifecycle,
             "run_path": relative_or_absolute(run_dir, raw_root),
         }
         runs.append(run_row)
@@ -747,6 +838,13 @@ def collect(
     selected_keys = mark_selected_runs(runs, rows, skill_rows)
     for item in learning_rows:
         item["selected_run"] = (item["job_id"], item["run_id"]) in selected_keys
+    learning_counts = Counter(
+        (item["job_id"], item["run_id"]) for item in learning_rows
+    )
+    for run in runs:
+        run["learning_record_count"] = learning_counts[
+            (run["job_id"], run["run_id"])
+        ]
 
     selected_rows = [row for row in rows if row["selected_run"]]
     selected_learning_rows = [row for row in learning_rows if row["selected_run"]]

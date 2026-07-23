@@ -331,10 +331,42 @@ def test_coverage_is_fail_closed_for_missing_conditions() -> None:
             "model": "qwen3.7-max",
             "condition": "self_generated",
             "environment_id": "E1",
+            "task_id": f"E1-LS{family}-T{tier}",
         }
-        for _ in range(15)
+        for family in range(1, 6)
+        for tier in range(4, 7)
     ]
-    coverage = REPORT.condition_coverage(rows, [])
+    expected_ids = [row["task_id"] for row in rows]
+    runs = [
+        {
+            "model": "qwen3.7-max",
+            "condition": "self_generated",
+            "environment_id": "E1",
+            "job_id": "job-e1",
+            "run_id": "run-e1",
+            "ap_status": "Succeeded",
+            "order_seed": "A",
+            "within_env_replay": False,
+            "replay_eval": False,
+            "library_scope": "environment",
+            "lifecycle_parse_errors": [],
+            "evaluation_task_start_count": 15,
+            "evaluation_task_end_count": 15,
+            "evaluation_task_ids": expected_ids,
+            "library_frozen_before_evaluation": True,
+            "evaluation_library_hash_stable": True,
+            "evaluation_library_hashes": ["stable"],
+            "baseline": "selfgen_in_session_always",
+            "evaluation_only_t4_t6": False,
+            "oracle_skill_view": False,
+            "use_skill_library": True,
+            "skill_init": "empty",
+            "allow_curated_inject": False,
+            "learning_max_attempts": 3,
+            "learning_record_count": 15,
+        }
+    ]
+    coverage = REPORT.condition_coverage(rows, runs)
 
     assert len(coverage) == 48
     assert next(
@@ -344,6 +376,20 @@ def test_coverage_is_fail_closed_for_missing_conditions() -> None:
         and item["environment_id"] == "E1"
     )["complete"] is True
     assert sum(item["complete"] for item in coverage) == 1
+
+    runs[0]["evaluation_library_hash_stable"] = False
+    invalid = REPORT.condition_coverage(rows, runs)
+    invalid_cell = next(
+        item
+        for item in invalid
+        if item["model"] == "qwen3.7-max"
+        and item["condition"] == "self_generated"
+        and item["environment_id"] == "E1"
+    )
+    assert invalid_cell["complete"] is False
+    assert invalid_cell["protocol_errors"] == [
+        "evaluation library hash was not stable"
+    ]
 
 
 def test_curated_all_condition_requires_five_exact_frozen_skills(
@@ -367,7 +413,35 @@ def test_curated_all_condition_requires_five_exact_frozen_skills(
             "family_id": f"E1-LS{family}",
             "latent_skill_id": f"E1-LS{family}.{slug}",
         }
-    (active.parent / ".frozen").write_text("frozen\n", encoding="utf-8")
+    events = run_dir / "stores/events/lifecycle.jsonl"
+    events.parent.mkdir(parents=True)
+    events.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "event_type": "library_frozen",
+                        "env_id": "E1",
+                        "hash": "stable-library-hash",
+                    }
+                ),
+                *[
+                    json.dumps(
+                        {
+                            "event_type": "trial_started",
+                            "phase": "evaluation",
+                            "task_id": f"E1-LS{family}-T{tier}",
+                            "library_hash": "stable-library-hash",
+                        }
+                    )
+                    for family in range(1, 6)
+                    for tier in range(4, 7)
+                ],
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     valid = COLLECTOR.curated_all_evidence(run_dir, "E1", specs, skills_root)
 

@@ -1320,6 +1320,82 @@ def selected_runs(evidence: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
+def protocol_cell_errors(
+    run: dict[str, Any] | None,
+    task_rows: list[dict[str, Any]],
+    *,
+    condition: str,
+    environment_id: str,
+) -> list[str]:
+    """Fail closed on protocol differences that can invalidate a cell."""
+    if run is None:
+        return ["missing selected run metadata"] if task_rows else []
+
+    errors: list[str] = []
+    expected_task_ids = [
+        f"{environment_id}-LS{family}-T{tier}"
+        for family in range(1, 6)
+        for tier in range(4, 7)
+    ]
+    observed_task_ids = sorted(str(row.get("task_id")) for row in task_rows)
+    lifecycle_task_ids = list(run.get("evaluation_task_ids") or [])
+
+    def require(value: bool, message: str) -> None:
+        if not value:
+            errors.append(message)
+
+    require(run.get("ap_status") == "Succeeded", "AP job is not Succeeded")
+    require(run.get("order_seed") == "A", "order_seed is not A")
+    require(run.get("within_env_replay") is False, "within-env replay is enabled or unknown")
+    require(run.get("replay_eval") is False, "replay evaluation is enabled or unknown")
+    require(run.get("library_scope") == "environment", "library scope is not environment")
+    require(not (run.get("lifecycle_parse_errors") or []), "lifecycle stream has parse errors")
+    require(run.get("evaluation_task_start_count") == 15, "evaluation start coverage is not 15")
+    require(run.get("evaluation_task_end_count") == 15, "evaluation end coverage is not 15")
+    require(
+        sorted(lifecycle_task_ids) == sorted(expected_task_ids),
+        "lifecycle T4-T6 task grid differs",
+    )
+    require(observed_task_ids == sorted(expected_task_ids), "record T4-T6 task grid differs")
+    require(
+        run.get("library_frozen_before_evaluation") is True,
+        "library was not frozen before evaluation",
+    )
+    require(
+        run.get("evaluation_library_hash_stable") is True,
+        "evaluation library hash was not stable",
+    )
+
+    if condition == "self_generated":
+        require(run.get("baseline") == "selfgen_in_session_always", "wrong self-generated baseline")
+        require(run.get("evaluation_only_t4_t6") is False, "self-generated cell skipped T1-T3")
+        require(run.get("oracle_skill_view") is False, "self-generated cell enabled oracle view")
+        require(run.get("use_skill_library") is True, "self-generated skill library disabled")
+        require(run.get("skill_init") == "empty", "self-generated library was not initialized empty")
+        require(run.get("allow_curated_inject") is False, "self-generated cell injected curated skills")
+        require(run.get("learning_max_attempts") == 3, "self-generated learning attempt budget is not 3")
+        require(run.get("learning_record_count") == 15, "self-generated T1-T3 coverage is not 15")
+    elif condition == "exact_oracle":
+        require(run.get("baseline") == "curated_static", "wrong exact-oracle baseline")
+        require(run.get("evaluation_only_t4_t6") is True, "exact-oracle is not T4-T6-only")
+        require(run.get("oracle_skill_view") is True, "exact-oracle view disabled")
+        require(run.get("use_skill_library") is True, "exact-oracle skill library disabled")
+        require(run.get("learning_record_count") == 0, "exact-oracle unexpectedly contains T1-T3")
+    elif condition == "curated_all":
+        require(run.get("baseline") == "curated_static", "wrong curated-all baseline")
+        require(run.get("evaluation_only_t4_t6") is True, "curated-all is not T4-T6-only")
+        require(run.get("oracle_skill_view") is False, "curated-all exposed gold subset")
+        require(run.get("use_skill_library") is True, "curated-all skill library disabled")
+        require(run.get("learning_record_count") == 0, "curated-all unexpectedly contains T1-T3")
+    elif condition == "no_skill":
+        require(run.get("baseline") == "no_skill", "wrong no-skill baseline")
+        require(run.get("evaluation_only_t4_t6") is True, "no-skill is not T4-T6-only")
+        require(run.get("oracle_skill_view") is False, "no-skill exposed oracle view")
+        require(run.get("use_skill_library") is False, "no-skill library is enabled")
+        require(run.get("learning_record_count") == 0, "no-skill unexpectedly contains T1-T3")
+    return list(dict.fromkeys(errors))
+
+
 def condition_coverage(rows: list[dict[str, Any]], runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
     grouped: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
@@ -1345,7 +1421,13 @@ def condition_coverage(rows: list[dict[str, Any]], runs: list[dict[str, Any]]) -
                     ]
                 else:
                     invalid_tasks = []
-                protocol_valid = not invalid_tasks
+                protocol_errors = protocol_cell_errors(
+                    run,
+                    task_rows,
+                    condition=condition,
+                    environment_id=env,
+                )
+                protocol_valid = not invalid_tasks and not protocol_errors
                 result.append({
                     "model": model,
                     "condition": condition,
@@ -1355,10 +1437,60 @@ def condition_coverage(rows: list[dict[str, Any]], runs: list[dict[str, Any]]) -
                     "complete": n == EXPECTED_TASKS_PER_ENV and protocol_valid,
                     "protocol_valid": protocol_valid,
                     "protocol_invalid_tasks": invalid_tasks,
+                    "protocol_errors": protocol_errors,
                     "job_id": run.get("job_id") if run else None,
                     "ap_status": run.get("ap_status") if run else "missing",
+                    "run_id": run.get("run_id") if run else None,
+                    "library_hashes": (
+                        run.get("evaluation_library_hashes") or [] if run else []
+                    ),
+                    "timeout_multiplier": (
+                        run.get("harbor_agent_timeout_multiplier") if run else None
+                    ),
                 })
     return result
+
+
+def protocol_equivalence_analysis(
+    coverage: list[dict[str, Any]],
+) -> dict[str, Any]:
+    observed = [row for row in coverage if row["observed"]]
+    full_raw = [row for row in observed if row["observed"] == row["expected"]]
+    eligible = [row for row in coverage if row["complete"]]
+    timeout_multipliers: dict[str, list[float]] = {}
+    for condition in CONDITIONS:
+        timeout_multipliers[condition] = sorted({
+            float(row["timeout_multiplier"])
+            for row in observed
+            if row["condition"] == condition
+            and isinstance(row.get("timeout_multiplier"), (int, float))
+        })
+    return {
+        "observed_cells": len(observed),
+        "raw_full_cells": len(full_raw),
+        "scientifically_eligible_cells": len(eligible),
+        "protocol_invalid_full_cells": len(full_raw) - len(eligible),
+        "all_full_cells_protocol_valid": len(full_raw) == len(eligible),
+        "timeout_multipliers_by_condition": timeout_multipliers,
+        "records": coverage,
+        "causal_scope": (
+            "Only 15/15 cells with Succeeded AP state, exact T4-T6 grid, "
+            "replay disabled, environment-scoped library, a freeze event before "
+            "evaluation, one stable evaluation library hash, and the expected "
+            "condition-specific skill assignment enter scientific comparisons."
+        ),
+        "known_treatment_bundle": (
+            "No-skill versus skill-enabled conditions differs in both library "
+            "availability and the instruction to inspect/use that library; it "
+            "estimates the bundled treatment, not isolated SKILL.md text."
+        ),
+        "operational_variation": (
+            "Completed self-generated cells include timeout multipliers 4 or 6, "
+            "while controls use 6. A completed 15/15 cell did not hit the terminal "
+            "timeout, but latency/token behavior remains descriptive rather than "
+            "a randomized nuisance control."
+        ),
+    }
 
 
 def aggregates(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -6151,7 +6283,19 @@ def build_payload(
     rows = selected_rows(evidence)
     runs = selected_runs(evidence)
     coverage = condition_coverage(rows, runs)
-    comparisons = task_comparisons(rows)
+    eligible_cells = {
+        (row["model"], row["condition"], row["environment_id"])
+        for row in coverage
+        if row["complete"]
+    }
+    scientific_rows = [
+        row
+        for row in rows
+        if (row["model"], row["condition"], row["environment_id"])
+        in eligible_cells
+    ]
+    comparisons = task_comparisons(scientific_rows)
+    protocol_equivalence = protocol_equivalence_analysis(coverage)
     protocol_design = protocol_design_audit(audit)
     learning = learning_analysis(evidence)
     oracle_scope = oracle_scope_analysis(audit)
@@ -6169,9 +6313,11 @@ def build_payload(
         comparisons, measurement_validity
     )
     reference_integrity = reference_integrity_analysis(reference_audit or {})
-    attribution = failure_attribution(rows, audit, reference_integrity)
+    attribution = failure_attribution(
+        scientific_rows, audit, reference_integrity
+    )
     environment_summary = environment_diagnostics(
-        rows,
+        scientific_rows,
         comparisons,
         oracle_scope,
         attribution,
@@ -6183,20 +6329,21 @@ def build_payload(
         inventory or {},
         matrix_state or {},
     )
-    cases = build_cases(rows, audit, raw_root)
+    cases = build_cases(scientific_rows, audit, raw_root)
     return {
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "is_complete": all(row["complete"] for row in coverage),
         "coverage": coverage,
-        "aggregates": aggregates(rows),
-        "tasks": rows,
+        "aggregates": aggregates(scientific_rows),
+        "tasks": scientific_rows,
         "comparisons": comparisons,
         "protocol_design": protocol_design,
+        "protocol_equivalence": protocol_equivalence,
         "causal_diagnosis": causal_diagnosis_summary(comparisons),
-        "skill_use_adherence": skill_use_adherence(rows),
+        "skill_use_adherence": skill_use_adherence(scientific_rows),
         "effects": matched_effects(comparisons),
-        "model_comparisons": model_comparisons(rows),
-        "failure_map": failure_map(rows),
+        "model_comparisons": model_comparisons(scientific_rows),
+        "failure_map": failure_map(scientific_rows),
         "cases": cases,
         "skills": skill_summary(evidence),
         "learning": learning,
@@ -6206,7 +6353,9 @@ def build_payload(
         "measurement_validity": measurement_validity,
         "validity_stratified_effects": validity_effects,
         "oracle_scope": oracle_scope,
-        "verifier_shape_outcomes": verifier_shape_outcomes(rows, audit),
+        "verifier_shape_outcomes": verifier_shape_outcomes(
+            scientific_rows, audit
+        ),
         "scope_condition_outcomes": scope_condition_outcomes(comparisons, oracle_scope),
         "reference_integrity": reference_integrity,
         "failure_attribution": attribution,
@@ -6269,6 +6418,38 @@ def render_markdown(data: dict[str, Any]) -> str:
         for condition in CONDITIONS:
             rows = [row for row in data["coverage"] if row["model"] == model and row["condition"] == condition]
             lines.append(f"| {model} | {CONDITION_ZH[condition]} | {sum(row['complete'] for row in rows)}/6 | {sum(row['observed'] for row in rows)}/90 |")
+    protocol = data["protocol_equivalence"]
+    lines += [
+        "",
+        "## 四条件协议等价性 Gate",
+        "",
+        f"当前观测到 **{protocol['observed_cells']}** 个 cell，其中原始记录达到 15/15 的有 "
+        f"**{protocol['raw_full_cells']}** 个；通过 AP 终态、完整任务网格、replay 关闭、"
+        "environment-scoped library、eval 前 freeze 和整个 T4–T6 library hash 不变等检查后，"
+        f"**{protocol['scientifically_eligible_cells']}** 个进入科学比较，"
+        f"**{protocol['protocol_invalid_full_cells']}** 个 15/15 cell 被协议 gate 排除。",
+        "",
+        "No-skill 与 skill-enabled 条件的差值是“提供 skill library 并要求模型检查/使用它”的整体处理效应，"
+        "不是隔离后的纯 SKILL.md 文本效应；Exact 与 Curated-all 使用相同 framing，"
+        "它们的差值更适合诊断 gold subset 的选择/注意力优势。",
+        "",
+        "| 模型 / Env | 条件 | 记录 | AP | Freeze/hash | Gate | 错误 |",
+        "|---|---|---:|---|---|---|---|",
+    ]
+    for row in protocol["records"]:
+        if not row["observed"]:
+            continue
+        frozen = "稳定" if len(row.get("library_hashes") or []) == 1 else "异常/缺失"
+        errors = "; ".join(row.get("protocol_errors") or [])
+        invalid_tasks = row.get("protocol_invalid_tasks") or []
+        if invalid_tasks:
+            errors = "; ".join(filter(None, [errors, "assignment: " + ",".join(invalid_tasks)]))
+        lines.append(
+            f"| {row['model']} / {row['environment_id']} | "
+            f"{CONDITION_ZH[row['condition']]} | {row['observed']}/15 | "
+            f"{row['ap_status']} | {frozen} | "
+            f"{'纳入' if row['complete'] else '等待/排除'} | {errors or '—'} |"
+        )
     progress = data["runtime_progress"]
     lines += [
         "",
@@ -6907,6 +7088,7 @@ def render_html(data: dict[str, Any]) -> str:
 <section class="panel"><h2>先看结论</h2><div id="conclusions"></div></section>
 <section class="panel"><h2>先校正 “Oracle” 的含义</h2><p><code>exact_oracle</code> 是按 gold task→skill 映射注入仓库 curated 子集，不是任务 solution 或完整能力上界。curated skill 本身被设计为 gap-exposed scaffold，模型应从 T1–T3 补全它。</p><div class="grid cards" id="protocolDesign"></div></section>
 <section class="panel"><h2>实验覆盖</h2><div class="heat" id="coverage"></div></section>
+<section class="panel"><h2>四条件协议等价性 Gate</h2><p class="small">只有 AP 成功、15/15、无 replay、environment-scoped library、eval 前冻结且 T4–T6 library hash 始终相同的 cell 才进入科学比较。No-skill 对比估计“提供并要求使用 skill library”的整体处理效应，不是纯文本效应。</p><div id="protocolEquivalence"></div></section>
 <section class="panel"><h2>运行中的完整对照矩阵</h2><p class="small">把 AP 生命周期与科学证据分开：Queued/Running/Succeeded 不等于已有可用结果；只有终态导出、artifact 审计通过且单元达到 15/15，才计入实验覆盖。</p><div id="runtimeProgress"></div></section>
 <section class="panel"><h2>实验执行健康</h2><p class="small">AP 失败尝试与模型 T5/T6 结果分层展示。失败尝试保留作审计；只有完整、可复核的 episode 才能形成 15/15 科学单元。</p><div id="executionHealth"></div></section>
 <section class="panel"><h2>题目资产完整性：官方标准解能否通过？</h2><p>这不是模型 baseline：Harbor oracle 直接执行仓库的 <code>solution/solve.sh</code>，再运行原 verifier，用来识别题目、标准解、容器或 verifier 的内部不一致。</p><div id="referenceIntegrity"></div></section>
@@ -6941,6 +7123,7 @@ cards.innerHTML=[['完整单元',`${{complete}}/${{total}}`],['已纳入任务�
 conclusions.innerHTML=D.conclusions.map(x=>`<div class="conclusion ${{x.level}}"><h3>${{esc(x.title)}}</h3>${{esc(x.body)}}</div>`).join('');
 let pd=D.protocol_design;protocolDesign.innerHTML=[['Curated families',pd.family_count],['Author gap summaries',pd.gap_summary_count],['明确限制 curated',pd.gap_summaries_explicitly_limiting_curated+'/'+pd.gap_summary_count],['T2 enriched / T3 variant',(pd.role_counts['T2:enriched:learning']||0)+' / '+(pd.role_counts['T3:variant:learning']||0)]].map(x=>`<div class="card"><span class="label">${{x[0]}}</span><b>${{x[1]}}</b></div>`).join('');
 coverage.innerHTML='<div class="head">模型 / 条件</div>'+['E1','E2','E3','E4','E5','E6'].map(x=>`<div class="head">${{x}}</div>`).join('')+['qwen3.7-max','sig-fable'].flatMap(m=>['self_generated','exact_oracle','curated_all','no_skill'].map(c=>{{let cells=D.coverage.filter(x=>x.model===m&&x.condition===c);return `<div>${{m}}<br><span class="small">${{zh[c]}}</span></div>`+cells.map(x=>`<div class="v ${{x.complete?'high':x.observed?'mid':'none'}}">${{x.observed}}/15</div>`).join('')}})).join('');
+let pe=D.protocol_equivalence;let peRows=pe.records.filter(x=>x.observed).map(x=>{{let errs=[...(x.protocol_errors||[]),...((x.protocol_invalid_tasks||[]).length?['assignment: '+x.protocol_invalid_tasks.join(', ')]:[])];return `<tr><td><b>${{x.model}}</b><br><span class="small">${{x.environment_id}}</span></td><td>${{zh[x.condition]}}</td><td>${{x.observed}}/15</td><td>${{esc(x.ap_status)}}</td><td>${{(x.library_hashes||[]).length===1?'稳定':'异常/缺失'}}</td><td><span class="metric ${{x.complete?'pass':'fail'}}">${{x.complete?'纳入':'等待/排除'}}</span></td><td class="small">${{esc(errs.join('; ')||'—')}}</td></tr>`}}).join('');protocolEquivalence.innerHTML=`<div class="grid cards"><div class="card"><span class="label">观测 cell</span><b>${{pe.observed_cells}}</b></div><div class="card"><span class="label">原始 15/15</span><b>${{pe.raw_full_cells}}</b></div><div class="card"><span class="label">科学可用</span><b>${{pe.scientifically_eligible_cells}}</b></div><div class="card"><span class="label">协议排除</span><b>${{pe.protocol_invalid_full_cells}}</b></div></div><div class="tablebox"><table><thead><tr><th>模型 / Env</th><th>条件</th><th>记录</th><th>AP</th><th>Freeze/hash</th><th>Gate</th><th>错误</th></tr></thead><tbody>${{peRows}}</tbody></table></div><details><summary>解释边界</summary><p>${{esc(pe.known_treatment_bundle)}}</p><p>${{esc(pe.operational_variation)}}</p></details>`;
 let rp=D.runtime_progress;let stageRows=rp.stages.map(x=>{{let counts=Object.entries(x.job_statuses).map(([k,v])=>`${{k}}=${{v}}`).join(', ')||'—';let group=x.group_url?`<a href="${{esc(x.group_url)}}" target="_blank" rel="noreferrer">${{esc(x.group_id)}}</a>`:'—';return `<tr><td><b>${{esc(x.model)}}</b><br><span class="small">${{zh[x.condition]}}</span></td><td>${{esc(x.status)}}</td><td>${{esc(counts)}}</td><td>${{x.complete_cells}}/6 · ${{x.observed_tasks}}/90</td><td>${{x.failed_group_count}}</td><td>${{group}}</td></tr>`}}).join('');let repairRows=rp.repairs.map(x=>{{let job=x.job_url?`<a href="${{esc(x.job_url)}}" target="_blank" rel="noreferrer">${{esc(x.job_id)}}</a>`:'—';return `<tr><td>${{esc(x.model)}} / ${{esc(x.environment_id)}}</td><td>${{esc(x.status)}}</td><td>${{esc(x.export_state)}}</td><td>${{x.attempt_count}}</td><td>${{job}}</td></tr>`}}).join('');runtimeProgress.innerHTML=`<div class="grid cards"><div class="card"><span class="label">科学证据完整单元</span><b>${{rp.complete_cells}}/${{rp.total_cells}}</b></div><div class="card"><span class="label">AP Active Jobs</span><b>${{rp.active_job_count}}</b></div><div class="card"><span class="label">终态待导出</span><b>${{rp.terminal_waiting_export}}</b></div><div class="card"><span class="label">Inventory 更新</span><b style="font-size:15px">${{esc(rp.inventory_updated_at_utc||'—')}}</b></div></div><div class="tablebox"><table><thead><tr><th>模型/条件</th><th>Matrix 状态</th><th>AP jobs</th><th>科学覆盖</th><th>历史失败组</th><th>AP group</th></tr></thead><tbody>${{stageRows}}</tbody></table></div><h3 style="margin-top:16px">Self-generated 缺失 Env 修复</h3><div class="tablebox"><table><thead><tr><th>模型/Env</th><th>Job 状态</th><th>Artifact 导出</th><th>尝试数</th><th>AP job</th></tr></thead><tbody>${{repairRows}}</tbody></table></div>`;
 let eh=D.execution_attempts;executionHealth.innerHTML=`<div class="grid cards"><div class="card"><span class="label">失败 AP 尝试</span><b>${{eh.failed_attempt_count}}</b></div><div class="card"><span class="label">未纳入统计</span><b>${{eh.excluded_attempt_count}}</b></div><div class="card"><span class="label">贡献 T4–T6 的失败尝试</span><b>${{eh.failed_attempts_contributing_t56}}</b></div><div class="card"><span class="label">失败类型</span><b>${{Object.keys(eh.failure_counts).length}}</b></div></div><div>${{Object.entries(eh.failure_counts).map(([k,v])=>`<span class="metric fail">${{esc(k)}}: ${{v}}</span>`).join(' ')}}</div><details><summary>查看失败尝试证据</summary><div class="tablebox"><table><thead><tr><th>Label / Job</th><th>类型</th><th>Stage</th><th>进入 T4–T6</th><th>诊断</th></tr></thead><tbody>${{eh.failures.map(x=>`<tr><td>${{esc(x.label)}}<br><span class="small">${{esc(x.job_id)}}</span></td><td>${{esc(x.failure_kind)}}</td><td>${{esc(x.error_stage||'—')}}</td><td>${{x.contributes_t56_results?'是':'否'}}</td><td>${{esc(x.message||'—')}}</td></tr>`).join('')}}</tbody></table></div></details>`;
 let ri=D.reference_integrity;let riRows=['E1','E2','E3','E4','E5','E6'].map(e=>{{let cells=[4,5,6].map(t=>ri.rows.find(x=>x.environment_id===e&&x.tier===t));return `<tr><td><b>${{e}}</b></td>${{cells.map(x=>`<td>${{x.passed}}/${{x.total}}</td>`).join('')}}</tr>`}}).join('');let riFailures=ri.failures.length?`<details><summary>查看 ${{ri.failures.length}} 个失败标准解</summary><pre>${{esc(JSON.stringify(ri.failures,null,2))}}</pre></details>`:'<p class="small">当前没有已观测的标准解失败。</p>';referenceIntegrity.innerHTML=`<div class="grid cards"><div class="card"><span class="label">覆盖</span><b>${{ri.total}}/90</b></div><div class="card"><span class="label">严格通过</span><b>${{ri.passed}}/${{ri.total||0}}</b></div><div class="card"><span class="label">状态</span><b style="font-size:20px">${{ri.all_reference_solutions_pass?'全部通过':ri.complete?'存在失败':'运行中'}}</b></div></div><div class="tablebox"><table><thead><tr><th>Env</th><th>T4</th><th>T5</th><th>T6</th></tr></thead><tbody>${{riRows}}</tbody></table></div>${{riFailures}}`;
