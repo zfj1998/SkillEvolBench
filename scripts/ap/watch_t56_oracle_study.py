@@ -335,6 +335,10 @@ class Watcher:
         return "not_started"
 
     @staticmethod
+    def file_sha256(path: Path) -> str:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    @staticmethod
     def audit_tree(root: Path) -> dict[str, Any]:
         suffix_counts: dict[str, int] = {}
         named_counts = {
@@ -420,6 +424,7 @@ class Watcher:
             raise WatcherError(f"export failed for {job_id}: {diagnostic}")
 
         scanner = self.args.repo_root / "scripts/ap/scan_export_safety.py"
+        scanner_sha256 = self.file_sha256(scanner)
         scan_result = self.run_command(
             [sys.executable, str(scanner), str(temporary)],
             timeout=self.args.scan_timeout_sec,
@@ -445,6 +450,7 @@ class Watcher:
                     "job_id": job_id,
                     "quarantine": str(quarantine),
                     "scan_summary": scan_payload,
+                    "scanner_sha256": scanner_sha256,
                     "recorded_at_utc": utc_now(),
                 },
             )
@@ -464,6 +470,7 @@ class Watcher:
             "destination": str(destination),
             "exported_at_utc": utc_now(),
             "scan_summary": scan_payload,
+            "scanner_sha256": scanner_sha256,
             "audit": audit,
         }
         write_json(marker_path, marker)
@@ -496,6 +503,82 @@ class Watcher:
                 job_id=job_id,
                 validation_path=str(validation_path),
             )
+
+    def recheck_quarantined_export(self, job: dict[str, Any]) -> None:
+        """Re-scan a quarantine once after the scanner policy changes."""
+        job_id = str(job["job_id"])
+        marker_path = self.export_marker(job_id)
+        marker = read_json(marker_path, {})
+        if not isinstance(marker, dict) or marker.get("unsafe") is not True:
+            return
+        quarantine_value = marker.get("quarantine")
+        if not isinstance(quarantine_value, str):
+            return
+        quarantine = Path(quarantine_value)
+        if not quarantine.is_dir():
+            self.event("quarantine_missing", job_id=job_id)
+            return
+
+        scanner = self.args.repo_root / "scripts/ap/scan_export_safety.py"
+        scanner_sha256 = self.file_sha256(scanner)
+        if marker.get("scanner_sha256") == scanner_sha256:
+            return
+        result = self.run_command(
+            [sys.executable, str(scanner), str(quarantine)],
+            timeout=self.args.scan_timeout_sec,
+            phase="rechecking_quarantine",
+            heartbeat_fields={"current_job_id": job_id},
+        )
+        scan_payload: dict[str, Any] = {}
+        try:
+            scan_payload = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            pass
+        if result.returncode != 0:
+            marker.update(
+                {
+                    "scan_summary": scan_payload,
+                    "scanner_sha256": scanner_sha256,
+                    "rechecked_at_utc": utc_now(),
+                }
+            )
+            write_json(marker_path, marker)
+            self.event("quarantine_still_unsafe", job_id=job_id)
+            return
+
+        label = safe_label(str(job["label"]))
+        destination = self.evidence_dir / label / job_id
+        if destination.exists():
+            raise WatcherError(
+                f"refusing to replace existing destination while releasing {job_id}"
+            )
+        destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        quarantine.replace(destination)
+        audit = self.audit_tree(destination)
+        write_json(
+            marker_path,
+            {
+                "completed": True,
+                "unsafe": False,
+                "released_from_quarantine": True,
+                "job_id": job_id,
+                "label": label,
+                "ap_status": job.get("status"),
+                "destination": str(destination),
+                "exported_at_utc": utc_now(),
+                "scanner_sha256": scanner_sha256,
+                "scan_summary": scan_payload,
+                "previous_scan_summary": marker.get("scan_summary"),
+                "audit": audit,
+            },
+        )
+        self.event(
+            "quarantine_released",
+            job_id=job_id,
+            label=label,
+            file_count=audit["file_count"],
+            total_bytes=audit["total_bytes"],
+        )
 
     def refresh_analysis(self, inventory: dict[str, dict[str, Any]]) -> None:
         """Refresh derived evidence only when its AP/export inputs changed."""
@@ -755,8 +838,10 @@ class Watcher:
                 continue
             if self.export_state(job_id) == "not_started":
                 self.export_job(job)
-                job["export_state"] = self.export_state(job_id)
-                self.last_inventory = inventory
+            elif self.export_state(job_id) == "unsafe_quarantine":
+                self.recheck_quarantined_export(job)
+            job["export_state"] = self.export_state(job_id)
+            self.last_inventory = inventory
 
         self.refresh_analysis(inventory)
 

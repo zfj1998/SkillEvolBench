@@ -166,3 +166,48 @@ def test_invalid_report_does_not_advance_analysis_marker(
     watcher.refresh_analysis({})
     assert not (watcher.state_dir / "analysis.json").exists()
     assert "analysis_validation_failed" in (watcher.state_dir / "events.jsonl").read_text()
+
+
+def test_quarantine_is_released_only_after_new_scanner_passes(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("AP_API_KEY", "test-only-key")
+    args = argparse.Namespace(
+        state_dir=tmp_path / "watcher",
+        evidence_dir=tmp_path / "raw",
+        cluster="test-cluster",
+        repo_root=ROOT,
+        poll_sec=60,
+        scan_timeout_sec=60,
+    )
+    watcher = WATCH.Watcher(args)
+    job = {"job_id": "job-1", "label": "exact-E5", "status": "Succeeded"}
+    quarantine = watcher.evidence_dir / ".quarantine" / "exact-E5" / "job-1"
+    quarantine.mkdir(parents=True)
+    (quarantine / "result.json").write_text("{}\n", encoding="utf-8")
+    write_marker = {
+        "completed": False,
+        "unsafe": True,
+        "job_id": "job-1",
+        "quarantine": str(quarantine),
+        "scanner_sha256": "old-policy",
+        "scan_summary": {"clean": False},
+    }
+    WATCH.write_json(watcher.export_marker("job-1"), write_marker)
+    monkeypatch.setattr(
+        watcher,
+        "run_command",
+        lambda command, **kwargs: subprocess.CompletedProcess(
+            command, 0, '{"clean": true}', ""
+        ),
+    )
+
+    watcher.recheck_quarantined_export(job)
+
+    marker = WATCH.read_json(watcher.export_marker("job-1"), {})
+    assert marker["completed"] is True
+    assert marker["released_from_quarantine"] is True
+    assert marker["previous_scan_summary"] == {"clean": False}
+    assert not quarantine.exists()
+    assert Path(marker["destination"], "result.json").is_file()

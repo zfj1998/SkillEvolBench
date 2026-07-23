@@ -95,6 +95,11 @@ SIGNED_URL_QUERY_RE = re.compile(
     rb"x-oss-security-token|x-oss-signature)(?:=|%3[dD])",
     re.IGNORECASE,
 )
+PUBLIC_TRACKING_SIGNATURE_PREFIX = b"https://www.fairwinds.com/cs/c/"
+PUBLIC_TRACKING_SIGNATURE_MATCH_RE = re.compile(
+    rb"(?:\?|&|&amp;|%3[fF]|%26)signature(?:=|%3[dD])\Z",
+    re.IGNORECASE,
+)
 NO_AUTH_SENTINEL_RE = re.compile(rb"sevb-no-auth-", re.IGNORECASE)
 KNOWN_CREDENTIAL_VALUE_RE = re.compile(
     rb"(?:"
@@ -336,7 +341,10 @@ def detect_payload(payload: bytes, exact_secrets: Iterable[bytes]) -> set[str]:
     detected: set[str] = set()
     if PRIVATE_KEY_HEADER_RE.search(payload):
         detected.add("private_key_header")
-    if SIGNED_URL_QUERY_RE.search(payload):
+    if any(
+        not _is_known_public_tracking_signature(payload, match)
+        for match in SIGNED_URL_QUERY_RE.finditer(payload)
+    ):
         detected.add("signed_url_query")
     if NO_AUTH_SENTINEL_RE.search(payload):
         detected.add("no_auth_sentinel")
@@ -348,6 +356,32 @@ def detect_payload(payload: bytes, exact_secrets: Iterable[bytes]) -> set[str]:
     ):
         detected.add("credential_assignment")
     return detected
+
+
+def _is_known_public_tracking_signature(
+    payload: bytes,
+    match: re.Match[bytes],
+) -> bool:
+    """Exclude one exact public HubSpot CTA route from signed-URL findings.
+
+    The E5 evidence-grounding task fetches a public Fairwinds page whose HTML
+    contains a HubSpot CTA tracking URL.  Its ordinary query parameter is named
+    ``signature`` but is not an AP, OSS, cloud, or model-service credential.
+    Keep this exception deliberately narrower than a host allowlist: only the
+    exact HTTPS host/path and the bare lowercase-insensitive ``signature`` key
+    qualify.  Other signing keys, paths, hosts, and embedded secrets continue
+    through the normal scanner.
+    """
+
+    if PUBLIC_TRACKING_SIGNATURE_MATCH_RE.fullmatch(match.group(0)) is None:
+        return False
+    url_start = payload.rfind(b"https://", 0, match.start())
+    if url_start < 0:
+        return False
+    prefix = payload[url_start : match.start()]
+    if any(byte in prefix for byte in b" \t\r\n\"'<>\\"):
+        return False
+    return prefix.lower().startswith(PUBLIC_TRACKING_SIGNATURE_PREFIX)
 
 
 def _load_exact_secrets(

@@ -70,6 +70,42 @@ def test_content_categories_and_exact_environment_value_are_aggregated(
     assert report["scan_counts"]["exact_secret_values_loaded"] == 1  # type: ignore[index]
 
 
+def test_exact_public_fairwinds_cta_signature_is_not_a_secret(tmp_path: Path) -> None:
+    root = tmp_path / "export"
+    root.mkdir()
+    (root / "trajectory.json").write_text(
+        '{"url":"https://www.fairwinds.com/cs/c/?portal_id=1&signature=public-tracking"}\n',
+        encoding="utf-8",
+    )
+
+    report = scanner.scan_tree(root, environment={})
+
+    assert report["clean"] is True
+    assert report["category_counts"]["signed_url_query"] == 0  # type: ignore[index]
+
+
+@pytest.mark.parametrize(
+    "url",
+    (
+        "https://www.fairwinds.com/other/?signature=must-detect",
+        "https://evil.invalid/cs/c/?signature=must-detect",
+        "https://www.fairwinds.com/cs/c/?X-Amz-Signature=must-detect",
+    ),
+)
+def test_public_tracking_exception_does_not_hide_other_signed_urls(
+    tmp_path: Path,
+    url: str,
+) -> None:
+    root = tmp_path / "export"
+    root.mkdir()
+    (root / "trajectory.json").write_text(url + "\n", encoding="utf-8")
+
+    report = scanner.scan_tree(root, environment={})
+
+    assert report["clean"] is False
+    assert report["category_counts"]["signed_url_query"] == 1  # type: ignore[index]
+
+
 def test_filename_and_symlink_target_are_scanned_without_following(
     tmp_path: Path,
 ) -> None:
