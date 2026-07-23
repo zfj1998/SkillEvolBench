@@ -698,6 +698,17 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
             "model": "qwen3.7-max",
             "environment_id": "E6",
             "tier": 5,
+            "task_id": "E6-LS5-T5",
+            "task_slug": "hidden-action-taxonomy",
+            "outcome_pass": False,
+            "process_pass": True,
+            "classification": "outcome_only_failure",
+        },
+        {
+            **common,
+            "model": "qwen3.7-max",
+            "environment_id": "E6",
+            "tier": 5,
             "task_id": "E6-LS4-T5",
             "task_slug": "underdetermined-dst-tie-break",
             "outcome_pass": False,
@@ -726,6 +737,7 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
             {"task_id": "E6-LS3-T6", "process_shape_sensitivity": "medium"},
             {"task_id": "E6-LS3-T5", "process_shape_sensitivity": "low"},
             {"task_id": "E6-LS4-T5", "process_shape_sensitivity": "low"},
+            {"task_id": "E6-LS5-T5", "process_shape_sensitivity": "high"},
             {"task_id": "E6-LS4-T6", "process_shape_sensitivity": "low"},
         ]
     }
@@ -744,8 +756,35 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
         "E6-LS3-T5": "verified_benchmark_false_negative",
         "E6-LS3-T6": "mixed_benchmark_and_model_gap",
         "E6-LS4-T5": "invalid_or_underdetermined_task",
+        "E6-LS5-T5": "verified_benchmark_false_negative",
         "E6-LS4-T6": "invalid_or_underdetermined_task",
     }
+
+
+def test_failure_attribution_handles_model_specific_e6_ls5_process_false_negative() -> None:
+    rows = [{
+        "selected_run": True,
+        "condition": "self_generated",
+        "model": "sig-fable",
+        "environment_id": "E6",
+        "tier": 5,
+        "strict_pass": False,
+        "outcome_pass": True,
+        "process_pass": False,
+        "classification": "process_only_failure",
+        "task_id": "E6-LS5-T5",
+        "task_slug": "rhetorical-question-trap",
+        "failed_tests": [],
+    }]
+    result = REPORT.failure_attribution(
+        rows,
+        {"tasks": [{
+            "task_id": "E6-LS5-T5",
+            "process_shape_sensitivity": "high",
+        }]},
+        {"complete": False, "failures": []},
+    )
+    assert result["failures"][0]["cause"] == "verified_verifier_false_negative"
 
 
 def test_environment_diagnostics_keeps_reference_and_model_controls_distinct() -> None:

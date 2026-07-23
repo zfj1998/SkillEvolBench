@@ -75,6 +75,7 @@ VERIFIED_OUTCOME_FALSE_NEGATIVE_PAIRS = frozenset({
     ("qwen3.7-max", "E5-LS3-T6"),
     ("qwen3.7-max", "E5-LS4-T6"),
     ("qwen3.7-max", "E6-LS3-T5"),
+    ("qwen3.7-max", "E6-LS5-T5"),
     ("sig-fable", "E5-LS4-T6"),
     ("qwen3.7-max", "E6-LS2-T6"),
     ("sig-fable", "E6-LS2-T5"),
@@ -83,6 +84,7 @@ VERIFIED_OUTCOME_FALSE_NEGATIVE_PAIRS = frozenset({
 })
 VERIFIED_PROCESS_FALSE_NEGATIVE_PAIRS = frozenset({
     ("qwen3.7-max", "E2-LS3-T5"),
+    ("sig-fable", "E6-LS5-T5"),
 })
 MIXED_BENCHMARK_MODEL_GAP_PAIRS = frozenset({
     ("qwen3.7-max", "E2-LS1-T6"),
@@ -753,6 +755,30 @@ CASE_DEFINITIONS = {
             "environment/slack/users.json",
         ],
     },
+    "E6-LS5-T5": {
+        "title": "两模型 action/non-action 语义全对，却分别撞上隐藏 taxonomy 与源码 grep",
+        "kind": "隐藏分类表面形式与 source-grep 合同（强任务缺陷）",
+        "interpretation": (
+            "Qwen 与 Fable 都只把 r02/r04 抽成 action，并把 r01/r03/r05 全部放入 non_actions；"
+            "deadline、status、processed_count、source_count 和 summary 也一致。Qwen 的唯一 outcome"
+            "差异是把 Could we/Should we 归为 implicit delegation、assignee 写成输入直接提供的"
+            "product/design team；题面 schema 同时允许 implicit 与 question_action，assignee 又明确允许"
+            "owner or team，hidden expected 却强制 question_action 和 unspecified。Fable 使用 hidden"
+            "taxonomy 后 outcome 全过，但 process verifier 仍要求 extraction_policy.py 含变量名"
+            "question_action_patterns 或固定例句 would you be able；当前 fixture 根本没有该例句，Fable"
+            "已有 could/should request-question 逻辑并产生正确结果。因此两种 raw failure 都是测量"
+            "表面形式，不是 action extraction 或 skill 执行失败。"
+        ),
+        "files": [
+            "extraction_policy.py",
+            "output/thread_actions.json",
+        ],
+        "task_source_files": [
+            "tests/expected_actions.json",
+            "tests/test_process.py",
+            "environment/slack/channel_export.json",
+        ],
+    },
     "E6-LS4-T6": {
         "title": "题目没有唯一最优日程，verifier 却要求任意固定时间与数组顺序",
         "kind": "欠规定的唯一解与不可满足硬约束（强任务缺陷）",
@@ -987,7 +1013,9 @@ ENVIRONMENT_PROFILES = {
             "日历证据，只因 rationale 没复述隐藏词 timeline 失败；E6-LS4-T5 在无偏好、空日历下有"
             "四个等价合法整点，两个模型都包含 14:00 并正确解释 EDT/GMT，却因首项不是隐藏 id dst_safe"
             "失败；E6-LS3-T5 中 Qwen 已抽全三项真实请求，只因稳定 action id 与 hidden id 不同、"
-            "并按题面允许写 team 而非 speaker name 被拒，Fable 同题则确有误抽。其余优先级、行动抽取与"
+            "并按题面允许写 team 而非 speaker name 被拒，Fable 同题则确有误抽；E6-LS5-T5 中两模型"
+            "action/non-action 集合全对，Qwen 被隐藏 taxonomy 拒绝，Fable 仅被固定源码 token 拒绝。"
+            "其余优先级、行动抽取与"
             "thread parsing 仍有真实执行 gap。因此 E6 的 0/5 既不是纯模型失败，"
             "也不是纯坏题；需在 exact/no-skill 到齐后按题剔除合同缺陷再估计 skill 效应。"
         ),
@@ -4972,6 +5000,9 @@ def conclusions(
                 "DST-safe 解，两模型都包含 14:00，却因未公开 id `dst_safe` 和任意首项 tie-break 被拒；"
                 "E6-LS3-T5 中 Qwen 精确抽出 q02/q04/q06 三项真实 action，却因 hidden action id 词表"
                 "和 assignee 必须写 speaker name 而非题面允许的 team 被判 missing；"
+                "E6-LS5-T5 中两模型 action/non-action 集合完全正确，Qwen 采用题面 schema 允许的"
+                "implicit/team 形式而非 hidden question_action/unspecified，Fable 则仅因源码未出现"
+                "`question_action_patterns` 或 fixture 外例句 `would you be able` 失败；"
                 "E6-LS4-T6 的四人工作时段没有共同正长度交集，"
                 "verifier 却要求题面未声明的固定时间和数组顺序。90/90 reference pass 只能证明官方脚本能满足"
                 "官方 verifier，不能排除 reference 利用隐藏合同或任意 tie-break。最终任务质量结论必须把这类题"
