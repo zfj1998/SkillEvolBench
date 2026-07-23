@@ -236,6 +236,60 @@ def test_four_condition_causal_diagnosis_distinguishes_skill_effects() -> None:
         assert diagnosis["pattern"].startswith("S=")
 
 
+def test_causal_measurement_gate_excludes_known_benchmark_defects() -> None:
+    contaminated = REPORT.causal_measurement_annotation(
+        "qwen3.7-max", "E4-LS2-T6"
+    )
+    clean = REPORT.causal_measurement_annotation(
+        "qwen3.7-max", "E1-LS1-T5"
+    )
+
+    assert contaminated["measurement_status"] == "known_contamination"
+    assert contaminated["causal_interpretable"] is False
+    assert "benchmark/verifier" in contaminated["measurement_warning"]
+    assert clean["measurement_status"] == "no_known_outcome_defect"
+    assert clean["causal_interpretable"] is True
+
+
+def test_causal_summary_separates_raw_and_interpretable_counts() -> None:
+    comparisons = [
+        {
+            "tier": 5,
+            "causal": {
+                "complete": True,
+                "category": "self_evolution_benefit",
+                "causal_interpretable": True,
+            },
+        },
+        {
+            "tier": 6,
+            "causal": {
+                "complete": True,
+                "category": "self_evolution_benefit",
+                "causal_interpretable": False,
+            },
+        },
+        {
+            "tier": 4,
+            "causal": {
+                "complete": True,
+                "category": "low_skill_demand",
+                "causal_interpretable": True,
+            },
+        },
+    ]
+
+    result = REPORT.causal_diagnosis_summary(comparisons)
+
+    assert result["complete"] == 2
+    assert result["interpretable_complete"] == 1
+    assert result["measurement_contaminated_complete"] == 1
+    assert result["category_counts"] == {"self_evolution_benefit": 2}
+    assert result["interpretable_category_counts"] == {
+        "self_evolution_benefit": 1
+    }
+
+
 def test_skill_use_adherence_tracks_exact_oracle_compliance() -> None:
     rows = [
         {
