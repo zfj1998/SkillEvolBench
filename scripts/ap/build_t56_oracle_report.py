@@ -5522,6 +5522,48 @@ def conclusions(
                 ),
             }
         )
+        discordant = {
+            (str(row["model"]), str(row["task_id"]))
+            for row in matched_exact
+            if (
+                row["conditions"]["self_generated"]["outcome"] is True
+            ) != (
+                row["conditions"]["exact_oracle"]["outcome"] is True
+            )
+        }
+        verifier_surface_flips = {
+            ("qwen3.7-max", "E3-LS4-T6"),
+            ("qwen3.7-max", "E3-LS5-T5"),
+            ("qwen3.7-max", "E4-LS2-T6"),
+            ("qwen3.7-max", "E4-LS4-T5"),
+            ("sig-fable", "E3-LS4-T6"),
+            ("sig-fable", "E3-LS5-T5"),
+        }
+        sampling_flips = {("sig-fable", "E5-LS1-T6")}
+        skill_mechanism_flips = {
+            ("sig-fable", "E5-LS5-T5"),
+            ("sig-fable", "E5-LS5-T6"),
+        }
+        audited_flips = (
+            verifier_surface_flips | sampling_flips | skill_mechanism_flips
+        )
+        if discordant == audited_flips:
+            result.append({
+                "level": "good",
+                "title": "9/9 outcome 翻转已完成机制审计，仅 2 个是 substantive skill 差异",
+                "body": (
+                    "当前 raw matched 结果有 3 个 oracle rescue、6 个 oracle harm，但不能按"
+                    "3−6 解读 oracle 的净效应。逐题审计后：6 个来自 verifier/题面合同表面"
+                    "（E3 的 audit shape、错误 706 ground truth，以及 E4 的千分位和措辞正则）；"
+                    "1 个是 Fable/E5-LS1-T6 exact 单步 completion 精确打满 16,384 tokens、"
+                    "零 mutation 的采样执行退化；只有 2 个反映 skill 机制，而且方向相反。"
+                    "E5-LS5-T5 中 generated skill 诱导模型过度重构公开 provenance keys，exact "
+                    "保留 starter 合同而救回；E5-LS5-T6 中 generated skill 明确要求保留 starter "
+                    "patch seams 并在 reason 写入 raw values/context，self 满分而 exact 漏掉。"
+                    "因此现有证据表明 benchmark 确实能暴露 skill 的正负迁移，但 raw oracle "
+                    "pass-rate 差不能直接代表 skill 质量，必须依赖逐题机制和四条件控制。"
+                ),
+            })
     e5_ls1_t6 = next(
         (case for case in cases if case.get("task_id") == "E5-LS1-T6"),
         None,
