@@ -653,6 +653,17 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
             **common,
             "model": "qwen3.7-max",
             "environment_id": "E6",
+            "tier": 5,
+            "task_id": "E6-LS3-T5",
+            "task_slug": "hidden-action-id",
+            "outcome_pass": False,
+            "process_pass": True,
+            "classification": "outcome_only_failure",
+        },
+        {
+            **common,
+            "model": "qwen3.7-max",
+            "environment_id": "E6",
             "tier": 6,
             "task_id": "E6-LS2-T6",
             "task_slug": "verified-outcome-false-negative",
@@ -713,6 +724,7 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
             {"task_id": "E6-LS2-T6", "process_shape_sensitivity": "medium"},
             {"task_id": "E6-LS2-T5", "process_shape_sensitivity": "low"},
             {"task_id": "E6-LS3-T6", "process_shape_sensitivity": "medium"},
+            {"task_id": "E6-LS3-T5", "process_shape_sensitivity": "low"},
             {"task_id": "E6-LS4-T5", "process_shape_sensitivity": "low"},
             {"task_id": "E6-LS4-T6", "process_shape_sensitivity": "low"},
         ]
@@ -729,6 +741,7 @@ def test_failure_attribution_separates_functional_and_verified_false_negative() 
         "E5-LS2-T6": "verified_verifier_false_negative",
         "E6-LS2-T6": "verified_benchmark_false_negative",
         "E6-LS2-T5": "verified_benchmark_false_negative",
+        "E6-LS3-T5": "verified_benchmark_false_negative",
         "E6-LS3-T6": "mixed_benchmark_and_model_gap",
         "E6-LS4-T5": "invalid_or_underdetermined_task",
         "E6-LS4-T6": "invalid_or_underdetermined_task",
@@ -1052,6 +1065,7 @@ def test_e6_ls3_reproduction_aligns_semantic_actions_by_source(
     assert model["expected_actions"] == 8
     assert model["exact_hidden_id_matches"] == 6
     assert model["core_fields_matched"] == 23
+    assert model["core_fields_semantically_matched"] == 23
     assert model["core_fields_checked"] == 24
     assert {row["verifier_expected_id"] for row in model["id_mismatches"]} == {
         "act_runbook",
@@ -1063,6 +1077,66 @@ def test_e6_ls3_reproduction_aligns_semantic_actions_by_source(
         "expected": "no_update",
         "actual": "open",
         "matched": False,
+        "semantic_matched": False,
+    }]
+
+
+def test_e6_ls3_t5_reproduction_accepts_public_team_assignees(
+    tmp_path: Path,
+) -> None:
+    task_root = ROOT / "benchmark" / "tasks" / "question-masquerading-as-action-trap"
+    artifact_root = tmp_path / "task"
+    output_dir = artifact_root / "output"
+    output_dir.mkdir(parents=True)
+    (output_dir / "actions.json").write_text(
+        json.dumps({
+            "actions": [
+                {
+                    "id": "act_q4_targets_planning",
+                    "source_message_id": "q02",
+                    "assignee": "product",
+                    "deadline": None,
+                    "status": "open",
+                },
+                {
+                    "id": "act_northstar_call",
+                    "source_message_id": "q04",
+                    "assignee": "customer_success",
+                    "deadline": None,
+                    "status": "open",
+                },
+                {
+                    "id": "act_notes_cleanup",
+                    "source_message_id": "q06",
+                    "assignee": "fatima",
+                    "deadline": "2026-04-24",
+                    "status": "open",
+                },
+            ]
+        }),
+        encoding="utf-8",
+    )
+
+    result = REPORT.reproduce_e6_ls3_action_identity(
+        task_root,
+        [{
+            "model": "qwen3.7-max",
+            "condition": "self_generated",
+            "artifact_task_path": str(artifact_root),
+        }],
+    )
+
+    row = result["models"][0]
+    assert row["source_aligned_actions_found"] == 3
+    assert row["expected_actions"] == 3
+    assert row["exact_hidden_id_matches"] == 2
+    assert row["core_fields_matched"] == 7
+    assert row["core_fields_semantically_matched"] == 9
+    assert row["core_fields_checked"] == 9
+    assert row["id_mismatches"] == [{
+        "source_message_id": "q02",
+        "verifier_expected_id": "act_revisit_targets",
+        "model_id": "act_q4_targets_planning",
     }]
 
 

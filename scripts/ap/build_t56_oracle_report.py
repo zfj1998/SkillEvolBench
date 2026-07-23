@@ -74,6 +74,7 @@ VERIFIED_OUTCOME_FALSE_NEGATIVE_PAIRS = frozenset({
     ("qwen3.7-max", "E4-LS4-T6"),
     ("qwen3.7-max", "E5-LS3-T6"),
     ("qwen3.7-max", "E5-LS4-T6"),
+    ("qwen3.7-max", "E6-LS3-T5"),
     ("sig-fable", "E5-LS4-T6"),
     ("qwen3.7-max", "E6-LS2-T6"),
     ("sig-fable", "E6-LS2-T5"),
@@ -728,6 +729,30 @@ CASE_DEFINITIONS = {
             "environment/slack/channel_export.json",
         ],
     },
+    "E6-LS3-T5": {
+        "title": "Qwen 抽全三项真实请求，却被隐藏 action ID 与 assignee 表面形式拒绝",
+        "kind": "隐藏 semantic-ID 与 name-or-team 合同（强任务缺陷）",
+        "interpretation": (
+            "Qwen 精确排除了 q01/q03/q05 三个社交或修辞问题，并从 q02/q04/q06 抽出题面明确列出的"
+            "Q4 targets planning、Northstar call、notes cleanup 三项真实 action；description、deadline、"
+            "status 和 summary 都正确。唯一官方失败路径始于 id：模型使用稳定且语义清楚的"
+            "act_q4_targets_planning，而 hidden ground truth 只接受 act_revisit_targets，后续字段检查也"
+            "按隐藏 id lookup，于是整项被报 missing。另两项 assignee 写成 product/customer_success；"
+            "题面明确允许 owner name or team，users.json 又显示 Bob=Product Manager、Diana=Customer"
+            "Success，但 hidden verifier 只接受 bob/diana。故 Qwen 的 raw failure 是强假阴性。Fable"
+            "同题则把 q01/q03/q05 也抽成 action 并漏掉真实请求，仍是模型功能失败；归因必须 model-specific。"
+        ),
+        "files": [
+            "action_tracker.py",
+            "extractor_policy.py",
+            "output/actions.json",
+        ],
+        "task_source_files": [
+            "tests/ground_truth.json",
+            "environment/slack/channel_export.json",
+            "environment/slack/users.json",
+        ],
+    },
     "E6-LS4-T6": {
         "title": "题目没有唯一最优日程，verifier 却要求任意固定时间与数组顺序",
         "kind": "欠规定的唯一解与不可满足硬约束（强任务缺陷）",
@@ -961,7 +986,9 @@ ENVIRONMENT_PROFILES = {
             "T5 也存在同类污染：Fable 的 E6-LS2-T5 正文和 rationale 已使用全部项目、时间、scope 与"
             "日历证据，只因 rationale 没复述隐藏词 timeline 失败；E6-LS4-T5 在无偏好、空日历下有"
             "四个等价合法整点，两个模型都包含 14:00 并正确解释 EDT/GMT，却因首项不是隐藏 id dst_safe"
-            "失败。其余优先级、行动抽取与 thread parsing 仍有真实执行 gap。因此 E6 的 0/5 既不是纯模型失败，"
+            "失败；E6-LS3-T5 中 Qwen 已抽全三项真实请求，只因稳定 action id 与 hidden id 不同、"
+            "并按题面允许写 team 而非 speaker name 被拒，Fable 同题则确有误抽。其余优先级、行动抽取与"
+            "thread parsing 仍有真实执行 gap。因此 E6 的 0/5 既不是纯模型失败，"
             "也不是纯坏题；需在 exact/no-skill 到齐后按题剔除合同缺陷再估计 skill 效应。"
         ),
     },
@@ -1790,8 +1817,28 @@ def reproduce_e6_ls3_action_identity(
 
     ground_truth_path = task_root / "tests" / "ground_truth.json"
     messages_path = task_root / "environment" / "slack" / "channel_export.json"
+    users_path = task_root / "environment" / "slack" / "users.json"
     ground_truth = json.loads(ground_truth_path.read_text(encoding="utf-8"))
     messages = json.loads(messages_path.read_text(encoding="utf-8"))["messages"]
+    users = (
+        json.loads(users_path.read_text(encoding="utf-8"))
+        if users_path.is_file()
+        else {}
+    )
+
+    def compact(value: Any) -> str:
+        return re.sub(r"[^a-z0-9]+", "", str(value).lower())
+
+    def semantically_matches_assignee(expected: Any, actual: Any) -> bool:
+        expected_key = compact(expected)
+        actual_key = compact(actual)
+        if expected_key == actual_key:
+            return True
+        user = users.get(str(expected).lower(), {})
+        role_key = compact(user.get("role") or "")
+        return bool(actual_key and role_key) and (
+            actual_key in role_key or role_key in actual_key
+        )
 
     expected_source_by_id: dict[str, str] = {}
     for action_id, spec in ground_truth.get("expected_fields", {}).items():
@@ -1837,12 +1884,20 @@ def reproduce_e6_ls3_action_identity(
             spec = ground_truth["expected_fields"][expected_id]
             for field in ("assignee", "deadline", "status"):
                 if field in spec:
+                    semantic_match = (
+                        semantically_matches_assignee(
+                            spec[field], actual.get(field)
+                        )
+                        if field == "assignee"
+                        else actual.get(field) == spec[field]
+                    )
                     field_checks.append({
                         "source_message_id": source_id,
                         "field": field,
                         "expected": spec[field],
                         "actual": actual.get(field),
                         "matched": actual.get(field) == spec[field],
+                        "semantic_matched": semantic_match,
                     })
         rows.append({
             "model": observation.get("model"),
@@ -1860,6 +1915,9 @@ def reproduce_e6_ls3_action_identity(
                 check["matched"] for check in field_checks
             ),
             "core_fields_checked": len(field_checks),
+            "core_fields_semantically_matched": sum(
+                check["semantic_matched"] for check in field_checks
+            ),
             "id_mismatches": id_mismatches,
             "core_field_mismatches": [
                 check for check in field_checks if not check["matched"]
@@ -1878,6 +1936,7 @@ def reproduce_e6_ls3_action_identity(
         "models": rows,
         "ground_truth_path": str(ground_truth_path.resolve()),
         "messages_path": str(messages_path.resolve()),
+        "users_path": str(users_path.resolve()) if users_path.is_file() else None,
     }
 
 
@@ -2967,7 +3026,7 @@ def build_cases(rows: list[dict[str, Any]], audit: dict[str, Any], raw_root: Pat
             reproduction = reproduce_e5_ls3_t6_semantic_audit(task_root, observations)
         if task_id == "E5-LS4-T6" and task_root:
             reproduction = reproduce_e5_ls4_hierarchy_semantics(task_root, observations)
-        if task_id == "E6-LS3-T6" and task_root:
+        if task_id in {"E6-LS3-T5", "E6-LS3-T6"} and task_root:
             reproduction = reproduce_e6_ls3_action_identity(
                 task_root, observations
             )
@@ -4911,6 +4970,8 @@ def conclusions(
                 "scope、Friday、three-month estimate、staged alternative 和 calendar，只因 rationale"
                 "没复述隐藏词 `timeline` 失败；E6-LS4-T5 的 13:00–16:00 UTC 四个整点都是等价"
                 "DST-safe 解，两模型都包含 14:00，却因未公开 id `dst_safe` 和任意首项 tie-break 被拒；"
+                "E6-LS3-T5 中 Qwen 精确抽出 q02/q04/q06 三项真实 action，却因 hidden action id 词表"
+                "和 assignee 必须写 speaker name 而非题面允许的 team 被判 missing；"
                 "E6-LS4-T6 的四人工作时段没有共同正长度交集，"
                 "verifier 却要求题面未声明的固定时间和数组顺序。90/90 reference pass 只能证明官方脚本能满足"
                 "官方 verifier，不能排除 reference 利用隐藏合同或任意 tie-break。最终任务质量结论必须把这类题"
