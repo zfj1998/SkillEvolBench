@@ -4,7 +4,7 @@
     "ceo_strategy": "P1",
     "intern_printer": "P3",
     "vp_budget": "P1",
-    "manager_eod": "P1",
+    "manager_eod": "P0",
     "security_patch": "P0",
     "hier_06": "P2",
     "hier_07": "P2",
@@ -23,7 +23,8 @@
     "vp_budget": "P1"
   },
   "expected_p0": [
-    "security_patch"
+    "security_patch",
+    "manager_eod"
   ],
   "expected_p3": [
     "intern_printer",

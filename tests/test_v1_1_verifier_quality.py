@@ -143,3 +143,42 @@ def test_inbox_triage_rationales_do_not_require_hidden_keywords() -> None:
         "rationale quality may require a nontrivial explanation, but must not "
         f"force hidden wording that can reject a correct decision: {offenders}"
     )
+
+
+def test_inbox_triage_hard_same_day_labels_match_published_policy() -> None:
+    hard_blockers = {
+        "sort-20-explicit-priority": {
+            "email_003": "explicit EOD signature blocker",
+        },
+        "implicit-urgency-30-emails": {
+            "email_011": "explicit EOD decision",
+            "email_020": "same-day payment-hold blocker",
+        },
+        "sender-hierarchy-weight": {
+            "manager_eod": "explicit EOD deadline",
+        },
+        "anger-not-urgent-trap": {
+            "trap_client": "same-day signature blocker",
+        },
+        "triage-then-draft-p0-replies": {
+            "renewal_escalation": "same-day signature blocker",
+        },
+    }
+    wrong: dict[str, dict[str, str]] = {}
+    for task_slug, expected in hard_blockers.items():
+        ground_truth = json.loads(
+            (TASKS_ROOT / task_slug / "tests" / "ground_truth.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for message_id, rationale in expected.items():
+            actual = ground_truth["expected_priorities"].get(message_id)
+            if actual != "P0":
+                wrong.setdefault(task_slug, {})[message_id] = (
+                    f"{actual!r}; {rationale}"
+                )
+
+    assert not wrong, (
+        "the published policy assigns explicit EOD and same-day business "
+        f"blockers to P0, so ground-truth labels must agree: {wrong}"
+    )

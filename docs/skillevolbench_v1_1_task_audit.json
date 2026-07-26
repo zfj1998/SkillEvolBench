@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "release": "SkillEvolBench v1.1",
-  "status": "v1_1_5_candidate_pending_container_and_transfer_regression",
+  "status": "v1_1_6_candidate_pending_container_and_transfer_regression",
   "method": {
     "inputs": [
       "Fable and Opus 4.8 self-generated T1-T6 verifier records",
@@ -25,7 +25,8 @@
     "whole_skill_families_retired": 0,
     "e6_hidden_source_marker_gates_removed_all_tiers": 24,
     "e6_hidden_source_marker_gates_removed_held_out_t4_t6": 12,
-    "e6_ls1_hidden_rationale_wording_gates_removed_all_tiers": 6
+    "e6_ls1_hidden_rationale_wording_gates_removed_all_tiers": 6,
+    "e6_ls1_label_policy_alignments_all_tiers": 2
   },
   "release_decision": {
     "retain": "All 30 skill families remain useful evaluation targets.",
@@ -80,9 +81,9 @@
     "interpretation": "Every held-out T4-T6 task was internally solvable by its checked-in reference solution in the real task container. A later live Opus run nevertheless exposed a semantically valid E6-LS1-T6 output rejected only because its source omitted the unpublished phrase 'P0 reply'; therefore reference 90/90 was necessary but not sufficient and v1.1@1 is superseded."
   },
   "final_container_reference_audit": {
-    "candidate_split": "skillevolbench/skillevolbench/v1.1@2",
-    "benchmark_revision": "b5da55a017759c7ee3770285bcd8d64c3cdba441",
-    "ap_group": "group-91e1f8bca61146328131397b1df05697-d2",
+    "candidate_split": "skillevolbench/skillevolbench/v1.1@5",
+    "benchmark_revision": "dd4b03c1b3e838c25f21839d264a0d31cbb87437",
+    "ap_group": "group-77043c3a4b65491a9eddfa535ae7caf7-d2",
     "result": "90/90 strict passes",
     "by_environment": {
       "E1": "15/15",
@@ -94,7 +95,7 @@
     },
     "job_attempts": "All six AP jobs succeeded on attempt 0.",
     "coverage": "90 unique held-out task IDs: 30 T4, 30 T5, and 30 T6; every row has exactly one Harbor result.",
-    "evidence": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/analysis/reference_solution_audit_v1.1@2.json",
+    "evidence": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/analysis/reference_solution_audit_v1.1@5.json",
     "interpretation": "The repaired immutable split is internally solvable in the real task containers. This is a necessary verifier-integrity gate; live-model and matched no-skill regressions remain necessary because a reference implementation can accidentally contain source-shape tokens that hide false negatives."
   },
   "model_runtime_finding_after_v1_1_1": {
@@ -354,15 +355,29 @@
     "systematic_change_zh": "E6-LS1 六题继续严格检查优先级、排序、回复集合、草稿和运行时行为；仅把隐藏理由词表改为“每项分类必须提供非空且非敷衍的简短理由”。",
     "evidence": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/analysis/superseded-at4-diagnostic/e6-ls1-t1-trial.tgz"
   },
+  "label_policy_conflict_after_v1_1_5": {
+    "family_id": "E6-LS1",
+    "observed_task": "E6-LS1-T2",
+    "job": "ap-skillevolbench-e6844018264f459e-d2",
+    "observed_result": "Opus followed the published policy and assigned email_020 to P0 because approval was required today to avoid a payment hold, but the hidden label still expected P1.",
+    "observed_result_zh": "Opus 按公开规则把“今天必须批准，否则 payment hold”的 email_020 判为 P0，但隐藏标签仍要求 P1。",
+    "false_negative_proof": "The frozen attempt-1 T2 workspace passes 14/14 under the aligned labels without changing the model output.",
+    "false_negative_proof_zh": "冻结的 T2 attempt-1 工作区无需修改模型输出，在标签对齐后的 verifier 下得到 14/14。",
+    "systematic_audit": "A scan of all six family fixtures found a second contradictory label: sender-hierarchy-weight also kept an explicit EOD request at P1.",
+    "systematic_audit_zh": "对该 family 六题做系统扫描后又发现一处同类冲突：sender-hierarchy-weight 把明确的 EOD 请求仍标成 P1。",
+    "systematic_change": "Move email_020 and manager_eod to P0, update official solutions, and add a cross-task regression that all enumerated EOD/same-day blocker fixtures agree with the published policy.",
+    "systematic_change_zh": "把 email_020 和 manager_eod 统一改为 P0，更新官方解，并新增跨题回归，确保已枚举的 EOD / 当日 blocker fixture 与公开政策一致。",
+    "evidence": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/analysis/superseded-at5-diagnostic/selfgen-e6-ls1-t1-t2.tgz"
+  },
   "validation_gates": {
-    "repository_tests": "passed: 404 using explicit repository PYTHONPATH and /dev/shm basetemp because host /tmp inode capacity was exhausted",
+    "repository_tests": "passed: 405 using explicit repository PYTHONPATH and /dev/shm basetemp because host /tmp inode capacity was exhausted",
     "modified_python_compiles": "passed",
     "modified_json_parses": "passed",
     "diff_check": "passed",
     "local_official_solution_checks": "passed 6/6 for all E6-LS1 tasks after rationale-gate repair; each task scored 14/14",
-    "container_reference_audit": "passed for superseded candidate v1.1@4: 90/90 strict passes, 90 unique task IDs, and no incomplete trials in AP group group-9924ea9435104252ad46c2ad3bfd3386-d2; live Opus nevertheless exposed an unpublished rationale-wording gate, so a new immutable candidate is required",
-    "opus_v1_1_self_generated_regression": "v1.1@4 E6-LS1 smoke ap-skillevolbench-56f70ebdee3a4764-d2 exposed a rationale false negative on attempt 1; the frozen output replays at 14/14 with the repaired verifier, and the superseded run was cancelled before its feedback-adapted skill could be treated as transfer evidence",
-    "accepted_task_asset_split": "v1.1@4 upload integrity and 90/90 reference checks passed, but the candidate is superseded by the rationale false-negative repair",
-    "final_release_split": "pending immutable v1.1@5 packaging, container reference audit, and fresh Opus transfer regression"
+    "container_reference_audit": "passed for superseded v1.1@5: 90/90 strict passes in AP group group-77043c3a4b65491a9eddfa535ae7caf7-d2, but live Opus then exposed labels that contradicted the published priority policy",
+    "opus_v1_1_self_generated_regression": "v1.1@5 E6-LS1 smoke ap-skillevolbench-e6844018264f459e-d2 passed T1 first try and created a clean transfer skill; T2 followed the public hard-blocker rule but failed the contradictory hidden label, so the diagnostic run was frozen and cancelled",
+    "accepted_task_asset_split": "v1.1@5 integrity and reference gates passed but the split is superseded by the E6-LS1 label-policy alignment",
+    "final_release_split": "pending immutable v1.1@6 packaging, container reference audit, and a fresh Opus transfer regression"
   }
 }
