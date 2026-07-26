@@ -120,6 +120,17 @@ def behavior_takeaways(behavior: dict[str, Any]) -> list[dict[str, str]]:
                 "matched no-skill 回归复核。"
             ),
         },
+        {
+            "title": "生成的 skill 同时包含可迁移知识与 verifier 定向措辞",
+            "body": (
+                f"按保守关键词扫描，Fable 有 {fable['skills_with_verifier_markers']} "
+                f"条、Opus 有 {opus['skills_with_verifier_markers']} 条 active skill "
+                "提到 verifier、hidden test、regex 等裁判相关概念。逐条阅读显示，其中"
+                "既有可迁移规则，也有“使用测试期望的精确词形”一类过拟合策略。"
+                "因此报告展示完整 SKILL.md，并把“任务迁移能力”和“利用反馈适配裁判”"
+                "分开解释。"
+            ),
+        },
     ]
 
 

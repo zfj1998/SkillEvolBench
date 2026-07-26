@@ -35,7 +35,9 @@ def test_report_is_standalone_and_explains_claim_boundary() -> None:
         "model_zh": {},
         "heatmap": {"records": [], "totals": {}},
         "behavior": {},
-        "behavior_takeaways": [],
+        "behavior_takeaways": [
+            {"title": "verifier 定向措辞", "body": "measurement boundary"}
+        ],
         "task_audit": {},
         "reference_audit": {},
         "regression": {},
@@ -52,4 +54,5 @@ def test_report_is_standalone_and_explains_claim_boundary() -> None:
     assert "关键术语" in rendered
     assert "整族退役" in rendered
     assert "完整 SKILL.md" in rendered
+    assert "verifier 定向措辞" in rendered
     assert "Skill reads prove utilization, not causal usefulness." in rendered
