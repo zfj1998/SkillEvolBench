@@ -236,6 +236,27 @@ border-radius:10px;padding:10px;margin:0 0 10px}}a{{color:#245ac3}}footer{{paddi
 <b>Skill utilization</b> = 轨迹中实际读取了 SKILL.md；它证明“用过”，不自动证明“有帮助”。
 因果帮助必须与同模型、同任务的 no-skill 对照逐题比较。</p></section>
 
+<section class="panel"><h2>读图前先看：关键术语</h2><div class="grid three">
+<div class="card"><h3>Environment（环境）</h3><p>一种工作场景及其 Docker 运行环境，例如软件工程、
+数据分析或办公自动化。共 6 个环境，不是 6 道题。</p></div>
+<div class="card"><h3>Skill family（技能族）</h3><p>围绕同一种可迁移能力组织的 6 个任务。
+每个环境 5 个 family，因此全库共有 30 个 family、180 个 primary tasks。</p></div>
+<div class="card"><h3>T1–T6（任务角色）</h3><p>T1–T3 用来学习并总结经验；T4 是换情境，
+T5 是干扰或边界输入，T6 是能力组合。它们不是简单的六档同质难度。</p></div>
+<div class="card"><h3>Same-session retry</h3><p>同一道 T1–T3 中，模型看到 verifier 反馈后继续在
+同一会话里修正，最多 3 次。它测“能否从刚刚的失败中恢复”。</p></div>
+<div class="card"><h3>Freeze（冻结）</h3><p>T3 后技能库不再允许修改。T4–T6 只能读取已经形成的
+skills，防止模型在考试阶段继续改答案。</p></div>
+<div class="card"><h3>Verifier（自动裁判）</h3><p>Outcome 检查结果是否正确，Process 检查关键操作过程；
+两者同时通过才记为 Strict pass。本报告不把 AP Job Succeeded 当作答题通过。</p></div>
+<div class="card"><h3>Skill creation</h3><p>模型在 T1–T3 后生成或修订 SKILL.md，包括创建数量、
+版本演进、长度和是否成功写入技能库。</p></div>
+<div class="card"><h3>Skill utilization</h3><p>轨迹证明模型在 T4–T6 实际读取了某个 skill。
+“读取过”只能证明使用行为，不能单独证明 skill 带来了通过。</p></div>
+<div class="card"><h3>Matched no-skill control</h3><p>让同一个模型做完全相同的新输入，但不给生成的
+技能库。逐题比较 skill rescue 与 skill harm，才接近回答“skill 是否有帮助”。</p></div>
+</div></section>
+
 <section class="panel"><h2>旧版主实验：三个模型 T1–T6 热力图</h2>
 <div class="filters"><label>显示指标 <select id="hmMetric"><option value="strict">Strict</option>
 <option value="outcome">Outcome</option><option value="process">Process</option></select></label></div>
@@ -261,6 +282,7 @@ T4–T6 是 freeze 后 one-shot，不能把相邻 tier 当作相同预算下的�
 <th>Active skills</th><th>T4–T6 strict</th><th>同 family reads</th></tr></thead><tbody id="familyRows"></tbody></table></div></section>
 
 <section class="panel"><h2>题库质量审计与 v1.1 改进</h2><div class="grid cards" id="auditCards"></div>
+<div id="releaseDecision" style="margin-top:14px"></div>
 <div class="grid two" style="margin-top:14px">
  <div><h3>可解性 Gate</h3><div id="referenceGate"></div></div>
  <div><h3>Skill 迁移可识别性</h3><div id="validity"></div></div>
@@ -335,6 +357,8 @@ function showFamily(id,m){{let f=D.behavior.families.find(x=>x.family_id===id),x
 }} ['familyModel','familyEnv'].forEach(id=>$(id).onchange=renderFamilies);$('familySearch').oninput=renderFamilies;renderFamilies();
 const S=D.task_audit.summary;
 $('auditCards').innerHTML=[['Held-out tasks',S.held_out_tasks_total],['修复 contracts',S.outcome_or_contract_repairs],['重写 process checks',S.runtime_process_verifier_rewrites_without_known_outcome_contract_bug],['保持不变',S.unchanged_held_out_tasks]].map(x=>`<div class="card"><span class="small">${{x[0]}}</span><b class="big">${{x[1]}}</b></div>`).join('');
+let RD=D.task_audit.release_decision||{{}},replaced=RD.replace||[];
+$('releaseDecision').innerHTML=`<div class="grid three"><div class="card good"><h3>保留：30 个 skill families</h3><p>${{esc(RD.retain||'所有 family 均保留')}}</p></div><div class="card warn"><h3>替换：${{replaced.length}} 个具体实例</h3><p><b>${{esc(replaced.join(', ')||'无')}}</b></p><p class="small">${{esc(RD.reason||'')}}</p></div><div class="card"><h3>整族退役：${{S.whole_skill_families_retired||0}}</h3><p>能力目标仍有评测价值；有缺陷的具体题采用修复或替换，不为维持题量而保留不可解实例。</p></div></div><p class="note">${{esc(RD.low_transfer_identifiability||'')}}</p>`;
 let R=D.reference_audit;$('referenceGate').innerHTML=`<div class="card"><b class="big good">${{R.passed||0}}/${{R.total||90}}</b><p>${{R.all_reference_solutions_pass?'六个环境全部 15/15 strict pass':'尚未全部通过'}}</p><p class="small">Harbor oracle · real task container · unchanged verifier · AP group ${{esc(R.group_id||'—')}}</p></div>`;
 let mv=(D.measurement_validity.summaries||[])[0]||{{category_counts:{{}},eligible_for_causal_skill_claim:0,controlled_task_count:60}},c=mv.category_counts;
 $('validity').innerHTML=`<div class="card"><b class="big">${{mv.eligible_for_causal_skill_claim||0}}/${{mv.controlled_task_count||60}}</b><p>可进入历史 skill 因果分析</p><p class="small">history-supported ${{c.history_supported||0}} · mixed ${{c.mixed_history_and_on_task||0}} · on-task only ${{c.on_task_only||0}}</p></div>`;
