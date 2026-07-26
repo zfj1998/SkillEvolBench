@@ -20,6 +20,9 @@ def run():
         def warning(self, *args, **kwargs):
             pass
 
+        def info(self, *args, **kwargs):
+            pass
+
     class Response:
         def __init__(self, payload=None, text=""):
             self.payload = payload
