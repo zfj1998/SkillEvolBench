@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "release": "SkillEvolBench v1.1",
-  "status": "candidate_revision_pending_second_container_reference_audit_and_model_regression",
+  "status": "reference_validated_candidate_pending_opus_model_regression",
   "method": {
     "inputs": [
       "Fable and Opus 4.8 self-generated T1-T6 verifier records",
@@ -55,6 +55,23 @@
     },
     "revision": "Add the logger interface used by the candidate, exercise region-month deduplication with a synthetic fixture, and align the official citation solution with the published four-label taxonomy. Do not overwrite v1.1@0; package the repaired commit as a new immutable split.",
     "interpretation": "These are benchmark integration defects found by the reference audit, not model failures or AP instability."
+  },
+  "accepted_container_reference_audit": {
+    "candidate_split": "skillevolbench/skillevolbench/v1.1@1",
+    "benchmark_revision": "0e50f075d3cbe13e5e27418b7069f0f6809cee68",
+    "ap_group": "group-9b6800b28895434b8d67d555b6e0f508-d2",
+    "result": "90/90 strict passes",
+    "by_environment": {
+      "E1": "15/15",
+      "E2": "15/15",
+      "E3": "15/15",
+      "E4": "15/15",
+      "E5": "15/15",
+      "E6": "15/15"
+    },
+    "job_attempts": "All six AP jobs succeeded on attempt 0.",
+    "evidence": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/reference-audit-r2/group-9b6800b28895434b8d67d555b6e0f508-d2/reference-audit-r2-summary.json",
+    "interpretation": "Every held-out T4-T6 task is internally solvable by its checked-in reference solution in the real task container and unchanged verifier. This is a task-integrity gate, not a model score."
   },
   "outcome_or_contract_repairs": [
     {
@@ -219,8 +236,8 @@
     "modified_json_parses": "passed",
     "diff_check": "passed",
     "local_official_solution_checks": "passed where host dependencies were available",
-    "container_reference_audit": "v1.1@0 failed 87/90; repaired candidate pending full rerun",
-    "opus_v1_1_self_generated_regression": "pending",
-    "final_release_split": "pending"
+    "container_reference_audit": "passed: v1.1@1 90/90 strict, six environments 15/15 each",
+    "opus_v1_1_self_generated_regression": "running: E6 complete-environment job ap-skillevolbench-9e403a6d08a449ea-d2",
+    "final_release_split": "published and hash-verified candidate: skillevolbench/skillevolbench/v1.1@1"
   }
 }
