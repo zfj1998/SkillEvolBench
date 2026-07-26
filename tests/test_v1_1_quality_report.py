@@ -59,6 +59,8 @@ def test_report_is_standalone_and_explains_claim_boundary() -> None:
     assert "E6 隐藏 marker gate 清理" in rendered
     assert "skill 可能学会“适配裁判”" in rendered
     assert "文案干净不等于规则完整" in rendered
+    assert "正确决策不应输给隐藏理由词表" in rendered
+    assert "未公开源码词门槛和隐藏理由词表" in rendered
     assert "同一 Opus、同一 E6、同一不可变 split" in rendered
     assert "原问题：" in rendered
     assert "issue_zh||x.issue" in rendered
