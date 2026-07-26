@@ -9,6 +9,22 @@ SCRIPT_DIR = Path(os.environ["SCRIPT_DIR"])
 TASK_ROOT = SCRIPT_DIR.parent
 GT = json.loads((Path(__file__).resolve().parent / "ground_truth.json").read_text(encoding="utf-8"))
 
+def missing_context_groups(body, spec):
+    """Return visible thread-context concepts absent from a reply body.
+
+    Each requirement is a semantic surface group: one of its published-fixture
+    alternatives is sufficient.  This deliberately avoids requiring a single
+    reference-answer token such as a product name when another concrete thread
+    fact identifies the same incident.
+    """
+    lowered = str(body).lower()
+    missing = []
+    for requirement in spec.get("context_requirements", []):
+        alternatives = requirement.get("any_of", [])
+        if not any(str(alternative).lower() in lowered for alternative in alternatives):
+            missing.append(requirement.get("name", alternatives))
+    return missing
+
 def setup_module():
     subprocess.run([os.environ.get("PYTHON_BIN", "python3"), "triage_pipeline.py"], cwd=PROJECT_ROOT, check=True)
 
@@ -91,6 +107,9 @@ class TestOutcome:
         for mid, spec in expected.items():
             assert set(drafts[mid].get("to", [])) == set(spec.get("to", [])), f"draft to mismatch for {mid}"
             assert set(drafts[mid].get("cc", [])) == set(spec.get("cc", [])), f"draft cc mismatch for {mid}"
-            body = drafts[mid].get("body", "").lower()
-            for keyword in spec.get("must_include", []):
-                assert keyword.lower() in body, f"draft for {mid} missing {keyword!r}: {body}"
+            body = drafts[mid].get("body", "")
+            missing = missing_context_groups(body, spec)
+            assert not missing, (
+                f"draft for {mid} is missing visible thread-context concepts "
+                f"{missing}: {body.lower()}"
+            )

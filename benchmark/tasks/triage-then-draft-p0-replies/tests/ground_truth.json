@@ -58,11 +58,23 @@
       ],
       "body": "Thanks for flagging checkout incident inc-7421. I am joining the bridge now, Riley will own queue mitigation, and I will send the first customer-facing update by 10:30 ET with a follow-up ETA after queue saturation is confirmed.",
       "rationale": "Acknowledges incident, cites bridge context, names action owner, and gives ETA.",
-      "must_include": [
-        "inc-7421",
-        "queue",
-        "10:30",
-        "ETA"
+      "context_requirements": [
+        {
+          "name": "checkout incident identity",
+          "any_of": ["inc-7421", "checkout failure", "checkout incident", "checkout outage"]
+        },
+        {
+          "name": "current incident context",
+          "any_of": ["queue saturation", "queue mitigation", "callback latency", "incident bridge"]
+        },
+        {
+          "name": "customer communication action",
+          "any_of": ["customer-facing update", "customer update", "exec comms", "executive comms"]
+        },
+        {
+          "name": "first-update ETA",
+          "any_of": ["10:30", "10.30"]
+        }
       ]
     },
     "okta_alert": {
@@ -74,11 +86,27 @@
       ],
       "body": "Acknowledged on the Okta admin anomaly. Please proceed with the access review; I see the token was already revoked, and I will confirm executive sign-off by 11:00 ET.",
       "rationale": "References revoked token context and next action.",
-      "must_include": [
-        "Okta",
-        "revoked",
-        "11:00",
-        "access review"
+      "context_requirements": [
+        {
+          "name": "security incident identity",
+          "any_of": ["okta", "admin token", "privileged session", "security incident"]
+        },
+        {
+          "name": "current security state",
+          "any_of": ["revoked", "remain active", "still active", "unknown privileged"]
+        },
+        {
+          "name": "containment action",
+          "any_of": ["containment", "contain the"]
+        },
+        {
+          "name": "access-review action",
+          "any_of": ["access review", "review access"]
+        },
+        {
+          "name": "sign-off ETA",
+          "any_of": ["11:00", "11.00", "11 am", "11am"]
+        }
       ]
     },
     "renewal_escalation": {
@@ -91,11 +119,23 @@
       ],
       "body": "Ari, thank you for the clear deadline. Casey owns the data-retention redline, Jordan and I are aligning now, and we will send the written plan before 14:00 ET so signature does not pause.",
       "rationale": "Acknowledges client deadline, owner, action, and ETA.",
-      "must_include": [
-        "14:00",
-        "Casey",
-        "signature",
-        "written plan"
+      "context_requirements": [
+        {
+          "name": "customer cutoff",
+          "any_of": ["14:00", "14.00", "2:00 pm", "2 pm", "2pm"]
+        },
+        {
+          "name": "redline owner or workstream",
+          "any_of": ["casey", "data-retention", "data retention", "redline"]
+        },
+        {
+          "name": "signature blocker",
+          "any_of": ["signature", "procurement"]
+        },
+        {
+          "name": "written-plan action",
+          "any_of": ["written plan", "plan in writing"]
+        }
       ]
     }
   },

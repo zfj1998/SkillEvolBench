@@ -300,11 +300,14 @@ T4–T6 是 freeze 后 one-shot，不能把相邻 tier 当作相同预算下的�
 <div id="labelPolicyFinding" style="margin-top:14px"></div>
 <div id="temporalFixtureFinding" style="margin-top:14px"></div>
 <div id="routineDeadlineFinding" style="margin-top:14px"></div>
+<div id="implicitDpaFinding" style="margin-top:14px"></div>
+<div id="bareEodFinding" style="margin-top:14px"></div>
+<div id="draftContextFinding" style="margin-top:14px"></div>
 <div id="releaseDecision" style="margin-top:14px"></div>
 <div class="grid two" style="margin-top:14px">
  <div><h3>可解性 Gate</h3><div id="referenceGate"></div></div>
  <div><h3>Skill 迁移可识别性</h3><div id="validity"></div></div>
-</div><h3 style="margin-top:18px">26 个 outcome / contract 修复</h3><div class="repair-list" id="repairs"></div>
+</div><h3 id="repairHeading" style="margin-top:18px"></h3><div class="repair-list" id="repairs"></div>
 <details><summary id="processRewriteSummary"></summary><div id="processRewrites"></div></details></section>
 
 <section class="panel"><h2>v1.1 Opus 回归与 matched no-skill 控制</h2><div id="regression"></div>
@@ -328,8 +331,9 @@ const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g
 const pct=(n,d)=>d?Math.round(100*n/d)+'%':'—';
 const colors={{'qwen3.7-max':'#3867d6','sig-fable':'#1493a5','opus-4.8':'#7353ba'}};
 const totals=D.heatmap.totals;
+const refSummary=D.reference_audit.summary||D.reference_audit;
 let executive=[
- ['v1.1 标准解验收',`${{D.reference_audit.passed||0}}/${{D.reference_audit.total||90}}`,'真实容器 + 原 verifier'],
+ ['v1.1 标准解验收',`${{refSummary.passed||0}}/${{refSummary.total||90}}`,'真实容器 + 原 verifier'],
  ['契约 / outcome 修复',D.task_audit.summary.outcome_or_contract_repairs,'消除不可解和错误拒绝'],
  ['Process verifier 重写',D.task_audit.summary.runtime_process_verifier_rewrites_without_known_outcome_contract_bug,'从源码词形改为行为'],
  ['E6 隐藏 marker gate 清理',D.task_audit.summary.e6_hidden_source_marker_gates_removed_all_tiers||0,'覆盖 LS1–LS4、T1–T6'],
@@ -389,12 +393,19 @@ let TF=D.task_audit.temporal_fixture_conflict_after_v1_1_6||{{}};
 $('temporalFixtureFinding').innerHTML=Object.keys(TF).length?`<div class="card warn"><h3>v1.1@6 真实运行发现：时间线必须与标签语义一致</h3><p><b>${{esc(TF.observed_task||'E6-LS1-T2')}}</b>：${{esc(TF.observed_result_zh||TF.observed_result||'')}}</p><p>${{esc(TF.quality_problem_zh||TF.quality_problem||'')}}</p><p class="small"><b>系统修复：</b>${{esc(TF.systematic_change_zh||TF.systematic_change||'')}}</p></div>`:'';
 let DF=D.task_audit.routine_deadline_boundary_after_v1_1_7||{{}};
 $('routineDeadlineFinding').innerHTML=Object.keys(DF).length?`<div class="card warn"><h3>v1.1@7 真实运行发现：标准解可过，不代表公开边界唯一</h3><p><b>${{esc(DF.observed_task||'E6-LS1-T4')}}</b>：${{esc(DF.observed_result_zh||DF.observed_result||'')}}</p><p>${{esc(DF.quality_problem_zh||DF.quality_problem||'')}}</p><p class="small"><b>系统修复：</b>${{esc(DF.systematic_change_zh||DF.systematic_change||'')}}</p></div>`:'';
+let IF=D.task_audit.implicit_dpa_blocker_after_v1_1_8||{{}};
+$('implicitDpaFinding').innerHTML=Object.keys(IF).length?`<div class="card warn"><h3>v1.1@8 真实运行发现：隐藏的业务后果无法学成可靠 skill</h3><p><b>${{esc(IF.observed_task||'E6-LS1-T2')}}</b>：${{esc(IF.observed_result_zh||IF.observed_result||'')}}</p><p>${{esc(IF.quality_problem_zh||IF.quality_problem||'')}}</p><p class="small"><b>系统修复：</b>${{esc(IF.systematic_change_zh||IF.systematic_change||'')}}</p></div>`:'';
+let EF=D.task_audit.bare_eod_policy_conflict_after_v1_1_9||{{}};
+$('bareEodFinding').innerHTML=Object.keys(EF).length?`<div class="card warn"><h3>v1.1@9 真实运行发现：含糊反馈会污染 skill，并伤害后续迁移</h3><p><b>${{esc((EF.observed_tasks||[]).join(', ')||'E6-LS1-T3 / T4')}}</b>：${{esc(EF.observed_result_zh||EF.observed_result||'')}}</p><p>${{esc(EF.quality_problem_zh||EF.quality_problem||'')}}</p><p class="small"><b>v1.1@10 系统修复：</b>${{esc(EF.systematic_change_zh||EF.systematic_change||'')}}</p></div>`:'';
+let GF=D.task_audit.draft_context_lexical_gap_after_v1_1_10||{{}};
+$('draftContextFinding').innerHTML=Object.keys(GF).length?`<div class="card warn"><h3>v1.1@10 真实运行发现：上下文完整的草稿不应输给单个产品名</h3><p><b>${{esc(GF.observed_task||'E6-LS1-T6')}}</b>：${{esc(GF.observed_result_zh||GF.observed_result||'')}}</p><p>${{esc(GF.false_negative_proof_zh||GF.false_negative_proof||'')}}</p><p class="small"><b>v1.1@11 系统修复：</b>${{esc(GF.systematic_change_zh||GF.systematic_change||'')}}</p></div>`:'';
 let RD=D.task_audit.release_decision||{{}},replaced=RD.replace||[];
 $('releaseDecision').innerHTML=`<div class="grid three"><div class="card good"><h3>保留：30 个 skill families</h3><p>${{esc(RD.retain_zh||RD.retain||'所有 family 均保留')}}</p></div><div class="card warn"><h3>替换：${{replaced.length}} 个具体实例</h3><p><b>${{esc(replaced.join(', ')||'无')}}</b></p><p class="small">${{esc(RD.reason_zh||RD.reason||'')}}</p></div><div class="card"><h3>整族退役：${{S.whole_skill_families_retired||0}}</h3><p>能力目标仍有评测价值；有缺陷的具体题采用修复或替换，不为维持题量而保留不可解实例。</p></div></div><p class="note">${{esc(RD.low_transfer_identifiability_zh||RD.low_transfer_identifiability||'')}}</p>`;
-let R=D.reference_audit;$('referenceGate').innerHTML=`<div class="card"><b class="big good">${{R.passed||0}}/${{R.total||90}}</b><p>${{R.all_reference_solutions_pass?'六个环境全部 15/15 strict pass':'尚未全部通过'}}</p><p class="small">${{esc(R.split||'v1.1@2')}} · Harbor oracle · real task container · unchanged verifier · AP group ${{esc(R.group_id||'—')}}</p></div>`;
+let R=D.reference_audit;$('referenceGate').innerHTML=`<div class="card"><b class="big good">${{refSummary.passed||0}}/${{refSummary.total||90}}</b><p>${{refSummary.all_reference_solutions_pass?'六个环境全部 15/15 strict pass':'尚未全部通过'}}</p><p class="small">${{esc(R.split||'v1.1@2')}} · Harbor oracle · real task container · unchanged verifier · AP group ${{esc(R.group_id||'—')}}</p></div>`;
 $('releaseConclusion').textContent=`${{R.split||'最新 v1.1 候选'}} 已处理当前复现的不可解、隐藏任意 tie-break、标签与时间线冲突、未公开源码词门槛和隐藏理由词表；最终结论仍以逐题 verifier、轨迹与 matched no-skill 证据为准，而不是只看平均分。`;
 let mv=(D.measurement_validity.summaries||[])[0]||{{category_counts:{{}},eligible_for_causal_skill_claim:0,controlled_task_count:60}},c=mv.category_counts;
 $('validity').innerHTML=`<div class="card"><b class="big">${{mv.eligible_for_causal_skill_claim||0}}/${{mv.controlled_task_count||60}}</b><p>可进入历史 skill 因果分析</p><p class="small">history-supported ${{c.history_supported||0}} · mixed ${{c.mixed_history_and_on_task||0}} · on-task only ${{c.on_task_only||0}}</p></div>`;
+$('repairHeading').textContent=`${{S.outcome_or_contract_repairs}} 个 outcome / contract 修复`;
 $('repairs').innerHTML=D.task_audit.outcome_or_contract_repairs.map(x=>`<div class="repair"><b>${{x.task_id}}</b><p class="small"><b>原问题：</b>${{esc(x.issue_zh||x.issue)}}</p><p><b>v1.1 改进：</b>${{esc(x.v1_1_change_zh||x.v1_1_change)}}</p></div>`).join('');
 $('processRewriteSummary').textContent=`${{S.runtime_process_verifier_rewrites_without_known_outcome_contract_bug}} 个 held-out process verifiers 从隐藏源码形态改为可观察行为`;
 $('processRewrites').innerHTML=D.task_audit.runtime_process_verifier_rewrites_without_known_outcome_contract_bug.map(x=>`<span class="metric">${{x}}</span>`).join('');

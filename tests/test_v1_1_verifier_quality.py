@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 from datetime import date, timedelta
 from pathlib import Path
@@ -267,6 +268,65 @@ def test_p0_reply_fixture_publishes_its_active_security_incident() -> None:
     ).lower()
     assert "unknown privileged sessions remain active" in thread_context
     assert "immediate containment" in thread_context
+
+
+def test_p0_draft_verifier_accepts_context_equivalent_opus_reply(
+    monkeypatch,
+) -> None:
+    """Regression for the live v1.1@10 false negative.
+
+    The unchanged Opus reply names multiple concrete security facts, actions,
+    and the ETA but does not repeat the product name in its body.  Product-name
+    omission must not outweigh stronger evidence that the reply used the
+    visible thread context.
+    """
+    task_root = TASKS_ROOT / "triage-then-draft-p0-replies"
+    tests_root = task_root / "tests"
+    monkeypatch.setenv("PROJECT_ROOT", str(task_root / "environment"))
+    monkeypatch.setenv("SCRIPT_DIR", str(tests_root))
+    spec = importlib.util.spec_from_file_location(
+        "triage_then_draft_outcome_for_regression",
+        tests_root / "test_outcome.py",
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    ground_truth = json.loads(
+        (tests_root / "ground_truth.json").read_text(encoding="utf-8")
+    )
+    okta_spec = ground_truth["expected_drafts"]["okta_alert"]
+    unchanged_live_opus_body = (
+        "Acknowledged - the admin token was revoked but unknown privileged "
+        "sessions are still active, so this stays an active security incident. "
+        "Please proceed immediately with containment of the remaining privileged "
+        "sessions and begin the access review. I'm CC'ing Riley Chen for "
+        "engineering support. This note is my written acknowledgement of the "
+        "next steps; I'll secure executive sign-off and get back to you by "
+        "11:00 ET. ETA for executive sign-off on the access review: 11:00 ET."
+    )
+    assert module.missing_context_groups(unchanged_live_opus_body, okta_spec) == []
+
+    generic_reply = (
+        "Thanks for the note. We are looking into this and will follow up soon."
+    )
+    assert module.missing_context_groups(generic_reply, okta_spec), (
+        "relaxing one hidden product-name token must not admit a context-free reply"
+    )
+
+
+def test_p0_draft_contract_uses_semantic_groups_not_single_hidden_tokens() -> None:
+    task_root = TASKS_ROOT / "triage-then-draft-p0-replies"
+    ground_truth = json.loads(
+        (task_root / "tests" / "ground_truth.json").read_text(encoding="utf-8")
+    )
+    for message_id, draft_spec in ground_truth["expected_drafts"].items():
+        assert "must_include" not in draft_spec, (
+            f"{message_id} still exposes a single-surface lexical gate"
+        )
+        requirements = draft_spec.get("context_requirements", [])
+        assert len(requirements) >= 4
+        assert all(len(requirement.get("any_of", [])) >= 2 for requirement in requirements)
 
 
 def test_inbox_triage_near_term_client_fixture_is_after_today() -> None:

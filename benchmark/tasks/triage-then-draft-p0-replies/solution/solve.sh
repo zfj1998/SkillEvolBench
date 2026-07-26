@@ -90,11 +90,11 @@ def _cc_list(message: dict) -> list[str]:
 def draft_reply(message: dict, context: dict) -> dict:
     text = f"{message.get('subject', '')}\n{message.get('body', '')}".lower()
     if "checkout" in text:
-        body = "Thanks for flagging checkout incident inc-7421. I am joining the bridge now, Riley will own queue mitigation, and I will send the first update by 10:30 ET with a follow-up ETA."
+        body = "Thanks for flagging checkout incident inc-7421. I am joining the bridge now, Riley will own queue mitigation, and I will send the first customer-facing update by 10:30 ET with a follow-up ETA."
         rationale = "Acknowledges incident, bridge context, owner coordination, and ETA."
         cc = ["riley.chen@harborworks.example"]
     elif "okta" in text:
-        body = "Acknowledged on the Okta admin anomaly. I see the token was revoked; please proceed with the access review, and I will confirm executive sign-off by 11:00 ET."
+        body = "Acknowledged on the Okta admin anomaly. I see the token was revoked but unknown privileged sessions remain active; please proceed immediately with containment and the access review, and I will confirm executive sign-off by 11:00 ET."
         rationale = "References revoked token context and access review next step."
         cc = ["riley.chen@harborworks.example"]
     elif "renewal" in text or "14:00" in text or "signature" in text:

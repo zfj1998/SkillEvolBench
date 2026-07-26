@@ -57,4 +57,7 @@ start immediately to prevent that concrete blocking outcome.
 For this task, `response_list` must contain exactly the P0 messages and every P0
 message must have one draft. Use `mail/thread_context.md` for the current owner,
 reply routing, action, and ETA; do not invent those details from the subject
-line alone.
+line alone. A context-aware draft may identify an incident through any concrete
+thread fact (for example its product, incident ID, affected state, or active
+security condition); you do not need to copy a reference answer's exact wording
+when your reply unambiguously covers the current state, next action, and ETA.
