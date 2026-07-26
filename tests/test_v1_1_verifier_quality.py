@@ -6,6 +6,14 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TASKS_ROOT = REPO_ROOT / "benchmark" / "tasks"
+INBOX_TRIAGE_TASKS = (
+    "sort-20-explicit-priority",
+    "implicit-urgency-30-emails",
+    "sender-hierarchy-weight",
+    "triage-for-meeting-prep",
+    "anger-not-urgent-trap",
+    "triage-then-draft-p0-replies",
+)
 
 
 def _e6_task_roots() -> list[Path]:
@@ -81,4 +89,27 @@ def test_e6_process_verifiers_retain_nonlexical_checks() -> None:
     assert not too_small, (
         "removing lexical marker checks must not empty the process verifier: "
         f"{too_small}"
+    )
+
+
+def test_inbox_triage_family_publishes_one_consistent_priority_policy() -> None:
+    required_policy = (
+        "hard same-day/overnight",
+        "including an explicit EOD deadline",
+        "should be handled today but is not an active incident or hard same-day",
+        "low-impact administrative, social",
+    )
+    missing: dict[str, list[str]] = {}
+    for task_slug in INBOX_TRIAGE_TASKS:
+        instruction = (TASKS_ROOT / task_slug / "instruction.md").read_text(
+            encoding="utf-8"
+        )
+        normalized = " ".join(instruction.split())
+        absent = [phrase for phrase in required_policy if phrase not in normalized]
+        if absent:
+            missing[task_slug] = absent
+
+    assert not missing, (
+        "all six inbox-triage tasks must expose the same P0-P3 policy so a model "
+        f"does not have to infer hidden EOD semantics from verifier feedback: {missing}"
     )

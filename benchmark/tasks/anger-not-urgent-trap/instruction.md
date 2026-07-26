@@ -35,13 +35,15 @@ Classify every source email exactly once. Rank lower `rank` values first, with P
 
 Use these priority definitions:
 
-- **P0**: an active production/security incident, a same-day
-  customer/signature blocker, or another issue requiring immediate action;
-- **P1**: a material near-term deliverable or deadline that is important but is
-  not an active critical incident;
+- **P0**: an active production/security incident or a hard same-day/overnight
+  deadline for which work must start immediately (including an explicit EOD
+  deadline or a same-day customer/signature blocker);
+- **P1**: a material action, review, approval, or near-term deliverable that
+  should be handled today but is not an active incident or hard same-day
+  blocker;
 - **P2**: useful status, timeline, or background information with no immediate
   action;
-- **P3**: low-impact administrative, social, facilities, promotional, or
-  newsletter content.
+- **P3**: low-impact administrative, social, facilities, promotional,
+  automated, or newsletter content.
 
 This task evaluates triage only. Leave both `response_list` and `drafts` empty.

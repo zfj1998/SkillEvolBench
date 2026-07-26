@@ -331,15 +331,25 @@
     "E6-LS3-T4",
     "E6-LS4-T4"
   ],
+  "priority_policy_gap_after_v1_1_3": {
+    "family_id": "E6-LS1",
+    "observed_task": "E6-LS1-T1",
+    "job": "ap-skillevolbench-065c5532b93741dc-d2",
+    "finding": "The instruction named P0 as immediate and P1 as today, but did not disclose that a hard EOD or same-day signature deadline belongs to P0. Opus initially assigned the EOD legal request to P1, then learned the hidden mapping only from verifier feedback.",
+    "finding_zh": "题面只把 P0 写成 immediate、P1 写成 today，却没有公开“硬性 EOD / 当日签约阻塞属于 P0”。Opus 首轮把 EOD 法务请求判成 P1，只有看到 verifier feedback 后才学会隐藏映射。",
+    "quality_decision": "Do not accept a cleanly worded skill as sufficient evidence when the semantic policy itself was hidden. Publish one consistent P0-P3 policy in all six family instructions and rerun from a fresh immutable split.",
+    "quality_decision_zh": "不能因为 skill 文案干净就认为题目合格；如果语义规则本身未公开，模型仍是在适配隐藏标签。应在六道题中统一公开 P0–P3 规则，并从新的不可变 split 重跑。",
+    "next_split_change": "All E6-LS1 instructions now define P0 as an active incident or hard same-day/overnight deadline requiring immediate work, explicitly including EOD and same-day customer/signature blockers; P1 is an important today/near-term action without that hard blocker."
+  },
   "validation_gates": {
-    "repository_tests": "passed: 402 using /dev/shm basetemp because host /tmp inode capacity was exhausted",
+    "repository_tests": "passed: 403 using /dev/shm basetemp because host /tmp inode capacity was exhausted",
     "modified_python_compiles": "passed",
     "modified_json_parses": "passed",
     "diff_check": "passed",
     "local_official_solution_checks": "covered by the stronger real-container reference audit",
-    "container_reference_audit": "passed: v1.1@3 has 90/90 strict passes, 90 unique task IDs, and no incomplete trials in AP group group-ba2fb9f109c146cd99ff3431b450a11b-d2",
-    "opus_v1_1_self_generated_regression": "v1.1@2 diagnostic jobs are still running; v1.1@3 E6-LS1 transfer-quality smoke ap-skillevolbench-065c5532b93741dc-d2 is running with the strengthened reflection contract",
-    "accepted_task_asset_split": "uploaded immutable skillevolbench/skillevolbench/v1.1@3 from revision 8f848c7f8e01b194c0196e2ea1b9bdc3f673195d; two independent builds matched byte-for-byte and 13/13 OSS objects were re-downloaded with matching SHA-256",
-    "final_release_split": "v1.1@3 task/container solvability accepted; final release decision remains pending Opus transfer-quality regression"
+    "container_reference_audit": "passed for superseded candidate v1.1@3: 90/90 strict passes, 90 unique task IDs, and no incomplete trials in AP group group-ba2fb9f109c146cd99ff3431b450a11b-d2; a new gate is required after publishing the E6-LS1 priority policy",
+    "opus_v1_1_self_generated_regression": "v1.1@3 E6-LS1 smoke ap-skillevolbench-065c5532b93741dc-d2 produced a clean T1 skill with zero banned judge-directed terms, but also proved that the priority policy itself was incomplete; the run remains diagnostic only",
+    "accepted_task_asset_split": "v1.1@3 upload integrity passed but the candidate is superseded by the newly published E6-LS1 priority policy",
+    "final_release_split": "pending a fresh immutable candidate, reference audit, and Opus transfer regression after the priority-policy repair"
   }
 }
