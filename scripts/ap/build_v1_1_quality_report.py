@@ -221,7 +221,7 @@ border-radius:10px;padding:10px;margin:0 0 10px}}a{{color:#245ac3}}footer{{paddi
   <span class="badge">30 个 skill families</span><span class="badge">180 个 primary tasks</span>
 </section>
 
-<section class="panel"><h2>领导先看：四个结论</h2><div class="grid cards" id="executive"></div>
+<section class="panel"><h2>领导先看：核心结论</h2><div class="grid cards" id="executive"></div>
 <div id="takeaways" class="grid two" style="margin-top:14px"></div></section>
 
 <section class="panel"><h2>这个 benchmark 到底怎么测</h2>
@@ -289,12 +289,18 @@ const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g
 const pct=(n,d)=>d?Math.round(100*n/d)+'%':'—';
 const colors={{'qwen3.7-max':'#3867d6','sig-fable':'#1493a5','opus-4.8':'#7353ba'}};
 const totals=D.heatmap.totals;
-$('executive').innerHTML=[
+let executive=[
  ['v1.1 标准解验收',`${{D.reference_audit.passed||0}}/${{D.reference_audit.total||90}}`,'真实容器 + 原 verifier'],
  ['契约 / outcome 修复',D.task_audit.summary.outcome_or_contract_repairs,'消除不可解和错误拒绝'],
  ['Process verifier 重写',D.task_audit.summary.runtime_process_verifier_rewrites_without_known_outcome_contract_bug,'从源码词形改为行为'],
  ['替换而非硬补的题',D.task_audit.summary.v1_instances_replaced_instead_of_minimally_patched,'E6 scheduling 两题']
-].map(x=>`<div class="card"><span class="small">${{x[0]}}</span><b class="big">${{x[1]}}</b><span class="small">${{x[2]}}</span></div>`).join('');
+];
+if(D.regression&&Object.keys(D.regression).length) executive.unshift([
+ 'v1.1 E6 · Skill vs no-skill',
+ `${{D.regression.self_generated.strict_pass}}/15 vs ${{D.regression.no_skill.strict_pass}}/15`,
+ '同模型、同 15 题 matched control'
+]);
+$('executive').innerHTML=executive.map(x=>`<div class="card"><span class="small">${{x[0]}}</span><b class="big">${{x[1]}}</b><span class="small">${{x[2]}}</span></div>`).join('');
 $('takeaways').innerHTML=D.behavior_takeaways.map(x=>`<div class="takeaway"><h3>${{esc(x.title)}}</h3><p>${{esc(x.body)}}</p></div>`).join('');
 function renderHeat(){{
  const metric=$('hmMetric').value;
@@ -334,8 +340,19 @@ let mv=(D.measurement_validity.summaries||[])[0]||{{category_counts:{{}},eligibl
 $('validity').innerHTML=`<div class="card"><b class="big">${{mv.eligible_for_causal_skill_claim||0}}/${{mv.controlled_task_count||60}}</b><p>可进入历史 skill 因果分析</p><p class="small">history-supported ${{c.history_supported||0}} · mixed ${{c.mixed_history_and_on_task||0}} · on-task only ${{c.on_task_only||0}}</p></div>`;
 $('repairs').innerHTML=D.task_audit.outcome_or_contract_repairs.map(x=>`<div class="repair"><b>${{x.task_id}}</b><p class="small">${{esc(x.issue)}}</p><p>${{esc(x.v1_1_change)}}</p></div>`).join('');
 $('processRewrites').innerHTML=D.task_audit.runtime_process_verifier_rewrites_without_known_outcome_contract_bug.map(x=>`<span class="metric">${{x}}</span>`).join('');
-function renderRegression(){{let r=D.regression;if(!r||!Object.keys(r).length){{$('regression').innerHTML='<div class="card warn"><b>运行中</b><p>等待 Opus v1.1 self-generated 与 no-skill verifier/trajectory artifacts。</p><p class="small">self-generated: ap-skillevolbench-9e403a6d08a449ea-d2 · no-skill: ap-skillevolbench-86c4f52ae2c04672-d2</p></div>';return}}
- $('regression').innerHTML=`<pre>${{esc(JSON.stringify(r,null,2))}}</pre>`;}}renderRegression();
+function rbar(label,n,color){{return `<div class="barrow"><span>${{label}}</span><div class="track"><div class="fill" style="width:${{100*n/15}}%;background:${{color}}"></div></div><b>${{n}}/15</b></div>`}}
+function renderRegression(){{let r=D.regression;if(!r||!Object.keys(r).length){{$('regression').innerHTML=`<div class="card warn"><b>回归运行中</b><p>首轮两个 job 均因 Opus 启动探针 30 秒无首字节而在执行题目前退出；这不是 task failure。提高到 300 秒后探针已通过。no-skill R2 又暴露了提交器对无学习 baseline 的参数陷阱，现已修复并补交 R3。</p><p class="small">self-generated: ap-skillevolbench-a8fe6c6a5ff1418a-d2 · no-skill R3: ap-skillevolbench-ed1c836c22a74d4b-d2</p></div>`;return}}
+ let L=r.learning,S=r.self_generated,N=r.no_skill;
+ let learning=`<div class="grid cards"><div class="card"><span class="small">T1–T3 终态通过</span><b class="big">${{L.terminal_pass}}/${{L.tasks}}</b><span class="small">首次通过 ${{L.initial_pass}} · retry 修复 ${{L.repaired_to_pass}}</span></div><div class="card"><span class="small">Same-session 已验证</span><b class="big">${{L.same_session_verified}}/${{L.tasks}}</b><span class="small">总尝试 ${{L.attempts}}</span></div><div class="card"><span class="small">Active skills</span><b class="big">${{L.active_skills}}</b><span class="small">${{L.skill_versions}} 个版本</span></div><div class="card"><span class="small">T4–T6 skill read</span><b class="big">${{S.any_skill_read}}/15</b><span class="small">证明 utilization，不单独证明帮助</span></div></div>`;
+ let metrics=`<div class="grid two" style="margin-top:14px"><div class="card"><h3>Self-generated</h3>${{['strict','outcome','process'].map(k=>rbar(k,S[k+'_pass'],'#7353ba')).join('')}}</div><div class="card"><h3>No-skill</h3>${{['strict','outcome','process'].map(k=>rbar(k,N[k+'_pass'],'#637087')).join('')}}</div></div>`;
+ let paired=`<div class="grid three" style="margin-top:14px">${{['strict','outcome','process'].map(k=>{{let x=r.paired_summary[k]||{{}};return `<div class="card"><h3>${{k.toUpperCase()}} · paired</h3><p class="good">Skill rescue <b>${{x.skill_rescue||0}}</b></p><p class="bad">Skill harm <b>${{x.skill_harm||0}}</b></p><p class="small">both pass ${{x.both_pass||0}} · both fail ${{x.both_fail||0}}</p></div>`}}).join('')}}</div>`;
+ let tiers=`<div class="tablebox" style="margin-top:14px"><table><thead><tr><th>Tier</th><th>Self-generated S/O/P</th><th>No-skill S/O/P</th><th>Skill reads</th></tr></thead><tbody>${{[4,5,6].map(t=>{{let a=S.by_tier.find(x=>x.tier===t),b=N.by_tier.find(x=>x.tier===t);return `<tr><td><b>T${{t}}</b></td><td>${{a.strict_pass}}/${{a.outcome_pass}}/${{a.process_pass}}</td><td>${{b.strict_pass}}/${{b.outcome_pass}}/${{b.process_pass}}</td><td>${{a.any_skill_read}}/5</td></tr>`}}).join('')}}</tbody></table></div>`;
+ let tasks=`<details><summary>查看 15 个 matched tasks 的 verifier 与 skill-read 明细</summary><div class="tablebox"><table><thead><tr><th>Task</th><th>Tier</th><th>Paired state S/O/P</th><th>Selfgen S/O/P</th><th>No-skill S/O/P</th><th>实际读取 skill</th><th>失败测试</th></tr></thead><tbody>${{r.paired_tasks.map(x=>{{let a=x.self_generated,b=x.no_skill,mark=v=>v?'✓':'✗';return `<tr><td><b>${{x.task_id}}</b></td><td>T${{x.tier}}</td><td>${{x.states.strict}}<br><span class="small">${{x.states.outcome}} / ${{x.states.process}}</span></td><td>${{mark(a.strict_pass)}}/${{mark(a.outcome_pass)}}/${{mark(a.process_pass)}}</td><td>${{mark(b.strict_pass)}}/${{mark(b.outcome_pass)}}/${{mark(b.process_pass)}}</td><td>${{esc(a.skills_actually_used.join(', ')||'none')}}</td><td class="small">${{esc([...new Set([...(a.failed_tests||[]),...(b.failed_tests||[])])].join(', ')||'—')}}</td></tr>`}}).join('')}}</tbody></table></div></details>`;
+ let skills=`<details><summary>查看 v1.1 E6 生成的 ${{L.active_skills}} 个 active skills 与版本演进</summary>${{L.skills.map(s=>`<div class="card" style="margin-top:10px"><h3>${{esc(s.skill_id)}}</h3><p>${{esc(s.description||'')}}</p><p class="small">${{esc((s.version_summaries||[]).map(v=>'v'+(v.version??'?')+': '+(v.summary||JSON.stringify(v))).join('\\n'))}}</p><p class="small">${{esc(s.generated_path||'')}}</p></div>`).join('')||'<p class="bad">没有 active skill</p>'}}</details>`;
+ let learningTasks=`<details><summary>查看 T1–T3 的 15 条 same-session retry 记录</summary><div class="tablebox"><table><thead><tr><th>Task</th><th>Attempts</th><th>初始→终态</th><th>Same session</th><th>Reflection</th></tr></thead><tbody>${{(L.task_records||[]).map(x=>`<tr><td>${{x.task_id}}</td><td>${{x.attempts}}</td><td>${{x.initial_pass?'✓':'✗'}} → ${{x.terminal_pass?'✓':'✗'}}</td><td>${{x.same_session_verified?'✓':'✗'}}</td><td>${{esc(x.reflection_status||'—')}}</td></tr>`).join('')}}</tbody></table></div></details>`;
+ let links=`<p class="small">AP jobs · <a href="https://agentplatform.aliyun-inc.com/?cluster=hk-benchmark-dev#/jobs/${{r.jobs.self_generated}}" target="_blank">self-generated</a> · <a href="https://agentplatform.aliyun-inc.com/?cluster=hk-benchmark-dev#/jobs/${{r.jobs.no_skill}}" target="_blank">no-skill</a><br>${{esc(r.claim_boundary||'')}}</p>`;
+ $('regression').innerHTML=learning+metrics+paired+tiers+tasks+skills+learningTasks+links;
+}}renderRegression();
 $('claimBoundary').textContent=D.claim_boundary||'';
 </script></body></html>"""
 

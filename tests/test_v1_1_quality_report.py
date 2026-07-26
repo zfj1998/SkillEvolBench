@@ -47,4 +47,6 @@ def test_report_is_standalone_and_explains_claim_boundary() -> None:
     assert "<!doctype html>" in rendered
     assert "Skill utilization" in rendered
     assert "no-skill" in rendered
+    assert "Skill rescue" in rendered
+    assert "matched tasks" in rendered
     assert "Skill reads prove utilization, not causal usefulness." in rendered

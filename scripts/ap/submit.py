@@ -341,6 +341,12 @@ def build_submission(
     dataset = args.dataset.rstrip("/")
     split = args.split.strip("/")
     dataset_version = f"{dataset}/{split}"
+    # ``no_skill`` never enters the learning phase, but BaselineConfig still
+    # validates the field before the evaluation-only runner can start.  Values
+    # above one imply same-session skill updates and are invalid for no_skill.
+    effective_learning_max_attempts = (
+        1 if args.baseline_name == "no_skill" else args.learning_max_attempts
+    )
     params: dict[str, Any] = {
         "dataset": dataset,
         "split": split,
@@ -359,7 +365,7 @@ def build_submission(
         "baseline_name": args.baseline_name,
         "strategy_name": args.strategy_name,
         "order_seed": args.order_seed,
-        "learning_max_attempts": args.learning_max_attempts,
+        "learning_max_attempts": effective_learning_max_attempts,
         "harbor_agent_timeout_multiplier": args.harbor_agent_timeout_multiplier,
         "runtime_timeout_sec": args.runtime_timeout_sec,
         "episode_retry_max_attempts": args.episode_retry_max_attempts,

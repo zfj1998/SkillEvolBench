@@ -289,6 +289,26 @@ def test_submission_only_overrides_replay_when_user_explicitly_requests_it() -> 
     assert params["replay_eval"] is False
 
 
+def test_no_skill_normalizes_irrelevant_learning_retry_to_one() -> None:
+    args = submit._parser().parse_args(
+        [
+            "--scope",
+            "environment",
+            "--environment-id",
+            "E6",
+            "--evaluation-only-t4-t6",
+            "--baseline-name",
+            "no_skill",
+            "--learning-max-attempts",
+            "3",
+        ]
+    )
+    params = _params(submit.build_submission(args, _environment()).command)
+
+    assert params["baseline_name"] == "no_skill"
+    assert params["learning_max_attempts"] == 1
+
+
 def test_codex_submission_keeps_runtime_and_wire_api_aligned() -> None:
     args = submit._parser().parse_args(
         ["--harbor-agent", "codex", "--codex-wire-api", "chat"]
