@@ -51,4 +51,5 @@ def test_report_is_standalone_and_explains_claim_boundary() -> None:
     assert "matched tasks" in rendered
     assert "关键术语" in rendered
     assert "整族退役" in rendered
+    assert "完整 SKILL.md" in rendered
     assert "Skill reads prove utilization, not causal usefulness." in rendered

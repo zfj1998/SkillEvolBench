@@ -54,6 +54,7 @@ def evidence() -> dict[str, object]:
                 "selected_run": True,
                 "skill_id": "E6-LS1.example",
                 "family_id": "E6-LS1",
+                "generated_text": "# Example skill",
                 "version_summaries": [{"version": 1}],
             }
         ],
@@ -71,6 +72,7 @@ def test_build_audit_pairs_exact_jobs_and_summarizes_rescue() -> None:
     assert result["learning"]["tasks"] == 15
     assert result["learning"]["terminal_pass"] == 15
     assert len(result["learning"]["task_records"]) == 15
+    assert result["learning"]["skills"][0]["generated_text"] == "# Example skill"
     assert result["self_generated"]["strict_pass"] == 10
     assert result["no_skill"]["strict_pass"] == 5
     assert result["paired_summary"]["strict"] == {

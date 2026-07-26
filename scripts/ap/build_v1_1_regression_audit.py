@@ -148,6 +148,7 @@ def summarize_learning(rows: list[dict[str, Any]], skills: list[dict[str, Any]])
                 "current_version": row.get("current_version"),
                 "generated_chars": row.get("generated_chars"),
                 "description": row.get("generated_description"),
+                "generated_text": row.get("generated_text"),
                 "version_summaries": row.get("version_summaries") or [],
                 "generated_path": row.get("generated_path"),
             }
