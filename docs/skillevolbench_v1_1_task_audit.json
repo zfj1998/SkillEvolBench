@@ -28,12 +28,15 @@
   },
   "release_decision": {
     "retain": "All 30 skill families remain useful evaluation targets.",
+    "retain_zh": "30 个 skill family 的能力目标都仍有评测价值，因此全部保留。",
     "replace": [
       "E6-LS4-T5",
       "E6-LS4-T6"
     ],
     "reason": "The original scheduling instances measured hidden arbitrary choices, and E6-LS4-T6 had no positive-length common working-hours intersection. The capability is valuable, but the original instances are not.",
-    "low_transfer_identifiability": "Tasks whose advanced requirement is fully stated only in the current T5/T6 instruction remain useful as execution tests but must not be presented as proof of historical skill transfer without a matched no-skill control."
+    "reason_zh": "原日程题依赖未公开的任意选择，其中 E6-LS4-T6 甚至不存在正长度的共同工作时间交集。能力本身值得评测，但这两个具体实例不值得保留。",
+    "low_transfer_identifiability": "Tasks whose advanced requirement is fully stated only in the current T5/T6 instruction remain useful as execution tests but must not be presented as proof of historical skill transfer without a matched no-skill control.",
+    "low_transfer_identifiability_zh": "若高级要求只在当前 T5/T6 题面出现，该题仍可测试现场执行能力，但没有 matched no-skill 对照时，不得把通过归因于 T1–T3 的历史 skill 迁移。"
   },
   "reflection_protocol_fix": {
     "scope": "global",
@@ -99,139 +102,193 @@
     "observed_result": "outcome_passed=true, process_passed=false",
     "false_negative": "The output classified all required messages and produced the required P0 drafts, but the process verifier searched source files for the unpublished literal 'P0 reply'.",
     "systematic_audit": "The same hidden source-marker template appeared in 24 E6 tasks across LS1-LS4 and T1-T6.",
+    "systematic_audit_zh": "系统排查发现，同一类隐藏源码 marker 模板出现在 E6 的 LS1–LS4、T1–T6 共 24 题中。",
     "v1_1_2_change": "Remove all 24 lexical marker gates and their unused process_markers ground-truth fields while retaining at least three nonlexical process checks per task.",
+    "v1_1_2_change_zh": "v1.1@2 删除全部 24 个词法 marker gate 及未使用的 process_markers 字段，同时每题至少保留 3 项非词法、可观察的 process 检查。",
     "release_effect": "Do not mutate v1.1@1. Publish the repaired committed source as immutable split v1.1@2 and rerun container reference plus Opus regression gates."
   },
   "outcome_or_contract_repairs": [
     {
       "task_id": "E1-LS4-T5",
       "issue": "Hidden monkeypatch tests replaced one database binding while starter-style imported aliases retained the old object; source scans also required particular files or tokens.",
-      "v1_1_change": "Patch both live bindings and judge observable HTTP behavior across failure and recovery."
+      "issue_zh": "隐藏测试只替换了一处数据库绑定，但 starter 风格的导入别名仍指向旧对象；同时还用源码文件名和关键词判分，可能错杀行为正确的实现。",
+      "v1_1_change": "Patch both live bindings and judge observable HTTP behavior across failure and recovery.",
+      "v1_1_change_zh": "同时替换运行时的两处绑定，并以故障与恢复阶段可观察的 HTTP 行为判分。"
     },
     {
       "task_id": "E1-LS5-T5",
       "issue": "A broad regex rejected safe parameterized SQL because it scanned non-SQL arguments and surrounding source text.",
-      "v1_1_change": "Inspect the SQL argument structurally and reject actual interpolation rather than unrelated literals."
+      "issue_zh": "宽泛正则扫描了非 SQL 参数和周边源码，导致安全的参数化 SQL 也会被误判。",
+      "v1_1_change": "Inspect the SQL argument structurally and reject actual interpolation rather than unrelated literals.",
+      "v1_1_change_zh": "结构化检查真正的 SQL 参数，只拒绝实际发生的字符串插值。"
     },
     {
       "task_id": "E2-LS1-T6",
       "issue": "The public test required three results even though all four fixtures were valid, while several hidden process checks searched source strings instead of exercising validation and fallback behavior.",
-      "v1_1_change": "Align the expected output with all four valid inputs and test call order, rejection, normalization, and fallback at runtime."
+      "issue_zh": "四条 fixture 都合法，但公开测试只允许三条结果；多项隐藏 process 检查还依赖源码字符串，没有真正执行校验与 fallback。",
+      "v1_1_change": "Align the expected output with all four valid inputs and test call order, rejection, normalization, and fallback at runtime.",
+      "v1_1_change_zh": "把预期结果改为四条，并在运行时验证调用顺序、拒绝逻辑、标准化和 fallback。"
     },
     {
       "task_id": "E3-LS2-T6",
       "issue": "A semantically correct result could fail because the verifier compared full record dictionaries and rejected permitted audit fields.",
-      "v1_1_change": "Compare the required semantic projection and preserve the intended sort, deduplication, and aggregate checks."
+      "issue_zh": "verifier 比较整条字典，导致加入题目允许的审计字段后，语义正确的结果仍会失败。",
+      "v1_1_change": "Compare the required semantic projection and preserve the intended sort, deduplication, and aggregate checks.",
+      "v1_1_change_zh": "只比较契约要求的语义投影，同时保留排序、去重和聚合校验。"
     },
     {
       "task_id": "E3-LS3-T6",
       "issue": "Category totals were compared as a raw array with an undeclared order.",
-      "v1_1_change": "Compare records by their semantic category key."
+      "issue_zh": "类别汇总被当作有固定顺序的数组比较，但题面没有声明这一顺序。",
+      "v1_1_change": "Compare records by their semantic category key.",
+      "v1_1_change_zh": "按类别语义键对齐后比较，不再依赖未公开的数组顺序。"
     },
     {
       "task_id": "E3-LS4-T6",
       "issue": "The verifier required exact nested-dictionary equality and rejected additional null-audit information allowed by the instruction.",
-      "v1_1_change": "Require the expected recursive subset while allowing extra audit fields."
+      "issue_zh": "verifier 要求嵌套字典完全相等，题目允许的额外 null 审计信息也会被拒绝。",
+      "v1_1_change": "Require the expected recursive subset while allowing extra audit fields.",
+      "v1_1_change_zh": "递归检查必需字段子集，并允许额外审计字段。"
     },
     {
       "task_id": "E3-LS5-T5",
       "issue": "A permissive numeric parser treated malformed comma-separated values such as 1,2,3 as 123 and made the hidden expected count 706 instead of the generator-consistent 700.",
-      "v1_1_change": "Use strict numeric syntax, document it, and align the official solution and expected count to 700."
+      "issue_zh": "过宽的数字解析把 `1,2,3` 等非法值当成 123，造成隐藏答案为 706，而数据生成逻辑对应 700。",
+      "v1_1_change": "Use strict numeric syntax, document it, and align the official solution and expected count to 700.",
+      "v1_1_change_zh": "采用并公开严格数字语法，把官方解和期望计数统一为 700。"
     },
     {
       "task_id": "E4-LS1-T5",
       "issue": "The instruction and verifier disagreed about the output location.",
-      "v1_1_change": "Use the instruction-defined output path consistently."
+      "issue_zh": "题面和 verifier 对输出文件位置的约定不一致。",
+      "v1_1_change": "Use the instruction-defined output path consistently.",
+      "v1_1_change_zh": "统一使用题面明确给出的输出路径。"
     },
     {
       "task_id": "E4-LS2-T6",
       "issue": "Human-readable DOCX values such as $125,000 failed a raw-token check for 125000, and process checks ignored helper modules.",
-      "v1_1_change": "Parse formatted numeric surfaces and inspect the executed pipeline plus its helpers."
+      "issue_zh": "DOCX 中 `$125,000` 这类正常格式无法通过对 `125000` 的原始 token 检查，process verifier 也忽略了实际执行的 helper 模块。",
+      "v1_1_change": "Parse formatted numeric surfaces and inspect the executed pipeline plus its helpers.",
+      "v1_1_change_zh": "解析等价的格式化数字，并覆盖实际执行的主流程及 helper。"
     },
     {
       "task_id": "E4-LS3-T5",
       "issue": "The task allowed UNKNOWN, MISSING, empty, or null markers, but the hidden verifier accepted a different narrow literal set.",
-      "v1_1_change": "Accept the markers promised by the instruction while still rejecting hallucinated values."
+      "issue_zh": "题面允许 UNKNOWN、MISSING、空值或 null，但隐藏 verifier 只接受另一组狭窄字面量。",
+      "v1_1_change": "Accept the markers promised by the instruction while still rejecting hallucinated values.",
+      "v1_1_change_zh": "接受题面承诺的缺失标记，同时继续拒绝模型臆造的数值。"
     },
     {
       "task_id": "E4-LS4-T5",
       "issue": "Correct page-reference semantics failed a fixed-tense wording regex.",
-      "v1_1_change": "Check the page numbers and correction relationship semantically with tolerant phrasing."
+      "issue_zh": "页码和纠错关系都正确时，仍可能因时态或措辞不匹配固定正则而失败。",
+      "v1_1_change": "Check the page numbers and correction relationship semantically with tolerant phrasing.",
+      "v1_1_change_zh": "按页码与纠错关系做语义检查，容忍等价措辞。"
     },
     {
       "task_id": "E4-LS4-T6",
       "issue": "Correct policy changes failed when formatting used an en dash or 'per month' rather than the verifier's exact tokens.",
-      "v1_1_change": "Normalize equivalent numeric, time-range, and wording surfaces."
+      "issue_zh": "政策变化正确，但使用短横线或 `per month` 等等价格式时会因精确 token 不同而失败。",
+      "v1_1_change": "Normalize equivalent numeric, time-range, and wording surfaces.",
+      "v1_1_change_zh": "统一归一化等价的数字、时间区间和措辞表达。"
     },
     {
       "task_id": "E5-LS1-T4",
       "issue": "The banned-word check rejected a report that explicitly said a noisy semiconductor source was screened out.",
-      "v1_1_change": "Ban actual noise IDs and titles in selected evidence, not generic topical words in an audit explanation."
+      "issue_zh": "报告明确说明已剔除半导体噪声源，却因为解释中出现相关通用词而被 banned-word 检查拒绝。",
+      "v1_1_change": "Ban actual noise IDs and titles in selected evidence, not generic topical words in an audit explanation.",
+      "v1_1_change_zh": "只禁止被选证据中出现真实噪声源 ID/标题，不禁止审计说明里的通用主题词。"
     },
     {
       "task_id": "E5-LS3-T4",
       "issue": "The required fact-check label taxonomy was hidden from the task.",
-      "v1_1_change": "Publish the valid, misrepresented, and fake definitions."
+      "issue_zh": "判分必需的事实核查标签体系没有在题面公开。",
+      "v1_1_change": "Publish the valid, misrepresented, and fake definitions.",
+      "v1_1_change_zh": "公开 valid、misrepresented、fake 三类的定义。"
     },
     {
       "task_id": "E5-LS3-T5",
       "issue": "The hidden citation taxonomy treated a supported source as invalid and required labels not fully identifiable from the prompt.",
-      "v1_1_change": "Publish the taxonomy and align the ground truth with source authenticity and support."
+      "issue_zh": "隐藏引用标签把有支持力的真实来源判成无效，并要求从题面无法完整推断的标签。",
+      "v1_1_change": "Publish the taxonomy and align the ground truth with source authenticity and support.",
+      "v1_1_change_zh": "公开标签体系，并让 ground truth 与来源真实性和支持范围一致。"
     },
     {
       "task_id": "E5-LS3-T6",
       "issue": "A valid source was incorrectly excluded from the full audit contract.",
-      "v1_1_change": "Include S02 as valid and require a complete, evidence-grounded audit."
+      "issue_zh": "完整审计契约错误地排除了一个合法来源。",
+      "v1_1_change": "Include S02 as valid and require a complete, evidence-grounded audit.",
+      "v1_1_change_zh": "把 S02 纳入 valid，并要求完整、逐条有证据依据的审计。"
     },
     {
       "task_id": "E5-LS4-T6",
       "issue": "Correct hierarchy concepts failed narrow lexical checks such as validation versus validated and skin versus dermatology.",
-      "v1_1_change": "Use word-family and theme groups for the required concepts."
+      "issue_zh": "层级概念正确时，仍会因 validation/validated、skin/dermatology 等词形差异被狭窄词法检查拒绝。",
+      "v1_1_change": "Use word-family and theme groups for the required concepts.",
+      "v1_1_change_zh": "按词族和主题组检查必需概念。"
     },
     {
       "task_id": "E6-LS1-T5",
       "issue": "The hidden urgency mapping conflicted with the visible P1 definition and mixed business impact with emotional tone.",
-      "v1_1_change": "Publish P0-P3 definitions and evaluate business-impact evidence consistently."
+      "issue_zh": "隐藏优先级映射与公开的 P1 定义冲突，还把业务影响和邮件情绪混为一谈。",
+      "v1_1_change": "Publish P0-P3 definitions and evaluate business-impact evidence consistently.",
+      "v1_1_change_zh": "公开 P0–P3 定义，并始终依据业务影响证据判级。"
     },
     {
       "task_id": "E6-LS1-T6",
       "issue": "The verifier required an unpublished exact P0 set, response list, owners, and ETA phrases.",
-      "v1_1_change": "Publish the priority contract and require replies only for P0; provide the owner, CC, and ETA facts in the visible thread context."
+      "issue_zh": "verifier 要求未公开的精确 P0 集合、回复列表、owner 和 ETA 固定信息。",
+      "v1_1_change": "Publish the priority contract and require replies only for P0; provide the owner, CC, and ETA facts in the visible thread context.",
+      "v1_1_change_zh": "公开优先级契约，只要求对 P0 回复，并在可见线程中提供 owner、CC 和 ETA 事实。"
     },
     {
       "task_id": "E6-LS2-T5",
       "issue": "A rationale containing Friday, the three-month estimate, staged delivery, and calendar constraints failed because it omitted the literal word timeline.",
-      "v1_1_change": "Judge the required context facts and acceptable friendly alternatives semantically."
+      "issue_zh": "理由已包含周五、三个月估算、分阶段交付和日历约束，却只因没有字面词 `timeline` 而失败。",
+      "v1_1_change": "Judge the required context facts and acceptable friendly alternatives semantically.",
+      "v1_1_change_zh": "按必需上下文事实和可接受的友好替代表达做语义判定。"
     },
     {
       "task_id": "E6-LS2-T6",
       "issue": "Correct routing and refusal to over-promise failed fixed phrases such as 'not promise' and 'thread context'.",
-      "v1_1_change": "Judge recipient, CC, evidence, and commitment semantics rather than fixed wording."
+      "issue_zh": "收件人路由和拒绝过度承诺都正确时，仍会因缺少 `not promise`、`thread context` 等固定短语失败。",
+      "v1_1_change": "Judge recipient, CC, evidence, and commitment semantics rather than fixed wording.",
+      "v1_1_change_zh": "检查收件人、CC、证据和承诺语义，不再要求固定措辞。"
     },
     {
       "task_id": "E6-LS3-T5",
       "issue": "The hidden action-ID vocabulary and speaker-name requirement contradicted the task's allowed team/role assignees.",
-      "v1_1_change": "Align by source message and accept the permitted assignee forms."
+      "issue_zh": "隐藏 action ID 和发言人姓名要求，与题面允许团队/角色作为 assignee 的规则冲突。",
+      "v1_1_change": "Align by source message and accept the permitted assignee forms.",
+      "v1_1_change_zh": "按来源消息对齐 action，并接受题面允许的 assignee 形式。"
     },
     {
       "task_id": "E6-LS3-T6",
       "issue": "The verifier relied on unpublished action IDs and raw ordering even when the extracted actions matched their source messages.",
-      "v1_1_change": "Align actions by source, then check assignee, deadline, status, and follow-up semantics."
+      "issue_zh": "即使抽取 action 与来源消息匹配，verifier 仍依赖未公开 action ID 和原始顺序。",
+      "v1_1_change": "Align actions by source, then check assignee, deadline, status, and follow-up semantics.",
+      "v1_1_change_zh": "先按来源对齐 action，再检查 assignee、deadline、status 和 follow-up 语义。"
     },
     {
       "task_id": "E6-LS4-T5",
       "issue": "Several DST-safe slots were equally feasible, but the verifier required a hidden slot ID and arbitrary first-item tie-break.",
-      "v1_1_change": "Retire the v1 scoring contract; generate stable slot IDs and publish the earliest-UTC tie-break."
+      "issue_zh": "多个时段同样可行且都满足 DST 约束，但 verifier 要求隐藏 slot ID 和任意的“第一个”破同分规则。",
+      "v1_1_change": "Retire the v1 scoring contract; generate stable slot IDs and publish the earliest-UTC tie-break.",
+      "v1_1_change_zh": "废弃 v1 题实例，生成稳定 slot ID，并公开“最早 UTC”破同分规则。"
     },
     {
       "task_id": "E6-LS4-T6",
       "issue": "The original four-person instance had no positive-length common working-hours intersection, yet the verifier required hard-coded times and order.",
-      "v1_1_change": "Replace the instance with per-meeting attendee sets, feasible windows, and a published lexicographic optimization order."
+      "issue_zh": "原四人实例不存在正长度的共同工作时间交集，但 verifier 仍要求硬编码时间和顺序，题目实际不可解。",
+      "v1_1_change": "Replace the instance with per-meeting attendee sets, feasible windows, and a published lexicographic optimization order.",
+      "v1_1_change_zh": "整体替换题实例：按会议给出参与人集合，确保存在可行窗口，并公开字典序优化规则。"
     },
     {
       "task_id": "E6-LS5-T5",
       "issue": "The verifier rejected assignee 'team' although allowed by the instruction, and its process test searched for variable names and an unrelated example phrase.",
-      "v1_1_change": "Accept instruction-permitted assignees and test actual question-versus-action behavior."
+      "issue_zh": "题面允许 assignee 为 `team`，verifier 却拒绝；process 测试还搜索变量名和无关示例短语。",
+      "v1_1_change": "Accept instruction-permitted assignees and test actual question-versus-action behavior.",
+      "v1_1_change_zh": "接受题面允许的 assignee，并实际测试问题与 action 的区分行为。"
     }
   ],
   "runtime_process_verifier_rewrites_without_known_outcome_contract_bug": [

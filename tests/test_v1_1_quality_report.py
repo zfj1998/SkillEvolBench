@@ -58,5 +58,8 @@ def test_report_is_standalone_and_explains_claim_boundary() -> None:
     assert "为什么 90/90 标准解通过后仍然发布 v1.1@2" in rendered
     assert "E6 隐藏 marker gate 清理" in rendered
     assert "同一 Opus、同一 E6、同一不可变 split" in rendered
+    assert "原问题：" in rendered
+    assert "issue_zh||x.issue" in rendered
+    assert "retain_zh||RD.retain" in rendered
     assert "ap-skillevolbench-a8fe6c6a5ff1418a-d2" not in rendered
     assert "Skill reads prove utilization, not causal usefulness." in rendered
