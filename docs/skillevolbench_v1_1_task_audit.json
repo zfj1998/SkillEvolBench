@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "release": "SkillEvolBench v1.1",
-  "status": "v1_1_2_candidate_pending_container_reference_and_opus_regression",
+  "status": "v1_1_2_reference_accepted_pending_opus_regression",
   "method": {
     "inputs": [
       "Fable and Opus 4.8 self-generated T1-T6 verifier records",
@@ -74,6 +74,24 @@
     "job_attempts": "All six AP jobs succeeded on attempt 0.",
     "evidence": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/reference-audit-r2/group-9b6800b28895434b8d67d555b6e0f508-d2/reference-audit-r2-summary.json",
     "interpretation": "Every held-out T4-T6 task was internally solvable by its checked-in reference solution in the real task container. A later live Opus run nevertheless exposed a semantically valid E6-LS1-T6 output rejected only because its source omitted the unpublished phrase 'P0 reply'; therefore reference 90/90 was necessary but not sufficient and v1.1@1 is superseded."
+  },
+  "final_container_reference_audit": {
+    "candidate_split": "skillevolbench/skillevolbench/v1.1@2",
+    "benchmark_revision": "b5da55a017759c7ee3770285bcd8d64c3cdba441",
+    "ap_group": "group-91e1f8bca61146328131397b1df05697-d2",
+    "result": "90/90 strict passes",
+    "by_environment": {
+      "E1": "15/15",
+      "E2": "15/15",
+      "E3": "15/15",
+      "E4": "15/15",
+      "E5": "15/15",
+      "E6": "15/15"
+    },
+    "job_attempts": "All six AP jobs succeeded on attempt 0.",
+    "coverage": "90 unique held-out task IDs: 30 T4, 30 T5, and 30 T6; every row has exactly one Harbor result.",
+    "evidence": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/analysis/reference_solution_audit_v1.1@2.json",
+    "interpretation": "The repaired immutable split is internally solvable in the real task containers. This is a necessary verifier-integrity gate; live-model and matched no-skill regressions remain necessary because a reference implementation can accidentally contain source-shape tokens that hide false negatives."
   },
   "model_runtime_finding_after_v1_1_1": {
     "task_id": "E6-LS1-T6",
@@ -250,9 +268,9 @@
     "modified_python_compiles": "passed",
     "modified_json_parses": "passed",
     "diff_check": "passed",
-    "local_official_solution_checks": "pending",
-    "container_reference_audit": "v1.1@1 passed 90/90 but is superseded by a live-model false negative; v1.1@2 audit pending",
-    "opus_v1_1_self_generated_regression": "v1.1@1 E6 jobs running: selfgen ap-skillevolbench-a8fe6c6a5ff1418a-d2 and no-skill ap-skillevolbench-ed1c836c22a74d4b-d2",
-    "final_release_split": "pending immutable skillevolbench/skillevolbench/v1.1@2"
+    "local_official_solution_checks": "covered by the stronger real-container reference audit",
+    "container_reference_audit": "passed: v1.1@2 has 90/90 strict passes in AP group group-91e1f8bca61146328131397b1df05697-d2",
+    "opus_v1_1_self_generated_regression": "running on v1.1@2: selfgen ap-skillevolbench-d70a63da58bf4fc4-d2 and matched no-skill ap-skillevolbench-18660174983b465b-d2",
+    "final_release_split": "uploaded immutable skillevolbench/skillevolbench/v1.1@2; 13/13 OSS objects were re-downloaded and SHA-256 matched"
   }
 }
