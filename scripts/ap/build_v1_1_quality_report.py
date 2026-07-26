@@ -294,6 +294,7 @@ T4–T6 是 freeze 后 one-shot，不能把相邻 tier 当作相同预算下的�
 
 <section class="panel"><h2>题库质量审计与 v1.1 改进</h2><div class="grid cards" id="auditCards"></div>
 <div id="runtimeFinding" style="margin-top:14px"></div>
+<div id="skillReflectionFinding" style="margin-top:14px"></div>
 <div id="releaseDecision" style="margin-top:14px"></div>
 <div class="grid two" style="margin-top:14px">
  <div><h3>可解性 Gate</h3><div id="referenceGate"></div></div>
@@ -372,6 +373,8 @@ const S=D.task_audit.summary;
 $('auditCards').innerHTML=[['Held-out tasks',S.held_out_tasks_total],['修复 contracts',S.outcome_or_contract_repairs],['重写 process checks',S.runtime_process_verifier_rewrites_without_known_outcome_contract_bug],['保持不变',S.unchanged_held_out_tasks]].map(x=>`<div class="card"><span class="small">${{x[0]}}</span><b class="big">${{x[1]}}</b></div>`).join('');
 let RF=D.task_audit.model_runtime_finding_after_v1_1_1||{{}};
 $('runtimeFinding').innerHTML=Object.keys(RF).length?`<div class="card warn"><h3>为什么 90/90 标准解通过后仍然发布 v1.1@2？</h3><p><b>${{esc(RF.task_id||'E6-LS1-T6')}}</b> 的真实 Opus 输出已经通过全部 outcome tests，却因为源码没有未公开短语 <code>P0 reply</code> 而 process fail。标准解恰好带有该短语，所以 reference audit 无法暴露这个问题。</p><p>${{esc(RF.systematic_audit_zh||RF.systematic_audit||'')}}</p><p class="small">${{esc(RF.v1_1_2_change_zh||RF.v1_1_2_change||'')}}</p></div>`:'';
+let SF=D.task_audit.skill_reflection_quality_finding_after_v1_1_2||{{}};
+$('skillReflectionFinding').innerHTML=Object.keys(SF).length?`<div class="card warn"><h3>v1.1@2 真实运行发现：skill 可能学会“适配裁判”</h3><p><b>${{esc(SF.task_id||'E6-LS1-T1')}}</b>：${{esc(SF.observed_result_zh||SF.observed_result||'')}}</p><p>${{esc(SF.quality_problem_zh||SF.quality_problem||'')}}</p><p class="small"><b>下一轮改进：</b>${{esc(SF.v1_1_3_change_zh||SF.v1_1_3_change||'')}}</p></div>`:'';
 let RD=D.task_audit.release_decision||{{}},replaced=RD.replace||[];
 $('releaseDecision').innerHTML=`<div class="grid three"><div class="card good"><h3>保留：30 个 skill families</h3><p>${{esc(RD.retain_zh||RD.retain||'所有 family 均保留')}}</p></div><div class="card warn"><h3>替换：${{replaced.length}} 个具体实例</h3><p><b>${{esc(replaced.join(', ')||'无')}}</b></p><p class="small">${{esc(RD.reason_zh||RD.reason||'')}}</p></div><div class="card"><h3>整族退役：${{S.whole_skill_families_retired||0}}</h3><p>能力目标仍有评测价值；有缺陷的具体题采用修复或替换，不为维持题量而保留不可解实例。</p></div></div><p class="note">${{esc(RD.low_transfer_identifiability_zh||RD.low_transfer_identifiability||'')}}</p>`;
 let R=D.reference_audit;$('referenceGate').innerHTML=`<div class="card"><b class="big good">${{R.passed||0}}/${{R.total||90}}</b><p>${{R.all_reference_solutions_pass?'六个环境全部 15/15 strict pass':'尚未全部通过'}}</p><p class="small">${{esc(R.split||'v1.1@2')}} · Harbor oracle · real task container · unchanged verifier · AP group ${{esc(R.group_id||'—')}}</p></div>`;
