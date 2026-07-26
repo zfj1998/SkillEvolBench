@@ -55,4 +55,6 @@ def test_report_is_standalone_and_explains_claim_boundary() -> None:
     assert "整族退役" in rendered
     assert "完整 SKILL.md" in rendered
     assert "verifier 定向措辞" in rendered
+    assert "为什么 90/90 标准解通过后仍然发布 v1.1@2" in rendered
+    assert "E6 隐藏 marker gate 清理" in rendered
     assert "Skill reads prove utilization, not causal usefulness." in rendered

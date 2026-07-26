@@ -293,12 +293,13 @@ T4–T6 是 freeze 后 one-shot，不能把相邻 tier 当作相同预算下的�
 <th>Active skills</th><th>T4–T6 strict</th><th>同 family reads</th></tr></thead><tbody id="familyRows"></tbody></table></div></section>
 
 <section class="panel"><h2>题库质量审计与 v1.1 改进</h2><div class="grid cards" id="auditCards"></div>
+<div id="runtimeFinding" style="margin-top:14px"></div>
 <div id="releaseDecision" style="margin-top:14px"></div>
 <div class="grid two" style="margin-top:14px">
  <div><h3>可解性 Gate</h3><div id="referenceGate"></div></div>
  <div><h3>Skill 迁移可识别性</h3><div id="validity"></div></div>
 </div><h3 style="margin-top:18px">26 个 outcome / contract 修复</h3><div class="repair-list" id="repairs"></div>
-<details><summary>23 个从源码字面量改为运行时行为的 process verifiers</summary><div id="processRewrites"></div></details></section>
+<details><summary id="processRewriteSummary"></summary><div id="processRewrites"></div></details></section>
 
 <section class="panel"><h2>v1.1 Opus 回归与 matched no-skill 控制</h2><div id="regression"></div>
 <p class="note">Reference solution 90/90 只证明题目资产内部可解；Opus self-generated 与 no-skill 的逐题差异
@@ -308,7 +309,7 @@ T4–T6 是 freeze 后 one-shot，不能把相邻 tier 当作相同预算下的�
 <ul><li>旧版模型排名受题目与 verifier 缺陷混淆，不能直接当作纯模型能力榜。</li>
 <li>Skill read 是 utilization，不是 causal usefulness；no-skill matched control 是必要条件。</li>
 <li>“On-task only” 题仍可测现场执行，但不得宣称证明了 T1–T3 历史 skill 迁移。</li>
-<li>v1.1 已消除当前已复现的不可解、隐藏任意 tie-break、标签冲突和源码形态误判；
+<li>v1.1@2 已消除当前已复现的不可解、隐藏任意 tie-break、标签冲突和未公开源码词门槛；
 模型回归仍要检查轨迹与逐题 verifier，而非只看平均分。</li></ul>
 <p class="note" id="claimBoundary"></p></section>
 
@@ -326,6 +327,7 @@ let executive=[
  ['v1.1 标准解验收',`${{D.reference_audit.passed||0}}/${{D.reference_audit.total||90}}`,'真实容器 + 原 verifier'],
  ['契约 / outcome 修复',D.task_audit.summary.outcome_or_contract_repairs,'消除不可解和错误拒绝'],
  ['Process verifier 重写',D.task_audit.summary.runtime_process_verifier_rewrites_without_known_outcome_contract_bug,'从源码词形改为行为'],
+ ['E6 隐藏 marker gate 清理',D.task_audit.summary.e6_hidden_source_marker_gates_removed_all_tiers||0,'覆盖 LS1–LS4、T1–T6'],
  ['替换而非硬补的题',D.task_audit.summary.v1_instances_replaced_instead_of_minimally_patched,'E6 scheduling 两题']
 ];
 if(D.regression&&Object.keys(D.regression).length) executive.unshift([
@@ -368,12 +370,15 @@ function showFamily(id,m){{let f=D.behavior.families.find(x=>x.family_id===id),x
 }} ['familyModel','familyEnv'].forEach(id=>$(id).onchange=renderFamilies);$('familySearch').oninput=renderFamilies;renderFamilies();
 const S=D.task_audit.summary;
 $('auditCards').innerHTML=[['Held-out tasks',S.held_out_tasks_total],['修复 contracts',S.outcome_or_contract_repairs],['重写 process checks',S.runtime_process_verifier_rewrites_without_known_outcome_contract_bug],['保持不变',S.unchanged_held_out_tasks]].map(x=>`<div class="card"><span class="small">${{x[0]}}</span><b class="big">${{x[1]}}</b></div>`).join('');
+let RF=D.task_audit.model_runtime_finding_after_v1_1_1||{{}};
+$('runtimeFinding').innerHTML=Object.keys(RF).length?`<div class="card warn"><h3>为什么 90/90 标准解通过后仍然发布 v1.1@2？</h3><p><b>${{esc(RF.task_id||'E6-LS1-T6')}}</b> 的真实 Opus 输出已经通过全部 outcome tests，却因为源码没有未公开短语 <code>P0 reply</code> 而 process fail。标准解恰好带有该短语，所以 reference audit 无法暴露这个问题。</p><p>${{esc(RF.systematic_audit||'')}}</p><p class="small">${{esc(RF.v1_1_2_change||'')}}</p></div>`:'';
 let RD=D.task_audit.release_decision||{{}},replaced=RD.replace||[];
 $('releaseDecision').innerHTML=`<div class="grid three"><div class="card good"><h3>保留：30 个 skill families</h3><p>${{esc(RD.retain||'所有 family 均保留')}}</p></div><div class="card warn"><h3>替换：${{replaced.length}} 个具体实例</h3><p><b>${{esc(replaced.join(', ')||'无')}}</b></p><p class="small">${{esc(RD.reason||'')}}</p></div><div class="card"><h3>整族退役：${{S.whole_skill_families_retired||0}}</h3><p>能力目标仍有评测价值；有缺陷的具体题采用修复或替换，不为维持题量而保留不可解实例。</p></div></div><p class="note">${{esc(RD.low_transfer_identifiability||'')}}</p>`;
-let R=D.reference_audit;$('referenceGate').innerHTML=`<div class="card"><b class="big good">${{R.passed||0}}/${{R.total||90}}</b><p>${{R.all_reference_solutions_pass?'六个环境全部 15/15 strict pass':'尚未全部通过'}}</p><p class="small">Harbor oracle · real task container · unchanged verifier · AP group ${{esc(R.group_id||'—')}}</p></div>`;
+let R=D.reference_audit;$('referenceGate').innerHTML=`<div class="card"><b class="big good">${{R.passed||0}}/${{R.total||90}}</b><p>${{R.all_reference_solutions_pass?'六个环境全部 15/15 strict pass':'尚未全部通过'}}</p><p class="small">${{esc(R.split||'v1.1@2')}} · Harbor oracle · real task container · unchanged verifier · AP group ${{esc(R.group_id||'—')}}</p></div>`;
 let mv=(D.measurement_validity.summaries||[])[0]||{{category_counts:{{}},eligible_for_causal_skill_claim:0,controlled_task_count:60}},c=mv.category_counts;
 $('validity').innerHTML=`<div class="card"><b class="big">${{mv.eligible_for_causal_skill_claim||0}}/${{mv.controlled_task_count||60}}</b><p>可进入历史 skill 因果分析</p><p class="small">history-supported ${{c.history_supported||0}} · mixed ${{c.mixed_history_and_on_task||0}} · on-task only ${{c.on_task_only||0}}</p></div>`;
 $('repairs').innerHTML=D.task_audit.outcome_or_contract_repairs.map(x=>`<div class="repair"><b>${{x.task_id}}</b><p class="small">${{esc(x.issue)}}</p><p>${{esc(x.v1_1_change)}}</p></div>`).join('');
+$('processRewriteSummary').textContent=`${{S.runtime_process_verifier_rewrites_without_known_outcome_contract_bug}} 个 held-out process verifiers 从隐藏源码形态改为可观察行为`;
 $('processRewrites').innerHTML=D.task_audit.runtime_process_verifier_rewrites_without_known_outcome_contract_bug.map(x=>`<span class="metric">${{x}}</span>`).join('');
 function rbar(label,n,color){{return `<div class="barrow"><span>${{label}}</span><div class="track"><div class="fill" style="width:${{100*n/15}}%;background:${{color}}"></div></div><b>${{n}}/15</b></div>`}}
 function renderRegression(){{let r=D.regression;if(!r||!Object.keys(r).length){{$('regression').innerHTML=`<div class="card warn"><b>回归运行中</b><p>首轮两个 job 均因 Opus 启动探针 30 秒无首字节而在执行题目前退出；这不是 task failure。提高到 300 秒后探针已通过。no-skill R2 又暴露了提交器对无学习 baseline 的参数陷阱，现已修复并补交 R3。</p><p class="small">self-generated: ap-skillevolbench-a8fe6c6a5ff1418a-d2 · no-skill R3: ap-skillevolbench-ed1c836c22a74d4b-d2</p></div>`;return}}
