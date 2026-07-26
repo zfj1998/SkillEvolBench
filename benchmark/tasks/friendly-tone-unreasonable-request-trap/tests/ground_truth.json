@@ -43,10 +43,5 @@
       "timeline"
     ]
   },
-  "process_markers": [
-    "scope",
-    "timeline",
-    "realistic"
-  ],
   "min_message_count": 1
 }

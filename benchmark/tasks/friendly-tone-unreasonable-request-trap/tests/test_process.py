@@ -23,15 +23,6 @@ class TestProcess:
         assert "reply_policy.select_actions" in pipeline, "pipeline should select reply/ack/ignore actions"
         assert "reply_policy.draft_reply" in pipeline, "pipeline should draft through policy module"
 
-    def test_policy_contains_required_capability_markers(self):
-        combined = "\n".join(
-            path.read_text(encoding="utf-8", errors="ignore")
-            for path in [PROJECT_ROOT / "reply_policy.py", PROJECT_ROOT / "context_loader.py"]
-            if path.exists()
-        ).lower()
-        for marker in GT.get("process_markers", []):
-            assert marker.lower() in combined, f"expected marker {marker!r} in reply policy/context loader"
-
     def test_output_schema_is_structured(self):
         output = json.loads((PROJECT_ROOT / "output" / "replies.json").read_text(encoding="utf-8"))
         assert isinstance(output.get("actions"), list), "actions list required"

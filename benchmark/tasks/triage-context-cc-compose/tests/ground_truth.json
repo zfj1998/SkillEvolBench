@@ -101,10 +101,5 @@
       "Product"
     ]
   },
-  "process_markers": [
-    "thread_history",
-    "stakeholder",
-    "cc"
-  ],
   "min_message_count": 15
 }

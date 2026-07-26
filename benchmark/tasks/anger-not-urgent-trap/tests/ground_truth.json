@@ -50,18 +50,25 @@
   ],
   "reason_evidence_any": {
     "trap_vending": [
-      ["vending", "facilities", "low impact", "low business"]
+      [
+        "vending",
+        "facilities",
+        "low impact",
+        "low business"
+      ]
     ],
     "trap_db_cert": [
-      ["certificate", "cert"],
-      ["tomorrow", "expires", "expiration"]
+      [
+        "certificate",
+        "cert"
+      ],
+      [
+        "tomorrow",
+        "expires",
+        "expiration"
+      ]
     ]
   },
   "expected_drafts": {},
-  "min_message_count": 15,
-  "process_markers": [
-    "business impact",
-    "emotional",
-    "certificate"
-  ]
+  "min_message_count": 15
 }

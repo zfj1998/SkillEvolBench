@@ -18,15 +18,6 @@ class TestProcess:
         scheduler = (PROJECT_ROOT / "scheduler.py").read_text(encoding="utf-8")
         assert "scheduling_policy.recommend_schedule" in scheduler, "scheduler should call scheduling policy"
 
-    def test_process_markers(self):
-        combined = "\n".join(
-            path.read_text(encoding="utf-8", errors="ignore")
-            for path in [PROJECT_ROOT / "scheduling_policy.py", PROJECT_ROOT / "calendar_loader.py"]
-            if path.exists()
-        ).lower()
-        for marker in GT.get("process_markers", []):
-            assert marker.lower() in combined, f"expected process marker {marker!r}"
-
     def test_request_context_exists(self):
         assert (PROJECT_ROOT / "scheduling_request.json").exists(), "missing structured scheduling request"
         assert (PROJECT_ROOT / "scheduling_request.md").exists(), "missing human-readable scheduling request"

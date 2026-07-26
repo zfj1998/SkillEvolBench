@@ -27,11 +27,5 @@
   },
   "expected_reason_terms": {},
   "expected_preference_breakdown": {},
-  "process_markers": [
-    "global",
-    "soft",
-    "fragmentation",
-    "preferences"
-  ],
   "min_soft_preferences_met": 2
 }

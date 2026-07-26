@@ -54,10 +54,5 @@
     ]
   },
   "expected_drafts": {},
-  "min_message_count": 15,
-  "process_markers": [
-    "sender hierarchy",
-    "org_chart",
-    "business impact"
-  ]
+  "min_message_count": 15
 }

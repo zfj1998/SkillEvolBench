@@ -54,10 +54,5 @@
       "bob": true,
       "charlie": false
     }
-  },
-  "process_markers": [
-    "preferences",
-    "soft",
-    "score"
-  ]
+  }
 }

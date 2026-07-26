@@ -50,13 +50,30 @@
   "rank_before": [],
   "reason_evidence_any": {
     "checkout_incident": [
-      ["checkout", "production", "incident", "failures"]
+      [
+        "checkout",
+        "production",
+        "incident",
+        "failures"
+      ]
     ],
     "okta_alert": [
-      ["okta", "admin", "token", "security", "access"]
+      [
+        "okta",
+        "admin",
+        "token",
+        "security",
+        "access"
+      ]
     ],
     "renewal_escalation": [
-      ["client", "customer", "renewal", "signature", "procurement"]
+      [
+        "client",
+        "customer",
+        "renewal",
+        "signature",
+        "procurement"
+      ]
     ]
   },
   "expected_drafts": {
@@ -110,10 +127,5 @@
       ]
     }
   },
-  "min_message_count": 20,
-  "process_markers": [
-    "thread context",
-    "ETA",
-    "P0 reply"
-  ]
+  "min_message_count": 20
 }

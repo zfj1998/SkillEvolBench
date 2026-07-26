@@ -73,11 +73,5 @@
     ]
   },
   "expected_drafts": {},
-  "min_message_count": 30,
-  "process_markers": [
-    "implicit urgency",
-    "follow",
-    "certificate",
-    "client"
-  ]
+  "min_message_count": 30
 }

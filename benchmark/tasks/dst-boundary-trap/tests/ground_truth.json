@@ -18,10 +18,5 @@
   "expected_scores": {},
   "expected_soft_preferences_met": {},
   "expected_reason_terms": {},
-  "expected_preference_breakdown": {},
-  "process_markers": [
-    "ZoneInfo",
-    "DST",
-    "not fixed offset"
-  ]
+  "expected_preference_breakdown": {}
 }

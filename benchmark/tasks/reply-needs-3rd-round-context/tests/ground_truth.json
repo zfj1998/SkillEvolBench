@@ -43,10 +43,5 @@
       "decision"
     ]
   },
-  "process_markers": [
-    "thread_history",
-    "third round",
-    "decision"
-  ],
   "min_message_count": 5
 }

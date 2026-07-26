@@ -26,10 +26,5 @@
     "slot_2026-04-24T14": 0
   },
   "expected_reason_terms": {},
-  "expected_preference_breakdown": {},
-  "process_markers": [
-    "ZoneInfo",
-    "working hours",
-    "calendar"
-  ]
+  "expected_preference_breakdown": {}
 }

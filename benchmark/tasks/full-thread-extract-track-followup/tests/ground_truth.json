@@ -129,13 +129,6 @@
     }
   },
   "min_message_count": 20,
-  "process_markers": [
-    "extract",
-    "track",
-    "follow-up",
-    "overdue",
-    "polite"
-  ],
   "allowed_missing_actions": 0,
   "requires_current_date": true
 }

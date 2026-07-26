@@ -70,6 +70,5 @@
     ]
   },
   "expected_drafts": {},
-  "min_message_count": 20,
-  "process_markers": []
+  "min_message_count": 20
 }

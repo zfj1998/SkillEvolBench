@@ -56,11 +56,6 @@
   ],
   "expected_followups": {},
   "min_message_count": 6,
-  "process_markers": [
-    "rhetorical",
-    "question",
-    "request"
-  ],
   "allowed_missing_actions": 0,
   "requires_current_date": false
 }

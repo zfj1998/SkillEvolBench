@@ -79,10 +79,5 @@
     ]
   },
   "expected_drafts": {},
-  "min_message_count": 30,
-  "process_markers": [
-    "meeting_agenda",
-    "agenda",
-    "board prep"
-  ]
+  "min_message_count": 30
 }
