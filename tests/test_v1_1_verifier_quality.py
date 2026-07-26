@@ -96,7 +96,7 @@ def test_e6_process_verifiers_retain_nonlexical_checks() -> None:
 def test_inbox_triage_family_publishes_one_consistent_priority_policy() -> None:
     required_policy = (
         "hard same-day/overnight",
-        "including an explicit EOD deadline",
+        "including an explicit EOD deadline tied to a concrete same-day",
         "should be handled today but is not an active incident or hard same-day",
         "A clock or senior sender alone does not make a message P0",
         "independently from priority",
@@ -158,7 +158,7 @@ def test_inbox_triage_hard_same_day_labels_match_published_policy() -> None:
             "email_020": "same-day payment-hold blocker",
         },
         "sender-hierarchy-weight": {
-            "manager_eod": "explicit EOD deadline",
+            "manager_eod": "explicit same-day payment blocker",
         },
         "anger-not-urgent-trap": {
             "trap_client": "same-day signature blocker",
@@ -182,7 +182,7 @@ def test_inbox_triage_hard_same_day_labels_match_published_policy() -> None:
                 )
 
     assert not wrong, (
-        "the published policy assigns explicit EOD and same-day business "
+        "the published policy assigns concrete EOD and same-day business "
         f"blockers to P0, so ground-truth labels must agree: {wrong}"
     )
 
@@ -204,6 +204,69 @@ def test_implicit_urgency_dpa_fixture_publishes_its_same_day_blocker() -> None:
     ):
         source = source_path.read_text(encoding="utf-8").lower()
         assert body in source, f"{source_path} drifted from messages.json"
+
+
+def test_sender_hierarchy_fixture_publishes_its_same_day_payment_blocker() -> None:
+    task_root = TASKS_ROOT / "sender-hierarchy-weight"
+    mail_root = task_root / "environment" / "mail"
+    mailbox = json.loads((mail_root / "messages.json").read_text(encoding="utf-8"))
+    message = next(item for item in mailbox["messages"] if item["id"] == "manager_eod")
+    body = message["body"].lower()
+
+    assert "by end of day" in body
+    assert "today's vendor payment" in body
+    assert "payment will be held tonight" in body
+
+    for source_path in (
+        mail_root / "mailbox.mbox",
+        mail_root / "raw" / "manager_eod.eml",
+    ):
+        source = source_path.read_text(encoding="utf-8").lower()
+        assert body in source, f"{source_path} drifted from messages.json"
+
+
+def test_meeting_prep_certificate_fixture_publishes_its_overnight_blocker() -> None:
+    task_root = TASKS_ROOT / "triage-for-meeting-prep"
+    mail_root = task_root / "environment" / "mail"
+    mailbox = json.loads((mail_root / "messages.json").read_text(encoding="utf-8"))
+    message = next(item for item in mailbox["messages"] if item["id"] == "meet_005")
+    body = message["body"].lower()
+
+    assert "expires tomorrow morning" in body
+    assert "prod still uses the current certificate" in body
+    assert "checkout traffic will lose db connectivity" in body
+
+    for source_path in (
+        mail_root / "mailbox.mbox",
+        mail_root / "raw" / "meet_005.eml",
+    ):
+        source = source_path.read_text(encoding="utf-8").lower()
+        assert body in source, f"{source_path} drifted from messages.json"
+
+
+def test_p0_reply_fixture_publishes_its_active_security_incident() -> None:
+    task_root = TASKS_ROOT / "triage-then-draft-p0-replies"
+    mail_root = task_root / "environment" / "mail"
+    mailbox = json.loads((mail_root / "messages.json").read_text(encoding="utf-8"))
+    message = next(item for item in mailbox["messages"] if item["id"] == "okta_alert")
+    body = message["body"].lower()
+
+    assert "unknown privileged sessions are still active" in body
+    assert "start containment immediately" in body
+    assert "eta for the access review" in body
+
+    for source_path in (
+        mail_root / "mailbox.mbox",
+        mail_root / "raw" / "okta_alert.eml",
+    ):
+        source = source_path.read_text(encoding="utf-8").lower()
+        assert body in source, f"{source_path} drifted from messages.json"
+
+    thread_context = (mail_root / "thread_context.md").read_text(
+        encoding="utf-8"
+    ).lower()
+    assert "unknown privileged sessions remain active" in thread_context
+    assert "immediate containment" in thread_context
 
 
 def test_inbox_triage_near_term_client_fixture_is_after_today() -> None:

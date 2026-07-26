@@ -37,7 +37,8 @@ Use these priority definitions:
 
 - **P0**: an active production/security incident or a hard same-day/overnight
   deadline for which work must start immediately (including an explicit EOD
-  deadline or a same-day customer/signature blocker);
+  deadline tied to a concrete same-day customer, signature, payment,
+  production, or security blocker);
 - **P1**: a material action, review, approval, or near-term deliverable that
   should be handled today but is not an active incident or hard same-day
   blocker;

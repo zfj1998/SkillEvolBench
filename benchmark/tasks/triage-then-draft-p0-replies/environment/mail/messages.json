@@ -45,7 +45,7 @@
       ],
       "cc": [],
       "subject": "CRITICAL: Okta admin anomaly",
-      "body": "Admin token revoked; please acknowledge next steps and ETA for access review.",
+      "body": "The admin token was revoked, but unknown privileged sessions are still active. Start containment immediately, acknowledge the next steps, and provide an ETA for the access review.",
       "labels": [],
       "attachments": [],
       "headers": {

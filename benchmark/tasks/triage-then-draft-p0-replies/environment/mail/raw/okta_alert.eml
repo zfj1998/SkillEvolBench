@@ -6,4 +6,4 @@ Subject: CRITICAL: Okta admin anomaly
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 
-Admin token revoked; please acknowledge next steps and ETA for access review.
+The admin token was revoked, but unknown privileged sessions are still active. Start containment immediately, acknowledge the next steps, and provide an ETA for the access review.
