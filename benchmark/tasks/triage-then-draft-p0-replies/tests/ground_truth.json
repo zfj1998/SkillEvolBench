@@ -48,15 +48,15 @@
     "renewal_escalation"
   ],
   "rank_before": [],
-  "reason_keywords": {
+  "reason_evidence_any": {
     "checkout_incident": [
-      "Immediate"
+      ["checkout", "production", "incident", "failures"]
     ],
     "okta_alert": [
-      "Immediate"
+      ["okta", "admin", "token", "security", "access"]
     ],
     "renewal_escalation": [
-      "client"
+      ["client", "customer", "renewal", "signature", "procurement"]
     ]
   },
   "expected_drafts": {

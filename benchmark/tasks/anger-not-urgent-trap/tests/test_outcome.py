@@ -65,9 +65,9 @@ class TestOutcome:
             assert actual[higher]["rank"] < actual[lower]["rank"], f"{higher} should rank before {lower}"
 
     def test_response_list_when_expected(self):
-        expected = set(GT.get("expected_response_ids", []))
-        if not expected:
+        if "expected_response_ids" not in GT:
             return
+        expected = set(GT["expected_response_ids"])
         output = load_output()
         actual = set(output.get("response_list", []))
         assert actual == expected, f"response list mismatch: actual={sorted(actual)} expected={sorted(expected)}"
@@ -75,6 +75,14 @@ class TestOutcome:
     def test_reasons_include_expected_evidence(self):
         output = load_output()
         actual = by_id(output)
+        for mid, groups in GT.get("reason_evidence_any", {}).items():
+            reason = actual.get(mid, {}).get("reason", "").lower()
+            missing = [
+                alternatives
+                for alternatives in groups
+                if not any(word.lower() in reason for word in alternatives)
+            ]
+            assert not missing, f"reason for {mid} missing semantic evidence groups {missing}: {reason}"
         for mid, keywords in GT.get("reason_keywords", {}).items():
             reason = actual.get(mid, {}).get("reason", "").lower()
             missing = [word for word in keywords if word.lower() not in reason]

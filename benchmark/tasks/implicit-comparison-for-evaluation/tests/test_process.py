@@ -22,4 +22,8 @@ class TestProcess:
     def test_dimensions_carry_source_evidence(self):
         for dim in data()["dimensions"]:
             evidence = dim.get("evidence", [])
-            assert evidence and all(":" in item for item in evidence)
+            assert evidence
+            assert all(
+                isinstance(item, (str, dict)) and bool(item)
+                for item in evidence
+            )

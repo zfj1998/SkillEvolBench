@@ -2426,6 +2426,11 @@ def reproduce_e6_ls3_action_identity(
 
     expected_source_by_id: dict[str, str] = {}
     for action_id, spec in ground_truth.get("expected_fields", {}).items():
+        if spec.get("source_message_id"):
+            expected_source_by_id[str(action_id)] = str(
+                spec["source_message_id"]
+            )
+            continue
         terms = [str(term).lower() for term in spec.get("description_terms", [])]
         candidates = [
             str(message["id"])
@@ -2467,10 +2472,29 @@ def reproduce_e6_ls3_action_identity(
                 })
             spec = ground_truth["expected_fields"][expected_id]
             for field in ("assignee", "deadline", "status"):
-                if field in spec:
+                allowed_values = (
+                    spec.get("allowed_assignees")
+                    if field == "assignee"
+                    else None
+                )
+                if field in spec or allowed_values is not None:
+                    expected_value = (
+                        allowed_values if allowed_values is not None else spec[field]
+                    )
+                    exact_match = (
+                        any(
+                            compact(actual.get(field)) == compact(value)
+                            for value in allowed_values
+                        )
+                        if allowed_values is not None
+                        else actual.get(field) == spec[field]
+                    )
                     semantic_match = (
-                        semantically_matches_assignee(
-                            spec[field], actual.get(field)
+                        any(
+                            semantically_matches_assignee(
+                                value, actual.get(field)
+                            )
+                            for value in (allowed_values or [spec[field]])
                         )
                         if field == "assignee"
                         else actual.get(field) == spec[field]
@@ -2478,9 +2502,9 @@ def reproduce_e6_ls3_action_identity(
                     field_checks.append({
                         "source_message_id": source_id,
                         "field": field,
-                        "expected": spec[field],
+                        "expected": expected_value,
                         "actual": actual.get(field),
-                        "matched": actual.get(field) == spec[field],
+                        "matched": exact_match,
                         "semantic_matched": semantic_match,
                     })
         rows.append({
@@ -2515,7 +2539,7 @@ def reproduce_e6_ls3_action_identity(
             "instead of the verifier-only action ID vocabulary."
         ),
         "instruction_only_requires_stable_action_id": True,
-        "verifier_indexes_actions_by_exact_hidden_id": True,
+        "verifier_indexes_actions_by_exact_hidden_id": False,
         "expected_source_by_hidden_id": expected_source_by_id,
         "models": rows,
         "ground_truth_path": str(ground_truth_path.resolve()),
@@ -3060,7 +3084,7 @@ def reproduce_e4_ls3_missing_markers(
                 "empty string" if value == ""
                 else "JSON null" if value is None
                 else str(value)
-            ): str(value) in verifier_markers
+            ): value is None or str(value) in verifier_markers
             for value in instruction_examples
         },
         "model_marker": actual_marker,

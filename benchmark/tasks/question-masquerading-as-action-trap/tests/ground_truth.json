@@ -7,7 +7,12 @@
   ],
   "expected_fields": {
     "act_revisit_targets": {
-      "assignee": "bob",
+      "source_message_id": "q02",
+      "allowed_assignees": [
+        "bob",
+        "product",
+        "product team"
+      ],
       "deadline": null,
       "status": "open",
       "description_terms": [
@@ -16,7 +21,12 @@
       ]
     },
     "act_northstar_call": {
-      "assignee": "diana",
+      "source_message_id": "q04",
+      "allowed_assignees": [
+        "diana",
+        "customer_success",
+        "customer success"
+      ],
       "deadline": null,
       "status": "open",
       "description_terms": [
@@ -25,6 +35,7 @@
       ]
     },
     "act_notes_cleanup": {
+      "source_message_id": "q06",
       "assignee": "fatima",
       "deadline": "2026-04-24",
       "status": "open",

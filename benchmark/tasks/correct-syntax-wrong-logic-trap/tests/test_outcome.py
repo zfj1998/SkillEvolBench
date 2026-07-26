@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import subprocess
 import sys
@@ -59,11 +60,18 @@ def expected_counts() -> dict[str, object]:
     def valid_amount(value: object) -> bool:
         if value is None:
             return False
-        text = str(value).strip().replace("$", "").replace(",", "")
+        text = str(value).strip().replace("$", "")
         if not text:
             return False
+        # Commas are valid only as conventional three-digit thousands
+        # separators.  Strings such as "1,2,3" are malformed data, not 123.
+        if "," in text:
+            if not re.fullmatch(r"[+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?", text):
+                return False
+        elif not re.fullmatch(r"[+-]?\d+(?:\.\d+)?", text):
+            return False
         try:
-            amount = Decimal(text)
+            amount = Decimal(text.replace(",", ""))
         except InvalidOperation:
             return False
         return amount > 0
@@ -126,7 +134,7 @@ def run():
         [
             ("script_succeeds", lambda: run_script()[0].returncode == 0 or (_ for _ in ()).throw(AssertionError(run_script()[0].stderr[:400]))),
             ("logical_total_is_correct", lambda: run_script()[1]["logical_customer_total"] == expected["logical_customer_total"] == 1000 or (_ for _ in ()).throw(AssertionError("logical total mismatch"))),
-            ("active_count_uses_valid_orders_only", lambda: run_script()[1]["active_customer_count"] == expected["active_customer_count"] == 706 or (_ for _ in ()).throw(AssertionError("active customer count mismatch"))),
+            ("active_count_uses_valid_orders_only", lambda: run_script()[1]["active_customer_count"] == expected["active_customer_count"] == 700 or (_ for _ in ()).throw(AssertionError("active customer count mismatch"))),
             ("inactive_count_reconciles", lambda: run_script()[1]["inactive_customer_count"] == expected["inactive_customer_count"] and run_script()[1]["active_customer_count"] + run_script()[1]["inactive_customer_count"] == run_script()[1]["logical_customer_total"] or (_ for _ in ()).throw(AssertionError("inactive count mismatch"))),
             ("active_customer_ids_match_ground_truth", lambda: run_script()[1]["active_customer_ids"] == expected["active_customer_ids"] or (_ for _ in ()).throw(AssertionError("active id set mismatch"))),
         ],

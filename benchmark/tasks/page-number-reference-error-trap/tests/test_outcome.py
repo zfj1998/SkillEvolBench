@@ -37,7 +37,15 @@ class TestOutcomeHidden(unittest.TestCase):
     def test_calls_out_incorrect_internal_page_reference(self):
         report = run_script()
         self.assertIn("23", report)
-        self.assertRegex(report, r"not the latest|incorrect|points to page 23")
+        flaw_terms = (
+            r"incorrect|misleading|outdated|prior year|fy2022|not the latest|"
+            r"point(?:s|ed)? to"
+        )
+        self.assertRegex(
+            report,
+            rf"(?:{flaw_terms}).{{0,100}}(?:page\s*)?23|"
+            rf"(?:page\s*)?23.{{0,100}}(?:{flaw_terms})",
+        )
 
 
 if __name__ == "__main__":

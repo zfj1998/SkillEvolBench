@@ -562,13 +562,23 @@ official verifier in a fresh isolated container.
 
     @staticmethod
     def _strict_frontmatter(content: str) -> dict[str, Any]:
+        """Validate the same frontmatter shape that native discovery consumes.
+
+        ``parse_skill_md_frontmatter_text`` deliberately has a conservative
+        line-oriented fallback for otherwise valid native skills whose
+        one-line description contains an unquoted colon.  Reflection used to
+        call ``yaml.safe_load`` directly, so a candidate could be rejected here
+        even though the next task's native discovery would load it correctly.
+        Keep the security/schema checks below, but use the shared parser so the
+        producer gate and consumer agree on what a usable SKILL.md is.
+        """
+        from skillevolbench.discovery import parse_skill_md_frontmatter_text
+
         normalized = content.replace("\r\n", "\n")
-        if not normalized.startswith("---\n"):
-            raise ValueError("missing opening YAML delimiter")
-        end = normalized.find("\n---\n", 4)
-        if end < 0:
-            raise ValueError("missing closing YAML delimiter")
-        loaded = yaml.safe_load(normalized[4:end])
+        loaded = parse_skill_md_frontmatter_text(
+            normalized,
+            source="reflection candidate SKILL.md",
+        )
         if not isinstance(loaded, dict):
             raise ValueError("frontmatter must be a mapping")
         unknown = set(loaded) - _ALLOWED_FRONTMATTER_KEYS

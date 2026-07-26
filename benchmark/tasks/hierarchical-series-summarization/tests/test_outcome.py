@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -31,6 +32,24 @@ def text_blocks(obj):
         blocks.append(obj["overall_summary"]["text"])
     return blocks
 
+
+def concept_present(term, text):
+    patterns = {
+        "validation": r"\bvalidat(?:e|ed|es|ing|ion)\b",
+        "skin": r"\bskin\b|\bdermatolog\w*\b",
+    }
+    return bool(re.search(patterns.get(term.lower(), re.escape(term.lower())), text))
+
+
+def group_summary_for(obj, theme):
+    for item in obj.get("group_summaries", []):
+        text = item.get("text", "").lower()
+        selected = " ".join(item.get("selected_sections", [])).lower()
+        if theme in text or f"_{theme}_" in selected:
+            return item
+    return None
+
+
 class TestOutcome:
     def test_output_exists(self):
         assert OUTPUT.exists()
@@ -52,7 +71,7 @@ class TestOutcome:
     def test_required_concepts_present(self):
         joined = " ".join(text_blocks(data())).lower()
         for term in GT["required_terms"]:
-            assert term.lower() in joined, term
+            assert concept_present(term, joined), term
 
     def test_forbidden_terms_absent(self):
         joined = " ".join(text_blocks(data())).lower()
@@ -87,5 +106,5 @@ class TestOutcome:
         elif GT["shape"] == "hierarchical":
             assert len(obj["article_summaries"]) == 5
             assert len(obj["group_summaries"]) == 2
-            assert "method" in obj["group_summaries"][0]["text"].lower()
-            assert "application" in obj["group_summaries"][1]["text"].lower()
+            assert group_summary_for(obj, "method") is not None
+            assert group_summary_for(obj, "application") is not None

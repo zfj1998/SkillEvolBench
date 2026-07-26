@@ -73,7 +73,17 @@ class TestOutcome:
     def test_rationales_explain_context_use(self):
         output = load_output()
         replies = {reply["email_id"]: reply for reply in output.get("replies", [])}
+        semantic_alternatives = {
+            "scope": ("scope", "staged", "phased", "safe_friday_scope"),
+            "timeline": ("timeline", "friday", "three months", "schedule"),
+        }
         for mid, keywords in GT.get("rationale_keywords", {}).items():
             rationale = replies.get(mid, {}).get("rationale", "").lower()
             for keyword in keywords:
-                assert keyword.lower() in rationale, f"rationale for {mid} missing {keyword!r}: {rationale}"
+                alternatives = semantic_alternatives.get(
+                    keyword.lower(), (keyword.lower(),)
+                )
+                assert any(term in rationale for term in alternatives), (
+                    f"rationale for {mid} missing semantic evidence for "
+                    f"{keyword!r}: {rationale}"
+                )

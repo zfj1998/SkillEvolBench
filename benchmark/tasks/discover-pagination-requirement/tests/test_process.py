@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import ast
+import json
 import sys
 from pathlib import Path
 
@@ -10,25 +10,35 @@ SKILLSBENCH_ROOT = Path(__file__).resolve().parents[4]
 if str(SKILLSBENCH_ROOT) not in sys.path:
     sys.path.insert(0, str(SKILLSBENCH_ROOT))
 
-from verifier_lib.runtime import emit_report, print_report, read_text, run_checks
+from verifier_lib.runtime import emit_report, load_module, print_report, run_checks
 
 SOURCE = PROJECT / "solution.py"
 
 
-def _source():
-    return read_text(SOURCE)
+def _run_solution():
+    for path in (PROJECT / "output.json", PROJECT / "trace.json"):
+        if path.exists():
+            path.unlink()
+    module = load_module("e2_ls3_t4_process_runtime", SOURCE)
+    module.main()
+    output = json.loads((PROJECT / "output.json").read_text(encoding="utf-8"))
+    trace = json.loads((PROJECT / "trace.json").read_text(encoding="utf-8"))
+    return output, trace["trace"]
 
 
 def _reads_pagination_signal():
-    text = _source()
-    assert "has_more" in text or "total" in text, "expected pagination signal handling"
-    return "pagination signal handled"
+    output, trace = _run_solution()
+    assert len(output) == 120
+    assert len(trace) >= 5
+    assert all("has_more" in row and "total" in row for row in trace)
+    return "pagination signals are followed to completion"
 
 
 def _loops_until_complete():
-    tree = ast.parse(_source())
-    assert any(isinstance(node, (ast.For, ast.While)) for node in ast.walk(tree)), "expected a loop for complete retrieval"
-    return "loop found"
+    output, trace = _run_solution()
+    assert [row["id"] for row in output] == list(range(1, 121))
+    assert max(row["page"] for row in trace) >= 5
+    return "runtime retrieves every page in API order"
 
 
 def run():

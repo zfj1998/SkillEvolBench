@@ -138,15 +138,7 @@ def _recommend_single_meeting(context: dict) -> dict:
     if not candidates:
         return {"recommendations": [], "scheduled_meetings": []}
 
-    zones = {participant["timezone"] for participant in participants}
-    if {"America/New_York", "Europe/London"}.issubset(zones) and not buffer_minutes:
-        def sort_key(candidate):
-            start, _score, _breakdown = candidate
-            ny_time = start.astimezone(ZoneInfo("America/New_York"))
-            return (abs((ny_time.hour * 60 + ny_time.minute) - 10 * 60), start)
-        candidates.sort(key=sort_key)
-    else:
-        candidates.sort(key=lambda item: item[0])
+    candidates.sort(key=lambda item: item[0])
 
     start, score, breakdown = candidates[0]
     recommendation = {

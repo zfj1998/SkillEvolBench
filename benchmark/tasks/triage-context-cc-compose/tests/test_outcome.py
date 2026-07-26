@@ -73,7 +73,17 @@ class TestOutcome:
     def test_rationales_explain_context_use(self):
         output = load_output()
         replies = {reply["email_id"]: reply for reply in output.get("replies", [])}
-        for mid, keywords in GT.get("rationale_keywords", {}).items():
+        for mid, keyword_groups in GT.get("rationale_keywords", {}).items():
             rationale = replies.get(mid, {}).get("rationale", "").lower()
-            for keyword in keywords:
-                assert keyword.lower() in rationale, f"rationale for {mid} missing {keyword!r}: {rationale}"
+            for keyword_group in keyword_groups:
+                alternatives = (
+                    keyword_group
+                    if isinstance(keyword_group, list)
+                    else [keyword_group]
+                )
+                assert any(
+                    keyword.lower() in rationale for keyword in alternatives
+                ), (
+                    f"rationale for {mid} missing one of "
+                    f"{alternatives!r}: {rationale}"
+                )

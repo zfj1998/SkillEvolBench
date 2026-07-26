@@ -39,7 +39,7 @@ class TestOutcome:
 
     def test_non_fake_problem_types_are_exercised(self):
         labels = {item["label"] for item in audit()["results"]}
-        assert {"invalid", "misrepresented", "selective"}.issubset(labels), labels
+        assert {"misrepresented", "selective"}.issubset(labels), labels
 
     def test_reasons_are_specific(self):
         for cid in GT["problem_ids"]:

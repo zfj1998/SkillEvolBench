@@ -75,6 +75,11 @@ def _run():
     return result, payload
 
 
+def _records_by_key(records, key):
+    """Treat JSON array order as presentation unless the contract says otherwise."""
+    return {item[key]: item for item in records}
+
+
 def run():
     merged, category_totals = _expected()
     public = run_checks("public", [
@@ -84,8 +89,26 @@ def run():
     hidden = run_checks("hidden", [
         ("coverage_above_90pct", lambda: len(_run()[1].get("records", [])) >= int(len(merged) * 0.9) or (_ for _ in ()).throw(AssertionError("merged coverage below 90%"))),
         ("no_fanout", lambda: _run()[1].get("row_count", 0) == len(merged) or (_ for _ in ()).throw(AssertionError("fanout detected in merged dataset"))),
-        ("category_totals_correct", lambda: _run()[1].get("category_totals") == category_totals.to_dict(orient="records") or (_ for _ in ()).throw(AssertionError("category totals incorrect"))),
-        ("records_match_ground_truth", lambda: _run()[1].get("records") == merged.to_dict(orient="records") or (_ for _ in ()).throw(AssertionError("multi-source merge output incorrect"))),
+        (
+            "category_totals_correct",
+            lambda: _records_by_key(
+                _run()[1].get("category_totals", []), "segment"
+            )
+            == _records_by_key(category_totals.to_dict(orient="records"), "segment")
+            or (_ for _ in ()).throw(AssertionError("category totals incorrect")),
+        ),
+        (
+            "records_match_ground_truth",
+            lambda: _records_by_key(
+                _run()[1].get("records", []), "canonical_company"
+            )
+            == _records_by_key(
+                merged.to_dict(orient="records"), "canonical_company"
+            )
+            or (_ for _ in ()).throw(
+                AssertionError("multi-source merge output incorrect")
+            ),
+        ),
     ])
     return emit_report("E3-LS3-T6", public, hidden)
 

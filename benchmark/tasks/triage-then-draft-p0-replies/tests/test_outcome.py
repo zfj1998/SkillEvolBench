@@ -75,6 +75,14 @@ class TestOutcome:
     def test_reasons_include_expected_evidence(self):
         output = load_output()
         actual = by_id(output)
+        for mid, groups in GT.get("reason_evidence_any", {}).items():
+            reason = actual.get(mid, {}).get("reason", "").lower()
+            missing = [
+                alternatives
+                for alternatives in groups
+                if not any(word.lower() in reason for word in alternatives)
+            ]
+            assert not missing, f"reason for {mid} missing semantic evidence groups {missing}: {reason}"
         for mid, keywords in GT.get("reason_keywords", {}).items():
             reason = actual.get(mid, {}).get("reason", "").lower()
             missing = [word for word in keywords if word.lower() not in reason]
@@ -88,6 +96,8 @@ class TestOutcome:
         drafts = {draft["email_id"]: draft for draft in output.get("drafts", [])}
         assert set(drafts) == set(expected), f"draft IDs mismatch: {sorted(drafts)} vs {sorted(expected)}"
         for mid, spec in expected.items():
+            assert set(drafts[mid].get("to", [])) == set(spec.get("to", [])), f"draft to mismatch for {mid}"
+            assert set(drafts[mid].get("cc", [])) == set(spec.get("cc", [])), f"draft cc mismatch for {mid}"
             body = drafts[mid].get("body", "").lower()
             for keyword in spec.get("must_include", []):
                 assert keyword.lower() in body, f"draft for {mid} missing {keyword!r}: {body}"

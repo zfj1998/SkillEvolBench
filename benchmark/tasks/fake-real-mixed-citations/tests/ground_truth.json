@@ -12,7 +12,7 @@
     "R10": "fake",
     "R11": "misrepresented",
     "R12": "selective",
-    "R13": "invalid"
+    "R13": "fake"
   },
   "problem_ids": [
     "R08",
@@ -25,8 +25,7 @@
   "required_problem_labels": [
     "fake",
     "misrepresented",
-    "selective",
-    "invalid"
+    "selective"
   ],
   "reason_terms": {
     "R08": [
@@ -65,7 +64,8 @@
       "limitation"
     ],
     "R13": [
-      "invalid",
+      "fake",
+      "fabricated",
       "missing",
       "not found",
       "table",

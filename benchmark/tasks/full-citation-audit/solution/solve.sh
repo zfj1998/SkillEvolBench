@@ -26,7 +26,7 @@ def classify_citation(citation: dict, source: dict | None) -> dict:
         return {"label": "misrepresented", "checks": ["existence", "content_match", "attribution"], "reason": "Misrepresented: the source does not support that attribution as stated; it is not a self-reported significant universal finding."}
     caveat_rules = [
         ("MED_NATURE_SKIN", ["visual", "image"]),
-        ("MED_JAMA_DR", ["validation", "fundus", "photographs"]),
+        ("MED_JAMA_DR", ["validation", "fundus", "photographs", "retinal images"]),
         ("REMOTE_NATURE_HYBRID", ["trip.com", "randomized"]),
     ]
     sid = str(citation.get("source_id", ""))

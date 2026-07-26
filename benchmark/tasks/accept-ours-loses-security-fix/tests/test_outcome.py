@@ -2,6 +2,7 @@
 import os
 import sys
 import sqlite3
+import ast
 import pytest
 
 PROJECT_DIR = os.path.join(os.path.dirname(__file__), "..", "project")
@@ -69,18 +70,34 @@ class TestHiddenSecurity:
         with open(db_path) as f:
             source = f.read()
 
-        # Check for string formatting in SQL (f-strings or .format)
-        import re
-        # f-string SQL patterns
-        fstring_sql = re.findall(r'execute\s*\(\s*f["\']', source)
-        format_sql = re.findall(r'execute\s*\([^)]*\.format\(', source)
-        concat_sql = re.findall(r'execute\s*\([^)]*\+', source)
-        pct_sql = re.findall(r'execute\s*\([^)]*%\s', source)
+        # Inspect only execute()'s SQL argument.  The previous regex consumed
+        # through the parameter tuple and falsely rejected safe code such as
+        # execute("... LIKE ?", ("%" + query + "%",)).
+        tree = ast.parse(source)
+        unsafe_lines = []
+        for node in ast.walk(tree):
+            if not (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "execute"
+                and node.args
+            ):
+                continue
+            sql_arg = node.args[0]
+            unsafe = (
+                isinstance(sql_arg, (ast.JoinedStr, ast.BinOp))
+                or (
+                    isinstance(sql_arg, ast.Call)
+                    and isinstance(sql_arg.func, ast.Attribute)
+                    and sql_arg.func.attr == "format"
+                )
+            )
+            if unsafe:
+                unsafe_lines.append(node.lineno)
 
-        unsafe_patterns = fstring_sql + format_sql + concat_sql + pct_sql
-        assert len(unsafe_patterns) == 0, (
-            f"Found {len(unsafe_patterns)} unsafe SQL patterns (string formatting). "
-            f"All queries should use parameterized queries (?)"
+        assert not unsafe_lines, (
+            "SQL text is constructed dynamically at execute() lines "
+            f"{unsafe_lines}; pass values through DB-API parameters instead"
         )
 
     def test_h3_special_chars_in_search_safe(self):

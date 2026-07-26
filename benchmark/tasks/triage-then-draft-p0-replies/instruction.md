@@ -33,3 +33,18 @@ Write `output/triage.json` as JSON with this schema:
 
 Classify every source email exactly once. Rank lower `rank` values first, with P0 before P1 before P2 before P3, and include concrete evidence in `reason`. If the task asks for replies, include only the messages that truly need responses in `response_list` and draft concise context-aware replies in `drafts`.
 
+Use these priority definitions:
+
+- **P0**: an active production/security incident, a same-day
+  customer/signature blocker, or another issue requiring immediate action;
+- **P1**: a material near-term deliverable or deadline that is important but is
+  not an active critical incident;
+- **P2**: useful status, timeline, or background information with no immediate
+  action;
+- **P3**: low-impact administrative, social, facilities, promotional, or
+  newsletter content.
+
+For this task, `response_list` must contain exactly the P0 messages and every P0
+message must have one draft. Use `mail/thread_context.md` for the current owner,
+reply routing, action, and ETA; do not invent those details from the subject
+line alone.

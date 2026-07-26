@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "release": "SkillEvolBench v1.1",
+  "status": "candidate_pending_container_reference_audit_and_model_regression",
+  "method": {
+    "inputs": [
+      "Fable and Opus 4.8 self-generated T1-T6 verifier records",
+      "downloaded model trajectories and final task workspaces",
+      "generated SKILL.md files and reflection audit results",
+      "task instructions, fixtures, public tests, hidden outcome tests, process tests, and official solutions"
+    ],
+    "decision_rule": [
+      "A model failure alone is not evidence that a task is defective.",
+      "A task is marked defective only after reproducing a contradiction, an impossible constraint set, an undeclared arbitrary tie-break, or a verifier rejection of a semantically valid implementation.",
+      "A process check is rewritten when it measures source spelling or file placement although the task contract asks for runtime behavior.",
+      "A skill read is evidence of utilization, not causal usefulness; causal usefulness requires matched no-skill evidence."
+    ]
+  },
+  "summary": {
+    "held_out_tasks_total": 90,
+    "outcome_or_contract_repairs": 26,
+    "runtime_process_verifier_rewrites_without_known_outcome_contract_bug": 23,
+    "unchanged_held_out_tasks": 41,
+    "v1_instances_replaced_instead_of_minimally_patched": 2,
+    "whole_skill_families_retired": 0
+  },
+  "release_decision": {
+    "retain": "All 30 skill families remain useful evaluation targets.",
+    "replace": [
+      "E6-LS4-T5",
+      "E6-LS4-T6"
+    ],
+    "reason": "The original scheduling instances measured hidden arbitrary choices, and E6-LS4-T6 had no positive-length common working-hours intersection. The capability is valuable, but the original instances are not.",
+    "low_transfer_identifiability": "Tasks whose advanced requirement is fully stated only in the current T5/T6 instruction remain useful as execution tests but must not be presented as proof of historical skill transfer without a matched no-skill control."
+  },
+  "reflection_protocol_fix": {
+    "scope": "global",
+    "observed_v1_behavior": {
+      "sig_fable_rejected_reflections": 7,
+      "opus_4_8_rejected_reflections": 20,
+      "dominant_reason": "skill_frontmatter_invalid:<slug>"
+    },
+    "root_cause": "The runtime skill parser accepted valid YAML frontmatter constructs that the reflection gate rejected with a stricter ad-hoc parser. Opus was affected more often because its descriptions more often contained unquoted colons.",
+    "v1_1_change": "Use the shared runtime frontmatter parser, then validate the allowed keys and value types. Add regression coverage for an unquoted colon in a YAML scalar.",
+    "scientific_effect": "This removes a benchmark-induced model-style penalty from skill creation. It does not retroactively change v1 scores."
+  },
+  "outcome_or_contract_repairs": [
+    {
+      "task_id": "E1-LS4-T5",
+      "issue": "Hidden monkeypatch tests replaced one database binding while starter-style imported aliases retained the old object; source scans also required particular files or tokens.",
+      "v1_1_change": "Patch both live bindings and judge observable HTTP behavior across failure and recovery."
+    },
+    {
+      "task_id": "E1-LS5-T5",
+      "issue": "A broad regex rejected safe parameterized SQL because it scanned non-SQL arguments and surrounding source text.",
+      "v1_1_change": "Inspect the SQL argument structurally and reject actual interpolation rather than unrelated literals."
+    },
+    {
+      "task_id": "E2-LS1-T6",
+      "issue": "The public test required three results even though all four fixtures were valid, while several hidden process checks searched source strings instead of exercising validation and fallback behavior.",
+      "v1_1_change": "Align the expected output with all four valid inputs and test call order, rejection, normalization, and fallback at runtime."
+    },
+    {
+      "task_id": "E3-LS2-T6",
+      "issue": "A semantically correct result could fail because the verifier compared full record dictionaries and rejected permitted audit fields.",
+      "v1_1_change": "Compare the required semantic projection and preserve the intended sort, deduplication, and aggregate checks."
+    },
+    {
+      "task_id": "E3-LS3-T6",
+      "issue": "Category totals were compared as a raw array with an undeclared order.",
+      "v1_1_change": "Compare records by their semantic category key."
+    },
+    {
+      "task_id": "E3-LS4-T6",
+      "issue": "The verifier required exact nested-dictionary equality and rejected additional null-audit information allowed by the instruction.",
+      "v1_1_change": "Require the expected recursive subset while allowing extra audit fields."
+    },
+    {
+      "task_id": "E3-LS5-T5",
+      "issue": "A permissive numeric parser treated malformed comma-separated values such as 1,2,3 as 123 and made the hidden expected count 706 instead of the generator-consistent 700.",
+      "v1_1_change": "Use strict numeric syntax, document it, and align the official solution and expected count to 700."
+    },
+    {
+      "task_id": "E4-LS1-T5",
+      "issue": "The instruction and verifier disagreed about the output location.",
+      "v1_1_change": "Use the instruction-defined output path consistently."
+    },
+    {
+      "task_id": "E4-LS2-T6",
+      "issue": "Human-readable DOCX values such as $125,000 failed a raw-token check for 125000, and process checks ignored helper modules.",
+      "v1_1_change": "Parse formatted numeric surfaces and inspect the executed pipeline plus its helpers."
+    },
+    {
+      "task_id": "E4-LS3-T5",
+      "issue": "The task allowed UNKNOWN, MISSING, empty, or null markers, but the hidden verifier accepted a different narrow literal set.",
+      "v1_1_change": "Accept the markers promised by the instruction while still rejecting hallucinated values."
+    },
+    {
+      "task_id": "E4-LS4-T5",
+      "issue": "Correct page-reference semantics failed a fixed-tense wording regex.",
+      "v1_1_change": "Check the page numbers and correction relationship semantically with tolerant phrasing."
+    },
+    {
+      "task_id": "E4-LS4-T6",
+      "issue": "Correct policy changes failed when formatting used an en dash or 'per month' rather than the verifier's exact tokens.",
+      "v1_1_change": "Normalize equivalent numeric, time-range, and wording surfaces."
+    },
+    {
+      "task_id": "E5-LS1-T4",
+      "issue": "The banned-word check rejected a report that explicitly said a noisy semiconductor source was screened out.",
+      "v1_1_change": "Ban actual noise IDs and titles in selected evidence, not generic topical words in an audit explanation."
+    },
+    {
+      "task_id": "E5-LS3-T4",
+      "issue": "The required fact-check label taxonomy was hidden from the task.",
+      "v1_1_change": "Publish the valid, misrepresented, and fake definitions."
+    },
+    {
+      "task_id": "E5-LS3-T5",
+      "issue": "The hidden citation taxonomy treated a supported source as invalid and required labels not fully identifiable from the prompt.",
+      "v1_1_change": "Publish the taxonomy and align the ground truth with source authenticity and support."
+    },
+    {
+      "task_id": "E5-LS3-T6",
+      "issue": "A valid source was incorrectly excluded from the full audit contract.",
+      "v1_1_change": "Include S02 as valid and require a complete, evidence-grounded audit."
+    },
+    {
+      "task_id": "E5-LS4-T6",
+      "issue": "Correct hierarchy concepts failed narrow lexical checks such as validation versus validated and skin versus dermatology.",
+      "v1_1_change": "Use word-family and theme groups for the required concepts."
+    },
+    {
+      "task_id": "E6-LS1-T5",
+      "issue": "The hidden urgency mapping conflicted with the visible P1 definition and mixed business impact with emotional tone.",
+      "v1_1_change": "Publish P0-P3 definitions and evaluate business-impact evidence consistently."
+    },
+    {
+      "task_id": "E6-LS1-T6",
+      "issue": "The verifier required an unpublished exact P0 set, response list, owners, and ETA phrases.",
+      "v1_1_change": "Publish the priority contract and require replies only for P0; provide the owner, CC, and ETA facts in the visible thread context."
+    },
+    {
+      "task_id": "E6-LS2-T5",
+      "issue": "A rationale containing Friday, the three-month estimate, staged delivery, and calendar constraints failed because it omitted the literal word timeline.",
+      "v1_1_change": "Judge the required context facts and acceptable friendly alternatives semantically."
+    },
+    {
+      "task_id": "E6-LS2-T6",
+      "issue": "Correct routing and refusal to over-promise failed fixed phrases such as 'not promise' and 'thread context'.",
+      "v1_1_change": "Judge recipient, CC, evidence, and commitment semantics rather than fixed wording."
+    },
+    {
+      "task_id": "E6-LS3-T5",
+      "issue": "The hidden action-ID vocabulary and speaker-name requirement contradicted the task's allowed team/role assignees.",
+      "v1_1_change": "Align by source message and accept the permitted assignee forms."
+    },
+    {
+      "task_id": "E6-LS3-T6",
+      "issue": "The verifier relied on unpublished action IDs and raw ordering even when the extracted actions matched their source messages.",
+      "v1_1_change": "Align actions by source, then check assignee, deadline, status, and follow-up semantics."
+    },
+    {
+      "task_id": "E6-LS4-T5",
+      "issue": "Several DST-safe slots were equally feasible, but the verifier required a hidden slot ID and arbitrary first-item tie-break.",
+      "v1_1_change": "Retire the v1 scoring contract; generate stable slot IDs and publish the earliest-UTC tie-break."
+    },
+    {
+      "task_id": "E6-LS4-T6",
+      "issue": "The original four-person instance had no positive-length common working-hours intersection, yet the verifier required hard-coded times and order.",
+      "v1_1_change": "Replace the instance with per-meeting attendee sets, feasible windows, and a published lexicographic optimization order."
+    },
+    {
+      "task_id": "E6-LS5-T5",
+      "issue": "The verifier rejected assignee 'team' although allowed by the instruction, and its process test searched for variable names and an unrelated example phrase.",
+      "v1_1_change": "Accept instruction-permitted assignees and test actual question-versus-action behavior."
+    }
+  ],
+  "runtime_process_verifier_rewrites_without_known_outcome_contract_bug": [
+    "E1-LS1-T5",
+    "E1-LS1-T6",
+    "E2-LS1-T5",
+    "E2-LS2-T5",
+    "E2-LS2-T6",
+    "E2-LS3-T4",
+    "E2-LS3-T5",
+    "E2-LS3-T6",
+    "E2-LS4-T6",
+    "E2-LS5-T4",
+    "E2-LS5-T5",
+    "E2-LS5-T6",
+    "E3-LS1-T6",
+    "E3-LS4-T5",
+    "E3-LS5-T4",
+    "E3-LS5-T6",
+    "E4-LS2-T4",
+    "E4-LS5-T4",
+    "E4-LS5-T6",
+    "E5-LS1-T5",
+    "E5-LS2-T4",
+    "E5-LS2-T5",
+    "E5-LS2-T6"
+  ],
+  "validation_gates": {
+    "repository_tests": "passed: 393",
+    "modified_python_compiles": "passed",
+    "modified_json_parses": "passed",
+    "diff_check": "passed",
+    "local_official_solution_checks": "passed where host dependencies were available",
+    "container_reference_audit": "pending",
+    "opus_v1_1_self_generated_regression": "pending",
+    "final_release_split": "pending"
+  }
+}

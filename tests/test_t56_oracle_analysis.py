@@ -1539,7 +1539,7 @@ def test_e6_ls3_t5_reproduction_accepts_public_team_assignees(
     assert row["source_aligned_actions_found"] == 3
     assert row["expected_actions"] == 3
     assert row["exact_hidden_id_matches"] == 2
-    assert row["core_fields_matched"] == 7
+    assert row["core_fields_matched"] == 9
     assert row["core_fields_semantically_matched"] == 9
     assert row["core_fields_checked"] == 9
     assert row["id_mismatches"] == [{
@@ -1563,15 +1563,22 @@ def test_e4_ls3_reproduction_exposes_missing_marker_contract_conflict(
         task_root, artifact_root
     )
 
-    assert result["verifier_accepted_strings"] == ["N/A", "TODO", "null"]
+    assert result["verifier_accepted_strings"] == [
+        "",
+        "MISSING",
+        "N/A",
+        "TODO",
+        "UNKNOWN",
+        "null",
+    ]
     assert result["instruction_example_acceptance"] == {
-        "UNKNOWN": False,
-        "MISSING": False,
-        "empty string": False,
-        "JSON null": False,
+        "UNKNOWN": True,
+        "MISSING": True,
+        "empty string": True,
+        "JSON null": True,
     }
     assert result["model_marker"] == "MISSING"
-    assert result["model_marker_accepted"] is False
+    assert result["model_marker_accepted"] is True
     assert result["verifier_uses_str_value_membership"] is True
 
 
@@ -1625,7 +1632,8 @@ def test_e4_ls2_reproduction_separates_commas_from_numeric_correctness(
     assert row["integer_strings_present_after_comma_normalization"] == 12
     assert row["helpers_implement_profit_and_add_table"] is True
     assert result["instruction_requires_raw_unformatted_integer_strings"] is False
-    assert result["outcome_verifier_uses_assert_in_str_value"] is True
+    assert result["outcome_verifier_uses_assert_in_str_value"] is False
+    assert result["process_verifier_reads_pipeline_only"] is False
 
 
 def test_e4_ls4_t5_reproduction_exposes_tense_sensitive_hidden_regex(
@@ -2234,17 +2242,8 @@ def test_e5_ls3_t5_reproduction_exposes_unidentifiable_fake_invalid_boundary(
         ],
     )
 
-    assert result["absent_source_expected_label_counts"] == {
-        "fake": 3,
-        "invalid": 1,
-    }
-    assert result["same_source_id_with_conflicting_hidden_labels"] == [
-        {
-            "source_id": "MED_NATURE_TABLE3_DEPLOYMENT",
-            "citation_ids": ["R09", "R13"],
-            "expected_labels": ["fake", "invalid"],
-        }
-    ]
+    assert result["absent_source_expected_label_counts"] == {"fake": 4}
+    assert result["same_source_id_with_conflicting_hidden_labels"] == []
     assert result["models"][0]["missing_registry_labels_are_consistent"] is True
     assert result["article_claim_label_word_leak"]["R10"] == ["fake"]
     assert result["article_claim_label_word_leak"]["R13"] == ["invalid"]
@@ -2292,14 +2291,8 @@ def test_e5_ls3_t6_reproduction_separates_semantics_from_token_contract(
     assert result["s02_claim_preserves_image_scope"] is True
     assert result["s02_claim_makes_universal_or_all_settings_claim"] is False
     row = result["models"][0]
-    assert row["exact_label_count"] == 14
-    assert row["label_mismatches"] == [
-        {
-            "citation_id": "S02",
-            "expected": "selective",
-            "actual": "valid",
-        }
-    ]
+    assert row["exact_label_count"] == 15
+    assert row["label_mismatches"] == []
     assert row["m02_official_reason_word_match"] is False
     assert row["m02_semantic_topic_mismatch_match"] is True
     assert row["policy_checks_manifest_authenticity_semantics"] is True

@@ -4,7 +4,7 @@ import subprocess
 import pytest
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / 'project'
-OUT = ROOT/'output.json'
+OUT = PROJECT / 'output.json'
 @pytest.fixture(scope='module')
 def data():
     if OUT.exists():

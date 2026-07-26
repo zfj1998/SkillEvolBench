@@ -1,4 +1,5 @@
 import runpy
+import re
 import shutil
 import unittest
 from pathlib import Path
@@ -30,13 +31,13 @@ class TestOutcomeHidden(unittest.TestCase):
     def test_first_round_changes_are_covered(self):
         report = run_script()
         hits = sum(
-            token in report
-            for token in [
-                "60 days",
-                "10 am - 4 pm",
-                "$800",
-                "quarterly security briefings",
-                "$150/month",
+            bool(re.search(pattern, report))
+            for pattern in [
+                r"\b60 days\b",
+                r"\b10 am\s*[-\u2013\u2014]\s*4 pm\b",
+                r"\$800\b",
+                r"\bquarterly security briefings?\b",
+                r"\$150(?:/|\s+per\s+)month\b",
             ]
         )
         self.assertGreaterEqual(hits, 4)

@@ -200,6 +200,38 @@ def test_candidate_rejects_bad_native_skill_frontmatter(tmp_path: Path) -> None:
         )
 
 
+def test_candidate_accepts_native_frontmatter_with_unquoted_colon(
+    tmp_path: Path,
+) -> None:
+    """The reflection gate must accept what native skill discovery accepts."""
+    baseline = load_baseline("selfgen_in_session_always")
+    reflection = InSessionSkillReflection(baseline=baseline, library=_Library())
+    candidate = tmp_path / "candidate.json"
+    slug = "systematic-error-diagnosis"
+    _write_candidate(
+        candidate,
+        {
+            f"{slug}/SKILL.md": (
+                "---\n"
+                f"name: {slug}\n"
+                "description: Use for diagnosis. Symptoms: repeated failures.\n"
+                "---\n\n"
+                "# Systematic error diagnosis\n"
+            )
+        },
+    )
+
+    patch = reflection.parse_candidate(
+        candidate,
+        task=TASK,
+        outcome=_outcome(),
+        mode="induction",
+    )
+
+    assert patch is not None
+    assert patch.target_skill_ids == [str(TASK.primary_skill)]
+
+
 def test_candidate_rejects_known_credential_literal(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

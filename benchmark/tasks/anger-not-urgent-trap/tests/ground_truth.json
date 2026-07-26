@@ -48,13 +48,13 @@
       "trap_lunch"
     ]
   ],
-  "reason_keywords": {
+  "reason_evidence_any": {
     "trap_vending": [
-      "Low business impact"
+      ["vending", "facilities", "low impact", "low business"]
     ],
     "trap_db_cert": [
-      "certificate",
-      "tomorrow"
+      ["certificate", "cert"],
+      ["tomorrow", "expires", "expiration"]
     ]
   },
   "expected_drafts": {},
