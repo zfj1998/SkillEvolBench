@@ -271,3 +271,8 @@ def test_prompt_discloses_feedback_but_forbids_tests_and_direct_writes() -> None
     assert "Do not look for or run verifier tests" in prompt
     assert "/logs/agent/self_reflection_patch.json" in prompt
     assert "Do not modify `/root/task`" in prompt
+    assert "Transfer-quality contract" in prompt
+    assert "different inputs" in prompt
+    assert "access to this verifier feedback" in prompt
+    assert "distributions/counts/sets" in prompt
+    assert "Examples must be synthetic or generalized" in prompt

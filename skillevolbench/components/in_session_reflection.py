@@ -297,6 +297,21 @@ SKILL.md before proposing a revision. `{allowed}` Every SKILL.md must start
 with YAML frontmatter containing at least `name` and a concrete `description`
 that says when the skill should be used.
 
+Transfer-quality contract:
+
+- Write for a future agent facing a related task with different inputs and no
+  access to this verifier feedback. Explain observable evidence, decision
+  principles, failure modes, and a reusable self-check.
+- Do not mention this benchmark, task/family IDs, verifier or grader behavior,
+  hidden/public tests, rewards, attempt numbers, ground truth, expected
+  distributions/counts/sets, failed-test names, or literal fixture/message IDs.
+- Never tell the future agent to target a known answer, copy a failure message,
+  or trust a judge-specific mapping. If feedback disclosed an expected label,
+  infer the semantic rule that justifies it from the visible task evidence.
+- Examples must be synthetic or generalized. Preserve the reasoning pattern,
+  not the instance answer. A candidate that teaches evaluation adaptation
+  instead of input-grounded transfer is not a useful skill.
+
 Security and state boundary:
 
 - Do not look for or run verifier tests. `/tests` and raw verifier logs are
