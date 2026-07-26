@@ -298,6 +298,7 @@ T4–T6 是 freeze 后 one-shot，不能把相邻 tier 当作相同预算下的�
 <div id="priorityPolicyFinding" style="margin-top:14px"></div>
 <div id="rationaleLexicalFinding" style="margin-top:14px"></div>
 <div id="labelPolicyFinding" style="margin-top:14px"></div>
+<div id="temporalFixtureFinding" style="margin-top:14px"></div>
 <div id="releaseDecision" style="margin-top:14px"></div>
 <div class="grid two" style="margin-top:14px">
  <div><h3>可解性 Gate</h3><div id="referenceGate"></div></div>
@@ -383,10 +384,12 @@ let LF=D.task_audit.rationale_lexical_gap_after_v1_1_4||{{}};
 $('rationaleLexicalFinding').innerHTML=Object.keys(LF).length?`<div class="card warn"><h3>v1.1@4 真实运行发现：正确决策不应输给隐藏理由词表</h3><p><b>${{esc(LF.observed_task||'E6-LS1-T1')}}</b>：${{esc(LF.observed_result_zh||LF.observed_result||'')}}</p><p>${{esc(LF.false_negative_proof_zh||LF.false_negative_proof||'')}}</p><p class="small"><b>系统修复：</b>${{esc(LF.systematic_change_zh||LF.systematic_change||'')}}</p></div>`:'';
 let LP=D.task_audit.label_policy_conflict_after_v1_1_5||{{}};
 $('labelPolicyFinding').innerHTML=Object.keys(LP).length?`<div class="card warn"><h3>v1.1@5 真实运行发现：公开政策与隐藏标签必须一致</h3><p><b>${{esc(LP.observed_task||'E6-LS1-T2')}}</b>：${{esc(LP.observed_result_zh||LP.observed_result||'')}}</p><p>${{esc(LP.systematic_audit_zh||LP.systematic_audit||'')}}</p><p>${{esc(LP.false_negative_proof_zh||LP.false_negative_proof||'')}}</p><p class="small"><b>系统修复：</b>${{esc(LP.systematic_change_zh||LP.systematic_change||'')}}</p></div>`:'';
+let TF=D.task_audit.temporal_fixture_conflict_after_v1_1_6||{{}};
+$('temporalFixtureFinding').innerHTML=Object.keys(TF).length?`<div class="card warn"><h3>v1.1@6 真实运行发现：时间线必须与标签语义一致</h3><p><b>${{esc(TF.observed_task||'E6-LS1-T2')}}</b>：${{esc(TF.observed_result_zh||TF.observed_result||'')}}</p><p>${{esc(TF.quality_problem_zh||TF.quality_problem||'')}}</p><p class="small"><b>系统修复：</b>${{esc(TF.systematic_change_zh||TF.systematic_change||'')}}</p></div>`:'';
 let RD=D.task_audit.release_decision||{{}},replaced=RD.replace||[];
 $('releaseDecision').innerHTML=`<div class="grid three"><div class="card good"><h3>保留：30 个 skill families</h3><p>${{esc(RD.retain_zh||RD.retain||'所有 family 均保留')}}</p></div><div class="card warn"><h3>替换：${{replaced.length}} 个具体实例</h3><p><b>${{esc(replaced.join(', ')||'无')}}</b></p><p class="small">${{esc(RD.reason_zh||RD.reason||'')}}</p></div><div class="card"><h3>整族退役：${{S.whole_skill_families_retired||0}}</h3><p>能力目标仍有评测价值；有缺陷的具体题采用修复或替换，不为维持题量而保留不可解实例。</p></div></div><p class="note">${{esc(RD.low_transfer_identifiability_zh||RD.low_transfer_identifiability||'')}}</p>`;
 let R=D.reference_audit;$('referenceGate').innerHTML=`<div class="card"><b class="big good">${{R.passed||0}}/${{R.total||90}}</b><p>${{R.all_reference_solutions_pass?'六个环境全部 15/15 strict pass':'尚未全部通过'}}</p><p class="small">${{esc(R.split||'v1.1@2')}} · Harbor oracle · real task container · unchanged verifier · AP group ${{esc(R.group_id||'—')}}</p></div>`;
-$('releaseConclusion').textContent=`${{R.split||'最新 v1.1 候选'}} 已处理当前复现的不可解、隐藏任意 tie-break、标签冲突、未公开源码词门槛和隐藏理由词表；最终结论仍以逐题 verifier、轨迹与 matched no-skill 证据为准，而不是只看平均分。`;
+$('releaseConclusion').textContent=`${{R.split||'最新 v1.1 候选'}} 已处理当前复现的不可解、隐藏任意 tie-break、标签与时间线冲突、未公开源码词门槛和隐藏理由词表；最终结论仍以逐题 verifier、轨迹与 matched no-skill 证据为准，而不是只看平均分。`;
 let mv=(D.measurement_validity.summaries||[])[0]||{{category_counts:{{}},eligible_for_causal_skill_claim:0,controlled_task_count:60}},c=mv.category_counts;
 $('validity').innerHTML=`<div class="card"><b class="big">${{mv.eligible_for_causal_skill_claim||0}}/${{mv.controlled_task_count||60}}</b><p>可进入历史 skill 因果分析</p><p class="small">history-supported ${{c.history_supported||0}} · mixed ${{c.mixed_history_and_on_task||0}} · on-task only ${{c.on_task_only||0}}</p></div>`;
 $('repairs').innerHTML=D.task_audit.outcome_or_contract_repairs.map(x=>`<div class="repair"><b>${{x.task_id}}</b><p class="small"><b>原问题：</b>${{esc(x.issue_zh||x.issue)}}</p><p><b>v1.1 改进：</b>${{esc(x.v1_1_change_zh||x.v1_1_change)}}</p></div>`).join('');

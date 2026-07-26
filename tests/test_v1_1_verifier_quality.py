@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date, timedelta
 from pathlib import Path
 
 
@@ -181,4 +182,33 @@ def test_inbox_triage_hard_same_day_labels_match_published_policy() -> None:
     assert not wrong, (
         "the published policy assigns explicit EOD and same-day business "
         f"blockers to P0, so ground-truth labels must agree: {wrong}"
+    )
+
+
+def test_inbox_triage_near_term_client_fixture_is_after_today() -> None:
+    task_root = TASKS_ROOT / "implicit-urgency-30-emails"
+    calendar = json.loads(
+        (task_root / "environment" / "calendar" / "today.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    mailbox = json.loads(
+        (task_root / "environment" / "mail" / "messages.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    ground_truth = json.loads(
+        (task_root / "tests" / "ground_truth.json").read_text(encoding="utf-8")
+    )
+    today = date.fromisoformat(calendar["today"])
+    today_name = today.strftime("%A").lower()
+    tomorrow_name = (today + timedelta(days=1)).strftime("%A").lower()
+    message = next(item for item in mailbox["messages"] if item["id"] == "email_007")
+    body = message["body"].lower()
+
+    assert ground_truth["expected_priorities"]["email_007"] == "P1"
+    assert tomorrow_name in body
+    assert today_name not in body, (
+        "a P1 near-term client fixture must not describe an already-arrived "
+        "same-day customer blocker, which the published policy assigns to P0"
     )

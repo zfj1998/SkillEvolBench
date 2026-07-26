@@ -61,6 +61,7 @@ def test_report_is_standalone_and_explains_claim_boundary() -> None:
     assert "文案干净不等于规则完整" in rendered
     assert "正确决策不应输给隐藏理由词表" in rendered
     assert "公开政策与隐藏标签必须一致" in rendered
+    assert "时间线必须与标签语义一致" in rendered
     assert "未公开源码词门槛和隐藏理由词表" in rendered
     assert "同一 Opus、同一 E6、同一不可变 split" in rendered
     assert "原问题：" in rendered

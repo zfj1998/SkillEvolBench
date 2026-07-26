@@ -39,8 +39,8 @@ def classify_message(message: dict, context: dict) -> dict:
         return _decision("P0", 6, "Immediate same-day legal or customer-blocking decision required.")
     if any(token in text for token in ["pause signature", "signature risk", "written plan by 14:00", "answer the data retention point today", "payment hold"]):
         return _decision("P0", 6, "Immediate same-day business blocker with a hard timeline.")
-    if "client team is arriving thursday" in text or ("client" in text and "thursday" in text and "demo" in text):
-        return _decision("P1", 7, "Implicit urgency from client arriving Thursday and missing demo data.")
+    if "client team is arriving friday" in text or ("client" in text and "friday" in text and "demo" in text):
+        return _decision("P1", 7, "Implicit urgency from client arriving Friday and missing demo data.")
     if "following up" in text and "api" in text:
         return _decision("P1", 6, "Follow-up escalation about the API decision and partner timeline.")
     if "ceo" in role or "ceo" in text:
