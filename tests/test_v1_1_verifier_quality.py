@@ -154,7 +154,7 @@ def test_inbox_triage_hard_same_day_labels_match_published_policy() -> None:
             "email_003": "explicit EOD signature blocker",
         },
         "implicit-urgency-30-emails": {
-            "email_011": "explicit EOD decision",
+            "email_011": "explicit same-day signature blocker",
             "email_020": "same-day payment-hold blocker",
         },
         "sender-hierarchy-weight": {
@@ -185,6 +185,25 @@ def test_inbox_triage_hard_same_day_labels_match_published_policy() -> None:
         "the published policy assigns explicit EOD and same-day business "
         f"blockers to P0, so ground-truth labels must agree: {wrong}"
     )
+
+
+def test_implicit_urgency_dpa_fixture_publishes_its_same_day_blocker() -> None:
+    task_root = TASKS_ROOT / "implicit-urgency-30-emails"
+    mail_root = task_root / "environment" / "mail"
+    mailbox = json.loads((mail_root / "messages.json").read_text(encoding="utf-8"))
+    message = next(item for item in mailbox["messages"] if item["id"] == "email_011")
+    body = message["body"].lower()
+
+    assert "signature" in body
+    assert "cannot be signed today" in body
+    assert "by eod" in body
+
+    for source_path in (
+        mail_root / "mailbox.mbox",
+        mail_root / "raw" / "email_011.eml",
+    ):
+        source = source_path.read_text(encoding="utf-8").lower()
+        assert body in source, f"{source_path} drifted from messages.json"
 
 
 def test_inbox_triage_near_term_client_fixture_is_after_today() -> None:
