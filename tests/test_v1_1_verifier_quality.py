@@ -98,6 +98,8 @@ def test_inbox_triage_family_publishes_one_consistent_priority_policy() -> None:
         "hard same-day/overnight",
         "including an explicit EOD deadline",
         "should be handled today but is not an active incident or hard same-day",
+        "A clock or senior sender alone does not make a message P0",
+        "independently from priority",
         "low-impact administrative, social",
     )
     missing: dict[str, list[str]] = {}
@@ -212,3 +214,24 @@ def test_inbox_triage_near_term_client_fixture_is_after_today() -> None:
         "a P1 near-term client fixture must not describe an already-arrived "
         "same-day customer blocker, which the published policy assigns to P0"
     )
+
+
+def test_meeting_prep_labels_follow_the_published_routine_deadline_boundary() -> None:
+    task_root = TASKS_ROOT / "triage-for-meeting-prep"
+    ground_truth = json.loads(
+        (task_root / "tests" / "ground_truth.json").read_text(encoding="utf-8")
+    )
+    expected_priorities = ground_truth["expected_priorities"]
+
+    assert expected_priorities["meet_005"] == "P0"
+    assert {
+        message_id: expected_priorities[message_id]
+        for message_id in ("meet_001", "meet_002", "meet_004", "meet_008")
+    } == {
+        "meet_001": "P1",
+        "meet_002": "P1",
+        "meet_004": "P1",
+        "meet_008": "P1",
+    }
+    assert expected_priorities["meet_007"] == "P2"
+    assert "meet_007" in ground_truth["expected_response_ids"]
