@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "release": "SkillEvolBench v1.1",
-  "status": "v1_1_3_candidate_pending_transfer_quality_regression",
+  "status": "v1_1_5_candidate_pending_container_and_transfer_regression",
   "method": {
     "inputs": [
       "Fable and Opus 4.8 self-generated T1-T6 verifier records",
@@ -24,7 +24,8 @@
     "v1_instances_replaced_instead_of_minimally_patched": 2,
     "whole_skill_families_retired": 0,
     "e6_hidden_source_marker_gates_removed_all_tiers": 24,
-    "e6_hidden_source_marker_gates_removed_held_out_t4_t6": 12
+    "e6_hidden_source_marker_gates_removed_held_out_t4_t6": 12,
+    "e6_ls1_hidden_rationale_wording_gates_removed_all_tiers": 6
   },
   "release_decision": {
     "retain": "All 30 skill families remain useful evaluation targets.",
@@ -341,15 +342,27 @@
     "quality_decision_zh": "不能因为 skill 文案干净就认为题目合格；如果语义规则本身未公开，模型仍是在适配隐藏标签。应在六道题中统一公开 P0–P3 规则，并从新的不可变 split 重跑。",
     "next_split_change": "All E6-LS1 instructions now define P0 as an active incident or hard same-day/overnight deadline requiring immediate work, explicitly including EOD and same-day customer/signature blockers; P1 is an important today/near-term action without that hard blocker."
   },
+  "rationale_lexical_gap_after_v1_1_4": {
+    "family_id": "E6-LS1",
+    "observed_task": "E6-LS1-T1",
+    "job": "ap-skillevolbench-56f70ebdee3a4764-d2",
+    "observed_result": "Opus selected the correct priorities and passed all four process checks, but received reward 0.9286 because the rationale for email_004 did not contain the unpublished literal 'historical'.",
+    "observed_result_zh": "Opus 的优先级决策正确，四项 process 检查也全部通过，但仅因 email_004 的理由没有写出未公开字面词 `historical`，reward 被判为 0.9286。",
+    "false_negative_proof": "The frozen attempt-1 task workspace passes 14/14 under the repaired verifier without changing the model output.",
+    "false_negative_proof_zh": "冻结的 attempt-1 模型工作区在不修改模型输出的前提下，经修复后的 verifier 得到 14/14，证明原失败是假阴性。",
+    "systematic_change": "Across all six E6-LS1 tasks, retain exact priority, ranking, response, draft, and runtime-behavior checks, but replace hidden rationale vocabulary lists with a format-level requirement that every classification include a nontrivial rationale.",
+    "systematic_change_zh": "E6-LS1 六题继续严格检查优先级、排序、回复集合、草稿和运行时行为；仅把隐藏理由词表改为“每项分类必须提供非空且非敷衍的简短理由”。",
+    "evidence": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/analysis/superseded-at4-diagnostic/e6-ls1-t1-trial.tgz"
+  },
   "validation_gates": {
-    "repository_tests": "passed: 403 using /dev/shm basetemp because host /tmp inode capacity was exhausted",
+    "repository_tests": "passed: 404 using explicit repository PYTHONPATH and /dev/shm basetemp because host /tmp inode capacity was exhausted",
     "modified_python_compiles": "passed",
     "modified_json_parses": "passed",
     "diff_check": "passed",
-    "local_official_solution_checks": "covered by the stronger real-container reference audit",
-    "container_reference_audit": "passed for superseded candidate v1.1@3: 90/90 strict passes, 90 unique task IDs, and no incomplete trials in AP group group-ba2fb9f109c146cd99ff3431b450a11b-d2; a new gate is required after publishing the E6-LS1 priority policy",
-    "opus_v1_1_self_generated_regression": "v1.1@3 E6-LS1 smoke ap-skillevolbench-065c5532b93741dc-d2 produced a clean T1 skill with zero banned judge-directed terms, but also proved that the priority policy itself was incomplete; the run remains diagnostic only",
-    "accepted_task_asset_split": "v1.1@3 upload integrity passed but the candidate is superseded by the newly published E6-LS1 priority policy",
-    "final_release_split": "pending a fresh immutable candidate, reference audit, and Opus transfer regression after the priority-policy repair"
+    "local_official_solution_checks": "passed 6/6 for all E6-LS1 tasks after rationale-gate repair; each task scored 14/14",
+    "container_reference_audit": "passed for superseded candidate v1.1@4: 90/90 strict passes, 90 unique task IDs, and no incomplete trials in AP group group-9924ea9435104252ad46c2ad3bfd3386-d2; live Opus nevertheless exposed an unpublished rationale-wording gate, so a new immutable candidate is required",
+    "opus_v1_1_self_generated_regression": "v1.1@4 E6-LS1 smoke ap-skillevolbench-56f70ebdee3a4764-d2 exposed a rationale false negative on attempt 1; the frozen output replays at 14/14 with the repaired verifier, and the superseded run was cancelled before its feedback-adapted skill could be treated as transfer evidence",
+    "accepted_task_asset_split": "v1.1@4 upload integrity and 90/90 reference checks passed, but the candidate is superseded by the rationale false-negative repair",
+    "final_release_split": "pending immutable v1.1@5 packaging, container reference audit, and fresh Opus transfer regression"
   }
 }

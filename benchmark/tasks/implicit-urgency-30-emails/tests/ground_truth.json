@@ -58,20 +58,6 @@
   ],
   "expected_response_ids": [],
   "rank_before": [],
-  "reason_keywords": {
-    "email_007": [
-      "client",
-      "Thursday"
-    ],
-    "email_014": [
-      "certificate",
-      "tomorrow"
-    ],
-    "email_022": [
-      "follow",
-      "API"
-    ]
-  },
   "expected_drafts": {},
   "min_message_count": 30
 }

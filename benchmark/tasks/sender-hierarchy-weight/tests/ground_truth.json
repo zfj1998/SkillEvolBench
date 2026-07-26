@@ -44,15 +44,6 @@
       "intern_printer"
     ]
   ],
-  "reason_keywords": {
-    "ceo_strategy": [
-      "CEO",
-      "board"
-    ],
-    "intern_printer": [
-      "Low business impact"
-    ]
-  },
   "expected_drafts": {},
   "min_message_count": 15
 }

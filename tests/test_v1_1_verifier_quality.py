@@ -113,3 +113,33 @@ def test_inbox_triage_family_publishes_one_consistent_priority_policy() -> None:
         "all six inbox-triage tasks must expose the same P0-P3 policy so a model "
         f"does not have to infer hidden EOD semantics from verifier feedback: {missing}"
     )
+
+
+def test_inbox_triage_rationales_do_not_require_hidden_keywords() -> None:
+    offenders: dict[str, list[str]] = {}
+    forbidden_contracts = ("reason_keywords", "reason_evidence_any")
+    forbidden_checks = (
+        "missing evidence words",
+        "missing semantic evidence groups",
+    )
+    for task_slug in INBOX_TRIAGE_TASKS:
+        task_root = TASKS_ROOT / task_slug
+        ground_truth = json.loads(
+            (task_root / "tests" / "ground_truth.json").read_text(encoding="utf-8")
+        )
+        outcome_text = (task_root / "tests" / "test_outcome.py").read_text(
+            encoding="utf-8"
+        )
+        matches = [
+            contract for contract in forbidden_contracts if contract in ground_truth
+        ]
+        matches.extend(
+            check for check in forbidden_checks if check in outcome_text
+        )
+        if matches:
+            offenders[task_slug] = matches
+
+    assert not offenders, (
+        "rationale quality may require a nontrivial explanation, but must not "
+        f"force hidden wording that can reject a correct decision: {offenders}"
+    )
