@@ -51,7 +51,7 @@ Subject: Production DB certificate expires tomorrow
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 
-Quiet heads-up: the production DB certificate expires tomorrow morning and prod still uses the current certificate. If it is not rotated before that window, morning checkout traffic will lose DB connectivity.
+Quiet heads-up: the production DB certificate expires tomorrow morning and prod still uses the current certificate. If it is not rotated before that window, morning checkout traffic will lose DB connectivity. Please confirm who owns the rotation and when it will be complete.
 
 From jordan.lee@harborworks.example 2026-04-23T09:00:00-04:00
 Message-ID: <meet_006@mail.harborworks.example>

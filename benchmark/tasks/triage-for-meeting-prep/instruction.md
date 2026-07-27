@@ -33,6 +33,11 @@ Write `output/triage.json` as JSON with this schema:
 
 Classify every source email exactly once. Rank lower `rank` values first, with P0 before P1 before P2 before P3, and include concrete evidence in `reason`. If the task asks for replies, include only the messages that truly need responses in `response_list` and draft concise context-aware replies in `drafts`. Decide `needs_response` independently from priority: an explicit request to confirm, approve, review, decide, or reply can still need a response when optional wording lowers it to P2; pure FYI, automated, and newsletter messages do not.
 
+This task asks you to identify response-needed messages but not to draft the
+responses. Populate `needs_response` and `response_list` from each message's
+visible request, and leave `drafts` empty as directed by
+`task_config.json` (`draft_p0_replies: false`).
+
 Use these priority definitions:
 
 - **P0**: an active production/security incident or a hard same-day/overnight

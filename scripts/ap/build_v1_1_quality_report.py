@@ -303,6 +303,7 @@ T4–T6 是 freeze 后 one-shot，不能把相邻 tier 当作相同预算下的�
 <div id="implicitDpaFinding" style="margin-top:14px"></div>
 <div id="bareEodFinding" style="margin-top:14px"></div>
 <div id="draftContextFinding" style="margin-top:14px"></div>
+<div id="responseContractFinding" style="margin-top:14px"></div>
 <div id="releaseDecision" style="margin-top:14px"></div>
 <div class="grid two" style="margin-top:14px">
  <div><h3>可解性 Gate</h3><div id="referenceGate"></div></div>
@@ -399,6 +400,8 @@ let EF=D.task_audit.bare_eod_policy_conflict_after_v1_1_9||{{}};
 $('bareEodFinding').innerHTML=Object.keys(EF).length?`<div class="card warn"><h3>v1.1@9 真实运行发现：含糊反馈会污染 skill，并伤害后续迁移</h3><p><b>${{esc((EF.observed_tasks||[]).join(', ')||'E6-LS1-T3 / T4')}}</b>：${{esc(EF.observed_result_zh||EF.observed_result||'')}}</p><p>${{esc(EF.quality_problem_zh||EF.quality_problem||'')}}</p><p class="small"><b>v1.1@10 系统修复：</b>${{esc(EF.systematic_change_zh||EF.systematic_change||'')}}</p></div>`:'';
 let GF=D.task_audit.draft_context_lexical_gap_after_v1_1_10||{{}};
 $('draftContextFinding').innerHTML=Object.keys(GF).length?`<div class="card warn"><h3>v1.1@10 真实运行发现：上下文完整的草稿不应输给单个产品名</h3><p><b>${{esc(GF.observed_task||'E6-LS1-T6')}}</b>：${{esc(GF.observed_result_zh||GF.observed_result||'')}}</p><p>${{esc(GF.false_negative_proof_zh||GF.false_negative_proof||'')}}</p><p class="small"><b>v1.1@11 系统修复：</b>${{esc(GF.systematic_change_zh||GF.systematic_change||'')}}</p></div>`:'';
+let RF=D.task_audit.response_observability_gap_after_v1_1_11||{{}};
+$('responseContractFinding').innerHTML=Object.keys(RF).length?`<div class="card warn"><h3>v1.1@11 真实运行发现：P0 需要行动，不等于邮件必然需要回复</h3><p><b>${{esc(RF.observed_task||'E6-LS1-T4')}}</b>：${{esc(RF.observed_result_zh||RF.observed_result||'')}}</p><p>${{esc(RF.quality_problem_zh||RF.quality_problem||'')}}</p><p class="small"><b>v1.1@12 系统修复：</b>${{esc(RF.systematic_change_zh||RF.systematic_change||'')}}</p><p class="small"><b>冻结输出复核：</b>${{esc(RF.frozen_workspace_proof||'')}}</p></div>`:'';
 let RD=D.task_audit.release_decision||{{}},replaced=RD.replace||[];
 $('releaseDecision').innerHTML=`<div class="grid three"><div class="card good"><h3>保留：30 个 skill families</h3><p>${{esc(RD.retain_zh||RD.retain||'所有 family 均保留')}}</p></div><div class="card warn"><h3>替换：${{replaced.length}} 个具体实例</h3><p><b>${{esc(replaced.join(', ')||'无')}}</b></p><p class="small">${{esc(RD.reason_zh||RD.reason||'')}}</p></div><div class="card"><h3>整族退役：${{S.whole_skill_families_retired||0}}</h3><p>能力目标仍有评测价值；有缺陷的具体题采用修复或替换，不为维持题量而保留不可解实例。</p></div></div><p class="note">${{esc(RD.low_transfer_identifiability_zh||RD.low_transfer_identifiability||'')}}</p>`;
 let R=D.reference_audit;$('referenceGate').innerHTML=`<div class="card"><b class="big good">${{refSummary.passed||0}}/${{refSummary.total||90}}</b><p>${{refSummary.all_reference_solutions_pass?'六个环境全部 15/15 strict pass':'尚未全部通过'}}</p><p class="small">${{esc(R.split||'v1.1@2')}} · Harbor oracle · real task container · unchanged verifier · AP group ${{esc(R.group_id||'—')}}</p></div>`;

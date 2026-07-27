@@ -236,6 +236,8 @@ def test_meeting_prep_certificate_fixture_publishes_its_overnight_blocker() -> N
     assert "expires tomorrow morning" in body
     assert "prod still uses the current certificate" in body
     assert "checkout traffic will lose db connectivity" in body
+    assert "please confirm who owns the rotation" in body
+    assert "when it will be complete" in body
 
     for source_path in (
         mail_root / "mailbox.mbox",
@@ -377,3 +379,23 @@ def test_meeting_prep_labels_follow_the_published_routine_deadline_boundary() ->
     }
     assert expected_priorities["meet_007"] == "P2"
     assert "meet_007" in ground_truth["expected_response_ids"]
+
+
+def test_meeting_prep_response_and_draft_contract_is_public() -> None:
+    task_root = TASKS_ROOT / "triage-for-meeting-prep"
+    instruction = (task_root / "instruction.md").read_text(
+        encoding="utf-8"
+    ).lower()
+    ground_truth = json.loads(
+        (task_root / "tests" / "ground_truth.json").read_text(encoding="utf-8")
+    )
+    config = json.loads(
+        (task_root / "environment" / "task_config.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert "meet_005" in ground_truth["expected_response_ids"]
+    assert config["draft_p0_replies"] is False
+    assert "identify response-needed messages but not to draft" in instruction
+    assert "leave `drafts` empty" in instruction
