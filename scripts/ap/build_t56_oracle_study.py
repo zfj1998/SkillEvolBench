@@ -16,12 +16,14 @@ import json
 import os
 import re
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import yaml
 
+from skillevolbench.discovery import parse_skill_md_frontmatter_text
 
 TASK_ID_RE = re.compile(r"^(E[1-6])-LS([1-5])-T([1-6])$")
 
@@ -367,12 +369,13 @@ def lifecycle_protocol_evidence(run_dir: Path) -> dict[str, Any]:
 
 
 def markdown_description(text: str) -> str:
-    if not text.startswith("---\n"):
+    try:
+        frontmatter = parse_skill_md_frontmatter_text(
+            text,
+            source="exported generated SKILL.md",
+        )
+    except ValueError:
         return ""
-    end = text.find("\n---\n", 4)
-    if end < 0:
-        return ""
-    frontmatter = yaml.safe_load(text[4:end]) or {}
     return str(frontmatter.get("description") or "") if isinstance(frontmatter, dict) else ""
 
 
@@ -431,6 +434,8 @@ def model_family(label: str, model_name: str) -> str:
         return "qwen3.7-max"
     if "fable" in value or "3.8-maxp" in value:
         return "sig-fable"
+    if "opus" in value and ("4-8" in value or "4.8" in value):
+        return "opus-4.8"
     return model_name or "unknown"
 
 
@@ -547,6 +552,8 @@ def collect(
         job_id = job_dir.name
         export_label = job_dir.parent.name
         job = inventory.get(job_id, {})
+        ap_manifest_path = job_dir / "artifacts" / "output" / "ap_run_manifest.json"
+        ap_manifest = load_json(ap_manifest_path) if ap_manifest_path.is_file() else {}
         baseline = config.get("baseline") or {}
         lifecycle = lifecycle_protocol_evidence(run_dir)
         condition = condition_name(config)
@@ -556,9 +563,12 @@ def collect(
             "job_id": job_id,
             "job_label": job.get("label", export_label),
             "ap_status": job.get("status", "unknown"),
+            "ap_attempt": job.get("attempt"),
             "ap_error_code": job.get("error_code"),
             "ap_created_at": job.get("created_at"),
             "ap_updated_at": job.get("updated_at"),
+            "benchmark_revision": ap_manifest.get("benchmark_revision"),
+            "runtime_attempt": ap_manifest.get("runtime_attempt"),
             "environment_id": config.get("environment_id"),
             "model": model,
             "model_name": baseline.get("model_name"),

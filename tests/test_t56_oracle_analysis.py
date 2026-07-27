@@ -6,7 +6,6 @@ import zipfile
 from pathlib import Path
 from types import SimpleNamespace
 
-
 ROOT = Path(__file__).parents[1]
 
 
@@ -41,6 +40,30 @@ def run(job: str, run_id: str, *, status: str, updated: str, env: str = "E1") ->
 
 def task(job: str, run_id: str, task_id: str) -> dict:
     return {"job_id": job, "run_id": run_id, "task_id": task_id}
+
+
+def test_generated_skill_description_accepts_native_unquoted_colon() -> None:
+    text = """---
+name: inbox-triage
+description: Distinguish commitments from weaker signals (tiered: explicit, implicit)
+---
+# Inbox triage
+"""
+
+    assert COLLECTOR.markdown_description(text) == (
+        "Distinguish commitments from weaker signals "
+        "(tiered: explicit, implicit)"
+    )
+
+
+def test_opus_model_name_is_normalized_for_heatmap_join() -> None:
+    assert (
+        COLLECTOR.model_family(
+            "opus48-selfgen-v1-14-E3",
+            "anthropic/claude-opus-4-8",
+        )
+        == "opus-4.8"
+    )
 
 
 def test_matrix_watcher_fable_gate_does_not_block_qwen_lane() -> None:

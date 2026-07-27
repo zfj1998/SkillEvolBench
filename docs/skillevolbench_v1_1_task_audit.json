@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "release": "SkillEvolBench v1.1",
-  "status": "v1_1_12_candidate_after_live_opus_response_contract_audit",
+  "status": "v1_1_12_accepted_with_fresh_opus_and_matched_e6_regression",
   "method": {
     "inputs": [
       "Fable and Opus 4.8 self-generated T1-T6 verifier records",
@@ -87,12 +87,12 @@
     "interpretation": "Every held-out T4-T6 task was internally solvable by its checked-in reference solution in the real task container. A later live Opus run nevertheless exposed a semantically valid E6-LS1-T6 output rejected only because its source omitted the unpublished phrase 'P0 reply'; therefore reference 90/90 was necessary but not sufficient and v1.1@1 is superseded."
   },
   "final_container_reference_audit": {
-    "candidate_split": "skillevolbench/skillevolbench/v1.1@11",
-    "benchmark_revision": "9eac5c79be49c0ddcaf32e7652cfd49cfb12b690",
+    "candidate_split": "skillevolbench/skillevolbench/v1.1@12",
+    "benchmark_revision": "a11e30f26594c6e847be213c1863f1cfb8d09117",
     "agenthub_revision": "ad4b38b9b35b9cc0c46f40f017d2fb6cbb096cc7",
     "harbor_revision": "071281b3d931aafd6a5375fa7d5933e23054d784",
-    "package_manifest_sha256": "44cb8e972387a6917f8d10d009d8bdd3498c69f78c00319aff69c0259bd34441",
-    "ap_group": "group-5494bac02e5843c9b72c644842b44548-d2",
+    "package_manifest_sha256": "865f4e9794d9ef09988ce10f8ba137eed8236e9b51e401679b50d782ea6fd7ba",
+    "ap_group": "group-3b9552705fd946989d1a2314586ff779-d2",
     "result": "90/90 strict passes",
     "by_environment": {
       "E1": "15/15",
@@ -104,8 +104,10 @@
     },
     "job_attempts": "All six AP jobs succeeded on attempt 0.",
     "coverage": "90 unique held-out task IDs: 30 T4, 30 T5, and 30 T6; every row has exactly one Harbor result.",
-    "evidence": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/analysis/reference_solution_audit_v1.1@11.json",
-    "interpretation": "The immutable v1.1@11 split is internally solvable in all six real task containers. All 90 held-out tasks strict-pass on the first and only Harbor oracle trial, with 30/30 coverage at each of T4, T5, and T6. The exported evidence contains 90 unique task IDs, exact split/revision/Agent-Hub/Harbor provenance, no exception rows, and a clean safety scan. Live Opus trajectory validation remains a separate gate for instruction clarity and verifier fairness."
+    "evidence": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/analysis/reference_solution_audit_v1.1@12.json",
+    "package_integrity": "Two independent deterministic builds were byte-identical across all 13 files. The exact 13 uploaded OSS objects were downloaded again and remained byte-identical to the local package.",
+    "export_safety": "clean: 0 findings across 3,062 regular files and 13,033,851 bytes; scan complete",
+    "interpretation": "The immutable v1.1@12 split is internally solvable in all six real task containers. All 90 held-out tasks strict-pass on the first and only Harbor oracle trial, with 30/30 coverage at each of T4, T5, and T6. The exported evidence contains 90 unique task IDs, exact split/revision/Agent-Hub/Harbor provenance, no exception rows, and a clean safety scan. Live Opus trajectory validation remains a separate gate for instruction clarity and verifier fairness."
   },
   "model_runtime_finding_after_v1_1_1": {
     "task_id": "E6-LS1-T6",
@@ -466,17 +468,80 @@
     "systematic_change_zh": "在 messages.json、mailbox.mbox 和 raw EML 中增加明确请求，要求收件人确认轮换负责人和完成时间；并在公开题面说明，本题评测 response identification 而非 drafting：根据可见请求填写 needs_response/response_list，因 draft_p0_replies=false 而保持 drafts 为空。",
     "frozen_workspace_proof": "The exact unchanged Opus T4 Python implementation from the live AP workspace was rerun against only the repaired visible fixture and instruction. It then marked meet_005 P0 and needs_response=true, included it in response_list, kept drafts empty, and passed all 14/14 outcome/process tests.",
     "repository_regression_result": "15/15 verifier-quality tests passed; direct official solution and unchanged frozen Opus implementation each passed 14/14",
-    "evidence": "live AP workspace ap-skillevolbench-dd18165b11524cfb-d2 plus local /dev/shm frozen-workspace replay; durable export will be recorded after the AP job terminates"
+    "evidence": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/smoke-at11/ap-skillevolbench-dd18165b11524cfb-d2 plus the unchanged frozen-workspace replay"
+  },
+  "model_behavior_case_studies": [
+    {
+      "title": "Fable 的长篇持续增补在 resolve-time dependency conflict 上产生了可见收益",
+      "task_ids": [
+        "E1-LS2-T1",
+        "E1-LS2-T3",
+        "E1-LS2-T5"
+      ],
+      "evidence": "Fable 的 dependency-conflict-resolution 从 T1 的 runtime API mismatch 扩展为 v2，明确覆盖 resolver 无法构造 lock、升级 stale middle package、迁移跨 major API 的项目代码和 full resolution；skill 为 10,364 chars。它在 T5 strict-pass。Opus 的同 family skill 停在 4,386-char v1，只覆盖 clean install 后的 runtime API-shape crash；T5 通过全部 process checks，但 public pipeline smoke failed。",
+      "boundary": "这不是纯粹的模型能力胜负。两者 T1-T3 都首轮通过，但旧 benchmark 的 frontmatter parser 拒绝了 Opus 的 T2、T3 两次 revision，而 Fable 的 T3 revision 被接受。v1.1 已统一 reflection 与运行时 parser；旧版结果说明 Fable 的成功扩写有价值，也说明 parser 缺陷会人为放大模型差距。",
+      "advantage": "Fable：更愿意把多个相邻失败形态写成一套完整、可操作的 runbook。"
+    },
+    {
+      "title": "E5-LS3-T4 的表面 Fable 胜出，实质是隐藏标签合同",
+      "task_ids": [
+        "E5-LS3-T4"
+      ],
+      "evidence": "两个模型都读取 citation-verification skill、完成 8/8 citations，并识别同样的 5 valid、2 real-but-unsupported 和 1 fabricated source。Fable 输出 verifier 私有词 `misrepresented`/`fake` 并 strict-pass；Opus 输出语义等价的 `unsupported`/`fabricated`，reason 更具体，却被 test_labels_are_complete 和 problem_types 拒绝。",
+      "boundary": "这是 benchmark false negative，不是 Fable 在事实核查能力上击败 Opus。Fable 的长 skill 已从 T1-T3 verifier feedback 记住精确标签词；v1.1 为该题公开 valid、misrepresented、fake 的定义。",
+      "advantage": "Fable：更强的反馈词形保持；Opus：语义解释更完整，但旧 verifier 不接受同义标签。"
+    },
+    {
+      "title": "E5-LS3-T6 展示了 Opus 在复杂 composition 上的执行纪律",
+      "task_ids": [
+        "E5-LS3-T6"
+      ],
+      "evidence": "两者都实际读取同 family citation-verification skill。Fable 只形成 5 个 trajectory steps：读取大量材料后，最后一次调用消耗 16,384 completion tokens，却没有新的 tool call、没有落盘 citation_audit.json，因而 outcome/process 全失败。Opus 把工作拆成 16 steps：读 skill 与 fixtures、建立四类标签、重写 policy 和 pipeline、运行生成器、检查 15/15 结果、验证 schema 与多 hash seed 确定性，最终 strict-pass。",
+      "boundary": "这里没有发现题面信息缺失或 verifier false negative；失败发生在模型没有把分析转换成可验证文件。它是 agent execution behavior，而不是 skill read 缺失。",
+      "advantage": "Opus：更强的复杂任务分解、工具落盘和闭环验证；尤其在 T6 composition 上不容易只分析不执行。"
+    }
+  ],
+  "fresh_opus_family_smoke_v1_1_12": {
+    "split": "skillevolbench/skillevolbench/v1.1@12",
+    "benchmark_revision": "a11e30f26594c6e847be213c1863f1cfb8d09117",
+    "agenthub_revision": "ad4b38b9b35b9cc0c46f40f017d2fb6cbb096cc7",
+    "job": "ap-skillevolbench-d067a1e6d1ad4607-d2",
+    "scope": "E6-LS1 T1-T6 in one stateful episode",
+    "result": "6/6 strict passes; all six Harbor trials scored 1.0; AP Succeeded on attempt 0 with no task errors and no episode retries",
+    "learning_protocol": "T1, T2, and T3 each strict-passed on the first same-session solve attempt. All three in-session reflections completed, all three patches were applied, and same_session_verified=true for every learning task.",
+    "skill_evolution": "One active skill, E6-LS1.inbox-triage-prioritization, evolved through three versions: T1 established live-message versus quoted/history/newsletter evidence and independent response decisions; T2 added implicit urgency from expiry, external-stakeholder, payment/signature, and repeated-follow-up evidence; T3 added a symmetric sender-hierarchy guardrail so loud junior noise is downweighted and calm senior asks are not blindly promoted.",
+    "evaluation_protocol": "T4, T5, and T6 each retrieved and actually used the generated skill. The evaluation library hash was identical across all three tasks after one library_frozen event, and no post-freeze revision occurred.",
+    "task_quality_result": "The repaired T4 naturally strict-passed 14/14 without frozen-output replay, confirming that the visible response request resolves the v1.1@11 ambiguity. T5 and the semantic-context T6 also strict-passed. This fresh trajectory exposed no additional task-contract defect in the family.",
+    "export_safety": "clean: 0 findings across 821 regular files and 61,358,873 bytes; scan complete; complete paginated logs for all six AP containers",
+    "evidence": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/smoke-at12/ap-skillevolbench-d067a1e6d1ad4607-d2"
+  },
+  "matched_opus_e6_v1_1_12": {
+    "status": "completed",
+    "split": "skillevolbench/skillevolbench/v1.1@12",
+    "benchmark_revision": "a11e30f26594c6e847be213c1863f1cfb8d09117",
+    "agenthub_revision": "ad4b38b9b35b9cc0c46f40f017d2fb6cbb096cc7",
+    "model": "anthropic/claude-opus-4-8",
+    "environment_id": "E6",
+    "self_generated_job": "ap-skillevolbench-c710a429e0434166-d2",
+    "no_skill_job": "ap-skillevolbench-26d79c7f81da4f70-d2",
+    "comparison": "The same Opus model ran the same 15 E6 T4-T6 task IDs on the same immutable v1.1@12 revision. The self-generated lane first completed all 15 T1-T3 learning tasks in the same stateful episode and froze its generated library; the no-skill lane received no library. Verifier-backed per-task pairs, not AP status or unmatched averages, determine rescue and harm.",
+    "learning_result": "T1-T3 used 32 solve attempts across 15 tasks: 5 passed initially, 10 passed terminally, and 5 were repaired to pass. All 15 tasks verified same-session attempts and completed reflection. Five active family skills evolved through 15 total versions.",
+    "protocol_result": "The self-generated lane emitted exactly one library_frozen event before evaluation. All 15 T4-T6 starts and ends used the same frozen library hash e60ffa10963b9ef507c5194c893ba1a1b844582b. Every T4-T6 task actually read a generated skill.",
+    "matched_result": "Self-generated strict/outcome/process = 8/8/14 of 15; no-skill = 6/6/15 of 15. Paired strict and outcome states contain 2 skill rescues, 0 skill harms, 6 both-pass, and 7 both-fail. Process has 14 both-pass and 1 skill harm. This is positive within-run E6 evidence, not a population-level causal estimate.",
+    "self_generated_export": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/regression-at12/selfgen/ap-skillevolbench-c710a429e0434166-d2",
+    "no_skill_export": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/regression-at12/no-skill/ap-skillevolbench-26d79c7f81da4f70-d2",
+    "paired_audit": "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/regression-at12/analysis/v1_1_regression_audit.json",
+    "export_safety": "Both final exports are clean and complete after sanitization: self-generated 0 findings across 3,297 files and 389,002,422 bytes; no-skill 0 findings across 784 files and 128,936,739 bytes."
   },
   "validation_gates": {
-    "repository_tests": "passed: 414 with 0 failures and 0 errors using python -m pytest and /dev/shm temporary storage because host /tmp inode capacity was exhausted",
+    "repository_tests": "passed: 416 with 0 failures and 0 errors using python -m pytest and /dev/shm temporary storage because host /tmp inode capacity was exhausted",
     "modified_python_compiles": "passed",
     "modified_json_parses": "passed",
     "diff_check": "passed",
     "local_official_solution_checks": "passed for the repaired E6-LS1-T3, E6-LS1-T4, and E6-LS1-T6 fixtures; the final T6 semantic-draft contract passes all 13 direct outcome/process tests",
-    "container_reference_audit": "passed for superseded v1.1@9: 90/90 strict passes in AP group group-d651b2f0038e41bab86dbc8e2ef54c41-d2; matched live Opus then exposed the contradictory bare-EOD policy in T3",
-    "opus_v1_1_self_generated_regression": "v1.1@10 E6-LS1 smoke completed all six tasks. T1 passed first attempt; T2 and T3 each repaired on same-session attempt 2; T4 missed only the published optional-wording P2 boundary; T5 passed; T6 produced a semantically complete reply but exposed a hidden single-token product-name gate. The unchanged frozen T6 output passes 13/13 after the verifier repair.",
-    "accepted_task_asset_split": "v1.1@11 deterministic packaging, 13-object OSS re-download integrity, and six-environment Harbor-oracle 90/90 were accepted, but fresh live Opus exposed an under-specified response obligation in E6-LS1-T4; v1.1@11 is therefore superseded as a release candidate.",
-    "final_release_split": "v1.1@12 candidate repairs the newly observed E6-LS1-T4 response contract. It must pass deterministic packaging, full six-environment reference audit, fresh Opus family smoke, and matched E6 self-generated versus no-skill regression before release."
+    "container_reference_audit": "passed for v1.1@12: 90/90 strict passes in AP group group-3b9552705fd946989d1a2314586ff779-d2; all six jobs succeeded on attempt 0 with 30/30 at each of T4, T5, and T6",
+    "opus_v1_1_self_generated_regression": "passed for final v1.1@12: the fresh E6-LS1 family smoke strict-passed 6/6, then the independent full-E6 matched regression completed both lanes on AP attempt 0 with 0 task errors. Self-generated improved strict and outcome from 6/15 to 8/15 on the exact same T4-T6 task IDs; all 15 evaluation tasks read one stable frozen five-skill library.",
+    "accepted_task_asset_split": "v1.1@12 deterministic packaging, exact 13-object OSS re-download integrity, clean export safety scan, and six-environment Harbor-oracle 90/90 are accepted.",
+    "final_release_split": "v1.1@12 is the accepted immutable task-asset split. Final matched Opus E6 evidence completed in self-generated job ap-skillevolbench-c710a429e0434166-d2 and no-skill job ap-skillevolbench-26d79c7f81da4f70-d2; exact paired evidence is archived under regression-at12/analysis."
   }
 }

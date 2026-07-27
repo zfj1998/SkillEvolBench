@@ -189,11 +189,50 @@ def build_audit(
     environment_id: str,
     split: str,
 ) -> dict[str, Any]:
+    runs = [row for row in evidence.get("runs", []) if isinstance(row, dict)]
     tasks = [row for row in evidence.get("tasks", []) if isinstance(row, dict)]
     learning = [
         row for row in evidence.get("learning_tasks", []) if isinstance(row, dict)
     ]
     skills = [row for row in evidence.get("skills", []) if isinstance(row, dict)]
+
+    selected_runs: dict[str, dict[str, Any]] = {}
+    for label, job_id in (
+        ("self_generated", selfgen_job_id),
+        ("no_skill", no_skill_job_id),
+    ):
+        candidates = [
+            row
+            for row in runs
+            if row.get("job_id") == job_id
+            and row.get("environment_id") == environment_id
+            and row.get("selected_run") is True
+        ]
+        if len(candidates) != 1:
+            raise ValueError(
+                f"{label} job has {len(candidates)} selected runs; expected exactly 1"
+            )
+        selected_runs[label] = candidates[0]
+
+    selfgen_run = selected_runs["self_generated"]
+    no_skill_run = selected_runs["no_skill"]
+    if selfgen_run.get("condition") != "self_generated":
+        raise ValueError("self-generated job does not use the self_generated condition")
+    if no_skill_run.get("condition") != "no_skill":
+        raise ValueError("no-skill job does not use the no_skill condition")
+    if selfgen_run.get("model_name") != no_skill_run.get("model_name"):
+        raise ValueError("matched jobs use different model names")
+    if not selfgen_run.get("benchmark_revision"):
+        raise ValueError("self-generated job is missing benchmark revision provenance")
+    if (
+        selfgen_run.get("benchmark_revision")
+        != no_skill_run.get("benchmark_revision")
+    ):
+        raise ValueError("matched jobs use different benchmark revisions")
+    if selfgen_run.get("ap_status") != "Succeeded":
+        raise ValueError("self-generated AP job is not Succeeded")
+    if no_skill_run.get("ap_status") != "Succeeded":
+        raise ValueError("no-skill AP job is not Succeeded")
 
     selfgen_rows = sorted(
         [
@@ -290,6 +329,44 @@ def build_audit(
         "jobs": {
             "self_generated": selfgen_job_id,
             "no_skill": no_skill_job_id,
+        },
+        "protocol": {
+            "same_model_name": selfgen_run.get("model_name"),
+            "same_benchmark_revision": selfgen_run.get("benchmark_revision"),
+            "self_generated_ap_attempt": selfgen_run.get("ap_attempt"),
+            "no_skill_ap_attempt": no_skill_run.get("ap_attempt"),
+            "self_generated_runtime_attempt": selfgen_run.get("runtime_attempt"),
+            "no_skill_runtime_attempt": no_skill_run.get("runtime_attempt"),
+            "self_generated_baseline": selfgen_run.get("baseline"),
+            "no_skill_baseline": no_skill_run.get("baseline"),
+            "self_generated_learning_max_attempts": selfgen_run.get(
+                "learning_max_attempts"
+            ),
+            "self_generated_evaluation_only_t4_t6": selfgen_run.get(
+                "evaluation_only_t4_t6"
+            ),
+            "no_skill_evaluation_only_t4_t6": no_skill_run.get(
+                "evaluation_only_t4_t6"
+            ),
+            "self_generated_library_freeze_event_count": selfgen_run.get(
+                "library_freeze_event_count"
+            ),
+            "self_generated_library_frozen_before_evaluation": selfgen_run.get(
+                "library_frozen_before_evaluation"
+            ),
+            "self_generated_evaluation_library_hashes": selfgen_run.get(
+                "evaluation_library_hashes"
+            )
+            or [],
+            "self_generated_evaluation_library_hash_stable": selfgen_run.get(
+                "evaluation_library_hash_stable"
+            ),
+            "self_generated_evaluation_task_start_count": selfgen_run.get(
+                "evaluation_task_start_count"
+            ),
+            "self_generated_evaluation_task_end_count": selfgen_run.get(
+                "evaluation_task_end_count"
+            ),
         },
         "claim_boundary": (
             "This is one matched run per condition. A skill read proves "

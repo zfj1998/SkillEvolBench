@@ -80,6 +80,8 @@ def behavior_takeaways(behavior: dict[str, Any]) -> list[dict[str, str]]:
     summaries = behavior["model_summaries"]
     fable = summaries["sig-fable"]
     opus = summaries["opus-4.8"]
+    fable_tiers = {int(row["tier"]): row for row in fable["by_tier"]}
+    opus_tiers = {int(row["tier"]): row for row in opus["by_tier"]}
     return [
         {
             "title": "学习阶段几乎打平，但路径不同",
@@ -112,12 +114,16 @@ def behavior_takeaways(behavior: dict[str, Any]) -> list[dict[str, str]]:
             ),
         },
         {
-            "title": "Fable 在 T4/T5 更稳，Opus 在 T6 略占优势",
+            "title": "Fable 在 T4 更稳，Opus 在 T6 与 outcome 上更强",
             "body": (
-                "旧版 strict：Fable T4/T5/T6 为 16/15/8，Opus 为 12/12/10。"
-                "这支持“Fable 更擅长按程序稳定执行，Opus 更擅长高复杂度整合”"
-                "这一描述性判断，但任务与 verifier 缺陷会混淆差异，需以 v1.1 "
-                "matched no-skill 回归复核。"
+                "刷新 E3 整环境重跑后，旧版 strict 的 Fable T4/T5/T6 为 "
+                f"{fable_tiers[4]['strict_pass']}/{fable_tiers[5]['strict_pass']}/"
+                f"{fable_tiers[6]['strict_pass']}，Opus 为 "
+                f"{opus_tiers[4]['strict_pass']}/{opus_tiers[5]['strict_pass']}/"
+                f"{opus_tiers[6]['strict_pass']}。Fable 的过程优势主要集中在 T4，"
+                "T5 strict 打平；Opus 在 T6 和 overall outcome 上领先。这是描述性"
+                "行为差异，任务与 verifier 缺陷会混淆旧版结果，仍需 v1.1 matched "
+                "no-skill 回归判断 skill 是否带来帮助。"
             ),
         },
         {
@@ -285,6 +291,11 @@ T4–T6 是 freeze 后 one-shot，不能把相邻 tier 当作相同预算下的�
 <th>任意 skill read</th><th>同 family skill read</th></tr></thead><tbody id="utilRows"></tbody></table></div>
 <div id="paired" class="grid three" style="margin-top:14px"></div></section>
 
+<section class="panel"><h2>不只看平均分：三个逐轨迹行为案例</h2>
+<div class="grid three" id="behaviorCases"></div>
+<p class="note">这些案例同时检查了 SKILL.md、agent trajectory、落盘输出和失败 tests。
+它们用于解释行为机制，不把单个样例外推成总体因果结论。</p></section>
+
 <section class="panel"><h2>逐 family 查看 skill 演进</h2>
 <div class="filters"><select id="familyModel"><option value="all">两个模型</option>
 <option value="sig-fable">S1 Fable</option><option value="opus-4.8">Opus 4.8</option></select>
@@ -311,7 +322,8 @@ T4–T6 是 freeze 后 one-shot，不能把相邻 tier 当作相同预算下的�
 </div><h3 id="repairHeading" style="margin-top:18px"></h3><div class="repair-list" id="repairs"></div>
 <details><summary id="processRewriteSummary"></summary><div id="processRewrites"></div></details></section>
 
-<section class="panel"><h2>v1.1 Opus 回归与 matched no-skill 控制</h2><div id="regression"></div>
+<section class="panel"><h2>v1.1 Opus 回归与 matched no-skill 控制</h2>
+<div id="freshSmoke"></div><div id="regression" style="margin-top:14px"></div>
 <p class="note">Reference solution 90/90 只证明题目资产内部可解；Opus self-generated 与 no-skill 的逐题差异
 才用于分析 skill rescue / harm。AP Succeeded 仍需下载 verifier 与轨迹后才能进入这里。</p></section>
 
@@ -365,6 +377,7 @@ function tier(m,t){{return B[m].by_tier.find(x=>x.tier===t)}}
 $('utilCards').innerHTML=['sig-fable','opus-4.8'].map(m=>`<div class="card"><h3>${{D.model_zh[m]}}</h3><p><b>${{B[m].evaluation_any_skill_used}}/90</b> evaluation tasks 实际读取 skill</p><p><b>${{B[m].evaluation_same_family_skill_used}}/90</b> 读取同 family skill</p><p class="small">“同 family”不是越高必然越好；T6 可合理组合其他 family 的技能。</p></div>`).join('');
 $('utilRows').innerHTML=['sig-fable','opus-4.8'].map(m=>`<tr><td><b>${{D.model_zh[m]}}</b></td>${{[4,5,6].map(t=>{{let x=tier(m,t);return `<td>${{x.strict_pass}}/${{x.outcome_pass}}/${{x.process_pass}}</td>`}}).join('')}}<td>${{B[m].evaluation_any_skill_used}}/90</td><td>${{B[m].evaluation_same_family_skill_used}}/90</td></tr>`).join('');
 $('paired').innerHTML=['strict','outcome','process'].map(k=>{{let x=D.behavior.paired_summary[k];return `<div class="card"><h3>${{k.toUpperCase()}} · 90 matched tasks</h3><p>都通过 <b>${{x.both_pass}}</b> · 都失败 <b>${{x.both_fail}}</b></p><p class="small">Fable only ${{x['sig-fable_only']}} · Opus only ${{x['opus-4.8_only']}}</p></div>`}}).join('');
+$('behaviorCases').innerHTML=(D.task_audit.model_behavior_case_studies||[]).map(x=>`<div class="card"><h3>${{esc(x.title)}}</h3><p><span class="metric">${{esc((x.task_ids||[]).join(', '))}}</span></p><p>${{esc(x.evidence)}}</p><p><b>优势侧写：</b>${{esc(x.advantage)}}</p><p class="small"><b>解释边界：</b>${{esc(x.boundary)}}</p></div>`).join('');
 ['E1','E2','E3','E4','E5','E6'].forEach(e=>$('familyEnv').insertAdjacentHTML('beforeend',`<option>${{e}}</option>`));
 function renderFamilies(){{
  let model=$('familyModel').value,env=$('familyEnv').value,q=$('familySearch').value.toLowerCase(),rows=[];
@@ -400,8 +413,8 @@ let EF=D.task_audit.bare_eod_policy_conflict_after_v1_1_9||{{}};
 $('bareEodFinding').innerHTML=Object.keys(EF).length?`<div class="card warn"><h3>v1.1@9 真实运行发现：含糊反馈会污染 skill，并伤害后续迁移</h3><p><b>${{esc((EF.observed_tasks||[]).join(', ')||'E6-LS1-T3 / T4')}}</b>：${{esc(EF.observed_result_zh||EF.observed_result||'')}}</p><p>${{esc(EF.quality_problem_zh||EF.quality_problem||'')}}</p><p class="small"><b>v1.1@10 系统修复：</b>${{esc(EF.systematic_change_zh||EF.systematic_change||'')}}</p></div>`:'';
 let GF=D.task_audit.draft_context_lexical_gap_after_v1_1_10||{{}};
 $('draftContextFinding').innerHTML=Object.keys(GF).length?`<div class="card warn"><h3>v1.1@10 真实运行发现：上下文完整的草稿不应输给单个产品名</h3><p><b>${{esc(GF.observed_task||'E6-LS1-T6')}}</b>：${{esc(GF.observed_result_zh||GF.observed_result||'')}}</p><p>${{esc(GF.false_negative_proof_zh||GF.false_negative_proof||'')}}</p><p class="small"><b>v1.1@11 系统修复：</b>${{esc(GF.systematic_change_zh||GF.systematic_change||'')}}</p></div>`:'';
-let RF=D.task_audit.response_observability_gap_after_v1_1_11||{{}};
-$('responseContractFinding').innerHTML=Object.keys(RF).length?`<div class="card warn"><h3>v1.1@11 真实运行发现：P0 需要行动，不等于邮件必然需要回复</h3><p><b>${{esc(RF.observed_task||'E6-LS1-T4')}}</b>：${{esc(RF.observed_result_zh||RF.observed_result||'')}}</p><p>${{esc(RF.quality_problem_zh||RF.quality_problem||'')}}</p><p class="small"><b>v1.1@12 系统修复：</b>${{esc(RF.systematic_change_zh||RF.systematic_change||'')}}</p><p class="small"><b>冻结输出复核：</b>${{esc(RF.frozen_workspace_proof||'')}}</p></div>`:'';
+let RC=D.task_audit.response_observability_gap_after_v1_1_11||{{}};
+$('responseContractFinding').innerHTML=Object.keys(RC).length?`<div class="card warn"><h3>v1.1@11 真实运行发现：P0 需要行动，不等于邮件必然需要回复</h3><p><b>${{esc(RC.observed_task||'E6-LS1-T4')}}</b>：${{esc(RC.observed_result_zh||RC.observed_result||'')}}</p><p>${{esc(RC.quality_problem_zh||RC.quality_problem||'')}}</p><p class="small"><b>v1.1@12 系统修复：</b>${{esc(RC.systematic_change_zh||RC.systematic_change||'')}}</p><p class="small"><b>冻结输出复核：</b>${{esc(RC.frozen_workspace_proof||'')}}</p></div>`:'';
 let RD=D.task_audit.release_decision||{{}},replaced=RD.replace||[];
 $('releaseDecision').innerHTML=`<div class="grid three"><div class="card good"><h3>保留：30 个 skill families</h3><p>${{esc(RD.retain_zh||RD.retain||'所有 family 均保留')}}</p></div><div class="card warn"><h3>替换：${{replaced.length}} 个具体实例</h3><p><b>${{esc(replaced.join(', ')||'无')}}</b></p><p class="small">${{esc(RD.reason_zh||RD.reason||'')}}</p></div><div class="card"><h3>整族退役：${{S.whole_skill_families_retired||0}}</h3><p>能力目标仍有评测价值；有缺陷的具体题采用修复或替换，不为维持题量而保留不可解实例。</p></div></div><p class="note">${{esc(RD.low_transfer_identifiability_zh||RD.low_transfer_identifiability||'')}}</p>`;
 let R=D.reference_audit;$('referenceGate').innerHTML=`<div class="card"><b class="big good">${{refSummary.passed||0}}/${{refSummary.total||90}}</b><p>${{refSummary.all_reference_solutions_pass?'六个环境全部 15/15 strict pass':'尚未全部通过'}}</p><p class="small">${{esc(R.split||'v1.1@2')}} · Harbor oracle · real task container · unchanged verifier · AP group ${{esc(R.group_id||'—')}}</p></div>`;
@@ -412,12 +425,17 @@ $('repairHeading').textContent=`${{S.outcome_or_contract_repairs}} 个 outcome /
 $('repairs').innerHTML=D.task_audit.outcome_or_contract_repairs.map(x=>`<div class="repair"><b>${{x.task_id}}</b><p class="small"><b>原问题：</b>${{esc(x.issue_zh||x.issue)}}</p><p><b>v1.1 改进：</b>${{esc(x.v1_1_change_zh||x.v1_1_change)}}</p></div>`).join('');
 $('processRewriteSummary').textContent=`${{S.runtime_process_verifier_rewrites_without_known_outcome_contract_bug}} 个 held-out process verifiers 从隐藏源码形态改为可观察行为`;
 $('processRewrites').innerHTML=D.task_audit.runtime_process_verifier_rewrites_without_known_outcome_contract_bug.map(x=>`<span class="metric">${{x}}</span>`).join('');
+let FS=D.task_audit.fresh_opus_family_smoke_v1_1_12||{{}};
+$('freshSmoke').innerHTML=Object.keys(FS).length?`<div class="card good"><h3>最终 split 的 fresh Opus family smoke：6/6 strict</h3><p>${{esc(FS.result||'')}}</p><p><b>Skill creation：</b>${{esc(FS.skill_evolution||'')}}</p><p><b>Skill utilization：</b>${{esc(FS.evaluation_protocol||'')}}</p><p class="small">${{esc(FS.task_quality_result||'')}}<br>${{esc(FS.export_safety||'')}}</p><p class="small"><a href="https://agentplatform.aliyun-inc.com/?cluster=hk-benchmark-dev#/jobs/${{esc(FS.job||'')}}" target="_blank">查看 AP job</a></p></div>`:'';
 function rbar(label,n,color){{return `<div class="barrow"><span>${{label}}</span><div class="track"><div class="fill" style="width:${{100*n/15}}%;background:${{color}}"></div></div><b>${{n}}/15</b></div>`}}
 function renderRegression(){{let r=D.regression;if(!r||!Object.keys(r).length){{
  let status=D.task_audit.validation_gates?.opus_v1_1_self_generated_regression||'v1.1@2 matched-control regression 尚未完成';
- $('regression').innerHTML=`<div class="card warn"><b>回归运行中</b><p>该区域只接受同一 Opus、同一 E6、同一不可变 split 的 self-generated 与 no-skill 下载证据。AP 状态或旧 split 的结果不会被混入最终对照。</p><p class="small">${{esc(status)}}</p></div>`;return}}
- let L=r.learning,S=r.self_generated,N=r.no_skill;
+ let M=D.task_audit.matched_opus_e6_v1_1_12||{{}};
+ let links=M.self_generated_job?`<p class="small">AP jobs · <a href="https://agentplatform.aliyun-inc.com/?cluster=hk-benchmark-dev#/jobs/${{esc(M.self_generated_job)}}" target="_blank">self-generated</a> · <a href="https://agentplatform.aliyun-inc.com/?cluster=hk-benchmark-dev#/jobs/${{esc(M.no_skill_job)}}" target="_blank">no-skill</a></p>`:'';
+ $('regression').innerHTML=`<div class="card warn"><b>Matched control 运行中</b><p>该区域只接受同一 Opus、同一 E6、同一不可变 split 的 self-generated 与 no-skill 下载证据。AP 状态或旧 split 的结果不会被混入最终对照。</p><p>${{esc(M.comparison||'')}}</p><p class="small">${{esc(status)}}</p>${{links}}</div>`;return}}
+ let L=r.learning,S=r.self_generated,N=r.no_skill,P=r.protocol||{{}};
  let learning=`<div class="grid cards"><div class="card"><span class="small">T1–T3 终态通过</span><b class="big">${{L.terminal_pass}}/${{L.tasks}}</b><span class="small">首次通过 ${{L.initial_pass}} · retry 修复 ${{L.repaired_to_pass}}</span></div><div class="card"><span class="small">Same-session 已验证</span><b class="big">${{L.same_session_verified}}/${{L.tasks}}</b><span class="small">总尝试 ${{L.attempts}}</span></div><div class="card"><span class="small">Active skills</span><b class="big">${{L.active_skills}}</b><span class="small">${{L.skill_versions}} 个版本</span></div><div class="card"><span class="small">T4–T6 skill read</span><b class="big">${{S.any_skill_read}}/15</b><span class="small">证明 utilization，不单独证明帮助</span></div></div>`;
+ let protocol=`<div class="card good" style="margin-top:14px"><h3>Matched protocol 已闭环</h3><p>同一模型 <b>${{esc(P.same_model_name||r.model)}}</b>，同一 E6、同一 v1.1@12 revision。学习阶段每题最多 ${{P.self_generated_learning_max_attempts||'—'}} 次；随后只发生 ${{P.self_generated_library_freeze_event_count??'—'}} 次 freeze，15 个 T4–T6 start/end 使用同一 library hash。</p><p class="small">benchmark revision: ${{esc(P.same_benchmark_revision||'—')}} · AP attempts: selfgen ${{P.self_generated_ap_attempt??'—'}}, no-skill ${{P.no_skill_ap_attempt??'—'}}<br>frozen before evaluation: ${{P.self_generated_library_frozen_before_evaluation?'yes':'no'}} · stable: ${{P.self_generated_evaluation_library_hash_stable?'yes':'no'}} · hash: ${{esc((P.self_generated_evaluation_library_hashes||[]).join(', ')||'—')}}</p></div>`;
  let metrics=`<div class="grid two" style="margin-top:14px"><div class="card"><h3>Self-generated</h3>${{['strict','outcome','process'].map(k=>rbar(k,S[k+'_pass'],'#7353ba')).join('')}}</div><div class="card"><h3>No-skill</h3>${{['strict','outcome','process'].map(k=>rbar(k,N[k+'_pass'],'#637087')).join('')}}</div></div>`;
  let paired=`<div class="grid three" style="margin-top:14px">${{['strict','outcome','process'].map(k=>{{let x=r.paired_summary[k]||{{}};return `<div class="card"><h3>${{k.toUpperCase()}} · paired</h3><p class="good">Skill rescue <b>${{x.skill_rescue||0}}</b></p><p class="bad">Skill harm <b>${{x.skill_harm||0}}</b></p><p class="small">both pass ${{x.both_pass||0}} · both fail ${{x.both_fail||0}}</p></div>`}}).join('')}}</div>`;
  let tiers=`<div class="tablebox" style="margin-top:14px"><table><thead><tr><th>Tier</th><th>Self-generated S/O/P</th><th>No-skill S/O/P</th><th>Skill reads</th></tr></thead><tbody>${{[4,5,6].map(t=>{{let a=S.by_tier.find(x=>x.tier===t),b=N.by_tier.find(x=>x.tier===t);return `<tr><td><b>T${{t}}</b></td><td>${{a.strict_pass}}/${{a.outcome_pass}}/${{a.process_pass}}</td><td>${{b.strict_pass}}/${{b.outcome_pass}}/${{b.process_pass}}</td><td>${{a.any_skill_read}}/5</td></tr>`}}).join('')}}</tbody></table></div>`;
@@ -425,7 +443,8 @@ function renderRegression(){{let r=D.regression;if(!r||!Object.keys(r).length){{
  let skills=`<details><summary>查看 v1.1 E6 生成的 ${{L.active_skills}} 个 active skills 与版本演进</summary>${{L.skills.map(s=>`<div class="card" style="margin-top:10px"><h3>${{esc(s.skill_id)}}</h3><p>${{esc(s.description||'')}}</p><p class="small">${{esc((s.version_summaries||[]).map(v=>'v'+(v.version??'?')+': '+(v.summary||JSON.stringify(v))).join('\\n'))}}</p><details><summary>展开完整 SKILL.md</summary><pre>${{esc(s.generated_text||'未导出完整文本')}}</pre></details><p class="small">${{esc(s.generated_path||'')}}</p></div>`).join('')||'<p class="bad">没有 active skill</p>'}}</details>`;
  let learningTasks=`<details><summary>查看 T1–T3 的 15 条 same-session retry 记录</summary><div class="tablebox"><table><thead><tr><th>Task</th><th>Attempts</th><th>初始→终态</th><th>Same session</th><th>Reflection</th></tr></thead><tbody>${{(L.task_records||[]).map(x=>`<tr><td>${{x.task_id}}</td><td>${{x.attempts}}</td><td>${{x.initial_pass?'✓':'✗'}} → ${{x.terminal_pass?'✓':'✗'}}</td><td>${{x.same_session_verified?'✓':'✗'}}</td><td>${{esc(x.reflection_status||'—')}}</td></tr>`).join('')}}</tbody></table></div></details>`;
  let links=`<p class="small">AP jobs · <a href="https://agentplatform.aliyun-inc.com/?cluster=hk-benchmark-dev#/jobs/${{r.jobs.self_generated}}" target="_blank">self-generated</a> · <a href="https://agentplatform.aliyun-inc.com/?cluster=hk-benchmark-dev#/jobs/${{r.jobs.no_skill}}" target="_blank">no-skill</a><br>${{esc(r.claim_boundary||'')}}</p>`;
- $('regression').innerHTML=learning+metrics+paired+tiers+tasks+skills+learningTasks+links;
+ let conclusion=`<div class="card" style="margin-top:14px"><h3>这一次 matched E6 的结论</h3><p>Self-generated 在 strict / outcome 上从 <b>${{N.strict_pass}}/15</b> 提升到 <b>${{S.strict_pass}}/15</b>：逐题看是 2 次 skill rescue、0 次 skill harm。Process 则有 1 次 harm，说明生成 skill 并非单调有益。该结果证明这套评测能观察到“学习—冻结—新 input transfer—正负迁移”，但单个环境的一次 paired run 还不能外推成模型总体因果效应。</p></div>`;
+ $('regression').innerHTML=learning+protocol+metrics+paired+tiers+conclusion+tasks+skills+learningTasks+links;
 }}renderRegression();
 $('claimBoundary').textContent=D.claim_boundary||'';
 </script></body></html>"""

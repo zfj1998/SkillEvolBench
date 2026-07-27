@@ -45,6 +45,41 @@ def evidence() -> dict[str, object]:
                 }
             )
     return {
+        "runs": [
+            {
+                "job_id": "selfgen",
+                "environment_id": "E6",
+                "selected_run": True,
+                "condition": "self_generated",
+                "baseline": "selfgen_in_session_always",
+                "model_name": "anthropic/claude-opus-4-8",
+                "benchmark_revision": "revision-1",
+                "ap_attempt": 0,
+                "runtime_attempt": 0,
+                "ap_status": "Succeeded",
+                "learning_max_attempts": 3,
+                "evaluation_only_t4_t6": False,
+                "library_freeze_event_count": 1,
+                "library_frozen_before_evaluation": True,
+                "evaluation_library_hashes": ["abc123"],
+                "evaluation_library_hash_stable": True,
+                "evaluation_task_start_count": 15,
+                "evaluation_task_end_count": 15,
+            },
+            {
+                "job_id": "no-skill",
+                "environment_id": "E6",
+                "selected_run": True,
+                "condition": "no_skill",
+                "baseline": "no_skill",
+                "model_name": "anthropic/claude-opus-4-8",
+                "benchmark_revision": "revision-1",
+                "ap_attempt": 0,
+                "runtime_attempt": 0,
+                "ap_status": "Succeeded",
+                "evaluation_only_t4_t6": True,
+            },
+        ],
         "tasks": tasks,
         "learning_tasks": learning,
         "skills": [
@@ -81,6 +116,9 @@ def test_build_audit_pairs_exact_jobs_and_summarizes_rescue() -> None:
         "skill_rescue": 5,
     }
     assert len(result["paired_tasks"]) == 15
+    assert result["protocol"]["same_model_name"] == "anthropic/claude-opus-4-8"
+    assert result["protocol"]["same_benchmark_revision"] == "revision-1"
+    assert result["protocol"]["self_generated_library_frozen_before_evaluation"]
 
 
 def test_build_audit_rejects_incomplete_condition() -> None:

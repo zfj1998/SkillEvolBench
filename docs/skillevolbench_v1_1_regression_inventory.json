@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "jobs": [
+    {
+      "job_id": "ap-skillevolbench-c710a429e0434166-d2",
+      "label": "opus-v1.1@12-self-generated-E6",
+      "status": "Succeeded",
+      "attempt": 0,
+      "error_code": null,
+      "created_at": "2026-07-27T10:02:34.521",
+      "updated_at": "2026-07-27T15:18:56.113"
+    },
+    {
+      "job_id": "ap-skillevolbench-26d79c7f81da4f70-d2",
+      "label": "opus-v1.1@12-no-skill-E6",
+      "status": "Succeeded",
+      "attempt": 0,
+      "error_code": null,
+      "created_at": "2026-07-27T10:02:53.309",
+      "updated_at": "2026-07-27T12:31:50.563"
+    }
+  ]
+}
