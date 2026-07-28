@@ -55,10 +55,5 @@
   ],
   "expected_cc": {},
   "rationale_keywords": {},
-  "process_markers": [
-    "select_actions",
-    "acknowledge",
-    "ignore"
-  ],
   "min_message_count": 10
 }

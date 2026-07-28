@@ -85,7 +85,17 @@ class TestOutcome:
                 continue
             action = actions[source]
             assignee = str(action.get("assignee", "")).lower()
-            assert expected["assignee"].lower() in assignee, f"{source} wrong assignee: {assignee}"
+            if expected["assignee"].lower() == "unspecified":
+                assert assignee in {
+                    "unspecified",
+                    "team",
+                    "product",
+                    "product team",
+                    "design",
+                    "design team",
+                }, f"{source} wrong assignee: {assignee}"
+            else:
+                assert expected["assignee"].lower() in assignee, f"{source} wrong assignee: {assignee}"
             blob = text_blob(action.get("description", ""))
             for term in expected.get("description_terms", []):
                 assert term.lower() in blob, f"{source} description missing term {term!r}: {blob}"

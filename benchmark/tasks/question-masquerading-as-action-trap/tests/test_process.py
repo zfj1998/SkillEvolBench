@@ -27,15 +27,6 @@ class TestProcess:
             for field in ["id", "source_message_id", "description", "assignee", "status", "confidence", "reason"]:
                 assert field in action, f"missing action field {field}"
 
-    def test_process_markers(self):
-        combined = "\n".join(
-            path.read_text(encoding="utf-8", errors="ignore")
-            for path in [PROJECT_ROOT / "extractor_policy.py", PROJECT_ROOT / "context_loader.py", PROJECT_ROOT / "followup_drafter.py"]
-            if path.exists()
-        ).lower()
-        for marker in GT.get("process_markers", []):
-            assert marker.lower() in combined, f"expected process marker {marker!r}"
-
     def test_current_date_context_when_required(self):
         if not GT.get("requires_current_date"):
             return

@@ -21,10 +21,5 @@
     "team_sync_tue": 0
   },
   "expected_reason_terms": {},
-  "expected_preference_breakdown": {},
-  "process_markers": [
-    "team.json",
-    "infer",
-    "timezone"
-  ]
+  "expected_preference_breakdown": {}
 }

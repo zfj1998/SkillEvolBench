@@ -68,21 +68,6 @@
     "meet_008"
   ],
   "rank_before": [],
-  "reason_keywords": {
-    "meet_005": [
-      "certificate",
-      "tomorrow"
-    ],
-    "meet_008": [
-      "CEO",
-      "board"
-    ]
-  },
   "expected_drafts": {},
-  "min_message_count": 30,
-  "process_markers": [
-    "meeting_agenda",
-    "agenda",
-    "board prep"
-  ]
+  "min_message_count": 30
 }

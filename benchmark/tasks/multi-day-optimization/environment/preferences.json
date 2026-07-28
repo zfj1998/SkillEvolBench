@@ -11,7 +11,8 @@
     ]
   },
   "one_on_one": {
-    "prefer_time": "afternoon"
+    "prefer_time": "afternoon",
+    "participant_id": "alice"
   },
   "global": {
     "spread_across_days": true

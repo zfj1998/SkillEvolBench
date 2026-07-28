@@ -8,9 +8,9 @@
     "one_on_one"
   ],
   "required_start_utc": [
-    "2026-04-28T15:00:00Z",
-    "2026-04-29T14:00:00Z",
-    "2026-04-30T19:00:00Z"
+    "2026-04-27T16:00:00Z",
+    "2026-04-28T13:00:00Z",
+    "2026-04-29T16:00:00Z"
   ],
   "forbidden_start_utc": [],
   "expected_local_times": [],
@@ -27,11 +27,5 @@
   },
   "expected_reason_terms": {},
   "expected_preference_breakdown": {},
-  "process_markers": [
-    "global",
-    "soft",
-    "fragmentation",
-    "preferences"
-  ],
   "min_soft_preferences_met": 2
 }

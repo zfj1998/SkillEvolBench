@@ -31,5 +31,27 @@ Write `output/triage.json` as JSON with this schema:
 }
 ```
 
-Classify every source email exactly once. Rank lower `rank` values first, with P0 before P1 before P2 before P3, and include concrete evidence in `reason`. If the task asks for replies, include only the messages that truly need responses in `response_list` and draft concise context-aware replies in `drafts`.
+Classify every source email exactly once. Rank lower `rank` values first, with P0 before P1 before P2 before P3, and include concrete evidence in `reason`. If the task asks for replies, include only the messages that truly need responses in `response_list` and draft concise context-aware replies in `drafts`. Decide `needs_response` independently from priority: an explicit request to confirm, approve, review, decide, or reply can still need a response when optional wording lowers it to P2; pure FYI, automated, and newsletter messages do not.
 
+Use these priority definitions:
+
+- **P0**: an active production/security incident or a hard same-day/overnight
+  deadline for which work must start immediately (including an explicit EOD
+  deadline tied to a concrete same-day customer, signature, payment,
+  production, or security blocker);
+- **P1**: a material action, review, approval, or near-term deliverable that
+  should be handled today but is not an active incident or hard same-day
+  blocker;
+
+A clock or senior sender alone does not make a message P0. Routine reviews,
+readouts, approvals, and decisions requested today or by tomorrow are P1 unless
+the message shows that missing the deadline directly blocks a customer,
+signature, payment, production, or security outcome. Use P0 only when work must
+start immediately to prevent that concrete blocking outcome.
+
+- **P2**: useful status, timeline, or background information with no immediate
+  action;
+- **P3**: low-impact administrative, social, facilities, promotional,
+  automated, or newsletter content.
+
+This task evaluates triage only. Leave both `response_list` and `drafts` empty.

@@ -32,3 +32,7 @@ Write `/root/task/output.json` as a JSON object with:
 
 Design contract: a query that runs is not enough. Use INNER JOIN semantics or a LEFT JOIN with an explicit non-null valid-order filter, normalize customer identity, exclude invalid/null orders, and verify that active customers cannot exceed logical customers.
 
+Amount strings may contain a currency symbol and conventional three-digit
+thousands separators, for example `$1,234.50`. Reject malformed grouping such
+as `1,2,3`; removing every comma first would incorrectly turn it into a valid
+amount.

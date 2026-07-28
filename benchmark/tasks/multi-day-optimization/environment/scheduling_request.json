@@ -2,15 +2,18 @@
   "meetings": [
     {
       "id": "team_sync",
-      "duration_minutes": 60
+      "duration_minutes": 60,
+      "attendee_ids": ["alice", "bob"]
     },
     {
       "id": "client_demo",
-      "duration_minutes": 120
+      "duration_minutes": 120,
+      "attendee_ids": ["alice", "george"]
     },
     {
       "id": "one_on_one",
-      "duration_minutes": 30
+      "duration_minutes": 30,
+      "attendee_ids": ["alice", "bob"]
     }
   ],
   "date_range": [

@@ -50,7 +50,10 @@
       ],
       [
         "not promise",
-        "would not promise"
+        "would not promise",
+        "cannot commit",
+        "can't commit",
+        "will not commit"
       ]
     ],
     "combo_04": [
@@ -85,7 +88,12 @@
   },
   "rationale_keywords": {
     "combo_02": [
-      "thread context"
+      [
+        "thread context",
+        "thread history",
+        "thread_notes",
+        "thread notes"
+      ]
     ],
     "combo_03": [
       "Sales",
@@ -93,11 +101,5 @@
       "Product"
     ]
   },
-  "process_markers": [
-    "triage",
-    "thread_history",
-    "stakeholder",
-    "cc"
-  ],
   "min_message_count": 15
 }

@@ -11,7 +11,7 @@ for item in (SKILLSBENCH_ROOT, PROJECT):
         sys.path.insert(0, str(item))
 
 import mock_api
-from verifier_lib.runtime import emit_report, load_module, print_report, read_text, run_checks
+from verifier_lib.runtime import emit_report, load_module, print_report, run_checks
 
 SOURCE = PROJECT / 'full_workflow.py'
 ROUTER = PROJECT / 'spec_router.py'
@@ -52,23 +52,31 @@ def _retry_and_wait_present():
     success_calls = [item for item in statuses if item['status'] == 200]
     assert len(success_calls) >= 2, 'missing retry after 503'
     assert any((later['ts'] - earlier['ts']) >= mock_api.MIN_POLL_INTERVAL for earlier, later in zip(success_calls, success_calls[1:])), 'missing wait between successful polls'
-    poller_text = read_text(POLLER)
-    assert '503' in poller_text and 'sleep' in poller_text, 'poller helper missing retry or wait handling'
     return 'retry and wait present'
 
 
 def _routes_from_tier():
-    text = read_text(ROUTER)
-    assert 'tier' in text, 'router should consult the current user tier'
-    assert 'execution_path_hint' not in text, 'router should not trust the stale execution-path hint'
-    return 'router uses current tier'
+    endpoints = [item['endpoint'] for item in _run_trace()]
+    assert '/premium/spec' in endpoints
+    assert '/standard/spec' not in endpoints
+    return 'runtime routes from the current premium tier'
 
 
 def _validator_uses_expected_checksum():
-    text = read_text(VALIDATOR)
-    assert 'expected_checksum' in text, 'validator should compare against the expected checksum from the selected spec'
-    assert '.startswith(' not in text, 'validator should not only perform a prefix check'
-    return 'validator checks exact checksum'
+    from result_validator import validate_result
+    valid = {
+        'approved': True,
+        'user_id': 'user_1',
+        'tier': 'premium',
+        'records': [],
+        'checksum': 'chk-premium',
+    }
+    assert validate_result(valid, 'chk-premium') == valid
+    try:
+        validate_result(valid, 'chk-other')
+    except ValueError:
+        return 'validator rejects a checksum that only matches the prefix'
+    raise AssertionError('validator did not compare the exact expected checksum')
 
 
 def run():

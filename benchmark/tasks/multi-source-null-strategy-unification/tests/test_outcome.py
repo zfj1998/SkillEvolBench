@@ -79,6 +79,18 @@ def _run() -> tuple[subprocess.CompletedProcess[str], dict]:
     return result, payload
 
 
+def _contains_expected(actual, expected):
+    """Recursively require contract fields while allowing extra audit detail."""
+    if isinstance(expected, dict):
+        return isinstance(actual, dict) and all(
+            key in actual and _contains_expected(actual[key], value)
+            for key, value in expected.items()
+        )
+    if isinstance(expected, list):
+        return actual == expected
+    return actual == expected
+
+
 def run():
     expected = _expected()
     public = run_checks("public", [
@@ -88,8 +100,23 @@ def run():
     hidden = run_checks("hidden", [
         ("script_does_not_crash", lambda: _run()[0].returncode == 0 or (_ for _ in ()).throw(AssertionError(_run()[0].stderr[:400]))),
         ("summary_matches_ground_truth", lambda: _run()[1].get("record_count") == expected["record_count"] and _run()[1].get("valid_price_count") == expected["valid_price_count"] and _run()[1].get("missing_price_count") == expected["missing_price_count"] and _run()[1].get("total_stock") == expected["total_stock"] and _run()[1].get("out_of_stock_count") == expected["out_of_stock_count"] or (_ for _ in ()).throw(AssertionError("top-level summary mismatch"))),
-        ("source_null_summary_matches", lambda: _run()[1].get("source_null_summary") == expected["source_null_summary"] or (_ for _ in ()).throw(AssertionError("per-source null summary mismatch"))),
-        ("category_totals_match", lambda: _run()[1].get("category_totals") == expected["category_totals"] or (_ for _ in ()).throw(AssertionError("category totals mismatch"))),
+        (
+            "source_null_summary_matches",
+            lambda: _contains_expected(
+                _run()[1].get("source_null_summary"),
+                expected["source_null_summary"],
+            )
+            or (_ for _ in ()).throw(
+                AssertionError("per-source null summary mismatch")
+            ),
+        ),
+        (
+            "category_totals_match",
+            lambda: _contains_expected(
+                _run()[1].get("category_totals"), expected["category_totals"]
+            )
+            or (_ for _ in ()).throw(AssertionError("category totals mismatch")),
+        ),
     ])
     return emit_report("E3-LS4-T6", public, hidden)
 

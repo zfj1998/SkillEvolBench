@@ -12,6 +12,7 @@
   ],
   "expected_fields": {
     "act_runbook": {
+      "source_message_id": "ft01",
       "assignee": "alice",
       "deadline": "2026-04-13",
       "status": "overdue",
@@ -21,6 +22,7 @@
       ]
     },
     "act_pricing_faq": {
+      "source_message_id": "ft02",
       "assignee": "bob",
       "deadline": "2026-04-15",
       "status": "overdue",
@@ -30,6 +32,7 @@
       ]
     },
     "act_emea_dns": {
+      "source_message_id": "ft03",
       "assignee": "charlie",
       "deadline": null,
       "status": "delayed",
@@ -39,6 +42,7 @@
       ]
     },
     "act_customer_comms": {
+      "source_message_id": "ft04",
       "assignee": "diana",
       "deadline": "2026-04-24",
       "status": "completed",
@@ -48,6 +52,7 @@
       ]
     },
     "act_regression": {
+      "source_message_id": "ft05",
       "assignee": "eli",
       "deadline": "2026-04-27",
       "status": "open",
@@ -56,6 +61,7 @@
       ]
     },
     "act_docs": {
+      "source_message_id": "ft06",
       "assignee": "team",
       "deadline": "2026-04-30",
       "status": "no_update",
@@ -64,6 +70,7 @@
       ]
     },
     "act_migration_mapping": {
+      "source_message_id": "ft07",
       "assignee": "alice",
       "deadline": null,
       "status": "no_update",
@@ -73,6 +80,7 @@
       ]
     },
     "act_partner_qa": {
+      "source_message_id": "ft08",
       "assignee": "bob",
       "deadline": "2026-04-24",
       "status": "open",
@@ -99,6 +107,7 @@
   "expected_followups": {
     "act_runbook": {
       "action_id": "act_runbook",
+      "source_message_id": "ft01",
       "to": "alice",
       "body": "Hi Alice, quick follow-up on the webhook runbook that was targeted for last Monday. Could you share the latest status or a revised ETA when you have a moment?",
       "must_include": [
@@ -109,6 +118,7 @@
     },
     "act_pricing_faq": {
       "action_id": "act_pricing_faq",
+      "source_message_id": "ft02",
       "to": "bob",
       "body": "Hi Bob, checking in on the pricing FAQ that was due last Wednesday. Could you send the current status and any blocker so we can update the launch tracker?",
       "must_include": [
@@ -119,13 +129,6 @@
     }
   },
   "min_message_count": 20,
-  "process_markers": [
-    "extract",
-    "track",
-    "follow-up",
-    "overdue",
-    "polite"
-  ],
   "allowed_missing_actions": 0,
   "requires_current_date": true
 }

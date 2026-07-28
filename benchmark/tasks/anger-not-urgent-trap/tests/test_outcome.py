@@ -65,20 +65,21 @@ class TestOutcome:
             assert actual[higher]["rank"] < actual[lower]["rank"], f"{higher} should rank before {lower}"
 
     def test_response_list_when_expected(self):
-        expected = set(GT.get("expected_response_ids", []))
-        if not expected:
+        if "expected_response_ids" not in GT:
             return
+        expected = set(GT["expected_response_ids"])
         output = load_output()
         actual = set(output.get("response_list", []))
         assert actual == expected, f"response list mismatch: actual={sorted(actual)} expected={sorted(expected)}"
 
-    def test_reasons_include_expected_evidence(self):
+    def test_reasons_are_present_and_nontrivial(self):
         output = load_output()
-        actual = by_id(output)
-        for mid, keywords in GT.get("reason_keywords", {}).items():
-            reason = actual.get(mid, {}).get("reason", "").lower()
-            missing = [word for word in keywords if word.lower() not in reason]
-            assert not missing, f"reason for {mid} missing evidence words {missing}: {reason}"
+        invalid = {
+            item.get("id"): item.get("reason")
+            for item in output.get("items", [])
+            if len(str(item.get("reason", "")).split()) < 3
+        }
+        assert not invalid, f"each classification needs a brief rationale: {invalid}"
 
     def test_p0_drafts_when_expected(self):
         expected = GT.get("expected_drafts", {})

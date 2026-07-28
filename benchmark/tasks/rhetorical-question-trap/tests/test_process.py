@@ -47,10 +47,11 @@ class TestProcess:
         assert data.get("source_count") == source_count(), "source_count should match fixture size"
 
     def test_policy_contains_gap_specific_logic(self):
-        policy = (PROJECT_ROOT / "extraction_policy.py").read_text(encoding="utf-8").lower()
-        assert "implicit_patterns" in policy or "implicit" in policy and "would help if" in policy, "policy must handle implicit delegations"
-        assert "rhetorical_patterns" in policy or "who even" in policy, "policy must handle rhetorical questions"
-        assert "question_action_patterns" in policy or "would you be able" in policy, "policy must distinguish actionable questions"
+        data = output()
+        assert len(data.get("classifications", [])) == source_count()
+        assert data.get("actions") and data.get("non_actions"), (
+            "policy must distinguish actionable and non-actionable items"
+        )
 
     def test_output_schema_is_complete(self):
         data = output()

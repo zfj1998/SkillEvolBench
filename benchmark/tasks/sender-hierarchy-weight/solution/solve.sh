@@ -35,7 +35,7 @@ def classify_message(message: dict, context: dict) -> dict:
         return _decision("P0", 8, "P0 because the certificate expires tomorrow and creates security or availability risk.")
     if any(token in text for token in ["production checkout down", "checkout failures continue", "production error budget", "queue workers", "sso policy bypass", "okta admin", "leaked api token", "security breach", "critical:"]):
         return _decision("P0", 7, "Immediate business impact or explicit same-day action required.")
-    if "action required by eod" in text or "need a yes/no by eod" in text:
+    if any(token in text for token in ["action required by eod", "need a yes/no by eod", "need by eod", "by end of day"]):
         return _decision("P0", 6, "Immediate same-day legal or customer-blocking decision required.")
     if any(token in text for token in ["pause signature", "signature risk", "written plan by 14:00", "answer the data retention point today"]):
         return _decision("P0", 6, "Immediate client or signature risk with customer timeline.")

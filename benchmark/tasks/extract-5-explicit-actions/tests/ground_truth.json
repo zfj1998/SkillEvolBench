@@ -67,11 +67,6 @@
   ],
   "expected_followups": {},
   "min_message_count": 10,
-  "process_markers": [
-    "explicit",
-    "deadline",
-    "source_message"
-  ],
   "allowed_missing_actions": 0,
   "requires_current_date": false
 }

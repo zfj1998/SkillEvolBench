@@ -13,6 +13,52 @@ from textwrap import dedent
 PROJECT_ROOT = Path(os.environ.get("PROJECT_ROOT", "/root/task")).resolve()
 
 FILES = {
+    "order_validity.py": dedent(
+        """
+        from __future__ import annotations
+
+        import re
+        from datetime import datetime
+        from decimal import Decimal, InvalidOperation
+
+
+        def valid_order_status(value: object) -> bool:
+            return str(value).strip().lower() in {"paid", "shipped"}
+
+
+        def parse_amount(value: object) -> Decimal | None:
+            if value is None:
+                return None
+            text = str(value).strip().replace("$", "")
+            if not text:
+                return None
+            if "," in text:
+                if not re.fullmatch(r"[+-]?\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?", text):
+                    return None
+            elif not re.fullmatch(r"[+-]?\\d+(?:\\.\\d+)?", text):
+                return None
+            try:
+                amount = Decimal(text.replace(",", ""))
+            except InvalidOperation:
+                return None
+            return amount if amount > 0 else None
+
+
+        def valid_order_date(value: object) -> bool:
+            if value is None:
+                return False
+            text = str(value).strip()
+            if not text:
+                return False
+            for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%m/%d/%Y"):
+                try:
+                    datetime.strptime(text, fmt)
+                    return True
+                except ValueError:
+                    pass
+            return False
+        """
+    ),
     "activity_guard.py": dedent(
         """
         from __future__ import annotations

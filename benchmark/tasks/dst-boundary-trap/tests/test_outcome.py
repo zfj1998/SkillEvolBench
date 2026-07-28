@@ -52,19 +52,30 @@ class TestOutcome:
             assert all("score" in item for item in items), "scores required for optimization tasks"
 
     def test_expected_scores_match_soft_constraints(self):
+        result = output()
+        items = result.get("recommendations", []) + result.get("scheduled_meetings", [])
+        if "expected_first_score" in GT:
+            assert items[0].get("score") == GT["expected_first_score"], (
+                f"first item score mismatch: {items[0].get('score')}"
+            )
         expected_scores = GT.get("expected_scores", {})
         if not expected_scores:
             return
-        items = result = output()
+        result = output()
         by_id = {item.get("slot_id") or item.get("meeting_id"): item for item in result.get("recommendations", []) + result.get("scheduled_meetings", [])}
         wrong = {item_id: (by_id.get(item_id, {}).get("score"), score) for item_id, score in expected_scores.items() if by_id.get(item_id, {}).get("score") != score}
         assert not wrong, f"score mismatch: {wrong}"
 
     def test_soft_preference_counts_match(self):
+        result = output()
+        items = result.get("recommendations", []) + result.get("scheduled_meetings", [])
+        if "expected_first_soft_preferences_met" in GT:
+            assert items[0].get("soft_preferences_met") == GT["expected_first_soft_preferences_met"], (
+                f"first item soft preference count mismatch: {items[0].get('soft_preferences_met')}"
+            )
         expected = GT.get("expected_soft_preferences_met", {})
         if not expected:
             return
-        result = output()
         by_id = {item.get("slot_id") or item.get("meeting_id"): item for item in result.get("recommendations", []) + result.get("scheduled_meetings", [])}
         wrong = {item_id: (by_id.get(item_id, {}).get("soft_preferences_met"), count) for item_id, count in expected.items() if by_id.get(item_id, {}).get("soft_preferences_met") != count}
         assert not wrong, f"soft preference count mismatch: {wrong}"

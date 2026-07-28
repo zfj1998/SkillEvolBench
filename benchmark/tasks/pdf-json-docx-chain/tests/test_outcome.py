@@ -1,8 +1,10 @@
 
 import json
+import re
 import subprocess
 import sys
 import unittest
+from decimal import Decimal
 from pathlib import Path
 from docx import Document
 
@@ -31,6 +33,13 @@ def doc_all_text(doc):
                 parts.append(cell.text)
     return "\n".join(parts)
 
+def numeric_values(text):
+    """Parse human-formatted numbers such as $125,000 and 125000 equally."""
+    return {
+        Decimal(token.replace(",", ""))
+        for token in re.findall(r"(?<![A-Za-z0-9])[-+]?\d[\d,]*(?:\.\d+)?", text)
+    }
+
 class HiddenTests(unittest.TestCase):
     def test_hidden_json_contains_correct_financial_data(self):
         data, _ = run_pipeline()
@@ -43,10 +52,15 @@ class HiddenTests(unittest.TestCase):
     def test_hidden_docx_numbers_match_pdf(self):
         _, doc = run_pipeline()
         text = doc_all_text(doc)
+        observed_numbers = numeric_values(text)
         for quarter, values in EXPECTED.items():
             self.assertIn(quarter, text)
             for value in values.values():
-                self.assertIn(str(value), text)
+                self.assertIn(
+                    Decimal(str(value)),
+                    observed_numbers,
+                    f"financial value {value} missing from DOCX",
+                )
 
     def test_hidden_docx_has_title_and_table(self):
         _, doc = run_pipeline()

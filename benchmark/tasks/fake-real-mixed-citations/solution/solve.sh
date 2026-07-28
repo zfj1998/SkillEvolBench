@@ -23,16 +23,10 @@ def classify_citation(citation: dict, source: dict | None) -> dict:
     source_text = _text(source)
     source_id = str(citation.get("source_id", "")).lower()
     if source is None:
-        if "table" in claim or "deployment" in claim:
-            return {
-                "label": "invalid",
-                "checks": ["existence", "content_match", "registry"],
-                "reason": "Invalid citation: the referenced table or deployment source is missing/not found in the verified registry.",
-            }
         return {
             "label": "fake",
             "checks": ["existence", "authenticity", "doi", "journal_author_crosscheck"],
-            "reason": "Fake or fabricated citation: no matching source is present in the verified registry, so DOI, journal, and authenticity checks fail; near-match journal or author-title metadata is not enough.",
+            "reason": "Fake or fabricated citation: no matching source is present in the verified registry, so a missing table, deployment record, DOI, journal, or near-match metadata cannot establish authenticity.",
         }
     if "example.invalid" in source_text or "fake" in source_text or "fabricated" in source_text:
         return {
@@ -48,9 +42,9 @@ def classify_citation(citation: dict, source: dict | None) -> dict:
     for group in unsupported_groups:
         if any(marker in claim for marker in group) and not any(marker in source_text for marker in group):
             return {
-                "label": "invalid",
+                "label": "misrepresented",
                 "checks": ["existence", "content_match"],
-                "reason": "The source exists, but the table, appendix, or unsupported claim is missing/not found in the verified source notes.",
+                "reason": "Misrepresented citation: the source exists, but the claimed table, appendix, deployment, or scope is missing from the verified source notes.",
             }
     if "universal diagnosis" in claim or "all cancers" in claim:
         return {

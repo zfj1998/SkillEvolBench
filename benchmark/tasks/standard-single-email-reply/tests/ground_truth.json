@@ -58,9 +58,5 @@
       "project_state"
     ]
   },
-  "process_markers": [
-    "context_json",
-    "project_state"
-  ],
   "min_message_count": 1
 }

@@ -62,11 +62,6 @@
   "non_action_message_ids": [],
   "expected_followups": {},
   "min_message_count": 6,
-  "process_markers": [
-    "current_date",
-    "relative date",
-    "overdue"
-  ],
   "allowed_missing_actions": 0,
   "requires_current_date": true
 }

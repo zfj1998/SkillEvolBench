@@ -2,7 +2,17 @@
 import unittest
 from pathlib import Path
 
-SOURCE = (Path(__file__).resolve().parents[1] / "project" / "pipeline.py").read_text(encoding="utf-8")
+PROJECT = Path(__file__).resolve().parents[1] / "project"
+SOURCE = "\n".join(
+    path.read_text(encoding="utf-8")
+    for path in (
+        PROJECT / "pipeline.py",
+        PROJECT / "pdf_extract.py",
+        PROJECT / "json_bridge.py",
+        PROJECT / "docx_writer.py",
+    )
+    if path.exists()
+)
 
 class ProcessTests(unittest.TestCase):
     def test_process_has_three_stage_pipeline(self):

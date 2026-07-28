@@ -33,7 +33,11 @@ def classify_message(message: dict, context: dict) -> dict:
         return _decision("P3", 1, "Low business impact despite emotional wording; facilities or social issue.")
     if "certificate" in text and ("tomorrow" in text or "expiration date" in text or "expires" in text):
         return _decision("P0", 8, "P0 because the certificate expires tomorrow and creates security or availability risk.")
-    if any(token in text for token in ["production checkout down", "checkout failures continue", "production error budget", "queue workers", "sso policy bypass", "okta admin", "leaked api token", "security breach", "critical:"]):
+    if "checkout failures continue" in text or "production checkout down" in text:
+        return _decision("P0", 7, "Active checkout production incident with continuing failures requires immediate action.")
+    if any(token in text for token in ["sso policy bypass", "okta admin", "leaked api token", "security breach"]):
+        return _decision("P0", 7, "Active Okta or security access incident requires immediate action.")
+    if any(token in text for token in ["production error budget", "queue workers", "critical:"]):
         return _decision("P0", 7, "Immediate business impact or explicit same-day action required.")
     if "action required by eod" in text or "need a yes/no by eod" in text:
         return _decision("P0", 6, "Immediate same-day legal or customer-blocking decision required.")
@@ -86,17 +90,24 @@ def _cc_list(message: dict) -> list[str]:
 def draft_reply(message: dict, context: dict) -> dict:
     text = f"{message.get('subject', '')}\n{message.get('body', '')}".lower()
     if "checkout" in text:
-        body = "Thanks for flagging checkout incident inc-7421. I am joining the bridge now, will keep queue mitigation moving, and will send the first update by 10:30 ET with a follow-up ETA."
+        body = "Thanks for flagging checkout incident inc-7421. I am joining the bridge now, Riley will own queue mitigation, and I will send the first customer-facing update by 10:30 ET with a follow-up ETA."
         rationale = "Acknowledges incident, bridge context, owner coordination, and ETA."
+        cc = ["riley.chen@harborworks.example"]
     elif "okta" in text:
-        body = "Acknowledged on the Okta admin anomaly. I see the token was revoked; please proceed with the access review, and I will confirm executive sign-off by 11:00 ET."
+        body = "Acknowledged on the Okta admin anomaly. I see the token was revoked but unknown privileged sessions remain active; please proceed immediately with containment and the access review, and I will confirm executive sign-off by 11:00 ET."
         rationale = "References revoked token context and access review next step."
+        cc = ["riley.chen@harborworks.example"]
     elif "renewal" in text or "14:00" in text or "signature" in text:
         body = "Ari, thank you for the clear deadline. Casey owns the data-retention redline, Jordan and I are aligning now, and we will send the written plan before 14:00 ET so signature does not pause."
         rationale = "Acknowledges client deadline, owner, action, and ETA."
+        cc = [
+            "casey.holt@harborworks.example",
+            "jordan.lee@harborworks.example",
+        ]
     else:
         body = "Acknowledged. I will follow up with the right owner and timing."
         rationale = "Fallback acknowledgement for a response-required item."
-    return {"email_id": message["id"], "to": _to_list(message), "cc": _cc_list(message), "body": body, "rationale": rationale}
+        cc = _cc_list(message)
+    return {"email_id": message["id"], "to": _to_list(message), "cc": cc, "body": body, "rationale": rationale}
 PYMOD
 python3 "$PROJECT_ROOT/triage_pipeline.py"

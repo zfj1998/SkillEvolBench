@@ -19,10 +19,19 @@ def output():
 def actions_by_id():
     return {action["id"]: action for action in output().get("actions", [])}
 
+def actions_by_source():
+    actions = output().get("actions", [])
+    by_source = {action.get("source_message_id"): action for action in actions}
+    assert len(by_source) == len(actions), "source_message_id must identify each action"
+    return by_source
+
 class TestOutcome:
     def test_expected_actions_detected(self):
-        actual = set(actions_by_id())
-        expected = set(GT["expected_action_ids"])
+        actual = set(actions_by_source())
+        expected = {
+            spec["source_message_id"]
+            for spec in GT.get("expected_fields", {}).values()
+        }
         missing = expected - actual
         assert len(missing) <= GT.get("allowed_missing_actions", 0), f"missing expected actions: {sorted(missing)}"
 
@@ -32,21 +41,26 @@ class TestOutcome:
         assert actual_sources.isdisjoint(forbidden), f"non-action messages extracted: {sorted(actual_sources & forbidden)}"
 
     def test_assignees_deadlines_and_descriptions(self):
-        actual = actions_by_id()
+        actual = actions_by_source()
         for aid, expected in GT.get("expected_fields", {}).items():
-            assert aid in actual, f"missing action {aid}"
+            source_id = expected["source_message_id"]
+            assert source_id in actual, f"missing action from {source_id} ({aid})"
+            item = actual[source_id]
             for field in ["assignee", "deadline", "status"]:
                 if field in expected:
-                    assert actual[aid].get(field) == expected[field], f"{aid}.{field}: {actual[aid].get(field)} != {expected[field]}"
+                    assert item.get(field) == expected[field], f"{source_id}.{field}: {item.get(field)} != {expected[field]}"
             for word in expected.get("description_terms", []):
-                assert word.lower() in actual[aid].get("description", "").lower(), f"{aid} description missing {word}"
+                assert word.lower() in item.get("description", "").lower(), f"{source_id} description missing {word}"
 
     def test_implicit_and_confidence_requirements(self):
-        actual = actions_by_id()
+        actual = actions_by_source()
         for aid in GT.get("implicit_action_ids", []):
-            assert actual.get(aid, {}).get("implicit") is True, f"{aid} should be marked implicit"
+            source_id = GT["expected_fields"][aid]["source_message_id"]
+            assert actual.get(source_id, {}).get("implicit") is True, f"{source_id} should be marked implicit"
         for low, high in GT.get("confidence_less_than", []):
-            assert actual[low].get("confidence", 1) < actual[high].get("confidence", 0), f"{low} confidence should be lower than {high}"
+            low_source = GT["expected_fields"][low]["source_message_id"]
+            high_source = GT["expected_fields"][high]["source_message_id"]
+            assert actual[low_source].get("confidence", 1) < actual[high_source].get("confidence", 0), f"{low_source} confidence should be lower than {high_source}"
 
     def test_status_counts(self):
         expected = GT.get("expected_status_counts", {})
@@ -60,10 +74,20 @@ class TestOutcome:
         expected = GT.get("expected_followups", {})
         if not expected:
             return
-        drafts = {draft["action_id"]: draft for draft in output().get("followups", [])}
-        assert set(drafts) == set(expected), f"followup draft IDs mismatch: {sorted(drafts)} vs {sorted(expected)}"
+        id_to_source = {
+            action["id"]: action.get("source_message_id")
+            for action in output().get("actions", [])
+        }
+        drafts = {
+            id_to_source.get(draft["action_id"]): draft
+            for draft in output().get("followups", [])
+        }
+        expected_sources = {
+            spec["source_message_id"] for spec in expected.values()
+        }
+        assert set(drafts) == expected_sources, f"followup source IDs mismatch: {sorted(drafts)} vs {sorted(expected_sources)}"
         for aid, spec in expected.items():
-            body = drafts[aid].get("body", "").lower()
+            body = drafts[spec["source_message_id"]].get("body", "").lower()
             for term in spec.get("must_include", []):
                 assert term.lower() in body, f"followup {aid} missing {term}: {body}"
             for phrase in ["you failed", "overdue.", "this is overdue"]:

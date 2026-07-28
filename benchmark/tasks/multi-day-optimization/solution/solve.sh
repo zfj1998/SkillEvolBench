@@ -7,6 +7,7 @@ cat > "$PROJECT_ROOT/scheduling_policy.py" <<'PYMOD'
 from __future__ import annotations
 
 from datetime import date, datetime, time, timedelta, timezone
+from itertools import product
 from zoneinfo import ZoneInfo
 
 CAPABILITY_NOTES = "ZoneInfo DST not fixed offset working hours calendar preferences soft score buffer 15-minute all participant team.json infer timezone global fragmentation"
@@ -173,36 +174,6 @@ def _dates_by_name(start_text: str, end_text: str) -> dict[str, date]:
     return result
 
 
-def _meeting_day(meeting: dict, prefs: dict, used_days: set[date], days: dict[str, date]) -> date:
-    meeting_prefs = prefs.get(meeting["id"], {})
-    last_day = max(used_days) if used_days else None
-    preferred = [days[name] for name in meeting_prefs.get("prefer_days", []) if name in days]
-    available_preferred = [day for day in preferred if day not in used_days and (last_day is None or day > last_day)]
-    if available_preferred:
-        return available_preferred[-1] if len(available_preferred) > 1 else available_preferred[0]
-    avoided = {days[name] for name in meeting_prefs.get("avoid_days", []) if name in days}
-    ordered_days = [days[name] for name in DAY_NAMES if name in days]
-    for day in ordered_days:
-        if day not in used_days and day not in avoided and (last_day is None or day > last_day):
-            return day
-    for day in ordered_days:
-        if day not in used_days and day not in avoided:
-            return day
-    for day in ordered_days:
-        if day not in avoided:
-            return day
-    return next(iter(days.values()))
-
-
-def _meeting_start_utc(meeting: dict, day: date, prefs: dict) -> datetime:
-    meeting_prefs = prefs.get(meeting["id"], {})
-    if meeting["id"] == "client_demo":
-        return datetime.combine(day, time(14, 0), tzinfo=timezone.utc)
-    if meeting_prefs.get("prefer_time") == "afternoon":
-        return datetime.combine(day, time(19, 0), tzinfo=timezone.utc)
-    return datetime.combine(day, time(15, 0), tzinfo=timezone.utc)
-
-
 def _soft_preference_met(meeting: dict, start: datetime, prefs: dict) -> bool:
     meeting_prefs = prefs.get(meeting["id"], {})
     day_name = DAY_NAMES[start.weekday()]
@@ -211,7 +182,10 @@ def _soft_preference_met(meeting: dict, start: datetime, prefs: dict) -> bool:
     if "avoid_days" in meeting_prefs:
         return day_name not in meeting_prefs["avoid_days"]
     if meeting_prefs.get("prefer_time") == "afternoon":
-        return 12 <= start.astimezone(ZoneInfo("America/New_York")).hour < 17
+        participant_id = meeting_prefs["participant_id"]
+        zone = meeting["_participant_zones"][participant_id]
+        local = start.astimezone(ZoneInfo(zone))
+        return 12 <= local.hour < 17
     return False
 
 
@@ -225,33 +199,69 @@ def _schedule_multiple_meetings(context: dict) -> dict:
     request = context.get("request", {})
     participants = context.get("participants", [])
     prefs = context.get("preferences", {})
-    days = _dates_by_name(request["date_range"][0], request["date_range"][-1])
-    used_days: set[date] = set()
+    by_id = {participant["id"]: participant for participant in participants}
+    meetings = request.get("meetings", [])
+    participant_zones = {participant["id"]: participant["timezone"] for participant in participants}
+    days = list(_dates_by_name(*request["date_range"]).values())
+
+    options = []
+    for original in meetings:
+        meeting = {**original, "_participant_zones": participant_zones}
+        attendees = [by_id[item] for item in meeting["attendee_ids"]]
+        minutes = int(meeting["duration_minutes"])
+        meeting_options = []
+        for day in days:
+            start = datetime.combine(day, time(0, 0), tzinfo=timezone.utc)
+            day_end = start + timedelta(days=1)
+            while start < day_end:
+                end = start + timedelta(minutes=minutes)
+                if all(_within_work_hours(item, start, end) and _free_with_buffer(item, start, end, 0) for item in attendees):
+                    pref_met = _soft_preference_met(meeting, start, prefs)
+                    london_bonus = meeting["id"] == "client_demo" and _london_customer_afternoon(start, minutes)
+                    meeting_options.append((start, pref_met, london_bonus, attendees))
+                start += timedelta(minutes=15)
+        options.append(meeting_options)
+
+    def has_conflict(chosen) -> bool:
+        for left_index, left in enumerate(chosen):
+            left_start, _, _, left_attendees = left
+            left_end = left_start + timedelta(minutes=int(meetings[left_index]["duration_minutes"]))
+            left_ids = {item["id"] for item in left_attendees}
+            for right_index in range(left_index + 1, len(chosen)):
+                right_start, _, _, right_attendees = chosen[right_index]
+                right_end = right_start + timedelta(minutes=int(meetings[right_index]["duration_minutes"]))
+                if left_ids.intersection(item["id"] for item in right_attendees) and left_start < right_end and right_start < left_end:
+                    return True
+        return False
+
+    feasible = [chosen for chosen in product(*options) if not has_conflict(chosen)]
+    if not feasible:
+        return {"recommendations": [], "scheduled_meetings": []}
+
+    def objective(chosen):
+        starts = tuple(item[0] for item in chosen)
+        preference_count = sum(int(item[1]) for item in chosen)
+        london_bonus_count = sum(int(item[2]) for item in chosen)
+        distinct_days = len({start.date() for start in starts})
+        return (-preference_count, -london_bonus_count, -distinct_days, starts)
+
+    chosen = min(feasible, key=objective)
     scheduled = []
-    for meeting in request.get("meetings", []):
-        day = _meeting_day(meeting, prefs, used_days, days)
-        used_days.add(day)
-        minutes = int(meeting.get("duration_minutes", 60))
-        start = _meeting_start_utc(meeting, day, prefs)
-        pref_met = _soft_preference_met(meeting, start, prefs)
-        score = 1 + int(pref_met)
-        if meeting["id"] == "client_demo" and _london_customer_afternoon(start, minutes):
-            score += 1
-        scheduled.append(
-            {
-                "meeting_id": meeting["id"],
-                "start_utc": _iso(start),
-                "end_utc": _iso(start + timedelta(minutes=minutes)),
-                "score": score,
-                "soft_preferences_met": int(pref_met),
-                "preference_breakdown": {meeting["id"]: pref_met},
-                "local_times": _local_tokens(start, participants),
-                "reasons": [
-                    "Global optimization spreads meetings across days to reduce fragmentation.",
-                    "Soft preferences are evaluated per meeting before final placement.",
-                ],
-            }
-        )
+    for meeting, (start, pref_met, london_bonus, attendees) in zip(meetings, chosen):
+        minutes = int(meeting["duration_minutes"])
+        scheduled.append({
+            "meeting_id": meeting["id"],
+            "start_utc": _iso(start),
+            "end_utc": _iso(start + timedelta(minutes=minutes)),
+            "score": 1 + int(pref_met) + int(london_bonus),
+            "soft_preferences_met": int(pref_met),
+            "preference_breakdown": {meeting["id"]: pref_met},
+            "local_times": _local_tokens(start, attendees),
+            "reasons": [
+                "Hard constraints hold for every listed attendee.",
+                "Global optimization maximizes meeting preferences and spreads meetings across distinct days to reduce fragmentation.",
+            ],
+        })
     return {"recommendations": [], "scheduled_meetings": scheduled}
 
 

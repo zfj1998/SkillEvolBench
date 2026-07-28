@@ -9,47 +9,77 @@ SKILLSBENCH_ROOT = Path(__file__).resolve().parents[4]
 if str(SKILLSBENCH_ROOT) not in sys.path:
     sys.path.insert(0, str(SKILLSBENCH_ROOT))
 
-from verifier_lib.runtime import emit_report, load_module, print_report, read_text, run_checks
+from verifier_lib.runtime import emit_report, print_report, run_checks
 
-SOURCE = PROJECT / "breaker_client.py"
+from breaker_client import ResilientClient
+from mock_breaker import DownstreamAPI, FakeClock
+
+
+def _drive(schedule=(0, 2, 4, 6, 8, 10, 12, 14, 20, 25, 35, 36)):
+    service = DownstreamAPI()
+    clock = FakeClock()
+    client = ResilientClient(
+        service, failure_threshold=5, recovery_timeout=15.0
+    )
+    results = []
+    for timestamp in schedule:
+        clock.set(timestamp)
+        results.append(client.get_resource(clock))
+    return results, service, client
 
 
 def _has_three_states():
-    text = read_text(SOURCE)
-    assert "CLOSED" in text and "OPEN" in text and "HALF_OPEN" in text, "expected closed/open/half-open states"
-    return "has breaker states"
+    results, _, client = _drive()
+    states = {row["state"] for row in results}
+    assert states <= {"closed", "open", "half_open"}, states
+    assert {"closed", "open"} <= states
+    assert client.state == "closed", "successful recovery probe should close"
+    return "breaker exposes valid states and closes after recovery"
 
 
 def _tracks_threshold_and_timeout():
-    text = read_text(SOURCE)
-    assert "failure_threshold" in text and "recovery_timeout" in text, "expected threshold and timeout settings"
-    return "tracks threshold and timeout"
+    service = DownstreamAPI()
+    clock = FakeClock()
+    client = ResilientClient(service, failure_threshold=2, recovery_timeout=5.0)
+    for timestamp in (6, 8):
+        clock.set(timestamp)
+        client.get_resource(clock)
+    assert client.state == "open"
+    calls = len(service.trace)
+    clock.set(12)
+    client.get_resource(clock)
+    assert len(service.trace) == calls, "cooldown ended before configured timeout"
+    return "threshold and recovery timeout affect runtime behavior"
 
 
 def _tracks_probe_timing():
-    text = read_text(SOURCE)
-    assert "next_probe_at" in text, "expected next probe timing"
-    return "tracks probe timing"
+    results, service, _ = _drive()
+    called_at = {row["timestamp"] for row in service.trace}
+    assert 20 not in called_at and 25 not in called_at
+    assert 35 in called_at
+    assert results[-2]["state"] == "closed"
+    return "probe is withheld during cooldown and allowed at recovery"
 
 
 def _cooldown_ignores_success_budget():
-    text = read_text(SOURCE)
-    assert "success_budget" not in text, "cooldown should not be shortened by recent healthy traffic"
-    return "cooldown ignores success budget"
+    _, service, _ = _drive()
+    called_at = {row["timestamp"] for row in service.trace}
+    assert 20 not in called_at and 25 not in called_at
+    return "recent successes do not shorten the configured cooldown"
 
 
 def _fail_fast_does_not_increment_failures():
-    client_module = load_module("e2_ls2_t6_breaker_process", SOURCE)
-    mock_module = load_module("e2_ls2_t6_mock_process", PROJECT / "mock_breaker.py")
-    service = mock_module.DownstreamAPI()
-    clock = mock_module.FakeClock()
-    client = client_module.ResilientClient(service, failure_threshold=5, recovery_timeout=15.0)
+    service = DownstreamAPI()
+    clock = FakeClock()
+    client = ResilientClient(
+        service, failure_threshold=5, recovery_timeout=15.0
+    )
 
     for ts in [0, 6, 8, 10, 12, 14]:
         clock.set(ts)
         client.get_resource(clock)
 
-    assert client.state == client.OPEN, "client should be open after threshold failures"
+    assert client.state == "open", "client should be open after threshold failures"
     failure_count = client.failure_count
     downstream_calls = len(service.trace)
 

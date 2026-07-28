@@ -87,12 +87,6 @@
   ],
   "expected_followups": {},
   "min_message_count": 30,
-  "process_markers": [
-    "implicit",
-    "confidence",
-    "probably",
-    "team"
-  ],
   "allowed_missing_actions": 1,
   "requires_current_date": false
 }

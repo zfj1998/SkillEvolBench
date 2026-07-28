@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -9,25 +10,33 @@ SKILLSBENCH_ROOT = Path(__file__).resolve().parents[4]
 if str(SKILLSBENCH_ROOT) not in sys.path:
     sys.path.insert(0, str(SKILLSBENCH_ROOT))
 
-from verifier_lib.runtime import emit_report, print_report, read_text, run_checks
+from verifier_lib.runtime import emit_report, load_module, print_report, run_checks
 
 SOURCE = PROJECT / "solution.py"
 
 
-def _source():
-    return read_text(SOURCE)
+def _run_solution():
+    for path in (PROJECT / "output.json", PROJECT / "trace.json"):
+        if path.exists():
+            path.unlink()
+    module = load_module("e2_ls3_t5_process_runtime", SOURCE)
+    module.main()
+    output = json.loads((PROJECT / "output.json").read_text(encoding="utf-8"))
+    trace = json.loads((PROJECT / "trace.json").read_text(encoding="utf-8"))
+    return output, trace["trace"]
 
 
 def _rechecks_metadata_or_has_more():
-    text = _source()
-    assert "has_more" in text or text.count("total_pages") >= 2, "expected repeated pagination-state checks"
-    return "repeated pagination-state checks found"
+    output, trace = _run_solution()
+    assert len(output) == 80
+    assert [row["page"] for row in trace] == list(range(1, 9))
+    return "pagination state is rechecked through page 8"
 
 
 def _not_hardcoded_to_first_total_pages():
-    text = _source().replace(" ", "")
-    assert "range(2,total_pages+1)" not in text and "range(5)" not in text, "solution should not trust the first total_pages value"
-    return "no early total_pages hardcoding"
+    output, trace = _run_solution()
+    assert len(trace) == 8 and len(output) == 80
+    return "runtime does not stop at the stale first-page total"
 
 
 def run():

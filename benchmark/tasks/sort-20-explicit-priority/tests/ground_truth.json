@@ -58,18 +58,6 @@
   ],
   "expected_response_ids": [],
   "rank_before": [],
-  "reason_keywords": {
-    "email_004": [
-      "historical"
-    ],
-    "email_09": [
-      "FYI"
-    ],
-    "email_16": [
-      "Newsletter"
-    ]
-  },
   "expected_drafts": {},
-  "min_message_count": 20,
-  "process_markers": []
+  "min_message_count": 20
 }

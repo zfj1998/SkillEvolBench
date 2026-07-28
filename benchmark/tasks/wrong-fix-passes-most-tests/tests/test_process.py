@@ -10,10 +10,17 @@ switch to direct dict lookup, or any other approach — as long as
 the outcome tests pass and there's no shortcut.
 """
 
-import os, re
+import ast
+import os
+import sys
 import pytest
 
 PROJECT_DIR = os.path.join(os.path.dirname(__file__), '..', 'project')
+sys.path.insert(0, PROJECT_DIR)
+
+from tax_calculator import calculate_tax
+from tax_rates import TAX_RATES
+
 def _read(p):
     fp = os.path.join(PROJECT_DIR, p)
     return open(fp).read() if os.path.exists(fp) else ''
@@ -23,25 +30,24 @@ _BUGGY_LOOKUP = '_RATE_VECTOR[code]'
 
 class TestProcessP1RootCause:
     def test_p1_tax_rates_modified(self):
-        """The buggy lookup in tax_rates.py should be changed."""
-        src = _read('tax_rates.py')
-        assert _BUGGY_LOOKUP not in src, (
-            'tax_rates.py still contains the buggy _RATE_VECTOR[code] lookup'
-        )
+        """The implementation must use the full public region table correctly."""
+        for region, rate in TAX_RATES.items():
+            if region:
+                assert calculate_tax(12_345, region) == round(12_345 * rate, 2)
 
 
 class TestProcessP2NoShortcut:
     def test_p2_no_hardcoded_regions(self):
         """tax_calculator.py must NOT contain region-specific if/elif branches."""
-        calc = _read('tax_calculator.py')
-        shortcuts = [
-            r'if\s+region\s*==\s*["\']',
-            r'elif\s+region\s*==\s*["\']',
-            r'region\s+in\s*[\[({].*?["\'][A-Z]{2}["\']',
-            r'\b0\.0725\b',    # CA rate literal
-        ]
-        for pat in shortcuts:
-            m = re.search(pat, calc)
-            assert m is None, (
-                f'Shortcut detected in tax_calculator.py: {m.group()!r}'
-            )
+        tree = ast.parse(_read('tax_calculator.py'))
+        region_literals = {
+            node.value
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+            and len(node.value) == 2
+            and node.value.isupper()
+        }
+        assert not region_literals, (
+            f'region-specific shortcut literals found: {sorted(region_literals)}'
+        )

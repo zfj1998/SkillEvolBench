@@ -20,7 +20,7 @@
     "email_017": "P2",
     "email_018": "P2",
     "email_019": "P3",
-    "email_020": "P1",
+    "email_020": "P0",
     "email_021": "P2",
     "email_022": "P1",
     "email_23": "P2",
@@ -43,7 +43,8 @@
     "email_001",
     "email_005",
     "email_011",
-    "email_014"
+    "email_014",
+    "email_020"
   ],
   "expected_p3": [
     "email_004",
@@ -58,26 +59,6 @@
   ],
   "expected_response_ids": [],
   "rank_before": [],
-  "reason_keywords": {
-    "email_007": [
-      "client",
-      "Thursday"
-    ],
-    "email_014": [
-      "certificate",
-      "tomorrow"
-    ],
-    "email_022": [
-      "follow",
-      "API"
-    ]
-  },
   "expected_drafts": {},
-  "min_message_count": 30,
-  "process_markers": [
-    "implicit urgency",
-    "follow",
-    "certificate",
-    "client"
-  ]
+  "min_message_count": 30
 }

@@ -40,14 +40,34 @@ def _run():
     return result, payload
 
 
+def _required_record_projection(records):
+    """Compare the required contract while allowing documented aggregate fields."""
+    return [
+        {
+            "product_id": item.get("product_id"),
+            "date": item.get("date"),
+            "total_amount": item.get("total_amount"),
+        }
+        for item in records
+    ]
+
+
 def run():
     expected = _expected()
+    expected_records = expected.to_dict(orient="records")
     public = run_checks("public", [
         ("records_present", lambda: len(_run()[1].get("records", [])) > 0 or (_ for _ in ()).throw(AssertionError("records missing"))),
         ("row_count_present", lambda: _run()[1].get("row_count") == len(expected) or (_ for _ in ()).throw(AssertionError("row count mismatch"))),
     ])
     hidden = run_checks("hidden", [
-        ("date_sort_correct", lambda: _run()[1].get("records") == expected.to_dict(orient="records") or (_ for _ in ()).throw(AssertionError("composite ordering mismatch"))),
+        (
+            "date_sort_correct",
+            lambda: _required_record_projection(_run()[1].get("records", []))
+            == expected_records
+            or (_ for _ in ()).throw(
+                AssertionError("required record values or composite ordering mismatch")
+            ),
+        ),
         ("natural_product_order_correct", lambda: [r["product_id"] for r in _run()[1].get("records", [])] == expected["product_id"].tolist() or (_ for _ in ()).throw(AssertionError("product natural ordering wrong"))),
         ("semantic_duplicates_removed", lambda: _run()[1].get("row_count") == len(expected) or (_ for _ in ()).throw(AssertionError("duplicates not removed correctly"))),
         ("aggregates_correct", lambda: bool(_run()[1].get("records", [{}])[0].get("total_amount") == expected.iloc[0]["total_amount"]) or (_ for _ in ()).throw(AssertionError("aggregated totals incorrect"))),

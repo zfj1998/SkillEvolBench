@@ -48,20 +48,6 @@
       "trap_lunch"
     ]
   ],
-  "reason_keywords": {
-    "trap_vending": [
-      "Low business impact"
-    ],
-    "trap_db_cert": [
-      "certificate",
-      "tomorrow"
-    ]
-  },
   "expected_drafts": {},
-  "min_message_count": 15,
-  "process_markers": [
-    "business impact",
-    "emotional",
-    "certificate"
-  ]
+  "min_message_count": 15
 }

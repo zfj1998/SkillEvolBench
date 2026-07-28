@@ -9,7 +9,7 @@
     "M02": "misrepresented",
     "M03": "misrepresented",
     "S01": "selective",
-    "S02": "selective",
+    "S02": "valid",
     "S03": "selective",
     "R08": "fake",
     "R09": "fake",
@@ -21,7 +21,6 @@
     "M02",
     "M03",
     "S01",
-    "S02",
     "S03",
     "R08",
     "R09",
@@ -55,13 +54,6 @@
       "attribution"
     ],
     "S01": [
-      "caveat",
-      "limitation",
-      "scope",
-      "generalize",
-      "external"
-    ],
-    "S02": [
       "caveat",
       "limitation",
       "scope",
