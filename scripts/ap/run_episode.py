@@ -182,9 +182,10 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
         )
 
     wire_api = os.environ.get("CODEX_WIRE_API", "responses").strip() or "responses"
-    codex_reasoning_effort = os.environ.get(
-        "CODEX_REASONING_EFFORT", ""
-    ).strip()
+    reasoning_effort = (
+        os.environ.get("REASONING_EFFORT", "").strip()
+        or os.environ.get("CODEX_REASONING_EFFORT", "").strip()
+    )
 
     os.environ["OPENAI_BASE_URL"] = model_base_url
     os.environ["MODEL_API_KEY"] = model_api_key
@@ -248,8 +249,8 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
                 "wire_api": wire_api,
             }
         )
-        if codex_reasoning_effort:
-            agent_kwargs["reasoning_effort"] = codex_reasoning_effort
+        if reasoning_effort:
+            agent_kwargs["reasoning_effort"] = reasoning_effort
     else:
         opencode_version = (
             os.environ.get("OPENCODE_VERSION", "1.18.3").strip() or "1.18.3"
@@ -296,6 +297,16 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
                                 served_model_id: {
                                     "name": served_model_id,
                                     "attachment": False,
+                                    **(
+                                        {
+                                            "options": {
+                                                "enable_thinking": True,
+                                                "reasoningEffort": reasoning_effort,
+                                            }
+                                        }
+                                        if reasoning_effort
+                                        else {}
+                                    ),
                                     "limit": {
                                         "context": 131072,
                                         "output": 16384,
@@ -608,8 +619,10 @@ def main() -> int:
                 "model_base_url": os.environ["MODEL_BASE_URL"],
                 "model_api_protocol": os.environ.get("MODEL_API_PROTOCOL", "openai"),
                 "harbor_agent": config.baseline.harbor_agent_name,
-                "codex_reasoning_effort": (
-                    os.environ.get("CODEX_REASONING_EFFORT", "").strip() or None
+                "reasoning_effort": (
+                    os.environ.get("REASONING_EFFORT", "").strip()
+                    or os.environ.get("CODEX_REASONING_EFFORT", "").strip()
+                    or None
                 ),
                 "within_env_replay": config.baseline.within_env_replay,
                 "replay_eval": config.baseline.replay_eval,

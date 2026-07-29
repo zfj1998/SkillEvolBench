@@ -242,7 +242,7 @@ def test_build_config_routes_codex_without_duplicate_api_base(
     monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1/")
     monkeypatch.setenv("MODEL_API_KEY", "test-key")
     monkeypatch.setenv("HARBOR_AGENT", "codex")
-    monkeypatch.setenv("CODEX_REASONING_EFFORT", "max")
+    monkeypatch.setenv("REASONING_EFFORT", "max")
     monkeypatch.delenv("CODEX_WIRE_API", raising=False)
 
     config = run_episode._build_config(tmp_path)
@@ -318,6 +318,29 @@ def test_build_config_routes_opencode_via_chat_completions_without_secret(
     assert "stale.example" not in json.dumps(config.baseline.agent_kwargs)
     assert run_episode.os.environ["OPENAI_API_KEY"] == "test-key"
     assert run_episode.os.environ["OPENAI_BASE_URL"] == "http://model.example/v1"
+
+
+def test_build_config_passes_reasoning_effort_to_opencode_model(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    baseline = load_baseline("selfgen_in_session_always")
+    monkeypatch.setattr(run_episode, "load_baseline", lambda _name: baseline)
+    monkeypatch.setenv("INSTANCE_ID", "E2")
+    monkeypatch.setenv("MODEL", "openai.gpt-5.6-sol")
+    monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1")
+    monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("HARBOR_AGENT", "opencode")
+    monkeypatch.setenv("REASONING_EFFORT", "max")
+
+    config = run_episode._build_config(tmp_path)
+
+    provider = config.baseline.agent_kwargs["opencode_config"]["provider"]
+    model = provider["openai-compatible"]["models"]["openai.gpt-5.6-sol"]
+    assert model["options"] == {
+        "enable_thinking": True,
+        "reasoningEffort": "max",
+    }
 
 
 def test_build_config_routes_opencode_via_native_anthropic_without_secret(

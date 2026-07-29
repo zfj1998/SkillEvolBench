@@ -316,7 +316,7 @@ def test_codex_submission_keeps_runtime_and_wire_api_aligned() -> None:
             "codex",
             "--codex-wire-api",
             "chat",
-            "--codex-reasoning-effort",
+            "--reasoning-effort",
             "max",
             "--codex-version",
             "0.144.2",
@@ -327,7 +327,7 @@ def test_codex_submission_keeps_runtime_and_wire_api_aligned() -> None:
     assert params["harbor_agent"] == "codex"
     assert params["agent_cli_set"] == "codex"
     assert params["codex_wire_api"] == "chat"
-    assert params["codex_reasoning_effort"] == "max"
+    assert params["reasoning_effort"] == "max"
     assert params["codex_version"] == "0.144.2"
     assert "opencode_version" not in params
 

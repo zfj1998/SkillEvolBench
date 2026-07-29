@@ -375,6 +375,9 @@ def build_submission(
         "reference_solution_audit": args.reference_solution_audit,
         "reference_audit_concurrency": args.reference_audit_concurrency,
     }
+    reasoning_effort = args.reasoning_effort or args.codex_reasoning_effort
+    if reasoning_effort:
+        params["reasoning_effort"] = reasoning_effort
     # Tri-state CLI flags: omission means "use the selected baseline's yaml".
     # In particular, the same-session baseline intentionally disables replay;
     # an AP launcher must not silently turn it back on.
@@ -384,8 +387,6 @@ def build_submission(
         params["replay_eval"] = args.replay_eval
     if args.harbor_agent == "codex":
         params["codex_wire_api"] = args.codex_wire_api
-        if args.codex_reasoning_effort:
-            params["codex_reasoning_effort"] = args.codex_reasoning_effort
         params["codex_version"] = args.codex_version
     elif args.harbor_agent == "opencode":
         params["opencode_version"] = _required(
@@ -583,10 +584,16 @@ def _parser() -> argparse.ArgumentParser:
         "--codex-wire-api", choices=("responses", "chat"), default="responses"
     )
     parser.add_argument(
+        "--reasoning-effort",
+        choices=("low", "medium", "high", "xhigh", "max"),
+        default="",
+        help="optional model reasoning effort for Codex or OpenCode",
+    )
+    parser.add_argument(
         "--codex-reasoning-effort",
         choices=("low", "medium", "high", "xhigh", "max"),
         default="",
-        help="optional Codex reasoning effort; omit to use the agent default",
+        help="deprecated alias for --reasoning-effort",
     )
     parser.add_argument(
         "--codex-version",
