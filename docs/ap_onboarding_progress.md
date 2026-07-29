@@ -493,3 +493,32 @@ generated skill.
 - The top-level AP export transport metadata is outside the sanitized benchmark
   tree and may contain expiring artifact URLs. Do not publish it; hand off
   `artifacts/output/` instead.
+
+## 2026-07-29 GPT-5.6 harness correction
+
+The first GPT-5.6 smoke and no-skill E6 jobs were invalidated and cancelled
+after artifact readback proved they used OpenCode 1.18.3. The user-provided
+reference group instead uses `harbor_agent=codex`, Codex 0.144.2, Responses,
+and `reasoning_effort=max`. No score or timeout diagnosis from the invalid
+OpenCode jobs is attributable to GPT-5.6 under the requested harness.
+
+Harbor's pinned Codex adapter already implements native session continuation
+with `codex exec resume --last`. SkillEvolBench's audit layer was the missing
+piece: it had deliberately allowed only OpenCode because its continuity checks
+were tied to `opencode.session.json`. The Codex path now fails closed on all of
+the following evidence:
+
+- exactly one regular native Codex session JSONL below the mounted agent logs;
+- one stable `session_meta.payload.id`;
+- an exact byte prefix from solve to repair/reflection;
+- an exact ATIF trajectory prefix followed by the bounded verifier-feedback
+  user turn and an assistant turn;
+- unchanged task workspace during skill reflection;
+- the existing stopped-container and hidden-verifier lifecycle checks.
+
+Focused validation after the change: 176 tests passed before the two Codex
+end-to-end hook tests were added; the dedicated same-session suite then passed
+56 tests, including both a verifier-guided repair turn and final skill
+reflection with Codex. The next live gate is a fresh Codex family smoke whose
+downloaded manifest, runtime config, native session JSONL, and ATIF trajectory
+must all identify Codex before any matched evaluation is submitted.

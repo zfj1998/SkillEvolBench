@@ -23,7 +23,7 @@ from skillevolbench.opencode_continuity import (
     OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
     opencode_synthetic_continue,
 )
-from skillevolbench.schemas import TrialOutcome
+from skillevolbench.schemas import BaselineConfig, TrialOutcome
 
 
 SESSION_ID = "ses-1"
@@ -1147,3 +1147,276 @@ def test_solve_timeout_remains_unscoreable_before_reflection(
     assert trial.agent_environment.restart_calls == 0
     assert trial.agent.recovery_calls == 0
     assert TASK.task_id not in hooks._reflection_cache
+
+
+def _codex_session_bytes(
+    session_id: str = SESSION_ID,
+    *,
+    include_reflection: bool = False,
+    reflection_prompt: str = "reflection prompt",
+) -> bytes:
+    events = [
+        {
+            "type": "session_meta",
+            "payload": {"id": session_id, "cli_version": "0.144.2"},
+        },
+        {
+            "type": "response_item",
+            "payload": {
+                "type": "message",
+                "role": "user",
+                "content": [{"type": "input_text", "text": "solve prompt"}],
+            },
+        },
+        {
+            "type": "response_item",
+            "payload": {
+                "type": "message",
+                "role": "assistant",
+                "content": [{"type": "output_text", "text": "solve answer"}],
+            },
+        },
+    ]
+    if include_reflection:
+        events.extend(
+            [
+                {
+                    "type": "response_item",
+                    "payload": {
+                        "type": "message",
+                        "role": "user",
+                        "content": [
+                            {"type": "input_text", "text": reflection_prompt}
+                        ],
+                    },
+                },
+                {
+                    "type": "response_item",
+                    "payload": {
+                        "type": "message",
+                        "role": "assistant",
+                        "content": [{"type": "output_text", "text": "done"}],
+                    },
+                },
+            ]
+        )
+    return b"".join(
+        (json.dumps(event, separators=(",", ":")) + "\n").encode()
+        for event in events
+    )
+
+
+def test_codex_session_capture_and_prefix_validation(tmp_path: Path) -> None:
+    agent_dir = tmp_path / "agent"
+    session_file = agent_dir / "sessions" / "2026" / "07" / "session.jsonl"
+    session_file.parent.mkdir(parents=True)
+    solve_raw = _codex_session_bytes()
+    session_file.write_bytes(solve_raw)
+    (tmp_path / "audit").mkdir()
+    solve_copy, captured_raw, session_id = (
+        SkillEvolBenchHooks._capture_codex_session(
+            agent_dir,
+            tmp_path / "audit" / "solve.jsonl",
+            task_id=TASK.task_id,
+            reason="missing",
+        )
+    )
+
+    assert solve_copy.read_bytes() == solve_raw
+    assert captured_raw == solve_raw
+    assert session_id == SESSION_ID
+
+    full_raw = _codex_session_bytes(include_reflection=True)
+    assert (
+        SkillEvolBenchHooks._verify_codex_session_continuity(
+            solve_raw,
+            full_raw,
+            task_id=TASK.task_id,
+        )
+        == SESSION_ID
+    )
+
+
+def test_codex_session_prefix_mismatch_fails_closed() -> None:
+    with pytest.raises(UnscoreableTrialError) as error:
+        SkillEvolBenchHooks._verify_codex_session_continuity(
+            _codex_session_bytes(),
+            _codex_session_bytes("different", include_reflection=True),
+            task_id=TASK.task_id,
+        )
+
+    assert error.value.reason == "reflection-codex-session-prefix-mismatch"
+
+
+def test_same_session_baseline_accepts_codex_but_not_unverified_cli() -> None:
+    data = load_baseline("selfgen_in_session_always").model_dump()
+    data["harbor_agent_name"] = "codex"
+    assert BaselineConfig.model_validate(data).harbor_agent_name == "codex"
+
+    data["harbor_agent_name"] = "claude-code"
+    with pytest.raises(ValueError, match="currently requires"):
+        BaselineConfig.model_validate(data)
+
+
+class _CodexAgent:
+    def __init__(self, trial: "_CodexTrial") -> None:
+        self.trial = trial
+        self.extra_env = {"OPENAI_API_KEY": "resolved-in-memory"}
+
+    def populate_context_post_run(self, context) -> None:
+        session_file = next(
+            (self.trial.paths.agent_dir / "sessions").rglob("*.jsonl")
+        )
+        messages: list[tuple[str, str]] = []
+        for line in session_file.read_text().splitlines():
+            event = json.loads(line)
+            payload = event.get("payload", {})
+            if event.get("type") != "response_item":
+                continue
+            if payload.get("type") != "message":
+                continue
+            role = payload.get("role")
+            source = "user" if role == "user" else "agent"
+            text = "".join(
+                item.get("text", "")
+                for item in payload.get("content", [])
+                if isinstance(item, dict)
+            )
+            messages.append((source, text))
+        trajectory = _trajectory(messages)
+        trajectory["agent"]["name"] = "codex"
+        trajectory["agent"]["version"] = "0.144.2"
+        (self.trial.paths.agent_dir / "trajectory.json").write_text(
+            json.dumps(trajectory)
+        )
+        context.cost_usd = 0.0
+        context.n_input_tokens = 10
+        context.n_output_tokens = 2
+        context.n_cache_tokens = 0
+
+
+class _CodexTrial(_Trial):
+    def __init__(self, root: Path) -> None:
+        super().__init__(root)
+        session_file = (
+            self.paths.agent_dir / "sessions" / "2026" / "07" / "session.jsonl"
+        )
+        session_file.parent.mkdir(parents=True)
+        session_file.write_bytes(_codex_session_bytes())
+        (self.paths.agent_dir / "codex.txt").write_text(
+            json.dumps({"type": "item.completed"}) + "\n"
+        )
+        self.agent = _CodexAgent(self)
+
+    async def _run_agent_phase(self, *, target, instruction, resume, **_kwargs):
+        assert resume is True
+        assert self.agent_environment.running
+        assert "official verifier" in instruction
+        self.verifier_was_hidden_during_resume = not any(
+            self.paths.verifier_dir.iterdir()
+        )
+        session_file = next((self.paths.agent_dir / "sessions").rglob("*.jsonl"))
+        full_raw = _codex_session_bytes(
+            include_reflection=True,
+            reflection_prompt=instruction,
+        )
+        session_file.write_bytes(full_raw)
+        (self.paths.agent_dir / "codex.txt").write_text(
+            json.dumps({"type": "turn.completed"}) + "\n"
+        )
+        slug = "systematic-error-diagnosis"
+        skill_md = (
+            "---\n"
+            f"name: {slug}\n"
+            "description: Use when diagnosing a concrete runtime failure.\n"
+            "---\n\n# Workflow\n\nInspect, isolate, fix, validate.\n"
+        )
+        (self.paths.agent_dir / "self_reflection_patch.json").write_text(
+            json.dumps(
+                {
+                    "summary": "distill diagnosis",
+                    "operation_type": "create",
+                    "upsert_files": {f"{slug}/SKILL.md": skill_md},
+                    "delete_paths": [],
+                }
+            )
+        )
+        target.agent_result = SimpleNamespace(
+            cost_usd=None,
+            n_input_tokens=0,
+            n_output_tokens=0,
+            n_cache_tokens=0,
+        )
+
+
+def test_codex_post_verifier_resume_is_audited_as_same_session(
+    tmp_path: Path,
+) -> None:
+    baseline_data = load_baseline("selfgen_in_session_always").model_dump()
+    baseline_data["harbor_agent_name"] = "codex"
+    baseline_data["learning_max_attempts"] = 3
+    baseline = BaselineConfig.model_validate(baseline_data)
+    outcome = TrialOutcome(
+        task_id=TASK.task_id,
+        verifier_passed=False,
+        reward=0.0,
+        trajectory_path=tmp_path / "agent" / "trajectory.json",
+    )
+    events = _Events()
+    runtime = SimpleNamespace(
+        baseline=baseline,
+        library=_Library(),
+        verifier_adapter=SimpleNamespace(parse=lambda _result: outcome),
+        event_store=events,
+    )
+    registry = SimpleNamespace(task=lambda _task_id: SimpleNamespace(spec=TASK))
+    hooks = SkillEvolBenchHooks(runtime, registry, None, None)  # type: ignore[arg-type]
+    trial = _CodexTrial(tmp_path)
+
+    asyncio.run(hooks.on_post_verifier(trial))
+
+    audit = tmp_path / "self-reflection-audit"
+    record = hooks._reflection_cache[TASK.task_id]
+    assert record.status == "completed"
+    assert record.session_id == SESSION_ID
+    assert record.same_session_verified is True
+    assert (audit / "codex.session.solve.jsonl").is_file()
+    assert (audit / "codex.session.full.jsonl").is_file()
+    assert (audit / "codex.solve.jsonl").is_file()
+    assert (audit / "codex.reflection.jsonl").is_file()
+
+
+def test_codex_failed_learning_attempt_repairs_in_same_session(
+    tmp_path: Path,
+) -> None:
+    baseline_data = load_baseline("selfgen_in_session_always").model_dump()
+    baseline_data["harbor_agent_name"] = "codex"
+    baseline_data["learning_max_attempts"] = 3
+    baseline = BaselineConfig.model_validate(baseline_data)
+    outcome = TrialOutcome(
+        task_id=TASK.task_id,
+        verifier_passed=False,
+        reward=0.0,
+        trajectory_path=tmp_path / "agent" / "trajectory.json",
+    )
+    events = _Events()
+    runtime = SimpleNamespace(
+        baseline=baseline,
+        library=_Library(),
+        verifier_adapter=SimpleNamespace(parse=lambda _result: outcome),
+        event_store=events,
+    )
+    registry = SimpleNamespace(task=lambda _task_id: SimpleNamespace(spec=TASK))
+    hooks = SkillEvolBenchHooks(runtime, registry, None, None)  # type: ignore[arg-type]
+    trial = _CodexTrial(tmp_path)
+
+    repaired = asyncio.run(hooks.on_post_verifier_repair(trial, failed_attempt=1))
+
+    attempt = tmp_path / "same-session-attempts" / "attempt-01"
+    assert repaired is True
+    assert (attempt / "codex.session.before-repair.jsonl").is_file()
+    assert (attempt / "codex.session.after-repair.jsonl").is_file()
+    assert (attempt / "codex.repair.jsonl").is_file()
+    result = json.loads((attempt / "repair_result.json").read_text())
+    assert result["session_id"] == SESSION_ID
+    assert result["same_session_verified"] is True

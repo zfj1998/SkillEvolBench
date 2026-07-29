@@ -399,8 +399,11 @@ class SkillEvolBenchHooks:
 
         agent_dir = Path(trial.paths.agent_dir)
         canonical_trajectory = agent_dir / "trajectory.json"
+        agent_name = self.runtime.baseline.harbor_agent_name
         session_export = agent_dir / "opencode.session.json"
-        repair_stream = agent_dir / "opencode.reflection.jsonl"
+        repair_stream = agent_dir / (
+            "codex.txt" if agent_name == "codex" else "opencode.reflection.jsonl"
+        )
         task_snapshot = Path(trial.paths.artifacts_dir) / "root" / "task"
 
         audit_root = Path(trial.paths.trial_dir) / REPAIR_AUDIT_DIRNAME
@@ -462,29 +465,43 @@ class SkillEvolBenchHooks:
             task_id=task.task_id,
             reason="repair-missing-prefix-trajectory",
         )
-        prefix_export, prefix_export_raw = self._capture_agent_file(
-            session_export,
-            attempt_dir / "opencode.session.before-repair.json",
-            task_id=task.task_id,
-            reason="repair-missing-prefix-session-export",
-        )
+        if agent_name == "codex":
+            prefix_export, prefix_export_raw, prefix_export_session_id = (
+                self._capture_codex_session(
+                    agent_dir,
+                    attempt_dir / "codex.session.before-repair.jsonl",
+                    task_id=task.task_id,
+                    reason="repair-missing-prefix-session-export",
+                )
+            )
+        else:
+            prefix_export, prefix_export_raw = self._capture_agent_file(
+                session_export,
+                attempt_dir / "opencode.session.before-repair.json",
+                task_id=task.task_id,
+                reason="repair-missing-prefix-session-export",
+            )
+            prefix_export_payload = self._json_object(
+                prefix_export_raw,
+                reason="repair-prefix-session-export-invalid",
+                task_id=task.task_id,
+            )
+            prefix_export_session_id = self._session_id_from_export(
+                prefix_export_payload, task_id=task.task_id
+            )
         prefix_payload = self._json_object(
             prefix_trajectory_raw,
             reason="repair-prefix-trajectory-invalid",
             task_id=task.task_id,
         )
-        prefix_export_payload = self._json_object(
-            prefix_export_raw,
-            reason="repair-prefix-session-export-invalid",
-            task_id=task.task_id,
-        )
         prefix_session_id = self._session_id_from_trajectory(
             prefix_payload, task_id=task.task_id
         )
-        prefix_export_session_id = self._session_id_from_export(
-            prefix_export_payload, task_id=task.task_id
+        adapter_session_id = (
+            prefix_session_id
+            if agent_name == "codex"
+            else getattr(trial.agent, "opencode_session_id", None)
         )
-        adapter_session_id = getattr(trial.agent, "opencode_session_id", None)
         if not (
             isinstance(adapter_session_id, str)
             and adapter_session_id
@@ -538,15 +555,16 @@ class SkillEvolBenchHooks:
                     "repair-missing-agent-context", task_id=task.task_id
                 )
 
-            full_export_raw = self._read_regular_nofollow(
-                session_export,
-                max_bytes=_MAX_AUDIT_FILE_BYTES,
-                task_id=task.task_id,
-                reason="repair-full-session-export-invalid",
-            )
-            self._replace_with_regular(
-                session_export, full_export_raw, task_id=task.task_id
-            )
+            if agent_name != "codex":
+                full_export_raw = self._read_regular_nofollow(
+                    session_export,
+                    max_bytes=_MAX_AUDIT_FILE_BYTES,
+                    task_id=task.task_id,
+                    reason="repair-full-session-export-invalid",
+                )
+                self._replace_with_regular(
+                    session_export, full_export_raw, task_id=task.task_id
+                )
             self._replace_with_regular(canonical_trajectory, b"", task_id=task.task_id)
             trial.agent.populate_context_post_run(target.agent_result)
             trial.result.agent_result = target.agent_result
@@ -557,14 +575,25 @@ class SkillEvolBenchHooks:
                 task_id=task.task_id,
                 reason="repair-full-trajectory-invalid",
             )
-            self._write_new_regular(
-                attempt_dir / "opencode.session.after-repair.json",
-                full_export_raw,
-                task.task_id,
-            )
+            if agent_name == "codex":
+                _, full_export_raw, full_export_session_id = (
+                    self._capture_codex_session(
+                        agent_dir,
+                        attempt_dir / "codex.session.after-repair.jsonl",
+                        task_id=task.task_id,
+                        reason="repair-full-session-export-invalid",
+                    )
+                )
+            else:
+                self._write_new_regular(
+                    attempt_dir / "opencode.session.after-repair.json",
+                    full_export_raw,
+                    task.task_id,
+                )
             _, repair_stream_raw = self._capture_agent_file(
                 repair_stream,
-                attempt_dir / "opencode.repair.jsonl",
+                attempt_dir
+                / ("codex.repair.jsonl" if agent_name == "codex" else "opencode.repair.jsonl"),
                 task_id=task.task_id,
                 reason="repair-missing-stream",
             )
@@ -573,31 +602,43 @@ class SkillEvolBenchHooks:
                 reason="repair-full-trajectory-invalid",
                 task_id=task.task_id,
             )
-            full_export_payload = self._json_object(
-                full_export_raw,
-                reason="repair-full-session-export-invalid",
-                task_id=task.task_id,
-            )
             full_session_id = self._verify_trajectory_continuity(
                 prefix_payload,
                 full_payload,
                 prompt=prompt,
                 task_id=task.task_id,
             )
-            full_export_session_id = self._verify_export_continuity(
-                prefix_export_payload,
-                full_export_payload,
-                prompt=prompt,
-                task_id=task.task_id,
-            )
-            repair_stream_session_id = self._session_id_from_stream(
-                repair_stream_raw,
-                task_id=task.task_id,
-                phase=f"repair-{failed_attempt}",
-            )
+            if agent_name == "codex":
+                full_export_session_id = self._verify_codex_session_continuity(
+                    prefix_export_raw,
+                    full_export_raw,
+                    task_id=task.task_id,
+                )
+                repair_stream_session_id = full_export_session_id
+                resumed_adapter_session_id = full_export_session_id
+            else:
+                full_export_payload = self._json_object(
+                    full_export_raw,
+                    reason="repair-full-session-export-invalid",
+                    task_id=task.task_id,
+                )
+                full_export_session_id = self._verify_export_continuity(
+                    prefix_export_payload,
+                    full_export_payload,
+                    prompt=prompt,
+                    task_id=task.task_id,
+                )
+                repair_stream_session_id = self._session_id_from_stream(
+                    repair_stream_raw,
+                    task_id=task.task_id,
+                    phase=f"repair-{failed_attempt}",
+                )
+                resumed_adapter_session_id = getattr(
+                    trial.agent, "opencode_session_id", None
+                )
             if not (
                 adapter_session_id
-                == getattr(trial.agent, "opencode_session_id", None)
+                == resumed_adapter_session_id
                 == full_session_id
                 == full_export_session_id
                 == repair_stream_session_id
@@ -669,7 +710,7 @@ class SkillEvolBenchHooks:
         return True
 
     async def on_post_verifier(self, trial: Any) -> None:
-        """Resume the original OpenCode session for one reflection turn.
+        """Resume the original agent session for one reflection turn.
 
         This is called by the exact-version Harbor compatibility patch after
         ``SingleStepTrial._run_verifier`` returns. It intentionally runs before
@@ -758,11 +799,16 @@ class SkillEvolBenchHooks:
         mode = mode_or_reason
 
         agent_dir = Path(trial.paths.agent_dir)
+        agent_name = self.runtime.baseline.harbor_agent_name
         candidate_path = agent_dir / REFLECTION_CANDIDATE_FILENAME
         canonical_trajectory = agent_dir / "trajectory.json"
         session_export = agent_dir / "opencode.session.json"
-        solve_stream = agent_dir / "opencode.solve.jsonl"
-        reflection_stream = agent_dir / "opencode.reflection.jsonl"
+        solve_stream = agent_dir / (
+            "codex.txt" if agent_name == "codex" else "opencode.solve.jsonl"
+        )
+        reflection_stream = agent_dir / (
+            "codex.txt" if agent_name == "codex" else "opencode.reflection.jsonl"
+        )
 
         prompt, feedback = reflection.build_prompt(task, outcome, mode=mode)
         audit_dir = self._create_host_audit_dir(trial, task_id=task.task_id)
@@ -786,15 +832,26 @@ class SkillEvolBenchHooks:
             task_id=task.task_id,
             reason="reflection-missing-solve-trajectory",
         )
-        solve_export, solve_export_raw = self._capture_agent_file(
-            session_export,
-            audit_dir / "opencode.session.solve.json",
-            task_id=task.task_id,
-            reason="reflection-missing-solve-session-export",
-        )
+        if agent_name == "codex":
+            solve_export, solve_export_raw, solve_export_session_id = (
+                self._capture_codex_session(
+                    agent_dir,
+                    audit_dir / "codex.session.solve.jsonl",
+                    task_id=task.task_id,
+                    reason="reflection-missing-solve-session-export",
+                )
+            )
+        else:
+            solve_export, solve_export_raw = self._capture_agent_file(
+                session_export,
+                audit_dir / "opencode.session.solve.json",
+                task_id=task.task_id,
+                reason="reflection-missing-solve-session-export",
+            )
         self._capture_agent_file(
             solve_stream,
-            audit_dir / "opencode.solve.jsonl",
+            audit_dir
+            / ("codex.solve.jsonl" if agent_name == "codex" else "opencode.solve.jsonl"),
             task_id=task.task_id,
             reason="reflection-missing-solve-stream",
         )
@@ -803,28 +860,32 @@ class SkillEvolBenchHooks:
             reason="reflection-solve-trajectory-invalid",
             task_id=task.task_id,
         )
-        solve_export_payload = self._json_object(
-            solve_export_raw,
-            reason="reflection-solve-session-export-invalid",
-            task_id=task.task_id,
-        )
         solve_session_id = self._session_id_from_trajectory(
             solve_payload, task_id=task.task_id
         )
-        solve_export_session_id = self._session_id_from_export(
-            solve_export_payload, task_id=task.task_id
-        )
-        solve_stream_session_id = self._session_id_from_stream(
-            self._read_regular_nofollow(
-                solve_stream,
-                max_bytes=_MAX_AUDIT_FILE_BYTES,
+        if agent_name == "codex":
+            solve_stream_session_id = solve_export_session_id
+            adapter_session_id = solve_session_id
+        else:
+            solve_export_payload = self._json_object(
+                solve_export_raw,
+                reason="reflection-solve-session-export-invalid",
                 task_id=task.task_id,
-                reason="reflection-solve-stream-invalid",
-            ),
-            task_id=task.task_id,
-            phase="solve",
-        )
-        adapter_session_id = getattr(trial.agent, "opencode_session_id", None)
+            )
+            solve_export_session_id = self._session_id_from_export(
+                solve_export_payload, task_id=task.task_id
+            )
+            solve_stream_session_id = self._session_id_from_stream(
+                self._read_regular_nofollow(
+                    solve_stream,
+                    max_bytes=_MAX_AUDIT_FILE_BYTES,
+                    task_id=task.task_id,
+                    reason="reflection-solve-stream-invalid",
+                ),
+                task_id=task.task_id,
+                phase="solve",
+            )
+            adapter_session_id = getattr(trial.agent, "opencode_session_id", None)
         if not (
             isinstance(adapter_session_id, str)
             and adapter_session_id
@@ -878,6 +939,12 @@ class SkillEvolBenchHooks:
                 main_stopped_proven = True
             if phase_error is not None:
                 if not _is_agent_timeout_error(phase_error):
+                    raise phase_error
+                if agent_name == "codex":
+                    # Harbor's Codex adapter copies its native session in a
+                    # best-effort ``finally`` block. A cancelled turn cannot
+                    # prove that copy is complete, so fail the trial closed
+                    # and let only the outer clean-episode retry recover it.
                     raise phase_error
 
                 # A reflection budget expiry is scoreable only when the
@@ -948,19 +1015,18 @@ class SkillEvolBenchHooks:
                         task_id=task.task_id,
                     )
 
-            full_export_raw = self._read_regular_nofollow(
-                session_export,
-                max_bytes=_MAX_AUDIT_FILE_BYTES,
-                task_id=task.task_id,
-                reason="reflection-full-session-export-invalid",
-            )
-            # populate_context_post_run is deliberately invoked only after the
-            # container is stopped. Normalize its input/output paths to regular
-            # files first so this host-side method cannot follow an agent-created
-            # symlink.
-            self._replace_with_regular(
-                session_export, full_export_raw, task_id=task.task_id
-            )
+            if agent_name != "codex":
+                full_export_raw = self._read_regular_nofollow(
+                    session_export,
+                    max_bytes=_MAX_AUDIT_FILE_BYTES,
+                    task_id=task.task_id,
+                    reason="reflection-full-session-export-invalid",
+                )
+                # OpenCode's host-side converter consumes this export. Normalize
+                # it before parsing so it cannot follow an agent-created link.
+                self._replace_with_regular(
+                    session_export, full_export_raw, task_id=task.task_id
+                )
             if not reflection_timed_out:
                 self._replace_with_regular(
                     canonical_trajectory, b"", task_id=task.task_id
@@ -979,12 +1045,27 @@ class SkillEvolBenchHooks:
                 task_id=task.task_id,
                 reason="reflection-full-trajectory-invalid",
             )
-            full_export = audit_dir / "opencode.session.full.json"
-            self._write_new_regular(full_export, full_export_raw, task.task_id)
+            if agent_name == "codex":
+                full_export, full_export_raw, full_export_session_id = (
+                    self._capture_codex_session(
+                        agent_dir,
+                        audit_dir / "codex.session.full.jsonl",
+                        task_id=task.task_id,
+                        reason="reflection-full-session-export-invalid",
+                    )
+                )
+            else:
+                full_export = audit_dir / "opencode.session.full.json"
+                self._write_new_regular(full_export, full_export_raw, task.task_id)
             if reflection_stream_raw is None:
                 _, reflection_stream_raw = self._capture_agent_file(
                     reflection_stream,
-                    audit_dir / "opencode.reflection.jsonl",
+                    audit_dir
+                    / (
+                        "codex.reflection.jsonl"
+                        if agent_name == "codex"
+                        else "opencode.reflection.jsonl"
+                    ),
                     task_id=task.task_id,
                     reason="reflection-missing-reflection-stream",
                 )
@@ -994,29 +1075,40 @@ class SkillEvolBenchHooks:
                 reason="reflection-full-trajectory-invalid",
                 task_id=task.task_id,
             )
-            full_export_payload = self._json_object(
-                full_export_raw,
-                reason="reflection-full-session-export-invalid",
-                task_id=task.task_id,
-            )
             full_session_id = self._verify_trajectory_continuity(
                 solve_payload,
                 full_payload,
                 prompt=prompt,
                 task_id=task.task_id,
             )
-            full_export_session_id = self._verify_export_continuity(
-                solve_export_payload,
-                full_export_payload,
-                prompt=prompt,
-                task_id=task.task_id,
-            )
-            reflection_stream_session_id = self._session_id_from_stream(
-                reflection_stream_raw,
-                task_id=task.task_id,
-                phase="reflection",
-            )
-            reflection_session_id = getattr(trial.agent, "opencode_session_id", None)
+            if agent_name == "codex":
+                full_export_session_id = self._verify_codex_session_continuity(
+                    solve_export_raw,
+                    full_export_raw,
+                    task_id=task.task_id,
+                )
+                reflection_stream_session_id = full_export_session_id
+                reflection_session_id = full_export_session_id
+            else:
+                full_export_payload = self._json_object(
+                    full_export_raw,
+                    reason="reflection-full-session-export-invalid",
+                    task_id=task.task_id,
+                )
+                full_export_session_id = self._verify_export_continuity(
+                    solve_export_payload,
+                    full_export_payload,
+                    prompt=prompt,
+                    task_id=task.task_id,
+                )
+                reflection_stream_session_id = self._session_id_from_stream(
+                    reflection_stream_raw,
+                    task_id=task.task_id,
+                    phase="reflection",
+                )
+                reflection_session_id = getattr(
+                    trial.agent, "opencode_session_id", None
+                )
             if not (
                 isinstance(reflection_session_id, str)
                 and reflection_session_id
@@ -1377,6 +1469,101 @@ class SkillEvolBenchHooks:
                 f"reflection-{phase}-stream-session-invalid", task_id=task_id
             )
         return next(iter(session_ids))
+
+    @classmethod
+    def _capture_codex_session(
+        cls,
+        agent_dir: Path,
+        destination: Path,
+        *,
+        task_id: str,
+        reason: str,
+    ) -> tuple[Path, bytes, str]:
+        """Capture the one native Codex session JSONL without following links."""
+
+        sessions_root = agent_dir / "sessions"
+        if not sessions_root.is_dir() or sessions_root.is_symlink():
+            raise UnscoreableTrialError(reason, task_id=task_id)
+
+        session_files: list[Path] = []
+        for root, dirnames, filenames in os.walk(sessions_root, followlinks=False):
+            root_path = Path(root)
+            for dirname in tuple(dirnames):
+                child = root_path / dirname
+                if child.is_symlink():
+                    raise UnscoreableTrialError(reason, task_id=task_id)
+            for filename in filenames:
+                child = root_path / filename
+                if child.is_symlink():
+                    raise UnscoreableTrialError(reason, task_id=task_id)
+                if child.suffix == ".jsonl":
+                    session_files.append(child)
+
+        if len(session_files) != 1:
+            raise UnscoreableTrialError(reason, task_id=task_id)
+        raw = cls._read_regular_nofollow(
+            session_files[0],
+            max_bytes=_MAX_AUDIT_FILE_BYTES,
+            task_id=task_id,
+            reason=reason,
+        )
+        session_id = cls._session_id_from_codex_session(raw, task_id=task_id)
+        cls._write_new_regular(destination, raw, task_id)
+        return destination, raw, session_id
+
+    @staticmethod
+    def _session_id_from_codex_session(raw: bytes, *, task_id: str) -> str:
+        session_ids: set[str] = set()
+        try:
+            lines = raw.decode("utf-8").splitlines()
+        except UnicodeDecodeError as exc:
+            raise UnscoreableTrialError(
+                "reflection-codex-session-invalid", task_id=task_id
+            ) from exc
+        for line in lines:
+            if not line.strip():
+                continue
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise UnscoreableTrialError(
+                    "reflection-codex-session-invalid", task_id=task_id
+                ) from exc
+            if not isinstance(event, dict):
+                raise UnscoreableTrialError(
+                    "reflection-codex-session-invalid", task_id=task_id
+                )
+            if event.get("type") != "session_meta":
+                continue
+            payload = event.get("payload")
+            session_id = payload.get("id") if isinstance(payload, dict) else None
+            if isinstance(session_id, str) and session_id:
+                session_ids.add(session_id)
+        if len(session_ids) != 1:
+            raise UnscoreableTrialError(
+                "reflection-codex-session-missing-id", task_id=task_id
+            )
+        return next(iter(session_ids))
+
+    @classmethod
+    def _verify_codex_session_continuity(
+        cls,
+        solve_raw: bytes,
+        full_raw: bytes,
+        *,
+        task_id: str,
+    ) -> str:
+        solve_id = cls._session_id_from_codex_session(solve_raw, task_id=task_id)
+        full_id = cls._session_id_from_codex_session(full_raw, task_id=task_id)
+        if solve_id != full_id or not full_raw.startswith(solve_raw):
+            raise UnscoreableTrialError(
+                "reflection-codex-session-prefix-mismatch", task_id=task_id
+            )
+        if len(full_raw) <= len(solve_raw):
+            raise UnscoreableTrialError(
+                "reflection-codex-session-tail-missing", task_id=task_id
+            )
+        return full_id
 
     @staticmethod
     def _opencode_exported_prompt_matches(message: str, prompt: str) -> bool:

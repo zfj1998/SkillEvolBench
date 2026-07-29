@@ -379,15 +379,16 @@ class BaselineConfig(BaseModel):
                 "feedback_to_memory=True requires use_feedback_memory=True"
             )
 
-        # ---- 9. Same-session reflection is an OpenCode-only protocol ----
-        # The AP adapter records and explicitly resumes an OpenCode session
-        # id. Other CLIs may grow equivalent support later, but accepting one
-        # now would silently degrade "same session" into a fresh model call.
+        # ---- 9. Same-session reflection requires an audited resumable CLI ----
+        # The AP adapters for OpenCode and Codex both retain the native session
+        # transcript, explicitly resume that session, and fail closed when the
+        # solve transcript is not an exact prefix of the post-verifier turn.
+        # Other CLIs must not silently degrade "same session" into a fresh call.
         if self.skill_update_source == "same_agent_session":
-            if self.harbor_agent_name != "opencode":
+            if self.harbor_agent_name not in {"opencode", "codex"}:
                 raise ValueError(
                     "skill_update_source='same_agent_session' currently "
-                    "requires harbor_agent_name='opencode'"
+                    "requires harbor_agent_name='opencode' or 'codex'"
                 )
             if not self.use_skill_library:
                 raise ValueError(
