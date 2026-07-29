@@ -332,15 +332,17 @@ def test_build_config_passes_reasoning_effort_to_opencode_model(
     monkeypatch.setenv("MODEL_API_KEY", "test-key")
     monkeypatch.setenv("HARBOR_AGENT", "opencode")
     monkeypatch.setenv("REASONING_EFFORT", "max")
+    monkeypatch.setenv("OPENCODE_WIRE_API", "responses")
 
     config = run_episode._build_config(tmp_path)
 
     provider = config.baseline.agent_kwargs["opencode_config"]["provider"]
-    model = provider["openai-compatible"]["models"]["openai.gpt-5.6-sol"]
+    assert config.baseline.model_name == "openai/openai.gpt-5.6-sol"
+    model = provider["openai"]["models"]["openai.gpt-5.6-sol"]
     assert model["options"] == {
-        "enable_thinking": True,
         "reasoningEffort": "max",
     }
+    assert provider["openai"]["npm"] == "@ai-sdk/openai"
 
 
 def test_build_config_routes_opencode_via_native_anthropic_without_secret(

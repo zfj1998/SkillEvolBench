@@ -392,6 +392,7 @@ def build_submission(
         params["opencode_version"] = _required(
             args.opencode_version, "--opencode-version"
         )
+        params["opencode_wire_api"] = args.opencode_wire_api
     if args.agent_runtime_image:
         params["agent_runtime_image"] = args.agent_runtime_image
     if args.model_proxy_image:
@@ -603,6 +604,12 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--opencode-version",
         default=os.environ.get("OPENCODE_VERSION", "1.18.3"),
+    )
+    parser.add_argument(
+        "--opencode-wire-api",
+        choices=("chat", "responses"),
+        default="chat",
+        help="OpenCode provider path: Chat Completions or OpenAI Responses",
     )
     parser.add_argument("--baseline-name", default="selfgen_in_session_always")
     parser.add_argument("--strategy-name", default="chain")

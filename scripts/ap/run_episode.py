@@ -182,6 +182,14 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
         )
 
     wire_api = os.environ.get("CODEX_WIRE_API", "responses").strip() or "responses"
+    opencode_wire_api = (
+        os.environ.get("OPENCODE_WIRE_API", "chat").strip().lower() or "chat"
+    )
+    if opencode_wire_api not in {"chat", "responses"}:
+        raise ValueError(
+            "OPENCODE_WIRE_API must be 'chat' or 'responses'; "
+            f"got {opencode_wire_api!r}"
+        )
     reasoning_effort = (
         os.environ.get("REASONING_EFFORT", "").strip()
         or os.environ.get("CODEX_REASONING_EFFORT", "").strip()
@@ -212,9 +220,9 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
     baseline_data = baseline.model_dump()
     baseline_data["harbor_agent_name"] = harbor_agent
     # Normalize the AP-facing convenience prefix away from the actual served
-    # model id. OpenCode must use a non-reserved provider id: naming a generic
-    # ``@ai-sdk/openai-compatible`` provider ``openai`` makes OpenCode select
-    # its Responses-specific path instead of Chat Completions.
+    # model id. Generic endpoints use the non-reserved ``openai-compatible``
+    # provider and Chat Completions. Explicit Responses mode intentionally
+    # selects the official ``openai`` provider.
     served_model_id = model.removeprefix("openai/").removeprefix("anthropic/")
     baseline_data["model_name"] = (
         f"openai/{served_model_id}"
@@ -222,7 +230,11 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
         else (
             f"anthropic/{served_model_id}"
             if model_api_protocol == "anthropic"
-            else f"openai-compatible/{served_model_id}"
+            else (
+                f"openai/{served_model_id}"
+                if opencode_wire_api == "responses"
+                else f"openai-compatible/{served_model_id}"
+            )
         )
     )
     agent_kwargs = dict(baseline_data.get("agent_kwargs") or {})
@@ -259,14 +271,15 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
         # in the task container, so Harbor config and AP artifacts never
         # contain the credential itself. Native Anthropic is required for
         # signed Claude reasoning blocks to survive same-session continuation.
-        provider_id = (
-            "anthropic" if model_api_protocol == "anthropic" else "openai-compatible"
-        )
-        provider_npm = (
-            "@ai-sdk/anthropic"
-            if model_api_protocol == "anthropic"
-            else "@ai-sdk/openai-compatible"
-        )
+        if model_api_protocol == "anthropic":
+            provider_id = "anthropic"
+            provider_npm = "@ai-sdk/anthropic"
+        elif opencode_wire_api == "responses":
+            provider_id = "openai"
+            provider_npm = "@ai-sdk/openai"
+        else:
+            provider_id = "openai-compatible"
+            provider_npm = "@ai-sdk/openai-compatible"
         base_url_env = (
             "ANTHROPIC_BASE_URL"
             if model_api_protocol == "anthropic"
@@ -300,7 +313,6 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
                                     **(
                                         {
                                             "options": {
-                                                "enable_thinking": True,
                                                 "reasoningEffort": reasoning_effort,
                                             }
                                         }
@@ -623,6 +635,11 @@ def main() -> int:
                     os.environ.get("REASONING_EFFORT", "").strip()
                     or os.environ.get("CODEX_REASONING_EFFORT", "").strip()
                     or None
+                ),
+                "opencode_wire_api": (
+                    os.environ.get("OPENCODE_WIRE_API", "chat").strip().lower()
+                    if config.baseline.harbor_agent_name == "opencode"
+                    else None
                 ),
                 "within_env_replay": config.baseline.within_env_replay,
                 "replay_eval": config.baseline.replay_eval,

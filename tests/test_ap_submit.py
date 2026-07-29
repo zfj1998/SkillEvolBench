@@ -332,6 +332,23 @@ def test_codex_submission_keeps_runtime_and_wire_api_aligned() -> None:
     assert "opencode_version" not in params
 
 
+def test_opencode_submission_selects_responses_provider() -> None:
+    args = submit._parser().parse_args(
+        [
+            "--harbor-agent",
+            "opencode",
+            "--opencode-wire-api",
+            "responses",
+            "--reasoning-effort",
+            "max",
+        ]
+    )
+    params = _params(submit.build_submission(args, _environment()).command)
+
+    assert params["opencode_wire_api"] == "responses"
+    assert params["reasoning_effort"] == "max"
+
+
 def test_anthropic_submission_selects_native_protocol() -> None:
     args = submit._parser().parse_args(
         [
