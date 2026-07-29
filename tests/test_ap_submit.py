@@ -311,13 +311,24 @@ def test_no_skill_normalizes_irrelevant_learning_retry_to_one() -> None:
 
 def test_codex_submission_keeps_runtime_and_wire_api_aligned() -> None:
     args = submit._parser().parse_args(
-        ["--harbor-agent", "codex", "--codex-wire-api", "chat"]
+        [
+            "--harbor-agent",
+            "codex",
+            "--codex-wire-api",
+            "chat",
+            "--codex-reasoning-effort",
+            "max",
+            "--codex-version",
+            "0.144.2",
+        ]
     )
     params = _params(submit.build_submission(args, _environment()).command)
 
     assert params["harbor_agent"] == "codex"
     assert params["agent_cli_set"] == "codex"
     assert params["codex_wire_api"] == "chat"
+    assert params["codex_reasoning_effort"] == "max"
+    assert params["codex_version"] == "0.144.2"
     assert "opencode_version" not in params
 
 

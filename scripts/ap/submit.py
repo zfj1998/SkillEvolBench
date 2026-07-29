@@ -384,6 +384,9 @@ def build_submission(
         params["replay_eval"] = args.replay_eval
     if args.harbor_agent == "codex":
         params["codex_wire_api"] = args.codex_wire_api
+        if args.codex_reasoning_effort:
+            params["codex_reasoning_effort"] = args.codex_reasoning_effort
+        params["codex_version"] = args.codex_version
     elif args.harbor_agent == "opencode":
         params["opencode_version"] = _required(
             args.opencode_version, "--opencode-version"
@@ -578,6 +581,17 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--codex-wire-api", choices=("responses", "chat"), default="responses"
+    )
+    parser.add_argument(
+        "--codex-reasoning-effort",
+        choices=("low", "medium", "high", "xhigh", "max"),
+        default="",
+        help="optional Codex reasoning effort; omit to use the agent default",
+    )
+    parser.add_argument(
+        "--codex-version",
+        default=os.environ.get("CODEX_VERSION", "0.144.2"),
+        help="pinned @openai/codex CLI version used in the task runtime",
     )
     parser.add_argument(
         "--opencode-version",

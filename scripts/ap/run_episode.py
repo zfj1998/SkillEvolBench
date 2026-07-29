@@ -182,6 +182,9 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
         )
 
     wire_api = os.environ.get("CODEX_WIRE_API", "responses").strip() or "responses"
+    codex_reasoning_effort = os.environ.get(
+        "CODEX_REASONING_EFFORT", ""
+    ).strip()
 
     os.environ["OPENAI_BASE_URL"] = model_base_url
     os.environ["MODEL_API_KEY"] = model_api_key
@@ -245,6 +248,8 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
                 "wire_api": wire_api,
             }
         )
+        if codex_reasoning_effort:
+            agent_kwargs["reasoning_effort"] = codex_reasoning_effort
     else:
         opencode_version = (
             os.environ.get("OPENCODE_VERSION", "1.18.3").strip() or "1.18.3"
@@ -603,6 +608,9 @@ def main() -> int:
                 "model_base_url": os.environ["MODEL_BASE_URL"],
                 "model_api_protocol": os.environ.get("MODEL_API_PROTOCOL", "openai"),
                 "harbor_agent": config.baseline.harbor_agent_name,
+                "codex_reasoning_effort": (
+                    os.environ.get("CODEX_REASONING_EFFORT", "").strip() or None
+                ),
                 "within_env_replay": config.baseline.within_env_replay,
                 "replay_eval": config.baseline.replay_eval,
                 "learning_max_attempts": config.baseline.learning_max_attempts,

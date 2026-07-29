@@ -242,6 +242,7 @@ def test_build_config_routes_codex_without_duplicate_api_base(
     monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1/")
     monkeypatch.setenv("MODEL_API_KEY", "test-key")
     monkeypatch.setenv("HARBOR_AGENT", "codex")
+    monkeypatch.setenv("CODEX_REASONING_EFFORT", "max")
     monkeypatch.delenv("CODEX_WIRE_API", raising=False)
 
     config = run_episode._build_config(tmp_path)
@@ -253,6 +254,7 @@ def test_build_config_routes_codex_without_duplicate_api_base(
         "provider": "sglang",
         "env_key": "OPENAI_API_KEY",
         "wire_api": "responses",
+        "reasoning_effort": "max",
     }
     assert "api_base" not in config.baseline.agent_kwargs
     assert config.baseline.model_name == "openai/served-model"
