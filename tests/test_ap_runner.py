@@ -251,11 +251,12 @@ def test_build_config_routes_codex_without_duplicate_api_base(
     assert config.baseline.harbor_agent_name == "codex"
     assert config.baseline.agent_kwargs == {
         "base_url": "http://model.example/v1",
-        "provider": "sglang",
+        "provider": "custom",
         "env_key": "OPENAI_API_KEY",
         "wire_api": "responses",
         "reasoning_effort": "max",
     }
+    assert run_episode.os.environ["CODEX_MODEL_PROVIDER"] == "custom"
     assert "api_base" not in config.baseline.agent_kwargs
     assert config.baseline.model_name == "openai/served-model"
     assert config.environment_id == "E2"

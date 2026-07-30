@@ -202,7 +202,12 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
         os.environ["ANTHROPIC_BASE_URL"] = model_base_url
         os.environ["ANTHROPIC_API_KEY"] = model_api_key
     if harbor_agent == "codex":
-        os.environ["CODEX_MODEL_PROVIDER"] = provider
+        # Codex 0.144+ rejects attempts to redefine reserved built-in provider
+        # IDs such as ``openai``.  AP always supplies an explicit base URL, so
+        # this is necessarily a custom endpoint even when MODEL_PROVIDER is a
+        # display label like ``openai`` or ``sglang``.
+        codex_provider = "custom"
+        os.environ["CODEX_MODEL_PROVIDER"] = codex_provider
         os.environ["CODEX_PROVIDER_ENV_KEY"] = "OPENAI_API_KEY"
         os.environ["CODEX_WIRE_API"] = wire_api
 
@@ -221,8 +226,9 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
     baseline_data["harbor_agent_name"] = harbor_agent
     # Normalize the AP-facing convenience prefix away from the actual served
     # model id. Generic endpoints use the non-reserved ``openai-compatible``
-    # provider and Chat Completions. Explicit Responses mode intentionally
-    # selects the official ``openai`` provider.
+    # provider and Chat Completions. Codex uses a custom provider because AP
+    # supplies an explicit endpoint; built-in provider IDs cannot be
+    # overridden by recent Codex releases.
     served_model_id = model.removeprefix("openai/").removeprefix("anthropic/")
     baseline_data["model_name"] = (
         f"openai/{served_model_id}"
@@ -256,7 +262,7 @@ def _configure_model(baseline: BaselineConfig) -> BaselineConfig:
         agent_kwargs.update(
             {
                 "base_url": model_base_url,
-                "provider": provider,
+                "provider": codex_provider,
                 "env_key": "OPENAI_API_KEY",
                 "wire_api": wire_api,
             }
