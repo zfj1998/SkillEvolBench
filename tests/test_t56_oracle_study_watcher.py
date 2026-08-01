@@ -67,6 +67,45 @@ def test_discovery_preserves_ap_run_provenance(
     )
 
 
+def test_empty_manifest_mode_does_not_adopt_historical_default_jobs(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("AP_API_KEY", "test-only-key")
+    args = argparse.Namespace(
+        state_dir=tmp_path / "watcher",
+        evidence_dir=tmp_path / "raw",
+        cluster="test-cluster",
+        repo_root=ROOT,
+        poll_sec=60,
+        empty_manifest=True,
+    )
+
+    watcher = WATCH.Watcher(args)
+
+    assert WATCH.read_json(watcher.manifest_path, None) == WATCH.EMPTY_MANIFEST
+
+
+def test_register_group_can_create_an_isolated_manifest(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "watcher/manifest.json"
+
+    WATCH.update_manifest(
+        manifest_path,
+        "groups",
+        "group_id",
+        "group-new",
+        "v19-new",
+        empty_manifest=True,
+    )
+
+    assert WATCH.read_json(manifest_path, None) == {
+        "schema_version": 1,
+        "groups": [{"label": "v19-new", "group_id": "group-new"}],
+        "jobs": [],
+        "external_job_records": [],
+    }
+
+
 def test_no_analysis_mode_only_monitors_and_exports(
     tmp_path: Path,
     monkeypatch,

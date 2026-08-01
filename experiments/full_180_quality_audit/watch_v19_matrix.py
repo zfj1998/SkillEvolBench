@@ -344,6 +344,7 @@ class MatrixController:
                 str(self.repo / "scripts/ap/watch_t56_oracle_study.py"),
                 "--state-dir",
                 str(self.root / "watcher"),
+                "--empty-manifest",
                 "--register-group",
                 group_id,
                 "--label",

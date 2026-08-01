@@ -21,4 +21,5 @@ exec python "$REPO_ROOT/scripts/ap/watch_t56_oracle_study.py" \
   --evidence-dir "$AUDIT_ROOT/raw" \
   --cluster "$AP_CLUSTER" \
   --poll-sec 60 \
+  --empty-manifest \
   --no-analysis

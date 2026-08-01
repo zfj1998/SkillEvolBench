@@ -44,6 +44,12 @@ DEFAULT_STATE_DIR = Path(
     "watcher"
 )
 DEFAULT_EVIDENCE_DIR = DEFAULT_STATE_DIR.parent / "raw"
+EMPTY_MANIFEST = {
+    "schema_version": 1,
+    "groups": [],
+    "jobs": [],
+    "external_job_records": [],
+}
 DEFAULT_MANIFEST = {
     "schema_version": 1,
     "groups": [
@@ -132,7 +138,12 @@ class Watcher:
         os.chmod(self.evidence_dir, 0o700)
         self.manifest_path = self.state_dir / "manifest.json"
         if not self.manifest_path.exists():
-            write_json(self.manifest_path, DEFAULT_MANIFEST)
+            write_json(
+                self.manifest_path,
+                EMPTY_MANIFEST
+                if getattr(args, "empty_manifest", False)
+                else DEFAULT_MANIFEST,
+            )
         self.environment = os.environ.copy()
         self.environment["AP_CLUSTER"] = args.cluster
         if not self.environment.get("AP_API_KEY"):
@@ -908,9 +919,14 @@ def update_manifest(
     identity_key: str,
     identity_value: str,
     label: str,
+    *,
+    empty_manifest: bool = False,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    manifest = read_json(path, DEFAULT_MANIFEST)
+    manifest = read_json(
+        path,
+        EMPTY_MANIFEST if empty_manifest else DEFAULT_MANIFEST,
+    )
     if not isinstance(manifest, dict):
         raise WatcherError("cannot update invalid manifest")
     entries = manifest.setdefault(collection, [])
@@ -944,6 +960,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--command-heartbeat-sec", type=int, default=15)
     parser.add_argument("--once", action="store_true")
     parser.add_argument(
+        "--empty-manifest",
+        action="store_true",
+        help=(
+            "initialize a new state directory with no historical default jobs; "
+            "use this for an isolated study whose entities are registered explicitly"
+        ),
+    )
+    parser.add_argument(
         "--no-export",
         action="store_true",
         help="query AP and update inventory without downloading artifacts",
@@ -975,12 +999,24 @@ def main() -> int:
     args = parse_args()
     manifest_path = args.state_dir.resolve() / "manifest.json"
     if args.register_job:
-        update_manifest(manifest_path, "jobs", "job_id", args.register_job, args.label)
+        update_manifest(
+            manifest_path,
+            "jobs",
+            "job_id",
+            args.register_job,
+            args.label,
+            empty_manifest=args.empty_manifest,
+        )
         print(f"registered job {args.register_job}")
         return 0
     if args.register_group:
         update_manifest(
-            manifest_path, "groups", "group_id", args.register_group, args.label
+            manifest_path,
+            "groups",
+            "group_id",
+            args.register_group,
+            args.label,
+            empty_manifest=args.empty_manifest,
         )
         print(f"registered group {args.register_group}")
         return 0
