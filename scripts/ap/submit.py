@@ -383,11 +383,15 @@ def build_submission(
         "episode_retry_backoff_sec": args.episode_retry_backoff_sec,
         "evaluation_only_t4_t6": args.evaluation_only_t4_t6,
         "oracle_skill_view": args.oracle_skill_view,
-        "shuffled_skill_view": args.shuffled_skill_view,
         "reference_solution_audit": args.reference_solution_audit,
         "reference_audit_concurrency": args.reference_audit_concurrency,
-        "reference_audit_tiers": args.reference_audit_tiers,
     }
+    # Keep ordinary submissions compatible with an older Agent-Hub template
+    # while the new diagnostic parameters are being rolled out.
+    if args.shuffled_skill_view:
+        params["shuffled_skill_view"] = True
+    if args.reference_solution_audit:
+        params["reference_audit_tiers"] = args.reference_audit_tiers
     reasoning_effort = args.reasoning_effort or args.codex_reasoning_effort
     if reasoning_effort:
         params["reasoning_effort"] = reasoning_effort
