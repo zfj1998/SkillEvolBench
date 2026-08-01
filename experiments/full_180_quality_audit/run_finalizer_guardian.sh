@@ -42,7 +42,7 @@ while true; do
     status="restart_failed"
   fi
   temporary="$STATE_DIR/guardian/.heartbeat.json.$$"
-  printf '{{"updated_at_utc":"%s","status":"%s","session":"%s"}}\n' \
+  printf '{"updated_at_utc":"%s","status":"%s","session":"%s"}\n' \
     "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$status" "$SESSION" > "$temporary"
   chmod 600 "$temporary"
   mv -f "$temporary" "$STATE_DIR/guardian/heartbeat.json"

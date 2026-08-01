@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -32,6 +33,16 @@ FINALIZER_SPEC = importlib.util.spec_from_file_location(
 assert FINALIZER_SPEC is not None and FINALIZER_SPEC.loader is not None
 FINALIZER = importlib.util.module_from_spec(FINALIZER_SPEC)
 FINALIZER_SPEC.loader.exec_module(FINALIZER)
+
+
+def test_finalizer_guardian_writes_one_valid_json_object() -> None:
+    script = (
+        ROOT
+        / "experiments/full_180_quality_audit/run_finalizer_guardian.sh"
+    ).read_text(encoding="utf-8")
+
+    assert "printf '{{\"updated_at_utc\"" not in script
+    assert "printf '{\"updated_at_utc\"" in script
 
 
 def _write_json(path: Path, value: object) -> None:
@@ -102,6 +113,24 @@ def test_finalizer_requires_all_five_groups_and_30_safe_exports(
     assert reason == "waiting for 1 safe exports"
 
 
+def test_finalizer_can_launch_repo_local_ap_collector(tmp_path: Path) -> None:
+    finalizer = FINALIZER.Finalizer(
+        SimpleNamespace(repo_root=ROOT, audit_root=tmp_path, poll_sec=10)
+    )
+
+    result = finalizer.run_command(
+        [
+            sys.executable,
+            str(ROOT / "scripts/ap/build_t56_oracle_study.py"),
+            "--help",
+        ],
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "--raw-root" in result.stdout
+
+
 def test_generated_skill_update_is_linked_to_later_new_input_use() -> None:
     payload = {
         "skills": [{
@@ -163,6 +192,63 @@ def test_current_controls_distinguish_expert_rescue_from_wrong_skill() -> None:
 
     assert expert["status"] == "single_run_expert_rescue"
     assert unrelated["status"] == "single_run_correct_skill_specific"
+
+
+def test_screening_queue_prioritizes_defect_evidence_without_drop_verdict() -> None:
+    checks = {
+        "1_experience_generation_and_reuse": {
+            "status": "generated_skill_used_on_new_input"
+        },
+        "2_historical_skill_demand": {
+            "status": "single_run_low_skill_demand"
+        },
+        "3_correct_expert_skill_effect": {"status": "single_run_both_pass"},
+        "4_unrelated_skill_negative_control": {
+            "status": "single_run_wrong_skill_insensitive"
+        },
+        "5_task_and_verifier_validity": {
+            "reference_strict_pass": False,
+            "process_only_failure_conditions": ["self_generated"],
+            "model_execution_gap_candidate": False,
+            "process_shape_sensitivity": "high",
+        },
+    }
+
+    result = AUDIT.screening_assessment(5, checks)
+
+    assert result["priority"] == "high"
+    assert "reference_solution_failed" in result["flags"]
+    assert "process_only_false_negative_candidate" in result["flags"]
+    assert "low_skill_demand_candidate" in result["flags"]
+    assert "wrong_skill_insensitive_candidate" in result["flags"]
+    assert "not a keep/drop verdict" in result["claim_boundary"]
+
+
+def test_manual_semantic_false_negative_enters_high_priority_queue() -> None:
+    checks = {
+        "1_experience_generation_and_reuse": {
+            "status": "generated_skill_used_on_new_input"
+        },
+        "2_historical_skill_demand": {
+            "status": "single_run_historical_skill_demand_candidate"
+        },
+        "3_correct_expert_skill_effect": {"status": "single_run_both_fail"},
+        "4_unrelated_skill_negative_control": {
+            "status": "single_run_neither_skill_passes"
+        },
+        "5_task_and_verifier_validity": {
+            "reference_strict_pass": True,
+            "process_only_failure_conditions": [],
+            "model_execution_gap_candidate": False,
+            "process_shape_sensitivity": "low",
+            "manual_semantic_status": "confirmed_process_false_negative",
+        },
+    }
+
+    result = AUDIT.screening_assessment(5, checks)
+
+    assert result["priority"] == "high"
+    assert result["flags"] == ["process_only_false_negative_candidate"]
 
 
 def test_current_experience_links_reflection_update_to_new_input_use() -> None:
@@ -269,6 +355,12 @@ def test_complete_current_validator_requires_exact_180_task_evidence() -> None:
     )
     assert errors == []
 
+    reference[next(iter(reference))]["strict_pass"] = False
+    errors = AUDIT.current_coverage_errors(
+        specs, current, reference, "revision"
+    )
+    assert errors == []
+
     current["evaluation"].pop((next(iter(transfer_ids)), "shuffled_curated"))
     errors = AUDIT.current_coverage_errors(
         specs, current, reference, "revision"
@@ -291,6 +383,8 @@ def test_interactive_report_keeps_all_180_rows_and_escapes_script_end() -> None:
                         "tier": tier,
                         "role": "canonical",
                         "readiness": "ready",
+                        "screening_priority": "high",
+                        "screening_flags": ["reference_solution_failed"],
                         "instruction": "safe </script><script>alert(1)</script>",
                         "checks": {
                             key: {"status": "checked"} for key in REPORT.POINT_KEYS

@@ -326,6 +326,21 @@ def reference_index(reference: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
+def semantic_review_index(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    reviews = payload.get("reviews", [])
+    if not isinstance(reviews, list):
+        raise ValueError("semantic reviews must contain a reviews array")
+    indexed: dict[str, dict[str, Any]] = {}
+    for review in reviews:
+        if not isinstance(review, dict) or not review.get("task_id"):
+            raise ValueError("every semantic review must be an object with task_id")
+        task_id = str(review["task_id"])
+        if task_id in indexed:
+            raise ValueError(f"duplicate semantic review: {task_id}")
+        indexed[task_id] = review
+    return indexed
+
+
 def check_verifier(
     spec: dict[str, Any],
     static: dict[str, Any],
@@ -728,6 +743,93 @@ def enrich_verifier_with_dynamic_flags(
     return result
 
 
+def screening_assessment(
+    tier: int,
+    checks: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Create a review queue without turning one run into a keep/drop verdict."""
+    experience = checks["1_experience_generation_and_reuse"]
+    need = checks["2_historical_skill_demand"]
+    expert = checks["3_correct_expert_skill_effect"]
+    unrelated = checks["4_unrelated_skill_negative_control"]
+    verifier = checks["5_task_and_verifier_validity"]
+    flags: list[str] = []
+    high_flags = {
+        "reference_solution_failed",
+        "process_only_false_negative_candidate",
+        "expert_skill_harm_candidate",
+        "shuffled_skill_only_pass_candidate",
+        "learning_protocol_failure",
+        "invalid_control_evidence",
+    }
+
+    if verifier.get("reference_strict_pass") is False:
+        flags.append("reference_solution_failed")
+    if verifier.get("manual_semantic_status") == "confirmed_process_false_negative":
+        flags.append("process_only_false_negative_candidate")
+    if verifier.get("process_only_failure_conditions"):
+        flags.append("process_only_false_negative_candidate")
+    if verifier.get("model_execution_gap_candidate") is True:
+        flags.append("all_model_conditions_fail_reference_passes")
+    if verifier.get("process_shape_sensitivity") == "high":
+        flags.append("high_process_shape_sensitivity")
+
+    experience_status = str(experience.get("status") or "")
+    if tier <= 3:
+        if experience_status == "same_session_or_attempt_protocol_failed":
+            flags.append("learning_protocol_failure")
+        elif experience_status == "reflection_or_patch_missing":
+            flags.append("learning_reflection_or_patch_missing")
+        elif experience_status == "skill_update_applied_without_observed_later_use":
+            flags.append("skill_update_not_used_on_held_out_input")
+        elif experience_status == "reflection_completed_without_applied_skill_update":
+            flags.append("no_skill_update_applied")
+    elif experience_status == "generated_skill_retrieved_but_not_used":
+        flags.append("generated_skill_retrieved_but_not_used")
+    elif experience_status == "no_same_family_generated_skill_visible":
+        flags.append("generated_skill_not_visible_on_held_out_input")
+
+    need_status = str(need.get("status") or "")
+    if need_status == "single_run_low_skill_demand":
+        flags.append("low_skill_demand_candidate")
+    elif need_status.startswith("invalid_"):
+        flags.append("invalid_control_evidence")
+
+    expert_status = str(expert.get("status") or "")
+    if expert_status == "single_run_expert_rescue":
+        flags.append("expert_skill_rescue_candidate")
+    elif expert_status == "single_run_expert_harm":
+        flags.append("expert_skill_harm_candidate")
+    elif expert_status.startswith("invalid_"):
+        flags.append("invalid_control_evidence")
+
+    unrelated_status = str(unrelated.get("status") or "")
+    if unrelated_status == "single_run_correct_skill_specific":
+        flags.append("correct_skill_specific_candidate")
+    elif unrelated_status == "single_run_wrong_skill_insensitive":
+        flags.append("wrong_skill_insensitive_candidate")
+    elif unrelated_status == "single_run_shuffled_only_pass":
+        flags.append("shuffled_skill_only_pass_candidate")
+    elif unrelated_status.startswith("invalid_"):
+        flags.append("invalid_control_evidence")
+
+    flags = sorted(set(flags))
+    if any(flag in high_flags for flag in flags):
+        priority = "high"
+    elif flags:
+        priority = "medium"
+    else:
+        priority = "low"
+    return {
+        "priority": priority,
+        "flags": flags,
+        "claim_boundary": (
+            "This is a first-pass review queue, not a keep/drop verdict. "
+            "Outcome flips and defect candidates require valid repeats or semantic review."
+        ),
+    }
+
+
 def current_coverage_errors(
     specs: list[dict[str, Any]],
     current: dict[str, Any],
@@ -757,8 +859,6 @@ def current_coverage_errors(
             )
     if set(reference) != {str(spec["task_id"]) for spec in specs}:
         errors.append("reference solution grid is not the exact 180 tasks")
-    elif any(row.get("strict_pass") is not True for row in reference.values()):
-        errors.append("at least one of the 180 reference solutions failed strict verification")
 
     cells = Counter(
         (
@@ -842,6 +942,19 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         for row in task_audit.get("outcome_or_contract_repairs", [])
     }
     reference = reference_index(load_json(args.v11_reference_audit))
+    semantic_reviews_path = getattr(args, "semantic_reviews", None)
+    semantic_reviews = (
+        semantic_review_index(load_json(semantic_reviews_path))
+        if semantic_reviews_path is not None
+        else {}
+    )
+    unknown_review_ids = set(semantic_reviews) - {
+        str(spec["task_id"]) for spec in specs
+    }
+    if unknown_review_ids:
+        raise ValueError(
+            f"semantic reviews contain unknown task IDs: {sorted(unknown_review_ids)!r}"
+        )
     current_pairs = load_current_pairs(load_json(args.v11_regression))
     full_evidence_path = getattr(args, "v11_full_evidence", None)
     expected_model = getattr(args, "expected_model", "qwen3.7-max")
@@ -921,12 +1034,18 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                     checks["5_task_and_verifier_validity"], condition_rows
                 )
             )
+        if task_id in semantic_reviews:
+            review = semantic_reviews[task_id]
+            checks["5_task_and_verifier_validity"] = {
+                **checks["5_task_and_verifier_validity"],
+                "manual_semantic_status": review.get("status"),
+                "manual_semantic_review": review,
+            }
 
         if tier <= 3:
             learning_ready = current is not None and task_id in current["learning"]
             reference_ready = (
                 task_id in reference
-                and reference[task_id].get("strict_pass") is True
             )
             readiness = (
                 "ready"
@@ -953,13 +1072,13 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             )
             reference_ready = (
                 task_id in reference
-                and reference[task_id].get("strict_pass") is True
             )
             readiness = (
                 "ready"
                 if controls_ready and injection_ready and reference_ready
                 else "insufficient_current_four_condition_or_reference_evidence"
             )
+        assessment = screening_assessment(tier, checks)
         tasks.append(
             {
                 "task_id": task_id,
@@ -976,6 +1095,9 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 "instruction_sha256": spec.get("instruction_sha256"),
                 "instruction": spec.get("instruction"),
                 "readiness": readiness,
+                "screening_priority": assessment["priority"],
+                "screening_flags": assessment["flags"],
+                "screening_claim_boundary": assessment["claim_boundary"],
                 "checks": checks,
             }
         )
@@ -1012,10 +1134,37 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             for _, condition in current_evaluation
         ),
         "v1_1_reference_solution_coverage": len(reference),
+        "v1_1_reference_solution_strict_passes": sum(
+            row.get("strict_pass") is True for row in reference.values()
+        ),
+        "v1_1_reference_solution_failures": sum(
+            row.get("strict_pass") is not True for row in reference.values()
+        ),
         "current_evidence_complete": not coverage_errors,
         "current_evidence_errors": coverage_errors,
         "ready_for_final_five_point_decision": sum(
             row["readiness"] == "ready" for row in tasks
+        ),
+        "screening_priority_counts": dict(
+            sorted(Counter(row["screening_priority"] for row in tasks).items())
+        ),
+        "screening_flag_counts": dict(
+            sorted(
+                Counter(
+                    flag
+                    for row in tasks
+                    for flag in row["screening_flags"]
+                ).items()
+            )
+        ),
+        "manual_semantic_review_count": len(semantic_reviews),
+        "manual_semantic_review_status_counts": dict(
+            sorted(
+                Counter(
+                    str(review.get("status") or "unspecified")
+                    for review in semantic_reviews.values()
+                ).items()
+            )
         ),
         "high_process_shape_review": sum(
             row["checks"]["5_task_and_verifier_validity"]["process_shape_sensitivity"]
@@ -1051,6 +1200,11 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             {"v11_full_evidence": str(full_evidence_path.resolve())}
             if full_evidence_path is not None
             else {}
+        )
+        | (
+            {"semantic_reviews": str(semantic_reviews_path.resolve())}
+            if semantic_reviews_path is not None
+            else {}
         ),
         "summary": summary,
         "tasks": tasks,
@@ -1066,6 +1220,8 @@ def write_csv(path: Path, tasks: list[dict[str, Any]]) -> None:
         "role",
         "task_slug",
         "readiness",
+        "screening_priority",
+        "screening_flags",
         "point1_status",
         "point2_status",
         "point3_status",
@@ -1074,6 +1230,7 @@ def write_csv(path: Path, tasks: list[dict[str, Any]]) -> None:
         "process_shape_sensitivity",
         "reference_strict_pass",
         "known_v1_repair_applied",
+        "manual_semantic_status",
         "instruction_path",
     ]
     handle = io.StringIO(newline="")
@@ -1091,6 +1248,8 @@ def write_csv(path: Path, tasks: list[dict[str, Any]]) -> None:
                 "role": task["role"],
                 "task_slug": task["task_slug"],
                 "readiness": task["readiness"],
+                "screening_priority": task["screening_priority"],
+                "screening_flags": ";".join(task["screening_flags"]),
                 "point1_status": checks["1_experience_generation_and_reuse"]["status"],
                 "point2_status": checks["2_historical_skill_demand"]["status"],
                 "point3_status": checks["3_correct_expert_skill_effect"]["status"],
@@ -1099,6 +1258,7 @@ def write_csv(path: Path, tasks: list[dict[str, Any]]) -> None:
                 "process_shape_sensitivity": verifier["process_shape_sensitivity"],
                 "reference_strict_pass": verifier["reference_strict_pass"],
                 "known_v1_repair_applied": verifier["known_v1_repair_applied"],
+                "manual_semantic_status": verifier.get("manual_semantic_status"),
                 "instruction_path": task["instruction_path"],
             }
         )
@@ -1118,6 +1278,11 @@ def main() -> int:
         "--v11-full-evidence",
         type=Path,
         help="current v1.1 four-condition collector output",
+    )
+    parser.add_argument(
+        "--semantic-reviews",
+        type=Path,
+        help="optional task-level manual semantic review records",
     )
     parser.add_argument("--expected-model", default="qwen3.7-max")
     parser.add_argument("--expected-benchmark-revision")

@@ -93,9 +93,17 @@ class Finalizer:
     def run_command(
         self, command: list[str], *, timeout: int = 900
     ) -> subprocess.CompletedProcess[str]:
+        environment = os.environ.copy()
+        existing_pythonpath = environment.get("PYTHONPATH")
+        environment["PYTHONPATH"] = (
+            f"{self.repo}{os.pathsep}{existing_pythonpath}"
+            if existing_pythonpath
+            else str(self.repo)
+        )
         return subprocess.run(
             command,
             cwd=self.repo,
+            env=environment,
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -185,9 +193,15 @@ class Finalizer:
     def finalize(self, ready: dict[str, Any]) -> None:
         matrix_dir = self.analysis / "current-matrix"
         reference_path = self.analysis / "reference-full180.json"
+        semantic_reviews_path = self.analysis / "semantic_reviews.json"
         ledger_dir = self.analysis / "ledger"
         report_dir = self.analysis / "report"
         matrix_dir.mkdir(parents=True, exist_ok=True)
+        if not semantic_reviews_path.is_file():
+            atomic_json(
+                semantic_reviews_path,
+                {"schema_version": "1.0", "reviews": []},
+            )
 
         self.run_stage(
             "collect-four-condition-matrix",
@@ -252,6 +266,8 @@ class Finalizer:
                 "/cpfs02/user/zhangfengji.zfj/skillevolbench_v1_1_20260727/regression-at12/analysis/v1_1_regression_audit.json",
                 "--v11-full-evidence",
                 str(matrix_dir / "t56_evidence.json"),
+                "--semantic-reviews",
+                str(semantic_reviews_path),
                 "--expected-model",
                 "qwen3.7-max",
                 "--expected-benchmark-revision",
@@ -277,6 +293,7 @@ class Finalizer:
             matrix_dir / "t56_evidence.json",
             matrix_dir / "t56_tasks.csv",
             reference_path,
+            semantic_reviews_path,
             ledger_dir / "task_five_point_audit.json",
             ledger_dir / "task_five_point_audit.csv",
             report_dir / "report_summary.json",

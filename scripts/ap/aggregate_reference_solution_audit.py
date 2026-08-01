@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -78,13 +79,17 @@ def require(condition: bool, message: str) -> None:
         raise ValueError(message)
 
 
-def validate_score(value: Any, *, field: str, task_id: str) -> None:
+def validate_score(value: Any, *, field: str, task_id: str) -> float | None:
     if value is None:
-        return
+        return None
     require(
-        isinstance(value, (int, float)) and float(value) == 1.0,
-        f"{task_id}: {field} must be 1.0 when present, got {value!r}",
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+        and 0.0 <= float(value) <= 1.0,
+        f"{task_id}: {field} must be finite and in [0, 1], got {value!r}",
     )
+    return float(value)
 
 
 def main() -> int:
@@ -196,13 +201,38 @@ def main() -> int:
             require(isinstance(row, dict), f"{job_id}: non-object task row")
             task_id = str(row.get("task_id") or "")
             require(row.get("environment_id") == environment_id, f"{task_id}: env mismatch")
-            require(row.get("strict_pass") is True, f"{task_id}: strict failure")
-            require(row.get("normalized_score") == 1.0, f"{task_id}: score is not 1.0")
+            require(
+                isinstance(row.get("strict_pass"), bool),
+                f"{task_id}: strict_pass is not boolean",
+            )
             require(row.get("trial_count") == 1, f"{task_id}: trial_count is not 1")
             require(row.get("result_present") is True, f"{task_id}: result missing")
-            require(row.get("exception_info") is None, f"{task_id}: exception present")
-            validate_score(row.get("outcome_passed"), field="outcome_passed", task_id=task_id)
-            validate_score(row.get("process_passed"), field="process_passed", task_id=task_id)
+            normalized = validate_score(
+                row.get("normalized_score"),
+                field="normalized_score",
+                task_id=task_id,
+            )
+            outcome = validate_score(
+                row.get("outcome_passed"),
+                field="outcome_passed",
+                task_id=task_id,
+            )
+            process = validate_score(
+                row.get("process_passed"),
+                field="process_passed",
+                task_id=task_id,
+            )
+            components = [value for value in (outcome, process) if value is not None]
+            expected_strict = bool(
+                row.get("exception_info") is None
+                and normalized is not None
+                and normalized == 1.0
+                and all(value == 1.0 for value in components)
+            )
+            require(
+                row.get("strict_pass") is expected_strict,
+                f"{task_id}: strict_pass disagrees with verifier evidence",
+            )
 
         passed = sum(row.get("strict_pass") is True for row in task_rows)
         environments.append(

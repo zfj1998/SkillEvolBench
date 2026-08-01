@@ -202,7 +202,9 @@ def test_reference_watcher_aggregates_all_90_tasks() -> None:
     assert aggregate["summary"]["by_environment"]["E3"]["passed"] == 0
 
 
-def test_reference_export_aggregator_accepts_all_180_tasks(tmp_path: Path) -> None:
+def test_reference_export_aggregator_preserves_failure_in_complete_180_grid(
+    tmp_path: Path,
+) -> None:
     group_id = "group-full-reference"
     benchmark_revision = "b" * 40
     agenthub_revision = "a" * 40
@@ -212,23 +214,27 @@ def test_reference_export_aggregator_accepts_all_180_tasks(tmp_path: Path) -> No
         environment_id = f"E{environment_number}"
         job_id = f"job-{environment_id}"
         output = export_root / "jobs" / job_id / "artifacts" / "output"
-        rows = [
-            {
-                "task_id": f"{environment_id}-LS{family}-T{tier}",
-                "environment_id": environment_id,
-                "family_id": f"{environment_id}-LS{family}",
-                "tier": tier,
-                "strict_pass": True,
-                "normalized_score": 1.0,
-                "trial_count": 1,
-                "result_present": True,
-                "exception_info": None,
-                "outcome_passed": 1.0,
-                "process_passed": 1.0,
-            }
-            for family in range(1, 6)
-            for tier in range(1, 7)
-        ]
+        rows = []
+        for family in range(1, 6):
+            for tier in range(1, 7):
+                failed_reference = (
+                    environment_number == 1 and family == 1 and tier == 1
+                )
+                rows.append(
+                    {
+                        "task_id": f"{environment_id}-LS{family}-T{tier}",
+                        "environment_id": environment_id,
+                        "family_id": f"{environment_id}-LS{family}",
+                        "tier": tier,
+                        "strict_pass": not failed_reference,
+                        "normalized_score": 0.5 if failed_reference else 1.0,
+                        "trial_count": 1,
+                        "result_present": True,
+                        "exception_info": None,
+                        "outcome_passed": 1.0,
+                        "process_passed": 0.0 if failed_reference else 1.0,
+                    }
+                )
         _write_json(
             export_root / "jobs" / job_id / "job.json",
             {
@@ -292,12 +298,15 @@ def test_reference_export_aggregator_accepts_all_180_tasks(tmp_path: Path) -> No
     aggregate = json.loads(output_path.read_text(encoding="utf-8"))
     assert aggregate["tiers"] == [1, 2, 3, 4, 5, 6]
     assert aggregate["summary"] == {
-        "passed": 180,
+        "passed": 179,
         "total": 180,
         "unique_task_ids": 180,
-        "all_reference_solutions_pass": True,
+        "all_reference_solutions_pass": False,
         "by_tier": {
-            str(tier): {"passed": 30, "total": 30}
+            str(tier): {
+                "passed": 29 if tier == 1 else 30,
+                "total": 30,
+            }
             for tier in range(1, 7)
         },
     }

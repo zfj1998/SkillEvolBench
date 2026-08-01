@@ -77,6 +77,9 @@ python scripts/ap/build_t56_oracle_study.py \
 learning records、四个条件各 90 条 T4--T6 records、24 个完整环境 episode、
 180 条 reference records、空 no-skill、精确 expert 注入、等量零重叠 shuffled
 注入，以及 freeze 和 lifecycle 证据；少一格就拒绝生成“已完成”结论。
+完整的 reference record 不等于 reference 必须通过。失败的官方解正是第 5 项
+task/verifier 缺陷证据，聚合器会保留其 score、exception 和组件结果，并让该题
+进入语义复查队列，而不会把整份报告当成缺失。
 
 `exact_curated` 不是 solution manual。仓库中的 curated skills 本来就刻意留下
 T2/T3 acquisition gap，所以 exact 失败不能自动判题坏。
