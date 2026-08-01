@@ -311,6 +311,54 @@ def test_reference_export_aggregator_preserves_failure_in_complete_180_grid(
         },
     }
 
+    selected_inventory = tmp_path / "selected-reference.json"
+    _write_json(
+        selected_inventory,
+        {
+            "jobs": [
+                {
+                    "job_id": f"job-E{environment}",
+                    "instance_id": f"E{environment}",
+                }
+                for environment in range(1, 7)
+            ]
+        },
+    )
+    selected_output = tmp_path / "aggregate-selected.json"
+    selected_result = subprocess.run(
+        [
+            sys.executable,
+            str(AGGREGATOR_PATH),
+            "--export-root",
+            str(export_root),
+            "--output",
+            str(selected_output),
+            "--selected-inventory",
+            str(selected_inventory),
+            "--expected-dataset",
+            "dataset/name",
+            "--expected-split",
+            "v1.1@test",
+            "--expected-benchmark-revision",
+            benchmark_revision,
+            "--expected-agenthub-ref",
+            agenthub_revision,
+            "--expected-harbor-revision",
+            harbor_revision,
+            "--expected-tiers",
+            "1,2,3,4,5,6",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert selected_result.returncode == 0, selected_result.stderr
+    selected = json.loads(selected_output.read_text(encoding="utf-8"))
+    assert selected["group_id"] is None
+    assert selected["group_ids"] == [group_id]
+    assert len(selected["selected_inventory_sha256"]) == 64
+    assert selected["summary"] == aggregate["summary"]
+
 
 def test_reference_aggregator_discovers_only_matching_watcher_group(
     tmp_path: Path,
@@ -321,3 +369,16 @@ def test_reference_aggregator_discovers_only_matching_watcher_group(
     _write_json(foreign / "job.json", {"group_id": "group-self"})
 
     assert AGGREGATOR.group_job_dirs(tmp_path, "group-reference") == [wanted]
+
+
+def test_reference_aggregator_can_discover_explicit_retry_selection(
+    tmp_path: Path,
+) -> None:
+    wanted = tmp_path / "reference-retry-E1" / "ap-reference-retry-E1"
+    foreign = tmp_path / "reference-old-E1" / "ap-reference-old-E1"
+    _write_json(wanted / "job.json", {"group_id": "group-retry", "attempt": 1})
+    _write_json(foreign / "job.json", {"group_id": "group-old", "attempt": 0})
+
+    assert AGGREGATOR.selected_job_dirs(
+        tmp_path, {"ap-reference-retry-E1"}
+    ) == [wanted]

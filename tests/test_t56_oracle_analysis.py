@@ -319,6 +319,13 @@ def test_verifier_auditor_can_inventory_all_180_primary_tasks() -> None:
     assert len({task["task_id"] for task in result["tasks"]}) == 180
 
 
+def test_nonempty_inventory_is_an_explicit_collector_allowlist() -> None:
+    assert COLLECTOR.inventory_allows_job({}, "job-any") is True
+    inventory = {"job-selected": {"job_id": "job-selected"}}
+    assert COLLECTOR.inventory_allows_job(inventory, "job-selected") is True
+    assert COLLECTOR.inventory_allows_job(inventory, "job-foreign") is False
+
+
 def test_task_comparison_marks_oracle_outcome_rescue() -> None:
     common = {
         "model": "qwen3.7-max",

@@ -7,6 +7,7 @@ readonly REPO_ROOT="/cpfs01/user/zhangfengji.zfj/workspace/SkillEvolBench-v1.1"
 readonly AUDIT_ROOT="/cpfs02/user/zhangfengji.zfj/skillevolbench_180_audit_v1_1_19_20260802"
 readonly CONTROLLER_SESSION="sevb-v19-matrix-controller"
 readonly EXPORT_SESSION="sevb-v19-export-watcher"
+readonly FINALIZER_SESSION="sevb-v19-finalizer"
 readonly POLL_SECONDS=60
 readonly STALE_SECONDS=300
 
@@ -39,6 +40,7 @@ restart() {
 while true; do
   controller_heartbeat="$AUDIT_ROOT/matrix-controller/heartbeat.json"
   export_heartbeat="$AUDIT_ROOT/watcher/heartbeat.json"
+  finalizer_heartbeat="$AUDIT_ROOT/v19-finalizer/heartbeat.json"
   if [[ -f "$AUDIT_ROOT/matrix-controller/completed.json" ]]; then
     controller_status="completed"
   elif healthy "$CONTROLLER_SESSION" "$controller_heartbeat"; then
@@ -63,9 +65,23 @@ while true; do
     export_status="restart_failed"
   fi
 
+  if [[ -f "$AUDIT_ROOT/v19-finalizer/completed.json" ]]; then
+    finalizer_status="completed"
+  elif healthy "$FINALIZER_SESSION" "$finalizer_heartbeat"; then
+    finalizer_status="healthy"
+  elif restart \
+      "$FINALIZER_SESSION" \
+      "$REPO_ROOT/experiments/full_180_quality_audit/run_v19_finalizer.sh" \
+      "$finalizer_heartbeat"; then
+    finalizer_status="restarted"
+  else
+    finalizer_status="restart_failed"
+  fi
+
   temporary="$AUDIT_ROOT/guardian/.heartbeat.json.$$"
-  printf '{"updated_at_utc":"%s","controller":"%s","export_watcher":"%s"}\n' \
-    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$controller_status" "$export_status" \
+  printf '{"updated_at_utc":"%s","controller":"%s","export_watcher":"%s","finalizer":"%s"}\n' \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    "$controller_status" "$export_status" "$finalizer_status" \
     > "$temporary"
   chmod 600 "$temporary"
   mv -f "$temporary" "$AUDIT_ROOT/guardian/heartbeat.json"

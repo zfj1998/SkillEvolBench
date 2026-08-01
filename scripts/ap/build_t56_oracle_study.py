@@ -435,6 +435,13 @@ def load_inventory(path: Path) -> dict[str, dict[str, Any]]:
     }
 
 
+def inventory_allows_job(
+    inventory: dict[str, dict[str, Any]], job_id: str
+) -> bool:
+    """Treat a non-empty inventory as an explicit analysis allowlist."""
+    return not inventory or job_id in inventory
+
+
 def lifecycle_protocol_evidence(run_dir: Path) -> dict[str, Any]:
     """Recover the evaluation freeze boundary from append-only events.
 
@@ -692,6 +699,8 @@ def collect(
         config = load_json(config_path)
         job_dir = run_dir.parents[3]
         job_id = job_dir.name
+        if not inventory_allows_job(inventory, job_id):
+            continue
         export_label = job_dir.parent.name
         job = inventory.get(job_id, {})
         ap_manifest_path = job_dir / "artifacts" / "output" / "ap_run_manifest.json"

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from datetime import datetime, timezone
@@ -74,6 +75,20 @@ def group_job_dirs(export_root: Path, expected_group_id: str) -> list[Path]:
     return selected
 
 
+def selected_job_dirs(export_root: Path, selected_job_ids: set[str]) -> list[Path]:
+    """Find only explicitly selected watcher/group exports by immutable job ID."""
+    candidates: set[Path] = set()
+    jobs_root = export_root / "jobs"
+    if jobs_root.is_dir():
+        candidates.update(path for path in jobs_root.iterdir() if path.is_dir())
+    candidates.update(
+        path.parent
+        for path in export_root.glob("*/ap-*/job.json")
+        if path.is_file()
+    )
+    return sorted(path for path in candidates if path.name in selected_job_ids)
+
+
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise ValueError(message)
@@ -96,7 +111,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--export-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--expected-group-id", required=True)
+    parser.add_argument("--expected-group-id")
+    parser.add_argument(
+        "--selected-inventory",
+        type=Path,
+        help=(
+            "JSON inventory containing exactly one selected reference job per "
+            "environment; permits valid AP retries or replacement groups"
+        ),
+    )
     parser.add_argument("--expected-dataset", required=True)
     parser.add_argument("--expected-split", required=True)
     parser.add_argument("--expected-benchmark-revision", required=True)
@@ -113,7 +136,33 @@ def main() -> int:
     expected_per_environment = 5 * len(tiers)
     expected_total = len(ENVIRONMENTS) * expected_per_environment
 
-    job_dirs = group_job_dirs(args.export_root.resolve(), args.expected_group_id)
+    if bool(args.expected_group_id) == bool(args.selected_inventory):
+        parser.error("provide exactly one of --expected-group-id or --selected-inventory")
+    selected_inventory: dict[str, dict[str, Any]] = {}
+    selected_inventory_sha256: str | None = None
+    if args.selected_inventory:
+        inventory_path = args.selected_inventory.resolve()
+        inventory_payload = load_object(inventory_path)
+        selected_rows = inventory_payload.get("jobs")
+        require(
+            isinstance(selected_rows, list) and len(selected_rows) == 6,
+            "selected inventory must contain exactly six jobs",
+        )
+        selected_inventory = {
+            str(row.get("job_id")): row
+            for row in selected_rows
+            if isinstance(row, dict) and row.get("job_id")
+        }
+        require(
+            len(selected_inventory) == 6,
+            "selected inventory job IDs must be present and unique",
+        )
+        selected_inventory_sha256 = hashlib.sha256(inventory_path.read_bytes()).hexdigest()
+        job_dirs = selected_job_dirs(
+            args.export_root.resolve(), set(selected_inventory)
+        )
+    else:
+        job_dirs = group_job_dirs(args.export_root.resolve(), args.expected_group_id)
     require(len(job_dirs) == 6, f"expected 6 exported jobs, found {len(job_dirs)}")
 
     rows: list[dict[str, Any]] = []
@@ -139,9 +188,27 @@ def main() -> int:
             f"duplicate environment {environment_id}",
         )
         seen_environments.add(environment_id)
-        require(job.get("group_id") == args.expected_group_id, f"{job_id}: group mismatch")
+        if args.expected_group_id:
+            require(
+                job.get("group_id") == args.expected_group_id,
+                f"{job_id}: group mismatch",
+            )
+        else:
+            selected_row = selected_inventory.get(job_id)
+            require(selected_row is not None, f"{job_id}: not selected")
+            require(
+                selected_row.get("instance_id") == environment_id,
+                f"{job_id}: selected inventory environment mismatch",
+            )
         require(job.get("status") == "Succeeded", f"{job_id}: not Succeeded")
-        require(job.get("attempt") == 0, f"{job_id}: unexpected retry attempt")
+        attempt = job.get("attempt")
+        if args.expected_group_id:
+            require(attempt == 0, f"{job_id}: unexpected retry attempt")
+        else:
+            require(
+                type(attempt) is int and attempt >= 0,
+                f"{job_id}: invalid retry attempt",
+            )
         require(
             job.get("agenthub_revision") == args.expected_agenthub_ref,
             f"{job_id}: Agent-Hub revision mismatch",
@@ -240,6 +307,7 @@ def main() -> int:
                 "environment_id": environment_id,
                 "job_id": job_id,
                 "attempt": job.get("attempt"),
+                "group_id": job.get("group_id"),
                 "passed": passed,
                 "total": len(task_rows),
                 "all_reference_solutions_pass": passed == len(task_rows),
@@ -276,6 +344,14 @@ def main() -> int:
         .replace(microsecond=0)
         .isoformat(),
         "group_id": args.expected_group_id,
+        "group_ids": sorted(
+            {
+                str(environment.get("group_id"))
+                for environment in environments
+                if environment.get("group_id")
+            }
+        ),
+        "selected_inventory_sha256": selected_inventory_sha256,
         "dataset": args.expected_dataset,
         "split": args.expected_split,
         "benchmark_revision": args.expected_benchmark_revision,
