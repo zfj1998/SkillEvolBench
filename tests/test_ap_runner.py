@@ -10,6 +10,12 @@ import pytest
 
 from scripts.ap import run_episode
 from scripts.ap.mask_secrets import SANITIZATION_MANIFEST, mask_tree
+from scripts.ap.prune_runtime_artifacts import (
+    MANIFEST_NAME as PRUNING_MANIFEST,
+    POLICY as PRUNING_POLICY,
+    prune_tree,
+    read_manifest as read_pruning_manifest,
+)
 from skillevolbench.baselines import load_baseline
 from skillevolbench.components import UnscoreableTrialError
 from skillevolbench.schemas import RunConfig, StrategyConfig
@@ -136,6 +142,7 @@ def test_complete_family_smoke_is_explicitly_noncanonical_and_unscoreable(
                 "n_noop": 1,
                 "n_rejected": 1,
                 "n_agent_timeouts": 1,
+                "n_task_workspace_violations": 1,
                 "n_same_session_verified": 3,
                 "n_all_attempts_same_session_verified": 3,
                 "learning_attempts_total": 7,
@@ -167,6 +174,7 @@ def test_complete_family_smoke_is_explicitly_noncanonical_and_unscoreable(
     assert metrics["reflection_valid_output_rate"] == pytest.approx(2 / 3)
     assert metrics["reflection_patch_candidate_rate"] == pytest.approx(1 / 3)
     assert metrics["n_reflection_agent_timeouts"] == 1
+    assert metrics["n_reflection_task_workspace_violations"] == 1
     assert metrics["learning_attempts_total"] == 7
     assert metrics["repair_attempts_total"] == 4
     assert metrics["repaired_to_pass_count"] == 1
@@ -948,6 +956,75 @@ def test_mask_tree_rejects_nested_manifest_name(tmp_path: Path) -> None:
     with pytest.raises(RuntimeError, match="nested sanitization manifest"):
         mask_tree(tmp_path)
     assert not (tmp_path / SANITIZATION_MANIFEST).exists()
+
+
+def test_prune_runtime_artifacts_removes_only_redundant_opencode_state(
+    tmp_path: Path,
+) -> None:
+    agent = (
+        tmp_path
+        / "runs/run-e1/harbor-job/job-e1/E1-LS1-T1__trial/agent"
+    )
+    runtime = agent / "opencode/xdg-data/opencode"
+    runtime.mkdir(parents=True)
+    (runtime / "opencode.db").write_bytes(b"sqlite task-local bearer probe")
+    (runtime / "opencode.db-wal").write_bytes(b"wal bytes")
+    (runtime / "log").mkdir()
+    (runtime / "log/opencode.log").write_text("runtime log\n")
+    (agent / "trajectory.json").write_text('{"steps": []}\n')
+    (agent / "opencode.session.json").write_text('{"messages": []}\n')
+    unrelated = tmp_path / "runs/run-e1/task-output/xdg-data"
+    unrelated.mkdir(parents=True)
+    (unrelated / "keep.txt").write_text("task artifact\n")
+    for name in ("metrics.json", "ap_run_manifest.json"):
+        (tmp_path / name).write_text('{"status": "completed"}\n')
+
+    assert prune_tree(tmp_path) == 1
+    assert not (agent / "opencode/xdg-data").exists()
+    assert (agent / "trajectory.json").is_file()
+    assert (agent / "opencode.session.json").is_file()
+    assert (unrelated / "keep.txt").read_text() == "task artifact\n"
+
+    manifest = read_pruning_manifest(tmp_path)
+    assert manifest is not None
+    assert manifest["policy"] == PRUNING_POLICY
+    assert manifest["removed_directory_count"] == 1
+    assert manifest["removed_regular_file_count"] == 3
+    assert manifest["removed_regular_file_bytes"] > 0
+    record = manifest["removed_directories"][0]
+    assert record["path"].endswith("/agent/opencode/xdg-data")
+    assert len(record["tree_sha256"]) == 64
+    assert len(record["canonical_trajectory_sha256"]) == 64
+    assert len(record["canonical_session_export_sha256"]) == 64
+    summary = {
+        key: manifest[key]
+        for key in (
+            "schema_version",
+            "policy",
+            "manifest",
+            "removed_directory_count",
+            "removed_regular_file_count",
+            "removed_regular_file_bytes",
+            "removed_symlink_count",
+        )
+    }
+    for name in ("metrics.json", "ap_run_manifest.json"):
+        payload = json.loads((tmp_path / name).read_text())
+        assert payload["runtime_artifact_pruning"] == summary
+    assert prune_tree(tmp_path) == 1
+    assert (tmp_path / PRUNING_MANIFEST).is_file()
+
+
+def test_prune_runtime_artifacts_rejects_tampered_manifest(tmp_path: Path) -> None:
+    (tmp_path / "metrics.json").write_text("{}\n")
+    assert prune_tree(tmp_path) == 0
+    path = tmp_path / PRUNING_MANIFEST
+    payload = json.loads(path.read_text())
+    payload["removed_directory_count"] = 1
+    path.write_text(json.dumps(payload))
+
+    with pytest.raises(RuntimeError, match="invalid runtime artifact pruning"):
+        read_pruning_manifest(tmp_path)
 
 
 def test_sanitize_error_redacts_credentials(monkeypatch: pytest.MonkeyPatch) -> None:

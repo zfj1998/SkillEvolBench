@@ -525,8 +525,14 @@ def current_experience_check(
         learning.get("reflection_status") == "completed"
         and isinstance(learning.get("reflection_patch"), dict)
     )
+    reflection_policy_violation = (
+        learning.get("reflection_reason") == "reflection-mutated-task-workspace"
+        or learning.get("task_workspace_unchanged") is False
+    )
     if not protocol_ok:
         status = "same_session_or_attempt_protocol_failed"
+    elif reflection_policy_violation:
+        status = "reflection_policy_violation"
     elif not reflection_ok:
         status = "reflection_or_patch_missing"
     elif updated_skills and later_uses:
@@ -555,6 +561,12 @@ def current_experience_check(
                 "all_attempts_same_session_verified",
                 "reflection_status",
                 "reflection_mode",
+                "reflection_reason",
+                "task_workspace_unchanged",
+                "task_workspace_hash_before",
+                "task_workspace_hash_after",
+                "task_workspace_content_hash_before",
+                "task_workspace_content_hash_after",
                 "reflection_patch",
                 "job_id",
                 "run_id",
@@ -760,6 +772,7 @@ def screening_assessment(
         "expert_skill_harm_candidate",
         "shuffled_skill_only_pass_candidate",
         "learning_protocol_failure",
+        "learning_reflection_policy_violation",
         "invalid_control_evidence",
     }
 
@@ -778,6 +791,8 @@ def screening_assessment(
     if tier <= 3:
         if experience_status == "same_session_or_attempt_protocol_failed":
             flags.append("learning_protocol_failure")
+        elif experience_status == "reflection_policy_violation":
+            flags.append("learning_reflection_policy_violation")
         elif experience_status == "reflection_or_patch_missing":
             flags.append("learning_reflection_or_patch_missing")
         elif experience_status == "skill_update_applied_without_observed_later_use":

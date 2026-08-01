@@ -32,6 +32,11 @@ from skillevolbench.opencode_continuity import (
     OPENCODE_POST_COMPACTION_ASSISTANT_KIND,
     opencode_synthetic_continue,
 )
+from skillevolbench.harbor_ext.hooks import SkillEvolBenchHooks
+from scripts.ap.prune_runtime_artifacts import (
+    MANIFEST_NAME as RUNTIME_PRUNING_MANIFEST,
+    POLICY as RUNTIME_PRUNING_POLICY,
+)
 
 
 BENCHMARK_REVISION = "a" * 40
@@ -107,6 +112,13 @@ def _export_message(
 
 
 def _reflection_result(audit: Path, task_id: str) -> dict[str, object]:
+    task_before = audit.parent / "artifacts" / "root" / "task"
+    task_after = audit / "task.after"
+    for task_root in (task_before, task_after):
+        task_root.mkdir(parents=True, exist_ok=True)
+        (task_root / "answer.txt").write_text(
+            "unchanged reflection fixture\n", encoding="utf-8"
+        )
     session_id = f"session-{task_id}"
     prompt = audit / "self_reflection_prompt.md"
     solve_trajectory = audit / "trajectory.solve.json"
@@ -198,7 +210,18 @@ def _reflection_result(audit: Path, task_id: str) -> dict[str, object]:
     )
     for name in ("outcome_report.json", "process_report.json", "score_report.json"):
         _write_json(audit / "official-verifier" / name, {})
-    workspace_hash = "3" * 64
+    workspace_hash = SkillEvolBenchHooks._hash_tree_nofollow(
+        task_before, task_id=task_id
+    )
+    workspace_content_hash = SkillEvolBenchHooks._hash_tree_nofollow(
+        task_before, task_id=task_id, include_permissions=False
+    )
+    assert workspace_hash == SkillEvolBenchHooks._hash_tree_nofollow(
+        task_after, task_id=task_id
+    )
+    assert workspace_content_hash == SkillEvolBenchHooks._hash_tree_nofollow(
+        task_after, task_id=task_id, include_permissions=False
+    )
     return {
         "status": "noop",
         "task_id": task_id,
@@ -223,6 +246,9 @@ def _reflection_result(audit: Path, task_id: str) -> dict[str, object]:
         "full_session_export_sha256": _sha256(full_export),
         "task_workspace_hash_before": workspace_hash,
         "task_workspace_hash_after": workspace_hash,
+        "task_workspace_content_hash_before": workspace_content_hash,
+        "task_workspace_content_hash_after": workspace_content_hash,
+        "task_workspace_unchanged": True,
         "trajectory_prefix_verified": True,
         "export_prefix_verified": True,
     }
@@ -310,6 +336,7 @@ def _metrics(environment_id: str, run_id: str) -> dict[str, object]:
         "n_reflection_completed": 0,
         "n_reflection_noop": 15,
         "n_reflection_rejected": 0,
+        "n_reflection_task_workspace_violations": 0,
         "n_same_session_verified": 15,
     }
 
@@ -413,6 +440,7 @@ def _make_environment(output: Path, environment_id: str) -> dict[str, object]:
                 "n_completed": 0,
                 "n_noop": 15,
                 "n_rejected": 0,
+                "n_task_workspace_violations": 0,
                 "n_skipped": 0,
                 "n_same_session_verified": 15,
             },
@@ -473,6 +501,14 @@ def _make_environment(output: Path, environment_id: str) -> dict[str, object]:
                 "steps": [{"kind": "solve"}],
             }
             _write_json(trial / "agent" / "trajectory.solve.json", canonical_solve)
+            _write_json(trial / "agent" / "trajectory.json", canonical_solve)
+            _write_json(
+                trial / "agent" / "opencode.session.json",
+                {
+                    "info": {"id": f"session-{task_id}"},
+                    "messages": [],
+                },
+            )
         task_spec = {
             "schema_version": "1.0",
             "task_id": task_id,
@@ -539,6 +575,50 @@ def _make_environment(output: Path, environment_id: str) -> dict[str, object]:
     lifecycle_path.write_text(
         "".join(json.dumps(row, sort_keys=True) + "\n" for row in lifecycle),
         encoding="utf-8",
+    )
+
+    pruning_records = []
+    for task_id in task_order:
+        agent = harbor / f"{task_id}__trial" / "agent"
+        pruning_records.append(
+            {
+                "path": (agent / "opencode/xdg-data")
+                .relative_to(output)
+                .as_posix(),
+                "tree_sha256": hashlib.sha256(
+                    f"removed-runtime-state:{task_id}".encode()
+                ).hexdigest(),
+                "directory_count": 2,
+                "regular_file_count": 3,
+                "regular_file_bytes": 4096,
+                "symlink_count": 0,
+                "canonical_trajectory_sha256": _sha256(agent / "trajectory.json"),
+                "canonical_session_export_sha256": _sha256(
+                    agent / "opencode.session.json"
+                ),
+            }
+        )
+    pruning_records.sort(key=lambda record: record["path"])
+    pruning_summary = {
+        "schema_version": 1,
+        "policy": RUNTIME_PRUNING_POLICY,
+        "manifest": RUNTIME_PRUNING_MANIFEST,
+        "removed_directory_count": len(pruning_records),
+        "removed_regular_file_count": sum(
+            record["regular_file_count"] for record in pruning_records
+        ),
+        "removed_regular_file_bytes": sum(
+            record["regular_file_bytes"] for record in pruning_records
+        ),
+        "removed_symlink_count": 0,
+    }
+    for path in (output / "metrics.json", output / "ap_run_manifest.json"):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["runtime_artifact_pruning"] = pruning_summary
+        _write_json(path, payload)
+    _write_json(
+        output / RUNTIME_PRUNING_MANIFEST,
+        {**pruning_summary, "removed_directories": pruning_records},
     )
 
     delivered = output / "preflight.log"
@@ -859,6 +939,26 @@ def _add_compactions(
         )
         fields["full_session_export_sha256"] = _sha256(export_path)
     _sync_reflection_fields(root, task_id, fields)
+    output = (
+        root
+        / "jobs"
+        / f"job-{task_id[:2].lower()}"
+        / "artifacts"
+        / "output"
+    )
+    pruning_path = output / RUNTIME_PRUNING_MANIFEST
+    pruning = json.loads(pruning_path.read_text(encoding="utf-8"))
+    record = next(
+        item
+        for item in pruning["removed_directories"]
+        if f"/{task_id}__trial/" in item["path"]
+    )
+    agent = audit.parent / "agent"
+    record["canonical_trajectory_sha256"] = _sha256(agent / "trajectory.json")
+    record["canonical_session_export_sha256"] = _sha256(
+        agent / "opencode.session.json"
+    )
+    _write_json(pruning_path, pruning)
 
 
 def _make_standalone_exports(tmp_path: Path) -> dict[str, Path]:
@@ -938,6 +1038,100 @@ def test_complete_group_passes_and_reports_observational_transitions(
     assert exit_code == 0
     assert SIGNED_URL_MARKER not in captured.out
     assert json.loads(captured.out)["passed"] is True
+
+
+def test_recorded_reflection_workspace_mutation_is_scoreable_rejection(
+    tmp_path: Path,
+) -> None:
+    root = _make_group(tmp_path)
+    task_id = "E1-LS1-T1"
+    audit, _record_path, lifecycle_path = _reflection_fixture_paths(root, task_id)
+    result = json.loads(
+        (audit / "self_reflection_result.json").read_text(encoding="utf-8")
+    )
+    (audit / "task.after" / "answer.txt").write_text(
+        "model changed the discarded task workspace\n", encoding="utf-8"
+    )
+    after_hash = SkillEvolBenchHooks._hash_tree_nofollow(
+        audit / "task.after", task_id=task_id
+    )
+    after_content_hash = SkillEvolBenchHooks._hash_tree_nofollow(
+        audit / "task.after", task_id=task_id, include_permissions=False
+    )
+    fields = {
+        "status": "rejected",
+        "reason": "reflection-mutated-task-workspace",
+        "patch_id": None,
+        "candidate_path": None,
+        "task_workspace_hash_before": result["task_workspace_hash_before"],
+        "task_workspace_hash_after": after_hash,
+        "task_workspace_content_hash_before": result[
+            "task_workspace_content_hash_before"
+        ],
+        "task_workspace_content_hash_after": after_content_hash,
+        "task_workspace_unchanged": False,
+    }
+    _sync_reflection_fields(root, task_id, fields)
+
+    lifecycle = [
+        json.loads(line)
+        for line in lifecycle_path.read_text(encoding="utf-8").splitlines()
+        if line
+    ]
+    for row in lifecycle:
+        if row.get("task_id") == task_id and str(
+            row.get("event_type", "")
+        ).startswith("reflection_"):
+            row["event_type"] = "reflection_rejected"
+    lifecycle_path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in lifecycle),
+        encoding="utf-8",
+    )
+
+    output = root / "jobs" / "job-e1" / "artifacts" / "output"
+    metrics_path = output / "metrics.json"
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    metrics.update(
+        {
+            "n_reflection_noop": 14,
+            "n_reflection_rejected": 1,
+            "n_reflection_task_workspace_violations": 1,
+        }
+    )
+    _write_json(metrics_path, metrics)
+
+    report_path = output / "runs" / "run-e1" / "reports" / "full_report.json"
+    full_report = json.loads(report_path.read_text(encoding="utf-8"))
+    reflection = full_report["reflection"]
+    reflection.update(
+        {
+            "n_noop": 14,
+            "n_rejected": 1,
+            "n_task_workspace_violations": 1,
+            "rejection_reasons": {"reflection-mutated-task-workspace": 1},
+        }
+    )
+    transfer = full_report["reflection_transfer"]
+    pair = next(
+        item for item in transfer["pairs"] if item["source_task_id"] == task_id
+    )
+    pair["reflection_status"] = "rejected"
+    transfer["by_reflection_status"]["noop"].update(
+        {"n_pairs": 14, "success_to_success_count": 14}
+    )
+    transfer["by_reflection_status"]["rejected"].update(
+        {
+            "n_pairs": 1,
+            "success_to_success_count": 1,
+            "success_regression_rate": 0.0,
+        }
+    )
+    _write_json(report_path, full_report)
+
+    report = audit_full_group(root)
+
+    assert report.passed is True
+    assert report.reflection_by_status["rejected"]["n_pairs"] == 1
 
 
 def test_reward_json_is_optional_when_canonical_bundle_and_snapshot_match(
@@ -1429,6 +1623,44 @@ def test_delivered_artifact_digest_mismatch_fails_closed(tmp_path: Path) -> None
     assert report.passed is False
     assert any(
         item.scope == "E3" and item.code == "sanitization_manifest_invalid"
+        for item in report.errors
+    )
+
+
+def test_missing_runtime_pruning_manifest_fails_closed(tmp_path: Path) -> None:
+    root = _make_group(tmp_path)
+    (
+        root
+        / "jobs/job-e2/artifacts/output"
+        / RUNTIME_PRUNING_MANIFEST
+    ).unlink()
+
+    report = audit_full_group(root)
+
+    assert report.passed is False
+    assert any(
+        item.scope == "E2" and item.code == "runtime_pruning_manifest_missing"
+        for item in report.errors
+    )
+
+
+def test_pruned_runtime_state_requires_bound_canonical_exports(
+    tmp_path: Path,
+) -> None:
+    root = _make_group(tmp_path)
+    trajectory = (
+        root
+        / "jobs/job-e1/artifacts/output/runs/run-e1/harbor-job/run-e1"
+        / "E1-LS1-T4__trial/agent/trajectory.json"
+    )
+    trajectory.write_text('{"session_id":"tampered","steps":[]}\n')
+
+    report = audit_full_group(root)
+
+    assert report.passed is False
+    assert any(
+        item.scope == "E1"
+        and item.code == "runtime_pruning_canonical_export_invalid"
         for item in report.errors
     )
 

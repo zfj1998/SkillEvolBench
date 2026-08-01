@@ -983,6 +983,22 @@ def collect(
                 "failed_tests": failed_tests,
                 "reflection_status": reflection.get("status"),
                 "reflection_mode": reflection.get("mode"),
+                "reflection_reason": reflection.get("reason"),
+                "task_workspace_unchanged": reflection.get(
+                    "task_workspace_unchanged"
+                ),
+                "task_workspace_hash_before": reflection.get(
+                    "task_workspace_hash_before"
+                ),
+                "task_workspace_hash_after": reflection.get(
+                    "task_workspace_hash_after"
+                ),
+                "task_workspace_content_hash_before": reflection.get(
+                    "task_workspace_content_hash_before"
+                ),
+                "task_workspace_content_hash_after": reflection.get(
+                    "task_workspace_content_hash_after"
+                ),
                 "learning_attempts": reflection.get("learning_attempts"),
                 "repair_attempts": reflection.get("repair_attempts"),
                 "initial_verifier_passed": reflection.get("initial_verifier_passed"),

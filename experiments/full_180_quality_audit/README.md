@@ -16,6 +16,14 @@
 - T4--T6 是不同的新输入；每题 one-shot，不再更新 library。
 - 180 题逐题出一行；涉及 transfer 的结论同时保留 family 级证据。
 
+当官方 verifier、same-session 连续性和导出证据都完整时，反思阶段产生畸形
+candidate、超时，或擅自修改即将销毁的 task workspace，属于该模型在该题上的
+终态反思失败：记录为 `rejected`、禁止更新 library，并继续同环境后续题，不能
+用它抹掉已经完成的 verifier 结果或中止其余 29 题。只有缺 verifier、丢失必需
+session/trajectory、连续性无法证明或其他证据不完整时，才把 logical unit 记为
+`unscoreable`。workspace mutation 仍须保存 before/after 快照与重算哈希，计入
+第 1 项的失败证据；它不是 AP retry 的理由。
+
 ## 五项问题
 
 1. **T1--T3 能否产生可复用经验？**
@@ -61,6 +69,12 @@ task attempts 为 630--810。T1--T3 的第 2--4 项按协议记为“不适用�
 ## 最终证据合并
 
 下载并安全扫描全部 AP artifacts 后，先把四个模型条件标准化：
+
+导出阶段仅保留顶层 canonical `trajectory.json`、`opencode.session.json` 和
+solve/reflection streams；冗余的 `agent/opencode/xdg-data` SQLite 运行态在上传前
+按 trial 计算 no-follow digest 后删除，并写入
+`runtime_artifact_pruning_manifest.json`。审计器要求每个被删目录仍有哈希绑定的
+canonical trajectory/session，避免用“清理敏感二进制”为由丢失科学证据。
 
 ```bash
 python scripts/ap/build_t56_oracle_study.py \

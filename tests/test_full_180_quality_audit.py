@@ -297,6 +297,34 @@ def test_current_experience_links_reflection_update_to_new_input_use() -> None:
     ]
 
 
+def test_current_experience_surfaces_reflection_workspace_violation() -> None:
+    spec = {"task_id": "E1-LS3-T1", "family_id": "E1-LS3"}
+    current = {
+        "learning": {
+            "E1-LS3-T1": {
+                "same_session_verified": True,
+                "all_attempts_same_session_verified": True,
+                "learning_attempts": 1,
+                "reflection_status": "rejected",
+                "reflection_reason": "reflection-mutated-task-workspace",
+                "task_workspace_unchanged": False,
+                "task_workspace_hash_before": "1" * 64,
+                "task_workspace_hash_after": "2" * 64,
+                "reflection_patch": None,
+            }
+        },
+        "skills": [],
+        "evaluation": {},
+    }
+
+    result = AUDIT.current_experience_check(spec, current)
+
+    assert result["status"] == "reflection_policy_violation"
+    assert result["protocol_ok"] is True
+    assert result["reflection_ok"] is False
+    assert result["learning"]["task_workspace_unchanged"] is False
+
+
 def test_complete_current_validator_requires_exact_180_task_evidence() -> None:
     specs = AUDIT.load_specs(ROOT / "benchmark" / "tasks")
     learning_ids = {

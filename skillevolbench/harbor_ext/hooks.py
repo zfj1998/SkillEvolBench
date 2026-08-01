@@ -911,6 +911,11 @@ class SkillEvolBenchHooks:
 
         task_snapshot = Path(trial.paths.artifacts_dir) / "root" / "task"
         task_hash_before = self._hash_tree_nofollow(task_snapshot, task_id=task.task_id)
+        task_content_hash_before = self._hash_tree_nofollow(
+            task_snapshot,
+            task_id=task.task_id,
+            include_permissions=False,
+        )
         official_verifier = self._snapshot_and_hide_verifier(
             trial, audit_dir=audit_dir, task_id=task.task_id
         )
@@ -1141,12 +1146,33 @@ class SkillEvolBenchHooks:
             task_hash_after = self._hash_tree_nofollow(
                 reflection_task, task_id=task.task_id
             )
-            if task_hash_after != task_hash_before:
-                raise UnscoreableTrialError(
-                    "reflection-mutated-task-workspace", task_id=task.task_id
-                )
+            task_content_hash_after = self._hash_tree_nofollow(
+                reflection_task,
+                task_id=task.task_id,
+                include_permissions=False,
+            )
+            task_workspace_unchanged = task_hash_after == task_hash_before
 
-            if reflection_timed_out:
+            # The official verifier has already run in an isolated container,
+            # its evidence is hidden, and this task container is destroyed at
+            # the end of the callback.  A resumed model editing /root/task is
+            # therefore observable model non-compliance, not missing grading
+            # evidence or an infrastructure failure.  Reject its skill
+            # candidate and continue the environment so one bad reflection
+            # cannot erase the other 29 task results.  Session/export failures
+            # above remain unscoreable because their evidence is incomplete.
+            if not task_workspace_unchanged:
+                record = ReflectionRecord(
+                    status="rejected",
+                    task_id=task.task_id,
+                    mode=mode,
+                    session_id=reflection_session_id,
+                    solve_session_id=solve_session_id,
+                    reflection_session_id=reflection_session_id,
+                    same_session_verified=True,
+                    reason="reflection-mutated-task-workspace",
+                )
+            elif reflection_timed_out:
                 # A candidate left by a cancelled process did not finish within
                 # the declared model-turn budget and must never mutate skills.
                 record = ReflectionRecord(
@@ -1222,6 +1248,9 @@ class SkillEvolBenchHooks:
             ).hexdigest()
             record.task_workspace_hash_before = task_hash_before
             record.task_workspace_hash_after = task_hash_after
+            record.task_workspace_content_hash_before = task_content_hash_before
+            record.task_workspace_content_hash_after = task_content_hash_after
+            record.task_workspace_unchanged = task_workspace_unchanged
             record.trajectory_prefix_verified = True
             record.export_prefix_verified = True
         except BaseException as exc:
@@ -1966,7 +1995,12 @@ class SkillEvolBenchHooks:
         return full_id
 
     @staticmethod
-    def _hash_tree_nofollow(root: Path, *, task_id: str) -> str:
+    def _hash_tree_nofollow(
+        root: Path,
+        *,
+        task_id: str,
+        include_permissions: bool = True,
+    ) -> str:
         if not root.is_dir() or root.is_symlink():
             raise UnscoreableTrialError(
                 "reflection-task-snapshot-invalid", task_id=task_id
@@ -1988,14 +2022,14 @@ class SkillEvolBenchHooks:
                 rel_bytes = rel.as_posix().encode("utf-8", errors="surrogateescape")
                 mode = stat.S_IMODE(metadata.st_mode)
                 if stat.S_ISDIR(metadata.st_mode):
-                    digest.update(
-                        b"D\0" + rel_bytes + b"\0" + str(mode).encode() + b"\0"
-                    )
+                    digest.update(b"D\0" + rel_bytes + b"\0")
+                    if include_permissions:
+                        digest.update(str(mode).encode() + b"\0")
                     visit(Path(entry.path), rel)
                 elif stat.S_ISREG(metadata.st_mode):
-                    digest.update(
-                        b"F\0" + rel_bytes + b"\0" + str(mode).encode() + b"\0"
-                    )
+                    digest.update(b"F\0" + rel_bytes + b"\0")
+                    if include_permissions:
+                        digest.update(str(mode).encode() + b"\0")
                     file_digest = hashlib.sha256()
                     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
                     try:
@@ -2021,10 +2055,11 @@ class SkillEvolBenchHooks:
                         b"L\0"
                         + rel_bytes
                         + b"\0"
-                        + str(mode).encode()
-                        + b"\0"
-                        + target.encode("utf-8", errors="surrogateescape")
-                        + b"\0"
+                    )
+                    if include_permissions:
+                        digest.update(str(mode).encode() + b"\0")
+                    digest.update(
+                        target.encode("utf-8", errors="surrogateescape") + b"\0"
                     )
                 else:
                     raise UnscoreableTrialError(

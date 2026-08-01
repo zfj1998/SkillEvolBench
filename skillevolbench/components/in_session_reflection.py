@@ -95,6 +95,9 @@ class ReflectionRecord:
     full_session_export_sha256: str | None = None
     task_workspace_hash_before: str | None = None
     task_workspace_hash_after: str | None = None
+    task_workspace_content_hash_before: str | None = None
+    task_workspace_content_hash_after: str | None = None
+    task_workspace_unchanged: bool | None = None
     trajectory_prefix_verified: bool = False
     export_prefix_verified: bool = False
     learning_attempts: int = 1
@@ -146,6 +149,9 @@ class ReflectionRecord:
             "full_session_export_sha256": self.full_session_export_sha256,
             "task_workspace_hash_before": self.task_workspace_hash_before,
             "task_workspace_hash_after": self.task_workspace_hash_after,
+            "task_workspace_content_hash_before": self.task_workspace_content_hash_before,
+            "task_workspace_content_hash_after": self.task_workspace_content_hash_after,
+            "task_workspace_unchanged": self.task_workspace_unchanged,
             "trajectory_prefix_verified": self.trajectory_prefix_verified,
             "export_prefix_verified": self.export_prefix_verified,
             "learning_attempts": self.learning_attempts,

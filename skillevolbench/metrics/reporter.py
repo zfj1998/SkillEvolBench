@@ -352,6 +352,9 @@ class ReportGenerator:
             "n_agent_timeouts": rejection_reasons.get(
                 REFLECTION_AGENT_TIMEOUT_REASON, 0
             ),
+            "n_task_workspace_violations": rejection_reasons.get(
+                "reflection-mutated-task-workspace", 0
+            ),
             "n_same_session_verified": sum(
                 1 for event in attempted_events if _same_session_verified(event)
             ),

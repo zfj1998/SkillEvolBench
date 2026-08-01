@@ -539,6 +539,9 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
         "n_reflection_noop": reflection.get("n_noop", 0),
         "n_reflection_rejected": reflection.get("n_rejected", 0),
         "n_reflection_agent_timeouts": reflection.get("n_agent_timeouts", 0),
+        "n_reflection_task_workspace_violations": reflection.get(
+            "n_task_workspace_violations", 0
+        ),
         "n_same_session_verified": reflection.get("n_same_session_verified", 0),
         "n_all_attempts_same_session_verified": reflection.get(
             "n_all_attempts_same_session_verified", 0

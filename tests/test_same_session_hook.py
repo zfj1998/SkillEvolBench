@@ -581,6 +581,11 @@ def test_post_verifier_resume_is_host_audited_and_continuous(
     assert record.trajectory_prefix_verified is True
     assert record.export_prefix_verified is True
     assert record.task_workspace_hash_before == record.task_workspace_hash_after
+    assert (
+        record.task_workspace_content_hash_before
+        == record.task_workspace_content_hash_after
+    )
+    assert record.task_workspace_unchanged is True
     assert record.solve_trajectory_path == audit / "trajectory.solve.json"
     assert record.full_session_trajectory_path == audit / "trajectory.full.json"
     assert len(record.solve_trajectory_sha256 or "") == 64
@@ -931,22 +936,44 @@ def test_secret_candidate_is_rejected_and_raw_file_is_not_retained(
     ).exists()
 
 
-@pytest.mark.parametrize(
-    ("trial_kwargs", "reason"),
-    [
-        ({"mutate_task": True}, "reflection-mutated-task-workspace"),
-        ({"bad_prefix": True}, "reflection-trajectory-prefix-mismatch"),
-    ],
-)
-def test_reflection_boundary_violations_fail_closed_and_restore_verifier(
-    tmp_path: Path, trial_kwargs: dict, reason: str
+def test_reflection_task_mutation_is_rejected_model_output_not_episode_failure(
+    tmp_path: Path,
 ) -> None:
-    hooks, trial, _events = _build(tmp_path, **trial_kwargs)
+    hooks, trial, events = _build(tmp_path, mutate_task=True)
+
+    asyncio.run(hooks.on_post_verifier(trial))
+
+    record = hooks._reflection_cache[TASK.task_id]
+    assert record.status == "rejected"
+    assert record.reason == "reflection-mutated-task-workspace"
+    assert record.patch is None
+    assert record.same_session_verified is True
+    assert record.trajectory_prefix_verified is True
+    assert record.export_prefix_verified is True
+    assert record.task_workspace_hash_before != record.task_workspace_hash_after
+    assert (
+        record.task_workspace_content_hash_before
+        != record.task_workspace_content_hash_after
+    )
+    assert record.task_workspace_unchanged is False
+    assert not trial.agent_environment.running
+    assert (trial.paths.verifier_dir / "reward.txt").is_file()
+    assert (
+        tmp_path / "self-reflection-audit" / "official-verifier" / "reward.txt"
+    ).is_file()
+    assert not (trial.paths.agent_dir / "self_reflection_patch.json").exists()
+    assert any(kind == "reflection_rejected" for kind, _ in events.items)
+
+
+def test_reflection_continuity_violation_remains_unscoreable(
+    tmp_path: Path,
+) -> None:
+    hooks, trial, _events = _build(tmp_path, bad_prefix=True)
 
     with pytest.raises(UnscoreableTrialError) as error:
         asyncio.run(hooks.on_post_verifier(trial))
 
-    assert error.value.reason == reason
+    assert error.value.reason == "reflection-trajectory-prefix-mismatch"
     assert not trial.agent_environment.running
     assert (trial.paths.verifier_dir / "reward.txt").is_file()
     assert (
@@ -993,6 +1020,11 @@ def test_agent_timeout_with_complete_evidence_is_terminal_rejected(
     assert record.trajectory_prefix_verified is True
     assert record.export_prefix_verified is True
     assert record.task_workspace_hash_before == record.task_workspace_hash_after
+    assert (
+        record.task_workspace_content_hash_before
+        == record.task_workspace_content_hash_after
+    )
+    assert record.task_workspace_unchanged is True
     assert trial.result.agent_result is trial.primary_agent_result
     assert trial.result.exception_info is None
     assert trial.agent.recovery_calls == 1

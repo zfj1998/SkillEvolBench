@@ -37,6 +37,11 @@ if str(REPO_ROOT) not in sys.path:
 from scripts.ap.mask_secrets import (  # noqa: E402
     _read_manifest as read_sanitization_manifest,
 )
+from scripts.ap.prune_runtime_artifacts import (  # noqa: E402
+    MANIFEST_NAME as RUNTIME_PRUNING_MANIFEST,
+    POLICY as RUNTIME_PRUNING_POLICY,
+    read_manifest as read_runtime_pruning_manifest,
+)
 from scripts.ap.compose_standalone_full import (  # noqa: E402
     AGGREGATION_METHOD,
     COMPOSITION_MODE,
@@ -156,6 +161,7 @@ class EnvironmentSummary:
         default_factory=lambda: {key: 0 for key in TRANSITION_KEYS}
     )
     manifest_changed_files: int = 0
+    manifest_pruned_runtime_directories: int = 0
     benchmark_revision: str = "unknown"
     source_archive_sha256: str = "unknown"
     benchmark_hash: str = "unknown"
@@ -613,6 +619,67 @@ def _load_manifest(
             context.error("sanitization_manifest_unchanged_entry", scope)
             break
     return manifest
+
+
+def _load_runtime_pruning_manifest(
+    output_root: Path,
+    *,
+    metrics: dict[str, Any] | None,
+    run_manifest: dict[str, Any] | None,
+    sanitization_manifest: dict[str, dict[str, str | int]],
+    expected_tasks: int,
+    context: AuditContext,
+    scope: str,
+) -> int:
+    try:
+        payload = read_runtime_pruning_manifest(output_root)
+    except RuntimeError:
+        context.error("runtime_pruning_manifest_invalid", scope)
+        return 0
+    if payload is None:
+        context.error("runtime_pruning_manifest_missing", scope)
+        return 0
+
+    records = payload["removed_directories"]
+    if len(records) != expected_tasks:
+        context.error("runtime_pruning_task_count_invalid", scope)
+    summary_keys = (
+        "schema_version",
+        "policy",
+        "manifest",
+        "removed_directory_count",
+        "removed_regular_file_count",
+        "removed_regular_file_bytes",
+        "removed_symlink_count",
+    )
+    summary = {key: payload[key] for key in summary_keys}
+    if not (
+        summary["policy"] == RUNTIME_PRUNING_POLICY
+        and summary["manifest"] == RUNTIME_PRUNING_MANIFEST
+        and isinstance(metrics, dict)
+        and metrics.get("runtime_artifact_pruning") == summary
+        and isinstance(run_manifest, dict)
+        and run_manifest.get("runtime_artifact_pruning") == summary
+    ):
+        context.error("runtime_pruning_provenance_invalid", scope)
+
+    for record in records:
+        relative = record["path"]
+        removed_root = output_root / relative
+        agent_dir = removed_root.parent.parent
+        for name, hash_field in (
+            ("trajectory.json", "canonical_trajectory_sha256"),
+            ("opencode.session.json", "canonical_session_export_sha256"),
+        ):
+            if not _runtime_hash_status(
+                agent_dir / name,
+                record.get(hash_field),
+                output_root=output_root,
+                manifest=sanitization_manifest,
+            ):
+                context.error("runtime_pruning_canonical_export_invalid", scope)
+                break
+    return len(records)
 
 
 def _runtime_hash_status(
@@ -1286,6 +1353,9 @@ def _validate_reflection(
         "export_prefix_verified",
         "task_workspace_hash_before",
         "task_workspace_hash_after",
+        "task_workspace_content_hash_before",
+        "task_workspace_content_hash_after",
+        "task_workspace_unchanged",
         "prompt_sha256",
         "solve_trajectory_sha256",
         "full_session_trajectory_sha256",
@@ -1316,8 +1386,64 @@ def _validate_reflection(
         context.error("reflection_prefix_flags_invalid", scope)
     before = result.get("task_workspace_hash_before")
     after = result.get("task_workspace_hash_after")
-    if not (isinstance(before, str) and HEX64.fullmatch(before) and before == after):
+    content_before = result.get("task_workspace_content_hash_before")
+    content_after = result.get("task_workspace_content_hash_after")
+    hashes_valid = (
+        isinstance(before, str)
+        and HEX64.fullmatch(before) is not None
+        and isinstance(after, str)
+        and HEX64.fullmatch(after) is not None
+    )
+    content_hashes_valid = (
+        isinstance(content_before, str)
+        and HEX64.fullmatch(content_before) is not None
+        and isinstance(content_after, str)
+        and HEX64.fullmatch(content_after) is not None
+    )
+    workspace_violation = (
+        status == "rejected"
+        and result.get("reason") == "reflection-mutated-task-workspace"
+    )
+    if workspace_violation:
+        if not (
+            hashes_valid
+            and content_hashes_valid
+            and before != after
+            and result.get("task_workspace_unchanged") is False
+        ):
+            context.error("reflection_workspace_violation_evidence_invalid", scope)
+    elif not (
+        hashes_valid
+        and content_hashes_valid
+        and before == after
+        and content_before == content_after
+        and result.get("task_workspace_unchanged") in (None, True)
+    ):
+        # ``None`` keeps already-delivered pre-field evidence auditable. New
+        # runs emit the explicit boolean and are checked above/below through
+        # the record/event/result equality contract.
         context.error("reflection_workspace_hash_invalid", scope)
+
+    # Recompute both model-visible trees from delivered bytes. Delivery and
+    # standalone composition may intentionally normalize file permissions, so
+    # the runtime digest above remains permission-sensitive while this second
+    # digest binds path/type/content independently of transport chmod changes.
+    try:
+        delivered_before = SkillEvolBenchHooks._hash_tree_nofollow(
+            trial_root / "artifacts" / "root" / "task",
+            task_id=task_id,
+            include_permissions=False,
+        )
+        delivered_after = SkillEvolBenchHooks._hash_tree_nofollow(
+            audit / "task.after",
+            task_id=task_id,
+            include_permissions=False,
+        )
+    except (OSError, UnscoreableTrialError):
+        delivered_before = None
+        delivered_after = None
+    if delivered_before != content_before or delivered_after != content_after:
+        context.error("reflection_workspace_hash_evidence_invalid", scope)
 
     solve_ids = _stream_session_ids(
         audit / "opencode.solve.jsonl", context=context, scope=scope
@@ -1794,6 +1920,15 @@ def _audit_environment(
 
     manifest = _load_manifest(output_root, context=context, scope=scope)
     summary.manifest_changed_files = len(manifest)
+    summary.manifest_pruned_runtime_directories = _load_runtime_pruning_manifest(
+        output_root,
+        metrics=metrics,
+        run_manifest=manifest_payload,
+        sanitization_manifest=manifest,
+        expected_tasks=PRIMARY_PER_ENVIRONMENT,
+        context=context,
+        scope=scope,
+    )
     run_root = _discover_run(output_root, context=context, scope=scope)
     if run_root is None:
         summary.errors = context.errors
@@ -1951,6 +2086,23 @@ def _audit_environment(
             == REFLECTIONS_PER_ENVIRONMENT
         ):
             context.error("full_report_reflection_invalid", scope)
+        elif metrics is not None:
+            report_workspace_violations = reflection.get(
+                "n_task_workspace_violations", 0
+            )
+            metric_workspace_violations = metrics.get(
+                "n_reflection_task_workspace_violations"
+            )
+            if not (
+                isinstance(report_workspace_violations, int)
+                and not isinstance(report_workspace_violations, bool)
+                and 0 <= report_workspace_violations <= REFLECTIONS_PER_ENVIRONMENT
+                and (
+                    metric_workspace_violations is None
+                    or metric_workspace_violations == report_workspace_violations
+                )
+            ):
+                context.error("reflection_workspace_violation_count_invalid", scope)
         task_success = report.get("task_success")
         if not isinstance(task_success, dict) or task_success.get("n_per_role") != {
             role: FAMILIES_PER_ENVIRONMENT for role, _phase in TASK_ROLES.values()
@@ -3018,7 +3170,9 @@ def _render_human(report: AuditReport) -> str:
             f"primary={summary.primary_trials} replay={summary.replay_trials} "
             f"reflection={summary.reflection_terminal} "
             f"same_session={summary.same_session_verified} "
-            f"manifest_changed={summary.manifest_changed_files}"
+            f"manifest_changed={summary.manifest_changed_files} "
+            "runtime_state_pruned="
+            f"{summary.manifest_pruned_runtime_directories}/30"
         )
     if report.errors:
         lines.append("ERRORS")
