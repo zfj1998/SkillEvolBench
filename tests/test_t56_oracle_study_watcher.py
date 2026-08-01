@@ -15,6 +15,32 @@ WATCH = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(WATCH)
 
 
+def test_no_analysis_mode_only_monitors_and_exports(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("AP_API_KEY", "test-only-key")
+    args = argparse.Namespace(
+        state_dir=tmp_path / "watcher",
+        evidence_dir=tmp_path / "raw",
+        cluster="test-cluster",
+        repo_root=ROOT,
+        poll_sec=60,
+        no_export=False,
+        no_analysis=True,
+    )
+    watcher = WATCH.Watcher(args)
+    monkeypatch.setattr(watcher, "discover_jobs", lambda: {})
+    refresh_calls: list[dict[str, object]] = []
+    monkeypatch.setattr(watcher, "refresh_analysis", refresh_calls.append)
+
+    watcher.step()
+
+    assert refresh_calls == []
+    heartbeat = WATCH.read_json(watcher.state_dir / "heartbeat.json", {})
+    assert heartbeat["phase"] == "idle_waiting_for_jobs"
+
+
 def test_reference_audit_is_routed_to_report_not_collector(
     tmp_path: Path,
     monkeypatch,

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -21,6 +23,16 @@ WATCHER_SPEC = importlib.util.spec_from_file_location(
 assert WATCHER_SPEC and WATCHER_SPEC.loader
 WATCHER = importlib.util.module_from_spec(WATCHER_SPEC)
 WATCHER_SPEC.loader.exec_module(WATCHER)
+
+AGGREGATOR_PATH = (
+    REPO_ROOT / "scripts" / "ap" / "aggregate_reference_solution_audit.py"
+)
+AGGREGATOR_SPEC = importlib.util.spec_from_file_location(
+    "aggregate_reference_solution_audit", AGGREGATOR_PATH
+)
+assert AGGREGATOR_SPEC and AGGREGATOR_SPEC.loader
+AGGREGATOR = importlib.util.module_from_spec(AGGREGATOR_SPEC)
+AGGREGATOR_SPEC.loader.exec_module(AGGREGATOR)
 
 
 def _write_json(path: Path, value: object) -> None:
@@ -188,3 +200,104 @@ def test_reference_watcher_aggregates_all_90_tasks() -> None:
     assert aggregate["summary"]["passed"] == 75
     assert aggregate["summary"]["all_reference_solutions_pass"] is False
     assert aggregate["summary"]["by_environment"]["E3"]["passed"] == 0
+
+
+def test_reference_export_aggregator_accepts_all_180_tasks(tmp_path: Path) -> None:
+    group_id = "group-full-reference"
+    benchmark_revision = "b" * 40
+    agenthub_revision = "a" * 40
+    harbor_revision = "h" * 40
+    export_root = tmp_path / "export"
+    for environment_number in range(1, 7):
+        environment_id = f"E{environment_number}"
+        job_id = f"job-{environment_id}"
+        output = export_root / "jobs" / job_id / "artifacts" / "output"
+        rows = [
+            {
+                "task_id": f"{environment_id}-LS{family}-T{tier}",
+                "environment_id": environment_id,
+                "family_id": f"{environment_id}-LS{family}",
+                "tier": tier,
+                "strict_pass": True,
+                "normalized_score": 1.0,
+                "trial_count": 1,
+                "result_present": True,
+                "exception_info": None,
+                "outcome_passed": 1.0,
+                "process_passed": 1.0,
+            }
+            for family in range(1, 6)
+            for tier in range(1, 7)
+        ]
+        _write_json(
+            export_root / "jobs" / job_id / "job.json",
+            {
+                "job_id": job_id,
+                "instance_id": environment_id,
+                "group_id": group_id,
+                "status": "Succeeded",
+                "attempt": 0,
+                "agenthub_revision": agenthub_revision,
+            },
+        )
+        _write_json(
+            output / "dataset_episode.json",
+            {
+                "environment_id": environment_id,
+                "dataset": "dataset/name",
+                "split": "v1.1@test",
+                "benchmark_revision": benchmark_revision,
+            },
+        )
+        _write_json(
+            output / "reference_solution_audit.json",
+            {
+                "benchmark_revision": benchmark_revision,
+                "harbor": {"installed_git_commit": harbor_revision},
+                "execution": {"agent": "oracle"},
+                "tasks": rows,
+            },
+        )
+
+    output_path = tmp_path / "aggregate.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(AGGREGATOR_PATH),
+            "--export-root",
+            str(export_root),
+            "--output",
+            str(output_path),
+            "--expected-group-id",
+            group_id,
+            "--expected-dataset",
+            "dataset/name",
+            "--expected-split",
+            "v1.1@test",
+            "--expected-benchmark-revision",
+            benchmark_revision,
+            "--expected-agenthub-ref",
+            agenthub_revision,
+            "--expected-harbor-revision",
+            harbor_revision,
+            "--expected-tiers",
+            "1,2,3,4,5,6",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    aggregate = json.loads(output_path.read_text(encoding="utf-8"))
+    assert aggregate["tiers"] == [1, 2, 3, 4, 5, 6]
+    assert aggregate["summary"] == {
+        "passed": 180,
+        "total": 180,
+        "unique_task_ids": 180,
+        "all_reference_solutions_pass": True,
+        "by_tier": {
+            str(tier): {"passed": 30, "total": 30}
+            for tier in range(1, 7)
+        },
+    }

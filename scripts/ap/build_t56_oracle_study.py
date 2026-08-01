@@ -216,6 +216,145 @@ def oracle_evidence(
     }
 
 
+def shuffled_evidence(
+    run_dir: Path,
+    task_id: str,
+    spec: dict[str, Any],
+    specs: dict[str, dict[str, Any]],
+    shuffled_enabled: bool,
+    raw_root: Path,
+    skills_root: Path,
+) -> dict[str, Any]:
+    """Validate an equal-count, disjoint cross-environment skill projection."""
+    if not shuffled_enabled:
+        return {
+            "shuffled_injection_valid": None,
+            "shuffled_audit_path": None,
+            "shuffled_gold_skill_ids": [],
+            "shuffled_skill_ids": [],
+            "expected_shuffled_skill_ids": [],
+            "shuffled_source_environment_id": None,
+            "shuffled_injection_errors": [],
+            "shuffled_content_verification": {},
+        }
+
+    gold = (
+        list(spec.get("required_skills") or [])
+        if int(spec.get("task_index", 0)) == 6
+        else [str(spec.get("primary_skill"))]
+    )
+    target_environment = str(spec.get("environment_id") or "")
+    try:
+        source_environment = f"E{int(target_environment[1:]) % 6 + 1}"
+    except (ValueError, IndexError):
+        source_environment = ""
+    latent_by_family = {
+        str(candidate.get("family_id")): str(candidate.get("latent_skill_id"))
+        for candidate in specs.values()
+        if candidate.get("family_id") and candidate.get("latent_skill_id")
+    }
+    expected: list[str] = []
+    errors: list[str] = []
+    for gold_skill_id in gold:
+        family_id = gold_skill_id.split(".", 1)[0]
+        try:
+            family_suffix = family_id.split("-", 1)[1]
+        except IndexError:
+            errors.append(f"invalid gold skill family: {gold_skill_id!r}")
+            continue
+        source_family = f"{source_environment}-{family_suffix}"
+        shuffled_skill_id = latent_by_family.get(source_family)
+        if not shuffled_skill_id:
+            errors.append(f"missing shuffled source family: {source_family}")
+            continue
+        expected.append(shuffled_skill_id)
+
+    audit_path = run_dir / "shuffled-skill-views" / f"{task_id}.audit.json"
+    view_dir = run_dir / "shuffled-skill-views" / task_id
+    audit: dict[str, Any] = {}
+    if not audit_path.exists():
+        errors.append("missing shuffled audit")
+    else:
+        try:
+            audit = load_json(audit_path)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            errors.append(f"invalid shuffled audit: {exc}")
+
+    actual_gold = list(audit.get("gold_skill_ids") or [])
+    actual = list(audit.get("shuffled_skill_ids") or [])
+    if audit.get("condition") != "shuffled_curated":
+        errors.append("shuffled audit condition differs")
+    if audit.get("task_id") != task_id:
+        errors.append("shuffled audit task ID differs")
+    if audit.get("source_environment_id") != source_environment:
+        errors.append("shuffled source environment differs")
+    if actual_gold != gold:
+        errors.append(f"gold IDs differ: actual={actual_gold!r} expected={gold!r}")
+    if actual != expected:
+        errors.append(
+            f"shuffled IDs differ: actual={actual!r} expected={expected!r}"
+        )
+    if len(actual) != len(gold):
+        errors.append("shuffled and gold skill counts differ")
+    if set(actual) & set(gold):
+        errors.append("shuffled and gold skill IDs overlap")
+    if len(actual) != len(set(actual)):
+        errors.append("shuffled skill IDs contain duplicates")
+
+    expected_slugs = sorted(skill.split(".", 1)[-1] for skill in expected)
+    visible_slugs = (
+        sorted(path.name for path in view_dir.iterdir() if path.is_dir())
+        if view_dir.is_dir()
+        else []
+    )
+    if visible_slugs != expected_slugs:
+        errors.append(
+            f"visible shuffled skill dirs differ: actual={visible_slugs!r} "
+            f"expected={expected_slugs!r}"
+        )
+
+    content_verification: dict[str, str] = {}
+    for skill in audit.get("skills") or []:
+        if not isinstance(skill, dict):
+            errors.append("non-object shuffled skill audit entry")
+            continue
+        slug = str(skill.get("slug") or "")
+        skill_dir = view_dir / slug
+        if skill.get("gold_skill_id") not in gold:
+            errors.append(f"unexpected shuffled gold mapping: {skill!r}")
+        if skill.get("skill_id") not in expected:
+            errors.append(f"unexpected shuffled skill mapping: {skill!r}")
+        if not skill_dir.is_dir():
+            errors.append(f"missing shuffled skill dir: {slug}")
+        elif tree_digest(skill_dir) == skill.get("sha256"):
+            content_verification[slug] = "delivered_tree"
+        elif sanitized_skill_matches_runtime_audit(
+            skill_dir=skill_dir,
+            audit_sha256=str(skill.get("sha256") or ""),
+            slug=slug,
+            skills_root=skills_root,
+            output_root=run_dir.parents[1],
+        ):
+            content_verification[slug] = "runtime_hash_via_sanitization_manifest"
+        else:
+            errors.append(f"shuffled content hash mismatch: {slug}")
+
+    return {
+        "shuffled_injection_valid": not errors,
+        "shuffled_audit_path": (
+            relative_or_absolute(audit_path, raw_root)
+            if audit_path.exists()
+            else None
+        ),
+        "shuffled_gold_skill_ids": actual_gold,
+        "shuffled_skill_ids": actual,
+        "expected_shuffled_skill_ids": expected,
+        "shuffled_source_environment_id": source_environment,
+        "shuffled_injection_errors": errors,
+        "shuffled_content_verification": content_verification,
+    }
+
+
 def curated_all_evidence(
     run_dir: Path,
     environment_id: str,
@@ -443,6 +582,9 @@ def condition_name(config: dict[str, Any]) -> str:
     baseline = config.get("baseline") or {}
     name = str(baseline.get("name") or "unknown")
     oracle_view = bool(config.get("oracle_skill_view"))
+    shuffled_view = bool(config.get("shuffled_skill_view"))
+    if shuffled_view and name == "curated_static":
+        return "shuffled_curated"
     if oracle_view and name == "curated_static":
         return "exact_oracle"
     if name == "curated_static":
@@ -576,6 +718,7 @@ def collect(
             "condition": condition,
             "evaluation_only_t4_t6": bool(config.get("evaluation_only_t4_t6")),
             "oracle_skill_view": bool(config.get("oracle_skill_view")),
+            "shuffled_skill_view": bool(config.get("shuffled_skill_view")),
             "order_seed": config.get("order_seed"),
             "harbor_agent_timeout_multiplier": config.get(
                 "harbor_agent_timeout_multiplier"
@@ -725,6 +868,15 @@ def collect(
                 raw_root,
                 skills_root,
             )
+            shuffled = shuffled_evidence(
+                run_dir,
+                task_id,
+                spec,
+                specs,
+                bool(config.get("shuffled_skill_view")),
+                raw_root,
+                skills_root,
+            )
             trial_candidates = sorted(
                 (run_dir / "harbor-job" / str(config.get("run_id", run_dir.name))).glob(
                     f"{task_id}__*"
@@ -736,6 +888,7 @@ def collect(
             row = {
                 **run_row,
                 **oracle,
+                **shuffled,
                 **curated_all,
                 "task_id": task_id,
                 "family_id": record.get("family_id") or spec.get("family_id"),
@@ -923,7 +1076,10 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "task_slug", "classification", "strict_pass", "outcome_pass",
         "process_pass", "reward", "primary_skill", "required_skills",
         "retrieved_skill_ids", "skills_actually_used", "job_id", "ap_status",
-        "selected_run", "oracle_injection_exact", "no_skill_empty",
+        "selected_run", "oracle_injection_exact", "shuffled_injection_valid",
+        "shuffled_gold_skill_ids", "shuffled_skill_ids",
+        "expected_shuffled_skill_ids", "shuffled_source_environment_id",
+        "shuffled_injection_errors", "no_skill_empty",
         "curated_all_library_complete", "curated_all_visible_slugs",
         "curated_all_expected_slugs", "curated_all_library_errors",
         "record_path", "local_trial_path", "local_artifact_task_path",
@@ -939,6 +1095,10 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
                 "required_skills",
                 "retrieved_skill_ids",
                 "skills_actually_used",
+                "shuffled_gold_skill_ids",
+                "shuffled_skill_ids",
+                "expected_shuffled_skill_ids",
+                "shuffled_injection_errors",
                 "curated_all_visible_slugs",
                 "curated_all_expected_slugs",
                 "curated_all_library_errors",

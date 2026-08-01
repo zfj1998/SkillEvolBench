@@ -843,7 +843,8 @@ class Watcher:
             job["export_state"] = self.export_state(job_id)
             self.last_inventory = inventory
 
-        self.refresh_analysis(inventory)
+        if not getattr(self.args, "no_analysis", False):
+            self.refresh_analysis(inventory)
 
         pending = sum(
             1
@@ -942,6 +943,14 @@ def parse_args() -> argparse.Namespace:
         "--no-export",
         action="store_true",
         help="query AP and update inventory without downloading artifacts",
+    )
+    parser.add_argument(
+        "--no-analysis",
+        action="store_true",
+        help=(
+            "export and safety-scan terminal jobs without rebuilding the "
+            "legacy fixed-shape T5/T6 report"
+        ),
     )
     parser.add_argument("--register-job", metavar="JOB_ID")
     parser.add_argument("--register-group", metavar="GROUP_ID")

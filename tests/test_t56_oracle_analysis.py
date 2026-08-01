@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import zipfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -64,6 +65,115 @@ def test_opus_model_name_is_normalized_for_heatmap_join() -> None:
         )
         == "opus-4.8"
     )
+
+
+def test_shuffled_skill_evidence_is_equal_count_disjoint_and_content_bound(
+    tmp_path: Path,
+) -> None:
+    tasks_root = ROOT / "benchmark" / "tasks"
+    skills_root = ROOT / "benchmark" / "skills"
+    specs = COLLECTOR.load_task_specs(tasks_root)
+    task_id = "E1-LS1-T4"
+    spec = specs[task_id]
+    source_family = "E2-LS1"
+    shuffled_skill_id = next(
+        str(row["latent_skill_id"])
+        for row in specs.values()
+        if row["family_id"] == source_family
+    )
+    slug = shuffled_skill_id.split(".", 1)[-1]
+    run_dir = tmp_path / "run"
+    view_dir = run_dir / "shuffled-skill-views" / task_id / slug
+    view_dir.mkdir(parents=True)
+    shutil.copyfile(skills_root / slug / "SKILL.md", view_dir / "SKILL.md")
+    audit = {
+        "schema_version": 1,
+        "condition": "shuffled_curated",
+        "task_id": task_id,
+        "source_environment_id": "E2",
+        "gold_skill_ids": [spec["primary_skill"]],
+        "shuffled_skill_ids": [shuffled_skill_id],
+        "skills": [
+            {
+                "gold_skill_id": spec["primary_skill"],
+                "skill_id": shuffled_skill_id,
+                "slug": slug,
+                "sha256": COLLECTOR.tree_digest(view_dir),
+            }
+        ],
+    }
+    audit_path = run_dir / "shuffled-skill-views" / f"{task_id}.audit.json"
+    audit_path.write_text(json.dumps(audit) + "\n", encoding="utf-8")
+
+    evidence = COLLECTOR.shuffled_evidence(
+        run_dir,
+        task_id,
+        spec,
+        specs,
+        True,
+        tmp_path,
+        skills_root,
+    )
+
+    assert evidence["shuffled_injection_valid"] is True
+    assert evidence["shuffled_gold_skill_ids"] == [spec["primary_skill"]]
+    assert evidence["shuffled_skill_ids"] == [shuffled_skill_id]
+    assert set(evidence["shuffled_skill_ids"]).isdisjoint(
+        evidence["shuffled_gold_skill_ids"]
+    )
+    assert evidence["shuffled_content_verification"] == {
+        slug: "delivered_tree"
+    }
+
+
+def test_shuffled_skill_evidence_rejects_gold_overlap(tmp_path: Path) -> None:
+    tasks_root = ROOT / "benchmark" / "tasks"
+    skills_root = ROOT / "benchmark" / "skills"
+    specs = COLLECTOR.load_task_specs(tasks_root)
+    task_id = "E1-LS1-T4"
+    spec = specs[task_id]
+    gold_skill_id = str(spec["primary_skill"])
+    slug = gold_skill_id.split(".", 1)[-1]
+    run_dir = tmp_path / "run"
+    view_dir = run_dir / "shuffled-skill-views" / task_id / slug
+    view_dir.mkdir(parents=True)
+    shutil.copyfile(skills_root / slug / "SKILL.md", view_dir / "SKILL.md")
+    (run_dir / "shuffled-skill-views" / f"{task_id}.audit.json").write_text(
+        json.dumps(
+            {
+                "condition": "shuffled_curated",
+                "task_id": task_id,
+                "source_environment_id": "E2",
+                "gold_skill_ids": [gold_skill_id],
+                "shuffled_skill_ids": [gold_skill_id],
+                "skills": [
+                    {
+                        "gold_skill_id": gold_skill_id,
+                        "skill_id": gold_skill_id,
+                        "slug": slug,
+                        "sha256": COLLECTOR.tree_digest(view_dir),
+                    }
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    evidence = COLLECTOR.shuffled_evidence(
+        run_dir,
+        task_id,
+        spec,
+        specs,
+        True,
+        tmp_path,
+        skills_root,
+    )
+
+    assert evidence["shuffled_injection_valid"] is False
+    assert "shuffled and gold skill IDs overlap" in evidence[
+        "shuffled_injection_errors"
+    ]
 
 
 def test_matrix_watcher_fable_gate_does_not_block_qwen_lane() -> None:

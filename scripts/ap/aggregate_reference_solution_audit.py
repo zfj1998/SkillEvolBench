@@ -11,7 +11,25 @@ from typing import Any
 
 
 ENVIRONMENTS = tuple(f"E{index}" for index in range(1, 7))
-TIERS = (4, 5, 6)
+DEFAULT_TIERS = (4, 5, 6)
+
+
+def parse_tiers(raw: str) -> tuple[int, ...]:
+    try:
+        tiers = tuple(int(value.strip()) for value in raw.split(",") if value.strip())
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "tiers must be a comma-separated subset of 1..6"
+        ) from exc
+    if (
+        not tiers
+        or len(tiers) != len(set(tiers))
+        or any(tier not in range(1, 7) for tier in tiers)
+    ):
+        raise argparse.ArgumentTypeError(
+            "tiers must be unique comma-separated values in 1..6"
+        )
+    return tuple(sorted(tiers))
 
 
 def load_object(path: Path) -> dict[str, Any]:
@@ -54,7 +72,16 @@ def main() -> int:
     parser.add_argument("--expected-benchmark-revision", required=True)
     parser.add_argument("--expected-agenthub-ref", required=True)
     parser.add_argument("--expected-harbor-revision", required=True)
+    parser.add_argument(
+        "--expected-tiers",
+        type=parse_tiers,
+        default=DEFAULT_TIERS,
+        help="comma-separated audited tiers; default: 4,5,6",
+    )
     args = parser.parse_args()
+    tiers = tuple(args.expected_tiers)
+    expected_per_environment = 5 * len(tiers)
+    expected_total = len(ENVIRONMENTS) * expected_per_environment
 
     jobs_root = args.export_root.resolve() / "jobs"
     job_dirs = sorted(path for path in jobs_root.iterdir() if path.is_dir())
@@ -126,20 +153,20 @@ def main() -> int:
 
         task_rows = audit.get("tasks")
         require(
-            isinstance(task_rows, list) and len(task_rows) == 15,
-            f"{job_id}: expected 15 task rows",
+            isinstance(task_rows, list) and len(task_rows) == expected_per_environment,
+            f"{job_id}: expected {expected_per_environment} task rows",
         )
         expected_ids = {
             f"{environment_id}-LS{family}-T{tier}"
             for family in range(1, 6)
-            for tier in TIERS
+            for tier in tiers
         }
         actual_ids = {
             str(row.get("task_id"))
             for row in task_rows
             if isinstance(row, dict)
         }
-        require(actual_ids == expected_ids, f"{job_id}: T4-T6 grid mismatch")
+        require(actual_ids == expected_ids, f"{job_id}: selected tier grid mismatch")
 
         for row in task_rows:
             require(isinstance(row, dict), f"{job_id}: non-object task row")
@@ -167,9 +194,12 @@ def main() -> int:
         rows.extend(task_rows)
 
     require(seen_environments == set(ENVIRONMENTS), "six-environment coverage mismatch")
-    require(len(rows) == 90, f"expected 90 task rows, found {len(rows)}")
     require(
-        len({str(row.get("task_id")) for row in rows}) == 90,
+        len(rows) == expected_total,
+        f"expected {expected_total} task rows, found {len(rows)}",
+    )
+    require(
+        len({str(row.get("task_id")) for row in rows}) == expected_total,
         "task IDs are not unique",
     )
 
@@ -182,8 +212,9 @@ def main() -> int:
             ),
             "total": sum(1 for row in rows if row.get("tier") == tier),
         }
-        for tier in TIERS
+        for tier in tiers
     }
+    passed = sum(row.get("strict_pass") is True for row in rows)
     payload = {
         "schema_version": "1.0",
         "audit_type": "official_reference_solution_all_environments",
@@ -196,12 +227,13 @@ def main() -> int:
         "benchmark_revision": args.expected_benchmark_revision,
         "agenthub_revision": args.expected_agenthub_ref,
         "harbor_revisions": sorted(harbor_revisions),
+        "tiers": list(tiers),
         "environments": environments,
         "summary": {
-            "passed": 90,
-            "total": 90,
-            "unique_task_ids": 90,
-            "all_reference_solutions_pass": True,
+            "passed": passed,
+            "total": expected_total,
+            "unique_task_ids": expected_total,
+            "all_reference_solutions_pass": passed == expected_total,
             "by_tier": by_tier,
         },
         "tasks": rows,
