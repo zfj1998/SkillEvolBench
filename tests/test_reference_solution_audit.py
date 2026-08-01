@@ -301,3 +301,14 @@ def test_reference_export_aggregator_accepts_all_180_tasks(tmp_path: Path) -> No
             for tier in range(1, 7)
         },
     }
+
+
+def test_reference_aggregator_discovers_only_matching_watcher_group(
+    tmp_path: Path,
+) -> None:
+    wanted = tmp_path / "reference-E1" / "ap-reference-E1"
+    foreign = tmp_path / "self-E1" / "ap-self-E1"
+    _write_json(wanted / "job.json", {"group_id": "group-reference"})
+    _write_json(foreign / "job.json", {"group_id": "group-self"})
+
+    assert AGGREGATOR.group_job_dirs(tmp_path, "group-reference") == [wanted]

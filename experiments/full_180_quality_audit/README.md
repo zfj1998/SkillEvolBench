@@ -50,6 +50,34 @@ AP attempt 语义：
 | `shuffled_curated` | 不执行 | 等数量、跨 environment 的错误 curated 子集 | 无关知识负对照 |
 | `reference_solution` | 不用模型 | 不用 skill | task/verifier 内部可解性 |
 
+这里的“5”是五项检查，不是五道题。审计表始终有 180 行。为了给这些行补齐
+证据，首轮矩阵有：`self_generated` 180 题，加上 T4--T6 的
+`no_skill`、`exact_curated`、`shuffled_curated` 各 90 题，再加
+`reference_solution` 180 题，共 630 个 task-condition cells。由于
+`self_generated` 的 90 个 T1--T3 task 最多允许 3 次同 session 尝试，实际
+task attempts 为 630--810。T1--T3 的第 2--4 项按协议记为“不适用”，而不是
+被删除。
+
+## 最终证据合并
+
+下载并安全扫描全部 AP artifacts 后，先把四个模型条件标准化：
+
+```bash
+python scripts/ap/build_t56_oracle_study.py \
+  --raw-root /path/to/raw \
+  --tasks-root benchmark/tasks \
+  --skills-root benchmark/skills \
+  --inventory /path/to/watcher/inventory.json \
+  --output-dir /path/to/analysis
+```
+
+全 180 题 reference audit 用 `--expected-tiers 1,2,3,4,5,6` 聚合。最终调用
+`build_audit.py` 时传入 `--v11-full-evidence`、固定模型和 benchmark commit，
+并加 `--require-complete-current`。这个严格模式会检查：90 条当前 T1--T3
+learning records、四个条件各 90 条 T4--T6 records、24 个完整环境 episode、
+180 条 reference records、空 no-skill、精确 expert 注入、等量零重叠 shuffled
+注入，以及 freeze 和 lifecycle 证据；少一格就拒绝生成“已完成”结论。
+
 `exact_curated` 不是 solution manual。仓库中的 curated skills 本来就刻意留下
 T2/T3 acquisition gap，所以 exact 失败不能自动判题坏。
 

@@ -269,7 +269,11 @@ class Watcher:
                 "instance_id": job.get("instance_id"),
                 "group_id": job.get("group_id"),
                 "status": job.get("status") or "Unknown",
+                "attempt": job.get("attempt"),
                 "error_code": job.get("error_code"),
+                "agenthub_revision": job.get("agenthub_revision"),
+                "template_commit": job.get("template_commit"),
+                "idempotency_key": job.get("idempotency_key"),
                 "created_at": job.get("created_at"),
                 "updated_at": job.get("updated_at"),
             }

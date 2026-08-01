@@ -23,6 +23,15 @@ from typing import Any
 import yaml
 
 
+CURRENT_CONDITIONS = (
+    "self_generated",
+    "no_skill",
+    "exact_curated",
+    "shuffled_curated",
+)
+CONDITION_ALIASES = {"exact_oracle": "exact_curated"}
+
+
 def load_json(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
@@ -327,7 +336,7 @@ def check_verifier(
     risk = static.get("process_shape_sensitivity")
     if reference and reference.get("strict_pass") is not True:
         status = "reference_solution_failed"
-    elif tier >= 4 and reference:
+    elif reference:
         status = (
             "v1_1_repaired_reference_passed_needs_semantic_probe"
             if repaired
@@ -364,6 +373,459 @@ def load_current_pairs(regression: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
+def current_evidence_index(
+    evidence: dict[str, Any],
+    expected_model: str,
+) -> dict[str, Any]:
+    def selected(row: dict[str, Any]) -> bool:
+        return row.get("selected_run") is True and row.get("model") == expected_model
+
+    runs = [
+        row
+        for row in evidence.get("runs", [])
+        if isinstance(row, dict) and selected(row)
+    ]
+    evaluation_rows: dict[tuple[str, str], dict[str, Any]] = {}
+    for row in evidence.get("tasks", []):
+        if not isinstance(row, dict) or not selected(row):
+            continue
+        condition = CONDITION_ALIASES.get(
+            str(row.get("condition")), str(row.get("condition"))
+        )
+        key = (str(row.get("task_id")), condition)
+        if key in evaluation_rows:
+            raise ValueError(f"duplicate selected current evidence row: {key!r}")
+        evaluation_rows[key] = row
+
+    learning_rows: dict[str, dict[str, Any]] = {}
+    for row in evidence.get("learning_tasks", []):
+        if (
+            not isinstance(row, dict)
+            or not selected(row)
+            or row.get("condition") != "self_generated"
+        ):
+            continue
+        task_id = str(row.get("task_id"))
+        if task_id in learning_rows:
+            raise ValueError(f"duplicate selected current learning row: {task_id}")
+        learning_rows[task_id] = row
+
+    skills = [
+        row
+        for row in evidence.get("skills", [])
+        if isinstance(row, dict)
+        and selected(row)
+        and row.get("condition") == "self_generated"
+    ]
+    return {
+        "runs": runs,
+        "evaluation": evaluation_rows,
+        "learning": learning_rows,
+        "skills": skills,
+    }
+
+
+def compact_current_condition(row: dict[str, Any] | None) -> dict[str, Any] | None:
+    if row is None:
+        return None
+    return {
+        "strict_pass": row.get("strict_pass"),
+        "outcome_pass": row.get("outcome_pass"),
+        "process_pass": row.get("process_pass"),
+        "normalized_score": row.get("normalized_score"),
+        "classification": row.get("classification"),
+        "failed_tests": row.get("failed_tests") or [],
+        "skills_actually_used": row.get("skills_actually_used") or [],
+        "retrieved_skill_ids": row.get("retrieved_skill_ids") or [],
+        "job_id": row.get("job_id"),
+        "run_id": row.get("run_id"),
+        "record_path": row.get("record_path"),
+        "local_trajectory_path": row.get("local_trajectory_path"),
+    }
+
+
+def current_experience_check(
+    spec: dict[str, Any],
+    current: dict[str, Any],
+) -> dict[str, Any]:
+    task_id = str(spec["task_id"])
+    learning = current["learning"].get(task_id)
+    if learning is None:
+        return {
+            "status": "missing_current_learning_evidence",
+            "evidence_revision": "v1.1_current_matrix",
+        }
+
+    updated_skills: list[dict[str, Any]] = []
+    for skill in current["skills"]:
+        versions = [
+            version
+            for version in skill.get("version_summaries") or []
+            if isinstance(version, dict)
+            and version.get("created_at_task") == task_id
+        ]
+        if (
+            skill.get("created_at_task") == task_id
+            or skill.get("last_revised_at_task") == task_id
+            or versions
+        ):
+            updated_skills.append(
+                {
+                    "skill_id": skill.get("skill_id"),
+                    "created_at_task": skill.get("created_at_task"),
+                    "last_revised_at_task": skill.get("last_revised_at_task"),
+                    "current_version": skill.get("current_version"),
+                    "versions_from_task": versions,
+                    "generated_path": skill.get("generated_path"),
+                    "generated_sha256": skill.get("generated_sha256"),
+                }
+            )
+    updated_ids = {
+        str(skill["skill_id"])
+        for skill in updated_skills
+        if skill.get("skill_id")
+    }
+    later_uses: list[dict[str, Any]] = []
+    for (later_task_id, condition), row in sorted(current["evaluation"].items()):
+        if condition != "self_generated" or row.get("family_id") != spec["family_id"]:
+            continue
+        used = set(map(str, row.get("skills_actually_used") or []))
+        overlap = sorted(updated_ids & used)
+        if overlap:
+            later_uses.append(
+                {
+                    "task_id": later_task_id,
+                    "skill_ids": overlap,
+                    "outcome_pass": row.get("outcome_pass"),
+                }
+            )
+
+    protocol_ok = (
+        learning.get("same_session_verified") is True
+        and learning.get("all_attempts_same_session_verified") is True
+        and isinstance(learning.get("learning_attempts"), int)
+        and 1 <= int(learning["learning_attempts"]) <= 3
+    )
+    reflection_ok = (
+        learning.get("reflection_status") == "completed"
+        and isinstance(learning.get("reflection_patch"), dict)
+    )
+    if not protocol_ok:
+        status = "same_session_or_attempt_protocol_failed"
+    elif not reflection_ok:
+        status = "reflection_or_patch_missing"
+    elif updated_skills and later_uses:
+        status = "skill_update_applied_and_used_on_later_new_input"
+    elif updated_skills:
+        status = "skill_update_applied_without_observed_later_use"
+    else:
+        status = "reflection_completed_without_applied_skill_update"
+    return {
+        "status": status,
+        "evidence_revision": "v1.1_current_matrix",
+        "protocol_ok": protocol_ok,
+        "reflection_ok": reflection_ok,
+        "learning": {
+            key: learning.get(key)
+            for key in (
+                "strict_pass",
+                "outcome_pass",
+                "process_pass",
+                "learning_attempts",
+                "repair_attempts",
+                "initial_verifier_passed",
+                "terminal_verifier_passed",
+                "repaired_to_pass",
+                "same_session_verified",
+                "all_attempts_same_session_verified",
+                "reflection_status",
+                "reflection_mode",
+                "reflection_patch",
+                "job_id",
+                "run_id",
+                "local_reflection_path",
+            )
+        },
+        "skill_updates": updated_skills,
+        "later_new_input_uses": later_uses,
+        "claim_boundary": (
+            "This proves same-session reflection, an applied library update, and later "
+            "new-input visibility/use when present; causal usefulness is decided by the "
+            "matched T4-T6 controls."
+        ),
+    }
+
+
+def current_need_check(
+    row: dict[str, Any] | None,
+    legacy: dict[str, Any],
+) -> dict[str, Any]:
+    if row is None:
+        return {"status": "missing_current_no_skill_evidence"}
+    if row.get("no_skill_empty") is not True:
+        return {
+            "status": "invalid_no_skill_control_nonempty",
+            "condition": compact_current_condition(row),
+        }
+    status = (
+        "single_run_low_skill_demand"
+        if row.get("outcome_pass") is True
+        else "single_run_historical_skill_demand_candidate"
+        if row.get("outcome_pass") is False
+        else "invalid_no_skill_outcome"
+    )
+    return {
+        "status": status,
+        "condition": compact_current_condition(row),
+        "legacy_measurement_categories": legacy.get(
+            "legacy_measurement_categories", []
+        ),
+        "claim_boundary": (
+            "One matched run screens demand. A stable task-level claim requires valid "
+            "repeats for outcome-flip or otherwise critical rows."
+        ),
+    }
+
+
+def current_expert_check(
+    no_skill: dict[str, Any] | None,
+    exact: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if no_skill is None or exact is None:
+        return {"status": "missing_current_exact_or_no_skill_evidence"}
+    if exact.get("oracle_injection_exact") is not True:
+        return {
+            "status": "invalid_exact_skill_injection",
+            "no_skill": compact_current_condition(no_skill),
+            "exact_curated": compact_current_condition(exact),
+            "injection_errors": exact.get("oracle_injection_errors") or [],
+        }
+    before = no_skill.get("outcome_pass")
+    after = exact.get("outcome_pass")
+    label = (
+        "single_run_expert_rescue"
+        if before is False and after is True
+        else "single_run_expert_harm"
+        if before is True and after is False
+        else "single_run_both_pass"
+        if before is True and after is True
+        else "single_run_both_fail"
+        if before is False and after is False
+        else "invalid_outcome_pair"
+    )
+    return {
+        "status": label,
+        "no_skill": compact_current_condition(no_skill),
+        "exact_curated": compact_current_condition(exact),
+        "oracle_skill_ids": exact.get("oracle_skill_ids") or [],
+        "claim_boundary": "Outcome is primary; strict/process differences are diagnostics.",
+    }
+
+
+def current_unrelated_check(
+    exact: dict[str, Any] | None,
+    shuffled: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if exact is None or shuffled is None:
+        return {"status": "missing_current_exact_or_shuffled_evidence"}
+    if shuffled.get("shuffled_injection_valid") is not True:
+        return {
+            "status": "invalid_shuffled_skill_injection",
+            "exact_curated": compact_current_condition(exact),
+            "shuffled_curated": compact_current_condition(shuffled),
+            "injection_errors": shuffled.get("shuffled_injection_errors") or [],
+        }
+    exact_pass = exact.get("outcome_pass")
+    shuffled_pass = shuffled.get("outcome_pass")
+    status = (
+        "single_run_correct_skill_specific"
+        if exact_pass is True and shuffled_pass is False
+        else "single_run_wrong_skill_insensitive"
+        if exact_pass is True and shuffled_pass is True
+        else "single_run_shuffled_only_pass"
+        if exact_pass is False and shuffled_pass is True
+        else "single_run_neither_skill_passes"
+        if exact_pass is False and shuffled_pass is False
+        else "invalid_outcome_pair"
+    )
+    return {
+        "status": status,
+        "exact_curated": compact_current_condition(exact),
+        "shuffled_curated": compact_current_condition(shuffled),
+        "gold_skill_ids": shuffled.get("shuffled_gold_skill_ids") or [],
+        "shuffled_skill_ids": shuffled.get("shuffled_skill_ids") or [],
+        "source_environment_id": shuffled.get(
+            "shuffled_source_environment_id"
+        ),
+        "claim_boundary": (
+            "The negative control is valid only when equal-count, disjoint, content-bound "
+            "injection evidence passes."
+        ),
+    }
+
+
+def current_transfer_use_check(
+    spec: dict[str, Any],
+    current: dict[str, Any],
+) -> dict[str, Any]:
+    task_id = str(spec["task_id"])
+    row = current["evaluation"].get((task_id, "self_generated"))
+    if row is None:
+        return {"status": "missing_current_self_generated_evaluation"}
+    family_skill_ids = {
+        str(skill.get("skill_id"))
+        for skill in current["skills"]
+        if skill.get("family_id") == spec["family_id"] and skill.get("skill_id")
+    }
+    retrieved = set(map(str, row.get("retrieved_skill_ids") or []))
+    used = set(map(str, row.get("skills_actually_used") or []))
+    matching_retrieved = sorted(family_skill_ids & retrieved)
+    matching_used = sorted(family_skill_ids & used)
+    status = (
+        "generated_skill_used_on_new_input"
+        if matching_used
+        else "generated_skill_retrieved_but_not_used"
+        if matching_retrieved
+        else "no_same_family_generated_skill_visible"
+    )
+    return {
+        "status": status,
+        "evidence_revision": "v1.1_current_matrix",
+        "family_generated_skill_ids": sorted(family_skill_ids),
+        "matching_retrieved_skill_ids": matching_retrieved,
+        "matching_used_skill_ids": matching_used,
+        "self_generated_condition": compact_current_condition(row),
+        "claim_boundary": "Visibility/use is not causal benefit without matched outcomes.",
+    }
+
+
+def enrich_verifier_with_dynamic_flags(
+    base: dict[str, Any],
+    condition_rows: dict[str, dict[str, Any] | None],
+) -> dict[str, Any]:
+    rows = [row for row in condition_rows.values() if row is not None]
+    process_only = sorted(
+        condition
+        for condition, row in condition_rows.items()
+        if row is not None
+        and row.get("outcome_pass") is True
+        and row.get("strict_pass") is not True
+    )
+    all_outcome_fail = bool(rows) and len(rows) == len(CURRENT_CONDITIONS) and all(
+        row.get("outcome_pass") is False for row in rows
+    )
+    result = dict(base)
+    result.update(
+        {
+            "current_condition_count": len(rows),
+            "process_only_failure_conditions": process_only,
+            "all_four_model_conditions_outcome_fail": all_outcome_fail,
+            "model_execution_gap_candidate": bool(
+                all_outcome_fail and base.get("reference_strict_pass") is True
+            ),
+        }
+    )
+    return result
+
+
+def current_coverage_errors(
+    specs: list[dict[str, Any]],
+    current: dict[str, Any],
+    reference: dict[str, dict[str, Any]],
+    expected_benchmark_revision: str | None,
+) -> list[str]:
+    errors: list[str] = []
+    learning_ids = {
+        str(spec["task_id"]) for spec in specs if int(spec["task_index"]) <= 3
+    }
+    transfer_ids = {
+        str(spec["task_id"]) for spec in specs if int(spec["task_index"]) >= 4
+    }
+    if set(current["learning"]) != learning_ids:
+        errors.append(
+            "current self-generated learning grid is not the exact 90 T1-T3 tasks"
+        )
+    for condition in CURRENT_CONDITIONS:
+        observed = {
+            task_id
+            for (task_id, row_condition) in current["evaluation"]
+            if row_condition == condition
+        }
+        if observed != transfer_ids:
+            errors.append(
+                f"current {condition} grid is not the exact 90 T4-T6 tasks"
+            )
+    if set(reference) != {str(spec["task_id"]) for spec in specs}:
+        errors.append("reference solution grid is not the exact 180 tasks")
+    elif any(row.get("strict_pass") is not True for row in reference.values()):
+        errors.append("at least one of the 180 reference solutions failed strict verification")
+
+    cells = Counter(
+        (
+            CONDITION_ALIASES.get(str(row.get("condition")), str(row.get("condition"))),
+            str(row.get("environment_id")),
+        )
+        for row in current["runs"]
+    )
+    expected_cells = {
+        (condition, f"E{environment}")
+        for condition in CURRENT_CONDITIONS
+        for environment in range(1, 7)
+    }
+    if set(cells) != expected_cells or any(count != 1 for count in cells.values()):
+        errors.append("current run grid is not exactly 4 conditions x 6 environments")
+    for run in current["runs"]:
+        condition = CONDITION_ALIASES.get(
+            str(run.get("condition")), str(run.get("condition"))
+        )
+        label = f"{condition}/{run.get('environment_id')}"
+        if run.get("ap_status") != "Succeeded":
+            errors.append(f"{label}: AP status is not Succeeded")
+        if run.get("lifecycle_parse_errors"):
+            errors.append(f"{label}: lifecycle parse errors are present")
+        if run.get("evaluation_task_start_count") != 15:
+            errors.append(f"{label}: evaluation start coverage is not 15")
+        if run.get("evaluation_task_end_count") != 15:
+            errors.append(f"{label}: evaluation end coverage is not 15")
+        if run.get("library_frozen_before_evaluation") is not True:
+            errors.append(f"{label}: library was not frozen before evaluation")
+        if run.get("evaluation_library_hash_stable") is not True:
+            errors.append(f"{label}: evaluation library hash was not stable")
+        if expected_benchmark_revision and run.get("benchmark_revision") != expected_benchmark_revision:
+            errors.append(f"{label}: benchmark revision mismatch")
+        if condition == "self_generated":
+            if run.get("evaluation_only_t4_t6") is not False:
+                errors.append(f"{label}: unexpectedly skipped learning tasks")
+            if run.get("learning_record_count") != 15:
+                errors.append(f"{label}: learning coverage is not 15")
+            if run.get("learning_max_attempts") != 3:
+                errors.append(f"{label}: learning attempt budget is not 3")
+        elif condition == "no_skill":
+            if run.get("baseline") != "no_skill":
+                errors.append(f"{label}: baseline is not no_skill")
+        elif condition == "exact_curated":
+            if run.get("oracle_skill_view") is not True:
+                errors.append(f"{label}: exact oracle view is not enabled")
+        elif condition == "shuffled_curated":
+            if run.get("shuffled_skill_view") is not True:
+                errors.append(f"{label}: shuffled view is not enabled")
+
+    for task_id in transfer_ids:
+        no_skill = current["evaluation"].get((task_id, "no_skill"))
+        exact = current["evaluation"].get((task_id, "exact_curated"))
+        shuffled = current["evaluation"].get((task_id, "shuffled_curated"))
+        if no_skill is not None and no_skill.get("no_skill_empty") is not True:
+            errors.append(f"{task_id}: no-skill evidence is not empty")
+        if exact is not None and exact.get("oracle_injection_exact") is not True:
+            errors.append(f"{task_id}: exact curated injection is invalid")
+        if (
+            shuffled is not None
+            and shuffled.get("shuffled_injection_valid") is not True
+        ):
+            errors.append(f"{task_id}: shuffled curated injection is invalid")
+    return errors
+
+
 def build(args: argparse.Namespace) -> dict[str, Any]:
     specs = load_specs(args.tasks_root)
     static_raw = load_json(args.static_audit)
@@ -381,20 +843,46 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     }
     reference = reference_index(load_json(args.v11_reference_audit))
     current_pairs = load_current_pairs(load_json(args.v11_regression))
+    full_evidence_path = getattr(args, "v11_full_evidence", None)
+    expected_model = getattr(args, "expected_model", "qwen3.7-max")
+    expected_benchmark_revision = getattr(
+        args, "expected_benchmark_revision", None
+    )
+    current = (
+        current_evidence_index(load_json(full_evidence_path), expected_model)
+        if full_evidence_path is not None
+        else None
+    )
+    coverage_errors = (
+        current_coverage_errors(
+            specs,
+            current,
+            reference,
+            expected_benchmark_revision,
+        )
+        if current is not None
+        else ["current v1.1 four-condition evidence was not provided"]
+    )
+    if getattr(args, "require_complete_current", False) and coverage_errors:
+        raise ValueError(
+            "current evidence completeness validation failed: "
+            + "; ".join(coverage_errors)
+        )
 
     tasks: list[dict[str, Any]] = []
     for spec in specs:
         task_id = str(spec["task_id"])
         tier = int(spec["task_index"])
         legacy_conditions = legacy_condition_rows(comparisons.get(task_id, []))
+        legacy_need = check_need(
+            tier,
+            measurements.get(task_id, []),
+            legacy_conditions,
+            current_pairs.get(task_id),
+        )
         checks = {
             "1_experience_generation_and_reuse": check_experience(spec, behavior),
-            "2_historical_skill_demand": check_need(
-                tier,
-                measurements.get(task_id, []),
-                legacy_conditions,
-                current_pairs.get(task_id),
-            ),
+            "2_historical_skill_demand": legacy_need,
             "3_correct_expert_skill_effect": check_expert(tier, legacy_conditions),
             "4_unrelated_skill_negative_control": check_unrelated(tier),
             "5_task_and_verifier_validity": check_verifier(
@@ -404,10 +892,74 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 task_id in repaired_ids,
             ),
         }
+        if current is not None and tier <= 3:
+            checks["1_experience_generation_and_reuse"] = current_experience_check(
+                spec, current
+            )
+        elif current is not None:
+            condition_rows = {
+                condition: current["evaluation"].get((task_id, condition))
+                for condition in CURRENT_CONDITIONS
+            }
+            checks["1_experience_generation_and_reuse"] = (
+                current_transfer_use_check(spec, current)
+            )
+            checks["2_historical_skill_demand"] = current_need_check(
+                condition_rows["no_skill"], legacy_need
+            )
+            checks["3_correct_expert_skill_effect"] = current_expert_check(
+                condition_rows["no_skill"], condition_rows["exact_curated"]
+            )
+            checks["4_unrelated_skill_negative_control"] = (
+                current_unrelated_check(
+                    condition_rows["exact_curated"],
+                    condition_rows["shuffled_curated"],
+                )
+            )
+            checks["5_task_and_verifier_validity"] = (
+                enrich_verifier_with_dynamic_flags(
+                    checks["5_task_and_verifier_validity"], condition_rows
+                )
+            )
+
         if tier <= 3:
-            readiness = "learning_observable_but_v1_1_reference_not_run"
+            learning_ready = current is not None and task_id in current["learning"]
+            reference_ready = (
+                task_id in reference
+                and reference[task_id].get("strict_pass") is True
+            )
+            readiness = (
+                "ready"
+                if learning_ready and reference_ready
+                else "insufficient_current_learning_or_reference_evidence"
+            )
         else:
-            readiness = "insufficient_causal_evidence_missing_v1_1_four_conditions"
+            rows = (
+                {
+                    condition: current["evaluation"].get((task_id, condition))
+                    for condition in CURRENT_CONDITIONS
+                }
+                if current is not None
+                else {condition: None for condition in CURRENT_CONDITIONS}
+            )
+            controls_ready = all(row is not None for row in rows.values())
+            injection_ready = bool(
+                rows["no_skill"]
+                and rows["no_skill"].get("no_skill_empty") is True
+                and rows["exact_curated"]
+                and rows["exact_curated"].get("oracle_injection_exact") is True
+                and rows["shuffled_curated"]
+                and rows["shuffled_curated"].get("shuffled_injection_valid") is True
+            )
+            reference_ready = (
+                task_id in reference
+                and reference[task_id].get("strict_pass") is True
+            )
+            readiness = (
+                "ready"
+                if controls_ready and injection_ready and reference_ready
+                else "insufficient_current_four_condition_or_reference_evidence"
+            )
         tasks.append(
             {
                 "task_id": task_id,
@@ -428,18 +980,40 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             }
         )
 
+    current_evaluation = current["evaluation"] if current is not None else {}
     summary = {
         "task_count": len(tasks),
+        "planned_task_condition_cells": 630,
+        "task_attempt_range_with_learning_retries": [630, 810],
         "by_tier": dict(sorted(Counter(f"T{row['tier']}" for row in tasks).items())),
         "static_verifier_coverage": sum(
             bool(row["checks"]["5_task_and_verifier_validity"])
             for row in tasks
         ),
         "legacy_learning_task_observations": 90 * len({model for _, model in behavior}),
+        "v1_1_current_learning_coverage": (
+            len(current["learning"]) if current is not None else 0
+        ),
+        "v1_1_matched_selfgen_no_skill_coverage": sum(
+            (task_id, "self_generated") in current_evaluation
+            and (task_id, "no_skill") in current_evaluation
+            for task_id in {
+                str(spec["task_id"])
+                for spec in specs
+                if int(spec["task_index"]) >= 4
+            }
+        ),
+        "v1_1_exact_curated_coverage": sum(
+            condition == "exact_curated"
+            for _, condition in current_evaluation
+        ),
+        "v1_1_shuffled_curated_coverage": sum(
+            condition == "shuffled_curated"
+            for _, condition in current_evaluation
+        ),
         "v1_1_reference_solution_coverage": len(reference),
-        "v1_1_matched_selfgen_no_skill_coverage": len(current_pairs),
-        "v1_1_exact_curated_coverage": 0,
-        "v1_1_shuffled_curated_coverage": 0,
+        "current_evidence_complete": not coverage_errors,
+        "current_evidence_errors": coverage_errors,
         "ready_for_final_five_point_decision": sum(
             row["readiness"] == "ready" for row in tasks
         ),
@@ -450,12 +1024,16 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         ),
     }
     return {
-        "schema_version": "1.0",
+        "schema_version": "2.0" if current is not None else "1.0",
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "benchmark_revision": revision(args.tasks_root.parents[1]),
         "claim_boundary": (
-            "This is a coverage and evidence ledger. Legacy v1 results do not complete v1.1 "
-            "causal cells, and missing shuffled controls remain missing."
+            "Current matched rows are a first-pass screen, not a stable causal estimate. "
+            "Legacy v1 results remain diagnostic only; outcome-flip and critical rows need "
+            "valid repeats before a majority label."
+            if current is not None
+            else "This is a coverage and evidence ledger. Legacy v1 results do not complete "
+            "v1.1 causal cells, and missing shuffled controls remain missing."
         ),
         "inputs": {
             name: str(getattr(args, name).resolve())
@@ -468,7 +1046,12 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
                 "v11_reference_audit",
                 "v11_regression",
             )
-        },
+        }
+        | (
+            {"v11_full_evidence": str(full_evidence_path.resolve())}
+            if full_evidence_path is not None
+            else {}
+        ),
         "summary": summary,
         "tasks": tasks,
     }
@@ -531,6 +1114,18 @@ def main() -> int:
     parser.add_argument("--v11-task-audit", type=Path, required=True)
     parser.add_argument("--v11-reference-audit", type=Path, required=True)
     parser.add_argument("--v11-regression", type=Path, required=True)
+    parser.add_argument(
+        "--v11-full-evidence",
+        type=Path,
+        help="current v1.1 four-condition collector output",
+    )
+    parser.add_argument("--expected-model", default="qwen3.7-max")
+    parser.add_argument("--expected-benchmark-revision")
+    parser.add_argument(
+        "--require-complete-current",
+        action="store_true",
+        help="fail unless all 180 reference and matched current evidence cells validate",
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
     result = build(args)

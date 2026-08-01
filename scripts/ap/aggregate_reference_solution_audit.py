@@ -48,6 +48,31 @@ def one_match(root: Path, pattern: str) -> Path:
     return matches[0]
 
 
+def group_job_dirs(export_root: Path, expected_group_id: str) -> list[Path]:
+    """Find the six group jobs in either a group export or watcher layout."""
+    candidates: set[Path] = set()
+    jobs_root = export_root / "jobs"
+    if jobs_root.is_dir():
+        candidates.update(path for path in jobs_root.iterdir() if path.is_dir())
+    candidates.update(
+        path.parent
+        for path in export_root.glob("*/ap-*/job.json")
+        if path.is_file()
+    )
+    selected: list[Path] = []
+    for path in sorted(candidates):
+        job_path = path / "job.json"
+        if not job_path.is_file():
+            continue
+        try:
+            job = load_object(job_path)
+        except (OSError, ValueError, json.JSONDecodeError):
+            continue
+        if job.get("group_id") == expected_group_id:
+            selected.append(path)
+    return selected
+
+
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise ValueError(message)
@@ -83,8 +108,7 @@ def main() -> int:
     expected_per_environment = 5 * len(tiers)
     expected_total = len(ENVIRONMENTS) * expected_per_environment
 
-    jobs_root = args.export_root.resolve() / "jobs"
-    job_dirs = sorted(path for path in jobs_root.iterdir() if path.is_dir())
+    job_dirs = group_job_dirs(args.export_root.resolve(), args.expected_group_id)
     require(len(job_dirs) == 6, f"expected 6 exported jobs, found {len(job_dirs)}")
 
     rows: list[dict[str, Any]] = []

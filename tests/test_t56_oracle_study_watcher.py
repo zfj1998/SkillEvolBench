@@ -15,6 +15,58 @@ WATCH = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(WATCH)
 
 
+def test_discovery_preserves_ap_run_provenance(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("AP_API_KEY", "test-only-key")
+    args = argparse.Namespace(
+        state_dir=tmp_path / "watcher",
+        evidence_dir=tmp_path / "raw",
+        cluster="test-cluster",
+        repo_root=ROOT,
+        poll_sec=60,
+    )
+    watcher = WATCH.Watcher(args)
+    WATCH.write_json(
+        watcher.manifest_path,
+        {
+            "schema_version": 1,
+            "groups": [{"group_id": "group-1", "label": "condition"}],
+            "jobs": [],
+            "external_job_records": [],
+        },
+    )
+    monkeypatch.setattr(
+        watcher,
+        "run_ap_json",
+        lambda _command: {
+            "jobs": [
+                {
+                    "job_id": "job-1",
+                    "job_type": "default",
+                    "instance_id": "E1",
+                    "group_id": "group-1",
+                    "status": "Succeeded",
+                    "attempt": 2,
+                    "agenthub_revision": "feat/benchmark",
+                    "template_commit": "a" * 40,
+                    "idempotency_key": "00000000-0000-4000-8000-000000000001",
+                }
+            ]
+        },
+    )
+
+    discovered = watcher.discover_jobs()["job-1"]
+
+    assert discovered["attempt"] == 2
+    assert discovered["agenthub_revision"] == "feat/benchmark"
+    assert discovered["template_commit"] == "a" * 40
+    assert discovered["idempotency_key"] == (
+        "00000000-0000-4000-8000-000000000001"
+    )
+
+
 def test_no_analysis_mode_only_monitors_and_exports(
     tmp_path: Path,
     monkeypatch,
