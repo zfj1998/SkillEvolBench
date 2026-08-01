@@ -259,7 +259,10 @@ class SkillEvolBenchHooks:
 
         # ---- 5. Skill retrieval (if baseline uses skill library) ----
         retrieval = None
-        if self.runtime.baseline.use_skill_library:
+        if (
+            self.runtime.baseline.use_skill_library
+            and not self.runtime.run_config.shuffled_skill_view
+        ):
             instruction_text = self._read_instruction(task)
             retrieval = self.runtime.retriever.retrieve(
                 query=instruction_text,
@@ -292,6 +295,8 @@ class SkillEvolBenchHooks:
 
         if self.runtime.run_config.oracle_skill_view:
             self._stage_oracle_skill_view(task, runtime_basename)
+        elif self.runtime.run_config.shuffled_skill_view:
+            self._stage_shuffled_skill_view(task, runtime_basename)
 
         # ---- 7. Build runtime task copy (overwrites instruction.md) ----
         # Pass runtime_basename so replay/shadow trials write to their own
@@ -593,7 +598,11 @@ class SkillEvolBenchHooks:
             _, repair_stream_raw = self._capture_agent_file(
                 repair_stream,
                 attempt_dir
-                / ("codex.repair.jsonl" if agent_name == "codex" else "opencode.repair.jsonl"),
+                / (
+                    "codex.repair.jsonl"
+                    if agent_name == "codex"
+                    else "opencode.repair.jsonl"
+                ),
                 task_id=task.task_id,
                 reason="repair-missing-stream",
             )
@@ -851,7 +860,9 @@ class SkillEvolBenchHooks:
         self._capture_agent_file(
             solve_stream,
             audit_dir
-            / ("codex.solve.jsonl" if agent_name == "codex" else "opencode.solve.jsonl"),
+            / (
+                "codex.solve.jsonl" if agent_name == "codex" else "opencode.solve.jsonl"
+            ),
             task_id=task.task_id,
             reason="reflection-missing-solve-stream",
         )
@@ -2791,15 +2802,34 @@ class SkillEvolBenchHooks:
         )
 
     def _seed_curated_environment(self, env_id: str, triggered_by_task: str) -> None:
-        """Seed all five immutable curated skills for an eval-only control."""
+        """Seed curated skills required by an eval-only control.
+
+        The exact-oracle condition seeds the target environment's five skills.
+        The shuffled negative control additionally seeds the next environment's
+        five skills, then exposes only that disjoint subset per task.
+        """
         if env_id in self._oracle_seeded_envs:
             return
-        families = self.task_registry.families_in_env(env_id)
-        if len(families) != 5:
+        target_families = list(self.task_registry.families_in_env(env_id))
+        if len(target_families) != 5:
             raise RuntimeError(
                 f"oracle diagnostic expected five families in {env_id}; "
-                f"got {len(families)}"
+                f"got {len(target_families)}"
             )
+        families = list(target_families)
+        shuffled_env_id: str | None = None
+        if self.runtime.run_config.shuffled_skill_view:
+            env_number = int(env_id[1:])
+            shuffled_env_id = f"E{env_number % 6 + 1}"
+            shuffled_families = list(
+                self.task_registry.families_in_env(shuffled_env_id)
+            )
+            if len(shuffled_families) != 5:
+                raise RuntimeError(
+                    "shuffled diagnostic expected five source families in "
+                    f"{shuffled_env_id}; got {len(shuffled_families)}"
+                )
+            families.extend(shuffled_families)
         for family in families:
             if self.runtime.library.has_curated_for(family.meta.family_id):
                 continue
@@ -2820,6 +2850,7 @@ class SkillEvolBenchHooks:
                     "family_id": family.meta.family_id,
                     "task_id": triggered_by_task,
                     "diagnostic_preseed": True,
+                    "shuffled_source_environment": shuffled_env_id,
                 },
             )
         self._oracle_seeded_envs.add(env_id)
@@ -2829,6 +2860,7 @@ class SkillEvolBenchHooks:
                 "environment_id": env_id,
                 "task_id": triggered_by_task,
                 "n_curated_skills": len(families),
+                "shuffled_source_environment": shuffled_env_id,
                 "library_hash": self.runtime.library.compute_hash(),
             },
         )
@@ -2921,6 +2953,113 @@ class SkillEvolBenchHooks:
             {
                 "task_id": task.task_id,
                 "oracle_skill_ids": skill_ids,
+                "library_hash": audit["library_hash"],
+            },
+        )
+
+    def _stage_shuffled_skill_view(self, task: Any, runtime_basename: str) -> None:
+        """Expose an equal-count, cross-environment unrelated skill subset."""
+        from skillevolbench.stores.library_store import skill_id_to_slug
+
+        gold_skill_ids = (
+            list(task.required_skills)
+            if task.role == TaskRole.COMPOSITION.value
+            else [task.primary_skill]
+        )
+        if not gold_skill_ids or len(gold_skill_ids) != len(set(gold_skill_ids)):
+            raise RuntimeError(
+                f"shuffled diagnostic task {task.task_id} has invalid gold skills"
+            )
+        target_env_number = int(task.environment_id[1:])
+        source_env_id = f"E{target_env_number % 6 + 1}"
+        mappings: list[tuple[str, str]] = []
+        for gold_skill_id in gold_skill_ids:
+            gold_family_id = gold_skill_id.split(".", 1)[0]
+            family_suffix = gold_family_id.split("-", 1)[1]
+            source_family_id = f"{source_env_id}-{family_suffix}"
+            source_family = self.task_registry.family(source_family_id)
+            shuffled_skill_id = source_family.meta.latent_skill_id
+            if shuffled_skill_id in gold_skill_ids:
+                raise RuntimeError(
+                    f"shuffled skill {shuffled_skill_id!r} overlaps gold annotations"
+                )
+            mappings.append((gold_skill_id, shuffled_skill_id))
+        shuffled_skill_ids = [shuffled for _, shuffled in mappings]
+        if len(shuffled_skill_ids) != len(set(shuffled_skill_ids)):
+            raise RuntimeError(
+                f"shuffled diagnostic task {task.task_id} produced duplicate skills"
+            )
+
+        views_root = self.runtime.run_root / "shuffled-skill-views"
+        view_dir = views_root / runtime_basename
+        view_dir.mkdir(parents=True, exist_ok=True)
+        for child in list(view_dir.iterdir()):
+            if child.is_symlink() or child.is_file():
+                child.unlink()
+            elif child.is_dir():
+                shutil.rmtree(child)
+            else:
+                raise RuntimeError(f"unsupported object in shuffled view: {child}")
+
+        copied: list[dict[str, Any]] = []
+        for gold_skill_id, shuffled_skill_id in mappings:
+            slug = skill_id_to_slug(shuffled_skill_id)
+            source = self.runtime.library.active_dir / slug
+            if not source.is_dir() or source.is_symlink():
+                raise RuntimeError(
+                    f"shuffled curated content for {shuffled_skill_id!r} is unavailable"
+                )
+            for path in source.rglob("*"):
+                if path.is_symlink():
+                    raise RuntimeError(
+                        f"shuffled skill {shuffled_skill_id!r} contains a forbidden symlink"
+                    )
+            destination = view_dir / slug
+            shutil.copytree(source, destination)
+            digest = hashlib.sha256()
+            for path in sorted(
+                (item for item in destination.rglob("*") if item.is_file()),
+                key=lambda item: item.relative_to(destination).as_posix(),
+            ):
+                relative = path.relative_to(destination).as_posix()
+                digest.update(relative.encode("utf-8"))
+                digest.update(b"\0")
+                digest.update(path.read_bytes())
+                digest.update(b"\0")
+            copied.append(
+                {
+                    "gold_skill_id": gold_skill_id,
+                    "skill_id": shuffled_skill_id,
+                    "slug": slug,
+                    "sha256": digest.hexdigest(),
+                }
+            )
+
+        audit = {
+            "schema_version": 1,
+            "condition": "shuffled_curated",
+            "task_id": task.task_id,
+            "runtime_basename": runtime_basename,
+            "role": task.role,
+            "gold_skill_ids": gold_skill_ids,
+            "shuffled_skill_ids": shuffled_skill_ids,
+            "source_environment_id": source_env_id,
+            "skills": copied,
+            "library_hash": self.runtime.library.compute_hash(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        audit_path = views_root / f"{runtime_basename}.audit.json"
+        audit_path.write_text(
+            json.dumps(audit, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        self.runtime.event_store.record(
+            "shuffled_skill_view_staged",
+            {
+                "task_id": task.task_id,
+                "gold_skill_ids": gold_skill_ids,
+                "shuffled_skill_ids": shuffled_skill_ids,
+                "source_environment_id": source_env_id,
                 "library_hash": audit["library_hash"],
             },
         )

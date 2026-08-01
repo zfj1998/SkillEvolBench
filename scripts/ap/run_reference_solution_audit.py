@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the official Harbor oracle against one environment's T4--T6 tasks.
+"""Run the official Harbor oracle against selected tiers in one environment.
 
 This is a benchmark-integrity diagnostic, not a model baseline.  Harbor's
 ``oracle`` agent uploads and executes each task's checked-in
@@ -24,9 +24,6 @@ from pathlib import Path
 from typing import Any
 
 from skillevolbench.discovery import TaskRecord, TaskRegistry
-
-
-EXPECTED_TASKS_PER_ENVIRONMENT = 15
 
 
 def utc_now() -> str:
@@ -98,7 +95,18 @@ def harbor_provenance(runtime_path: Path | None = None) -> dict[str, Any]:
     }
 
 
-def select_tasks(repo_root: Path, environment_id: str) -> list[TaskRecord]:
+def select_tasks(
+    repo_root: Path,
+    environment_id: str,
+    tiers: tuple[int, ...] = (4, 5, 6),
+) -> list[TaskRecord]:
+    if (
+        not tiers
+        or len(tiers) != len(set(tiers))
+        or any(tier not in range(1, 7) for tier in tiers)
+    ):
+        raise ValueError(f"tiers must be unique values in 1..6, got {tiers!r}")
+    tiers = tuple(sorted(tiers))
     registry = TaskRegistry.from_disk(
         repo_root / "benchmark" / "skills",
         repo_root / "benchmark" / "tasks",
@@ -108,24 +116,26 @@ def select_tasks(repo_root: Path, environment_id: str) -> list[TaskRecord]:
             task
             for task in registry.tasks
             if task.spec.environment_id == environment_id
-            and task.spec.task_index in {4, 5, 6}
+            and task.spec.task_index in set(tiers)
         ),
         key=lambda task: (task.spec.family_id, task.spec.task_index),
     )
-    if len(tasks) != EXPECTED_TASKS_PER_ENVIRONMENT:
+    expected_count = 5 * len(tiers)
+    tier_label = ",".join(f"T{tier}" for tier in tiers)
+    if len(tasks) != expected_count:
         raise RuntimeError(
             f"{environment_id} must contain exactly "
-            f"{EXPECTED_TASKS_PER_ENVIRONMENT} T4-T6 tasks; got {len(tasks)}"
+            f"{expected_count} {tier_label} tasks; got {len(tasks)}"
         )
     expected_ids = {
         f"{environment_id}-LS{family}-T{tier}"
         for family in range(1, 6)
-        for tier in range(4, 7)
+        for tier in tiers
     }
     actual_ids = {task.spec.task_id for task in tasks}
     if actual_ids != expected_ids:
         raise RuntimeError(
-            f"{environment_id} T4-T6 task IDs mismatch: "
+            f"{environment_id} {tier_label} task IDs mismatch: "
             f"missing={sorted(expected_ids - actual_ids)}, "
             f"extra={sorted(actual_ids - expected_ids)}"
         )
@@ -179,7 +189,9 @@ async def run_harbor_oracle(
     await job.run()
 
 
-def _reward(trial_dir: Path, result: dict[str, Any]) -> tuple[float | None, dict[str, Any]]:
+def _reward(
+    trial_dir: Path, result: dict[str, Any]
+) -> tuple[float | None, dict[str, Any]]:
     rewards = result.get("verifier_result", {}).get("rewards", {})
     if not isinstance(rewards, dict):
         rewards = {}
@@ -203,20 +215,14 @@ def collect_results(
     for task in tasks:
         task_id = task.spec.task_id
         candidates = sorted(
-            path
-            for path in job_root.glob(f"{task_id}__*")
-            if path.is_dir()
+            path for path in job_root.glob(f"{task_id}__*") if path.is_dir()
         )
         trial_dir = candidates[0] if len(candidates) == 1 else None
         result = read_json(trial_dir / "result.json") if trial_dir else {}
         score_report = (
-            read_json(trial_dir / "verifier" / "score_report.json")
-            if trial_dir
-            else {}
+            read_json(trial_dir / "verifier" / "score_report.json") if trial_dir else {}
         )
-        normalized, rewards = (
-            _reward(trial_dir, result) if trial_dir else (None, {})
-        )
+        normalized, rewards = _reward(trial_dir, result) if trial_dir else (None, {})
         outcome = rewards.get("outcome_passed")
         process = rewards.get("process_passed")
         exception = result.get("exception_info")
@@ -280,7 +286,7 @@ def build_audit(
             ),
             "total": sum(1 for row in rows if row["tier"] == tier),
         }
-        for tier in (4, 5, 6)
+        for tier in sorted({int(row["tier"]) for row in rows})
     }
     return {
         "schema_version": "1.0",
@@ -362,10 +368,17 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path(__file__).resolve().parents[2],
     )
-    parser.add_argument("--environment-id", choices=[f"E{i}" for i in range(1, 7)], required=True)
+    parser.add_argument(
+        "--environment-id", choices=[f"E{i}" for i in range(1, 7)], required=True
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--workspace-root", type=Path, required=True)
     parser.add_argument("--concurrency", type=int, default=2)
+    parser.add_argument(
+        "--tiers",
+        default="4,5,6",
+        help="comma-separated task tiers to audit; use 1,2,3,4,5,6 for all 30 tasks",
+    )
     parser.add_argument("--job-name")
     parser.add_argument(
         "--recover-job-root",
@@ -386,7 +399,16 @@ def main() -> int:
     workspace_root = args.workspace_root.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     workspace_root.mkdir(parents=True, exist_ok=True)
-    tasks = select_tasks(repo_root, args.environment_id)
+    try:
+        tiers = tuple(
+            int(value.strip()) for value in args.tiers.split(",") if value.strip()
+        )
+    except ValueError as exc:
+        raise SystemExit("--tiers must be a comma-separated subset of 1..6") from exc
+    try:
+        tasks = select_tasks(repo_root, args.environment_id, tiers)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     run_error: str | None = None
     if args.recover_job_root is not None:
         job_root = args.recover_job_root.resolve()
@@ -440,8 +462,7 @@ def main() -> int:
     # infrastructure failure.  Only fail the process when Harbor itself could
     # not produce one result per selected task.
     complete = all(
-        row["trial_count"] == 1 and row["result_present"]
-        for row in audit["tasks"]
+        row["trial_count"] == 1 and row["result_present"] for row in audit["tasks"]
     )
     if not complete:
         return 2

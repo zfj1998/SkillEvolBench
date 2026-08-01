@@ -155,6 +155,12 @@ class RunConfig(BaseModel):
     # contains exactly primary_skill for T4/T5 and required_skills for T6.
     # Only valid for the curated evaluation-only diagnostic above.
     oracle_skill_view: bool = False
+    # Negative-control projection: expose the same number of curated skills,
+    # but take them from the corresponding family IDs in the next environment
+    # (E1->E2, ..., E6->E1). This is deliberately disjoint from every task's
+    # annotated primary/required skills and is valid only for the same curated
+    # evaluation-only diagnostic.
+    shuffled_skill_view: bool = False
     workspace_root: Path = Path("workspace/runs")
 
     # ===== Execution =====
@@ -296,6 +302,24 @@ class RunConfig(BaseModel):
                     "oracle_skill_view requires a curated skill-library baseline"
                 )
 
+        if self.shuffled_skill_view:
+            if not self.evaluation_only_t4_t6:
+                raise ValueError(
+                    "shuffled_skill_view requires evaluation_only_t4_t6=True"
+                )
+            if (
+                self.baseline.skill_init != "curated"
+                or not self.baseline.allow_curated_inject
+                or not self.baseline.use_skill_library
+            ):
+                raise ValueError(
+                    "shuffled_skill_view requires a curated skill-library baseline"
+                )
+        if self.oracle_skill_view and self.shuffled_skill_view:
+            raise ValueError(
+                "oracle_skill_view and shuffled_skill_view are mutually exclusive"
+            )
+
         # ---- 2. baseline.default_strategy <-> strategy.name ----
         # The baseline's "default_strategy" lives in its yaml as a hint about
         # which strategy yaml is expected to be paired with it. RunConfig's
@@ -355,6 +379,7 @@ class RunConfig(BaseModel):
         family_smoke_id: Optional[str] = None,
         evaluation_only_t4_t6: bool = False,
         oracle_skill_view: bool = False,
+        shuffled_skill_view: bool = False,
         workspace_root: Path | str = "workspace/runs",
         api_base: Optional[str] = None,
         api_key_env_var: str = "ANTHROPIC_API_KEY",
@@ -373,6 +398,7 @@ class RunConfig(BaseModel):
             family_smoke_id=family_smoke_id,
             evaluation_only_t4_t6=evaluation_only_t4_t6,
             oracle_skill_view=oracle_skill_view,
+            shuffled_skill_view=shuffled_skill_view,
             workspace_root=Path(workspace_root),
             api_base=api_base,
             api_key_env_var=api_key_env_var,

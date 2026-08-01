@@ -11,10 +11,7 @@ import pytest
 
 
 ENV_MODULE_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "skillevolbench"
-    / "harbor_ext"
-    / "env.py"
+    Path(__file__).resolve().parents[1] / "skillevolbench" / "harbor_ext" / "env.py"
 )
 
 
@@ -31,9 +28,7 @@ def _load_environment_class(
             "harbor.environments.docker.docker",
         )
     }
-    modules["harbor.environments.docker.docker"].DockerEnvironment = (
-        docker_environment
-    )
+    modules["harbor.environments.docker.docker"].DockerEnvironment = docker_environment
     for name, module in modules.items():
         monkeypatch.setitem(sys.modules, name, module)
 
@@ -99,9 +94,7 @@ def test_legacy_harbor_mounts_json_is_still_supported(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class LegacyDockerEnvironment:
-        def __init__(
-            self, *, mounts_json: list[dict] | None = None, **_kwargs: Any
-        ):
+        def __init__(self, *, mounts_json: list[dict] | None = None, **_kwargs: Any):
             self.forwarded_mounts = list(mounts_json or [])
 
     environment_cls = _load_environment_class(monkeypatch, LegacyDockerEnvironment)
@@ -140,6 +133,32 @@ def test_oracle_diagnostic_mounts_task_specific_skill_view(
     assert all(mount["read_only"] is True for mount in skill_mounts)
 
 
+def test_shuffled_diagnostic_mounts_task_specific_skill_view(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class CurrentDockerEnvironment:
+        def __init__(self, *, mounts: list[dict] | None = None, **_kwargs: Any):
+            self.forwarded_mounts = list(mounts or [])
+
+    environment_cls = _load_environment_class(monkeypatch, CurrentDockerEnvironment)
+    environment = environment_cls(
+        **_common_args(tmp_path),
+        mounts=[],
+        shuffled_skill_view=True,
+    )
+
+    skill_mounts = [
+        mount
+        for mount in environment.forwarded_mounts
+        if mount["target"] != "/context/injection.json"
+    ]
+    expected = tmp_path / "shuffled-skill-views" / "E1-LS1-T1"
+    assert expected.is_dir()
+    assert {mount["source"] for mount in skill_mounts} == {str(expected)}
+    assert all(mount["read_only"] is True for mount in skill_mounts)
+
+
 def test_main_service_lifecycle_queries_are_checked_and_state_specific(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -153,9 +172,7 @@ def test_main_service_lifecycle_queries_are_checked_and_state_specific(
     calls: list[tuple[list[str], dict[str, Any]]] = []
     outputs = iter(("", "all-container-id\n", "running-container-id\n"))
 
-    async def compose(
-        command: list[str], **kwargs: Any
-    ) -> SimpleNamespace:
+    async def compose(command: list[str], **kwargs: Any) -> SimpleNamespace:
         calls.append((command, kwargs))
         return SimpleNamespace(stdout=next(outputs))
 

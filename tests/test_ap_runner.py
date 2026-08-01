@@ -474,6 +474,29 @@ def test_build_config_selects_curated_t4_t6_oracle_diagnostic(
     assert config.baseline.replay_eval is False
 
 
+def test_build_config_selects_curated_t4_t6_shuffled_diagnostic(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("INSTANCE_ID", "E4")
+    monkeypatch.setenv("BASELINE_NAME", "curated_static")
+    monkeypatch.setenv("MODEL", "served-model")
+    monkeypatch.setenv("MODEL_BASE_URL", "http://model.example/v1")
+    monkeypatch.setenv("MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("EVALUATION_ONLY_T4_T6", "true")
+    monkeypatch.setenv("SHUFFLED_SKILL_VIEW", "true")
+    monkeypatch.setenv("WITHIN_ENV_REPLAY", "false")
+    monkeypatch.setenv("REPLAY_EVAL", "false")
+
+    config = run_episode._build_config(tmp_path)
+
+    assert config.environment_id == "E4"
+    assert config.evaluation_only_t4_t6 is True
+    assert config.oracle_skill_view is False
+    assert config.shuffled_skill_view is True
+    assert config.baseline.name == "curated_static"
+
+
 def test_build_config_applies_bounded_same_session_attempt_budget(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -740,8 +763,7 @@ def test_mask_tree_allows_standard_dot_venv_python_link_chain(
 
     assert mask_tree(tmp_path) == 0
     assert all(
-        (bin_dir / name).is_symlink()
-        for name in ("python", "python3", "python3.12")
+        (bin_dir / name).is_symlink() for name in ("python", "python3", "python3.12")
     )
     assert (bin_dir / "python").readlink() == Path("python3.12")
     assert (bin_dir / "python3.12").readlink() == Path("/usr/bin/python3.12")

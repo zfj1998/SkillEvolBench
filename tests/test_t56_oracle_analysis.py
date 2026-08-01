@@ -195,6 +195,20 @@ def test_custom_score_weights_are_extracted_without_importing_task_code() -> Non
     ]
 
 
+def test_verifier_auditor_can_inventory_all_180_primary_tasks() -> None:
+    result = AUDITOR.build(
+        ROOT / "benchmark/tasks",
+        None,
+        {1, 2, 3, 4, 5, 6},
+    )
+
+    assert result["summary"]["task_count"] == 180
+    assert result["summary"]["by_tier"] == {
+        f"T{tier}": 30 for tier in range(1, 7)
+    }
+    assert len({task["task_id"] for task in result["tasks"]}) == 180
+
+
 def test_task_comparison_marks_oracle_outcome_rescue() -> None:
     common = {
         "model": "qwen3.7-max",

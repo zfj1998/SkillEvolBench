@@ -7,7 +7,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "ap" / "run_reference_solution_audit.py"
-SPEC = importlib.util.spec_from_file_location("run_reference_solution_audit", SCRIPT_PATH)
+SPEC = importlib.util.spec_from_file_location(
+    "run_reference_solution_audit", SCRIPT_PATH
+)
 assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
@@ -35,6 +37,13 @@ def test_selects_exactly_one_t4_t6_grid_per_environment() -> None:
     }
 
 
+def test_selects_all_thirty_tasks_for_full_environment_integrity_audit() -> None:
+    tasks = MODULE.select_tasks(REPO_ROOT, "E2", (1, 2, 3, 4, 5, 6))
+    assert len(tasks) == 30
+    assert [task.spec.task_index for task in tasks] == [1, 2, 3, 4, 5, 6] * 5
+    assert len({task.spec.task_id for task in tasks}) == 30
+
+
 def test_collect_results_requires_full_outcome_and_process_pass(tmp_path: Path) -> None:
     tasks = MODULE.select_tasks(REPO_ROOT, "E2")[:2]
     job_root = tmp_path / "jobs" / "reference"
@@ -60,7 +69,9 @@ def test_collect_results_requires_full_outcome_and_process_pass(tmp_path: Path) 
     assert rows[1]["strict_pass"] is False
 
 
-def test_collect_results_fails_closed_on_duplicate_or_missing_trials(tmp_path: Path) -> None:
+def test_collect_results_fails_closed_on_duplicate_or_missing_trials(
+    tmp_path: Path,
+) -> None:
     tasks = MODULE.select_tasks(REPO_ROOT, "E6")[:2]
     job_root = tmp_path / "jobs" / "reference"
     first = tasks[0].spec.task_id
@@ -170,8 +181,7 @@ def test_reference_watcher_accepts_exact_packaged_revision_fallback() -> None:
 
 def test_reference_watcher_aggregates_all_90_tasks() -> None:
     payloads = [
-        _audit_payload(f"E{index}", strict_pass=index != 3)
-        for index in range(1, 7)
+        _audit_payload(f"E{index}", strict_pass=index != 3) for index in range(1, 7)
     ]
     aggregate = WATCHER.aggregate_audits(payloads)
     assert aggregate["summary"]["total"] == 90

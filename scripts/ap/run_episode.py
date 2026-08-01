@@ -395,6 +395,7 @@ def _build_config(output_dir: Path) -> RunConfig:
         family_smoke_id=family_smoke_id,
         evaluation_only_t4_t6=_env_bool("EVALUATION_ONLY_T4_T6", False),
         oracle_skill_view=_env_bool("ORACLE_SKILL_VIEW", False),
+        shuffled_skill_view=_env_bool("SHUFFLED_SKILL_VIEW", False),
         workspace_root=workspace_root,
         # Host-side calls are routed by SEVB_HOST_LITELLM_* above. The Harbor
         # agent receives the endpoint through its agent-specific config/env.
@@ -441,9 +442,7 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
         # A family smoke has one family x T1-T3; a canonical environment has
         # five. Both require a terminal same-session result for every learning
         # primary trial before the execution unit is considered complete.
-        expected_reflections = (
-            0 if t4_t6_diagnostic else (3 if family_smoke else 15)
-        )
+        expected_reflections = 0 if t4_t6_diagnostic else (3 if family_smoke else 15)
         unit_complete = (
             unit_complete and reflection.get("n_terminal") == expected_reflections
         )
@@ -468,9 +467,7 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
         ),
         "scoreable": canonical_complete,
         "canonical": (
-            not family_smoke
-            and not t4_t6_diagnostic
-            and config.max_tasks is None
+            not family_smoke and not t4_t6_diagnostic and config.max_tasks is None
         ),
         "execution_scope": (
             "t4_t6_diagnostic"
@@ -479,9 +476,7 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
                 "family_smoke"
                 if family_smoke
                 else (
-                    "truncated_smoke"
-                    if config.max_tasks is not None
-                    else "environment"
+                    "truncated_smoke" if config.max_tasks is not None else "environment"
                 )
             )
         ),
@@ -489,6 +484,7 @@ def _success_metrics(config: RunConfig, report: Any) -> dict[str, Any]:
         "family_smoke_id": config.family_smoke_id,
         "evaluation_only_t4_t6": t4_t6_diagnostic,
         "oracle_skill_view": config.oracle_skill_view,
+        "shuffled_skill_view": config.shuffled_skill_view,
         "run_id": config.run_id,
         "baseline_name": config.baseline.name,
         "evaluation_sr": evaluation_sr,
@@ -612,6 +608,7 @@ def main() -> int:
                 "family_smoke_id": config.family_smoke_id,
                 "evaluation_only_t4_t6": config.evaluation_only_t4_t6,
                 "oracle_skill_view": config.oracle_skill_view,
+                "shuffled_skill_view": config.shuffled_skill_view,
                 "execution_scope": (
                     "t4_t6_diagnostic"
                     if config.evaluation_only_t4_t6
@@ -653,9 +650,7 @@ def main() -> int:
                 "harbor_agent_timeout_multiplier": (
                     config.harbor_agent_timeout_multiplier
                 ),
-                "runtime_attempt": int(
-                    os.environ.get("SEVB_EPISODE_ATTEMPT", "1")
-                ),
+                "runtime_attempt": int(os.environ.get("SEVB_EPISODE_ATTEMPT", "1")),
                 "smoke_max_tasks": config.max_tasks,
                 "workspace_root": str(config.workspace_root),
                 "started_at": datetime.now(timezone.utc).isoformat(),
@@ -673,6 +668,7 @@ def main() -> int:
         failed_max_tasks = os.environ.get("SMOKE_MAX_TASKS") or None
         failed_t4_t6_diagnostic = _env_bool("EVALUATION_ONLY_T4_T6", False)
         failed_oracle_skill_view = _env_bool("ORACLE_SKILL_VIEW", False)
+        failed_shuffled_skill_view = _env_bool("SHUFFLED_SKILL_VIEW", False)
         _write_json(
             metrics_path,
             {
@@ -691,17 +687,14 @@ def main() -> int:
                     else (
                         "family_smoke"
                         if failed_family_smoke_id
-                        else (
-                            "truncated_smoke"
-                            if failed_max_tasks
-                            else "environment"
-                        )
+                        else ("truncated_smoke" if failed_max_tasks else "environment")
                     )
                 ),
                 "environment_id": os.environ.get("INSTANCE_ID"),
                 "family_smoke_id": failed_family_smoke_id,
                 "evaluation_only_t4_t6": failed_t4_t6_diagnostic,
                 "oracle_skill_view": failed_oracle_skill_view,
+                "shuffled_skill_view": failed_shuffled_skill_view,
                 "expected_primary_trials": (
                     15
                     if failed_t4_t6_diagnostic
@@ -713,9 +706,7 @@ def main() -> int:
                 "error_reason": error_reason,
                 "error_task_id": error_task_id,
                 "error_exception_type": error_exception_type,
-                "runtime_attempt": int(
-                    os.environ.get("SEVB_EPISODE_ATTEMPT", "1")
-                ),
+                "runtime_attempt": int(os.environ.get("SEVB_EPISODE_ATTEMPT", "1")),
                 "message": _sanitize_error(str(actionable)),
             },
         )

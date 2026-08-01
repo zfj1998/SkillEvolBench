@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Audit T4-T6 verifier structure and join it with observed task outcomes."""
+"""Audit verifier structure and optionally join observed task outcomes.
+
+The historical default remains T4--T6 so existing reports stay reproducible.
+Use ``--tiers 1,2,3,4,5,6 --output-prefix all_task_verifier_audit`` for a
+complete 180-task structural inventory.
+"""
 
 from __future__ import annotations
 
@@ -441,12 +446,22 @@ def observed_by_task(evidence_path: Path | None) -> dict[str, list[dict[str, Any
     return grouped
 
 
-def build(tasks_root: Path, evidence_path: Path | None) -> dict[str, Any]:
+def build(
+    tasks_root: Path,
+    evidence_path: Path | None,
+    tiers: set[int] | None = None,
+) -> dict[str, Any]:
+    selected_tiers = tiers if tiers is not None else {4, 5, 6}
+    if not selected_tiers or not selected_tiers <= set(range(1, 7)):
+        raise ValueError(f"tiers must be a non-empty subset of 1..6: {selected_tiers}")
     observed = observed_by_task(evidence_path)
     tasks: list[dict[str, Any]] = []
     for spec_path in sorted(tasks_root.glob("*/task-spec.yaml")):
         spec = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
-        if not isinstance(spec, dict) or int(spec.get("task_index", 0)) not in {4, 5, 6}:
+        if (
+            not isinstance(spec, dict)
+            or int(spec.get("task_index", 0)) not in selected_tiers
+        ):
             continue
         root = spec_path.parent
         process = analyze_python(root / "tests/test_process.py", root / "environment")
@@ -572,11 +587,29 @@ def main() -> int:
     parser.add_argument("--tasks-root", type=Path, default=Path("benchmark/tasks"))
     parser.add_argument("--evidence", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--tiers",
+        default="4,5,6",
+        help="comma-separated task tiers to audit (default: 4,5,6)",
+    )
+    parser.add_argument(
+        "--output-prefix",
+        default="t56_verifier_audit",
+        help="basename for the emitted JSON and CSV files",
+    )
     args = parser.parse_args()
-    result = build(args.tasks_root, args.evidence)
+    try:
+        tiers = {int(value.strip()) for value in args.tiers.split(",") if value.strip()}
+    except ValueError as exc:
+        parser.error(f"--tiers must contain integers: {exc}")
+    if not tiers or not tiers <= set(range(1, 7)):
+        parser.error("--tiers must be a non-empty subset of 1,2,3,4,5,6")
+    if not args.output_prefix or Path(args.output_prefix).name != args.output_prefix:
+        parser.error("--output-prefix must be a non-empty filename prefix")
+    result = build(args.tasks_root, args.evidence, tiers)
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    json_path = args.output_dir / "t56_verifier_audit.json"
-    csv_path = args.output_dir / "t56_verifier_audit.csv"
+    json_path = args.output_dir / f"{args.output_prefix}.json"
+    csv_path = args.output_dir / f"{args.output_prefix}.csv"
     atomic_write_text(
         json_path, json.dumps(result, ensure_ascii=False, indent=2) + "\n"
     )

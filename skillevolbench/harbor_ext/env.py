@@ -114,6 +114,7 @@ class GlobalLibraryEnvironment(DockerEnvironment):
         run_root: str,
         library_scope: str = "global",
         oracle_skill_view: bool = False,
+        shuffled_skill_view: bool = False,
         *,
         # Standard Harbor 0.6+ DockerEnvironment ctor args. Listed
         # explicitly so the merge with our extra mounts can read
@@ -132,6 +133,11 @@ class GlobalLibraryEnvironment(DockerEnvironment):
         self.library_scope = library_scope
         self.run_root = Path(run_root)
         self.oracle_skill_view = oracle_skill_view
+        self.shuffled_skill_view = shuffled_skill_view
+        if self.oracle_skill_view and self.shuffled_skill_view:
+            raise ValueError(
+                "oracle_skill_view and shuffled_skill_view are mutually exclusive"
+            )
 
         # Recover task_id from trial_paths so we can build the per-trial
         # injection-context.json mount. Harbor names trial dirs as
@@ -165,6 +171,10 @@ class GlobalLibraryEnvironment(DockerEnvironment):
         if self.oracle_skill_view:
             self.library_active_path = (
                 self.run_root / "oracle-skill-views" / task_id
+            )
+        elif self.shuffled_skill_view:
+            self.library_active_path = (
+                self.run_root / "shuffled-skill-views" / task_id
             )
 
         # Defensive: harness creates these but a partial init could miss
@@ -229,11 +239,12 @@ class GlobalLibraryEnvironment(DockerEnvironment):
 
         _LOG.info(
             "GlobalLibraryEnvironment init: task_id=%s library_active=%s "
-            "frozen=%s oracle_skill_view=%s n_mounts=%d",
+            "frozen=%s oracle_skill_view=%s shuffled_skill_view=%s n_mounts=%d",
             task_id,
             self.library_active_path,
             is_frozen,
             self.oracle_skill_view,
+            self.shuffled_skill_view,
             len(merged_mounts),
         )
 

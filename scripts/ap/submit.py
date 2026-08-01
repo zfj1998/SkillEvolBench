@@ -289,7 +289,11 @@ def build_submission(
             raise ValueError(
                 "--reference-solution-audit requires --scope environment or full"
             )
-        if args.evaluation_only_t4_t6 or args.oracle_skill_view:
+        if (
+            args.evaluation_only_t4_t6
+            or args.oracle_skill_view
+            or args.shuffled_skill_view
+        ):
             raise ValueError(
                 "--reference-solution-audit is mutually exclusive with model diagnostics"
             )
@@ -307,18 +311,25 @@ def build_submission(
                 "--evaluation-only-t4-t6 requires --scope environment or full"
             )
         if args.within_env_replay is True or args.replay_eval is True:
-            raise ValueError(
-                "--evaluation-only-t4-t6 requires replay disabled"
-            )
+            raise ValueError("--evaluation-only-t4-t6 requires replay disabled")
     if args.oracle_skill_view:
         if not args.evaluation_only_t4_t6:
-            raise ValueError(
-                "--oracle-skill-view requires --evaluation-only-t4-t6"
-            )
+            raise ValueError("--oracle-skill-view requires --evaluation-only-t4-t6")
         if args.baseline_name != "curated_static":
             raise ValueError(
                 "--oracle-skill-view requires --baseline-name curated_static"
             )
+    if args.shuffled_skill_view:
+        if not args.evaluation_only_t4_t6:
+            raise ValueError("--shuffled-skill-view requires --evaluation-only-t4-t6")
+        if args.baseline_name != "curated_static":
+            raise ValueError(
+                "--shuffled-skill-view requires --baseline-name curated_static"
+            )
+    if args.oracle_skill_view and args.shuffled_skill_view:
+        raise ValueError(
+            "--oracle-skill-view and --shuffled-skill-view are mutually exclusive"
+        )
     ap_api_key = _required(environ.get("AP_API_KEY"), "AP_API_KEY")
     if args.reference_solution_audit:
         model_api_key = "NOT_REQUIRED"
@@ -372,8 +383,10 @@ def build_submission(
         "episode_retry_backoff_sec": args.episode_retry_backoff_sec,
         "evaluation_only_t4_t6": args.evaluation_only_t4_t6,
         "oracle_skill_view": args.oracle_skill_view,
+        "shuffled_skill_view": args.shuffled_skill_view,
         "reference_solution_audit": args.reference_solution_audit,
         "reference_audit_concurrency": args.reference_audit_concurrency,
+        "reference_audit_tiers": args.reference_audit_tiers,
     }
     reasoning_effort = args.reasoning_effort or args.codex_reasoning_effort
     if reasoning_effort:
@@ -482,7 +495,8 @@ def build_submission(
         elif args.evaluation_only_t4_t6:
             description = (
                 f"non-scoreable {environment_id} T4-T6 diagnostic "
-                f"(oracle_skill_view={args.oracle_skill_view})"
+                f"(oracle_skill_view={args.oracle_skill_view}, "
+                f"shuffled_skill_view={args.shuffled_skill_view})"
             )
         else:
             description = f"complete {environment_id} environment episode"
@@ -631,6 +645,15 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--shuffled-skill-view",
+        action="store_true",
+        help=(
+            "mount an equal-size disjoint curated skill set from the next "
+            "environment for T4-T6; requires curated_static and "
+            "--evaluation-only-t4-t6"
+        ),
+    )
+    parser.add_argument(
         "--reference-solution-audit",
         action="store_true",
         help=(
@@ -643,6 +666,12 @@ def _parser() -> argparse.ArgumentParser:
         type=int,
         default=2,
         help="concurrent Harbor oracle trials within each AP job (1-4)",
+    )
+    parser.add_argument(
+        "--reference-audit-tiers",
+        default="4,5,6",
+        choices=("4,5,6", "1,2,3,4,5,6"),
+        help="task tiers covered by the official reference-solution audit",
     )
     parser.add_argument(
         "--learning-max-attempts",
@@ -819,9 +848,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.skip_local_probe:
             print("Local model probe skipped; AP host and DinD probes remain mandatory")
         else:
-            model_api_key = _required(
-                os.environ.get("MODEL_API_KEY"), "MODEL_API_KEY"
-            )
+            model_api_key = _required(os.environ.get("MODEL_API_KEY"), "MODEL_API_KEY")
             model_base_urls = _model_base_urls(args, os.environ)
             model = _required(
                 args.model or os.environ.get("MODEL_NAME") or os.environ.get("MODEL"),

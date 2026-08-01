@@ -145,6 +145,44 @@ def test_oracle_skill_view_requires_curated_t4_t6_diagnostic() -> None:
     with pytest.raises(ValueError, match="requires --evaluation-only-t4-t6"):
         submit.build_submission(args, _environment())
 
+
+def test_shuffled_skill_view_is_a_disjoint_curated_diagnostic() -> None:
+    args = submit._parser().parse_args(
+        [
+            "--scope",
+            "environment",
+            "--environment-id",
+            "E2",
+            "--baseline-name",
+            "curated_static",
+            "--evaluation-only-t4-t6",
+            "--shuffled-skill-view",
+        ]
+    )
+    submission = submit.build_submission(args, _environment())
+    params = _params(submission.command)
+
+    assert params["evaluation_only_t4_t6"] is True
+    assert params["oracle_skill_view"] is False
+    assert params["shuffled_skill_view"] is True
+    assert "shuffled_skill_view=True" in submission.description
+
+
+def test_oracle_and_shuffled_cli_views_are_mutually_exclusive() -> None:
+    args = submit._parser().parse_args(
+        [
+            "--scope",
+            "environment",
+            "--baseline-name",
+            "curated_static",
+            "--evaluation-only-t4-t6",
+            "--oracle-skill-view",
+            "--shuffled-skill-view",
+        ]
+    )
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        submit.build_submission(args, _environment())
+
     args = submit._parser().parse_args(
         ["--scope", "environment", "--evaluation-only-t4-t6", "--oracle-skill-view"]
     )
@@ -160,6 +198,8 @@ def test_reference_solution_audit_needs_no_model_credentials() -> None:
             "--reference-solution-audit",
             "--reference-audit-concurrency",
             "3",
+            "--reference-audit-tiers",
+            "1,2,3,4,5,6",
             "--concurrency",
             "6",
         ]
@@ -173,6 +213,7 @@ def test_reference_solution_audit_needs_no_model_credentials() -> None:
 
     assert params["reference_solution_audit"] is True
     assert params["reference_audit_concurrency"] == 3
+    assert params["reference_audit_tiers"] == "1,2,3,4,5,6"
     assert params["model"] == "harbor-oracle"
     assert params["model_api_key"] == "NOT_REQUIRED"
     assert params["model_base_url"] == "http://reference-audit.invalid/v1"

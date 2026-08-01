@@ -237,6 +237,7 @@ def build_job_config(
                 "library_scope": getattr(config.baseline, "library_scope", "global"),
                 "run_root": str(run_dir),
                 "oracle_skill_view": config.oracle_skill_view,
+                "shuffled_skill_view": config.shuffled_skill_view,
             },
         ),
         # Harbor 0.6+ renamed ``timeout_sec`` -> ``override_timeout_sec``;
